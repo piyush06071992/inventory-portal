@@ -386,9 +386,37 @@ let html5QrCode;
       }
     }
 
-    function checkBarcodeMemory() {
-      console.log("Barcode ready for lookup: " + document.getElementById('barcodeInput').value);
+ async function checkBarcodeMemory() {
+  const barcode = document.getElementById('barcodeInput').value;
+  const scriptURL = "https://script.google.com/macros/s/AKfycbxySneFzP5acFfXE-SA8UowZAcmSWPt3nype5qf1hO_PfoDL4Rh_t1G-AUoKoP39lZDlg/exec"; // Your Google Web App URL
+  const nameDisplay = document.getElementById('scanMsg'); // Or wherever you show the product name
+
+  if (!barcode) return;
+
+  nameDisplay.innerText = "🔍 Searching inventory...";
+
+  try {
+    // Calling the "Bridge" to Google
+    const response = await fetch(`${scriptURL}?action=getDetails&barcode=${barcode}`);
+    const data = await response.json();
+
+    if (data.success) {
+      // SUCCESS: Item found in Google Sheet!
+      nameDisplay.innerHTML = `<b style="color:green">Found: ${data.name}</b><br>Price: ₹${data.price}`;
+      
+      // If you have a Price input box, we can fill it automatically:
+      if(document.getElementById('itemPrice')) {
+         document.getElementById('itemPrice').value = data.price;
+      }
+    } else {
+      // NOT FOUND: This is a new item
+      nameDisplay.innerHTML = `<b style="color:red">Item Not Found</b><br>Please enter details to add it.`;
     }
+  } catch (error) {
+    nameDisplay.innerText = "❌ Connection Error";
+    console.error(error);
+  }
+}
     function logout() {
   if(confirm("Are you sure you want to logout?")) {
     currentUser = "";
