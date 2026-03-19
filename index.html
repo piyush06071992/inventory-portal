@@ -944,6 +944,38 @@ function calcFromUnit() {
       let enteredQty = parseFloat(document.getElementById('qty').value) || 0;
       document.getElementById('newStock').innerText = currentAvailableStock + enteredQty;
     }
+    async function quickStockUpdate() {
+  const barcode = document.getElementById('barcodeInput').value;
+  const newCount = document.getElementById('quickStockQty').value;
+  const msg = document.getElementById('scanMsg');
+  
+  // Your real Google Script "Phone Number"
+  const scriptURL = "https://script.google.com/macros/s/AKfycbxySneFzP5acFfXE-SA8UowZAcmSWPt3nype5qf1hO_PfoDL4Rh_t1G-AUoKoP39lZDlg/exec";
+
+  if (!barcode || !newCount) {
+    alert("Please scan an item and enter a number in the box first!");
+    return;
+  }
+
+  msg.innerText = "⏳ Connecting to Google Sheets...";
+
+  try {
+    const response = await fetch(`${scriptURL}?action=updateStock&barcode=${barcode}&count=${newCount}`);
+    const res = await response.json();
+
+    if (res.success) {
+      msg.innerHTML = `<b style="color:green">✅ Success! Stock updated to ${newCount}</b>`;
+      // Clear the boxes for the next scan
+      document.getElementById('barcodeInput').value = "";
+      document.getElementById('quickStockQty').value = "";
+    } else {
+      msg.innerHTML = `<b style="color:red">❌ Error: Item not found in Inventory sheet.</b>`;
+    }
+  } catch (error) {
+    msg.innerText = "❌ Connection Error. Check internet.";
+    console.error(error);
+  }
+}
   </script>
 </body>
 </html>
