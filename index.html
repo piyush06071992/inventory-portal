@@ -868,10 +868,17 @@ function calcFromUnit() {
         dueDate: document.getElementById('paymentDueDate').value
       };
       
-      google.script.run
-        .withSuccessHandler(res => {
-          // Force the success message to show
-          msgDiv.innerText = res || "Stock Saved!";
+  const scriptURL = "https://script.google.com/macros/s/AKfycbxySneFzP5acFfXE-SA8UowZAcmSWPt3nype5qf1hO_PfoDL4Rh_t1G-AUoKoP39lZDlg/exec";
+      
+      try {
+        const response = await fetch(`${scriptURL}?action=saveStock`, {
+          method: "POST",
+          body: JSON.stringify(data)
+        });
+        const res = await response.json();
+
+        if (res.success) {
+          msgDiv.innerText = res.message || "Stock Saved!";
           msgDiv.style.color = "var(--color3)";
           setTimeout(() => { msgDiv.innerText = ""; }, 5000);
 
@@ -880,66 +887,44 @@ function calcFromUnit() {
           btnNext.innerText = "Save & Add Next";
 
           if (stockSubmitMode === "next") {
-            // PARTIAL RESET
-            ['category', 'newCategory', 'itemName', 'newItemName', 'companyName', 'newCompanyName', 'qty', 'minSellPrice', 'minStockQty', 'gstRate', 'unitPrice', 'totalPrice', 'expiryDate'].forEach(id => {
+            // PARTIAL RESET (Added Udhaar boxes to clear)
+            ['category', 'newCategory', 'itemName', 'newItemName', 'companyName', 'newCompanyName', 'qty', 'minSellPrice', 'minStockQty', 'gstRate', 'unitPrice', 'totalPrice', 'expiryDate', 'amountPaid', 'balanceDue', 'paymentDueDate'].forEach(id => {
               let el = document.getElementById(id);
               if(el) { el.value = ""; if(el.tagName === 'SELECT') el.selectedIndex = 0; }
             });
             document.getElementById('newCategory').classList.add('hidden');
             document.getElementById('newItemName').classList.add('hidden');
             document.getElementById('newCompanyName').classList.add('hidden');
+            document.getElementById('dueDateGroup').classList.add('hidden');
             
             processTaxes(0); 
             window.scrollTo(0,0); 
 
             // Reload dropdowns BUT keep the supplier selected
-            google.script.run.withSuccessHandler(newData => {
-              // Standard dropdown load
-              populateSelect('category', newData.categories);
-              populateSelect('itemName', newData.items);
-              populateSelect('companyName', newData.companies);
-              learnedGstMap = newData.catGstMap; 
-              globalSuppliers = newData.suppliers; 
-              globalCatItemMap = newData.catItemMap;
-              globalAllItems = newData.items;
-
-              // Re-fill Supplier list and RE-SELECT the previous one
-              const suppSel = document.getElementById('supplierName');
-              suppSel.innerHTML = '<option value="">Select Supplier...</option>';
-              globalSuppliers.forEach(s => { 
-                let opt = document.createElement('option'); 
-                opt.value = s.name; 
-                opt.innerText = s.name; 
-                suppSel.appendChild(opt); 
-              });
-              let addSupp = document.createElement('option'); 
-              addSupp.value = "ADD_NEW"; 
-              addSupp.innerText = "➕ Add New Supplier..."; 
-              suppSel.appendChild(addSupp);
-
-              // RE-APPLY THE STICKY VALUES
-              suppSel.value = currentSupplier;
-              document.getElementById('supplierGst').value = currentGst;
-              document.getElementById('supplierContact').value = currentContact;
-              updateContactLinks();
-
-            }).getDropdownData();
+            await loadDropdowns();
+            const suppSel = document.getElementById('supplierName');
+            suppSel.value = currentSupplier;
+            document.getElementById('supplierGst').value = currentGst;
+            document.getElementById('supplierContact').value = currentContact;
+            updateContactLinks();
 
           } else {
             // FULL RESET
             document.getElementById('stockForm').reset();
             processTaxes(0);
+            document.getElementById('dueDateGroup').classList.add('hidden');
             goBackToMenu();
-            loadDropdowns();
+            await loadDropdowns();
           }
-        })
-        .withFailureHandler(err => {
-          alert("Critical Error: " + err.message);
-          btnNext.disabled = false;
-          btnFinal.disabled = false;
-          btnNext.innerText = "Save & Add Next";
-        })
-        .saveStock(data);
+        } else {
+          throw new Error(res.message);
+        }
+      } catch (err) {
+        alert("Critical Error: " + err.message);
+        btnNext.disabled = false;
+        btnFinal.disabled = false;
+        btnNext.innerText = "Save & Add Next";
+      }
     }
 
     function submitStaff(e) {
