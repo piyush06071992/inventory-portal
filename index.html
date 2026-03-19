@@ -203,8 +203,13 @@
         <select id="supplierName" required onchange="handleSupplier()" style="margin-bottom: 8px;">
           <option value="">Loading Suppliers...</option>
         </select>
-        <input type="text" id="newSupplierName" class="hidden" placeholder="Type new supplier name..." style="margin-bottom: 8px; text-transform: capitalize; border-color: var(--color5);">
+      <input type="text" id="newSupplierName" class="hidden" placeholder="Type new supplier name..." style="margin-bottom: 8px; text-transform: capitalize; border-color: var(--color5);">
         
+        <div id="supplierBalanceBadge" class="hidden" style="margin-bottom: 12px; font-size: 13px; font-weight: bold; padding: 10px; border-radius: 8px; background: #ffeaa7; border-left: 6px solid #d63031; color: #d63031;">
+          ⚠️ Past Udhaar: ₹<span id="suppPending">0.00</span> <br>
+          <span style="color:var(--text); font-size: 12px;">Total After This Bill: ₹<span id="suppNewPending">0.00</span></span>
+        </div>
+
         <div style="display: flex; gap: 10px; margin-bottom: 8px;">
           <div style="flex: 1;"><input type="text" id="supplierGst" placeholder="Supplier GST No." style="text-transform: uppercase;"></div>
           <div style="flex: 1;"><input type="text" id="supplierContact" placeholder="10-digit Mobile" pattern="[0-9]{10}" oninput="updateContactLinks()"></div>
@@ -648,6 +653,8 @@ function handleItem() {
         document.getElementById('advAmount').innerText = parseFloat(amount).toFixed(2);
       }).getStaffAdvance(email);
     }
+   let currentSupplierBalance = 0; // Memory for supplier Udhaar
+
     function handleSupplier() {
       const supp = document.getElementById('supplierName').value;
       const newSupp = document.getElementById('newSupplierName');
@@ -657,6 +664,8 @@ function handleItem() {
         newSupp.classList.remove('hidden'); newSupp.required = true; 
         document.getElementById('supplierGst').value = ''; document.getElementById('supplierContact').value = '';
         actionBox.classList.add('hidden');
+        document.getElementById('supplierBalanceBadge').classList.add('hidden');
+        currentSupplierBalance = 0;
       } else { 
         newSupp.classList.add('hidden'); newSupp.required = false; 
         // Auto-fill logic
@@ -664,8 +673,33 @@ function handleItem() {
         if (found) {
           document.getElementById('supplierGst').value = found.gst;
           document.getElementById('supplierContact').value = found.contact;
-          updateContactLinks(); // Show buttons automatically!
+          updateContactLinks();
         }
+        // Fetch live balance!
+        fetchSupplierBalance(supp);
+      }
+    }
+
+    async function fetchSupplierBalance(suppName) {
+      const badge = document.getElementById('supplierBalanceBadge');
+      const pendingSpan = document.getElementById('suppPending');
+      if (!suppName) { badge.classList.add('hidden'); return; }
+
+      badge.classList.remove('hidden');
+      pendingSpan.innerText = "Loading...";
+
+      const scriptURL = "https://script.google.com/macros/s/AKfycbxySneFzP5acFfXE-SA8UowZAcmSWPt3nype5qf1hO_PfoDL4Rh_t1G-AUoKoP39lZDlg/exec";
+
+      try {
+        const response = await fetch(`${scriptURL}?action=getSupplierBalance&supplier=${encodeURIComponent(suppName)}`);
+        const res = await response.json();
+        if (res.success) {
+          currentSupplierBalance = parseFloat(res.balance) || 0;
+          pendingSpan.innerText = currentSupplierBalance.toFixed(2);
+          if (typeof calcUdhaar === "function") calcUdhaar(); // Update total live!
+        }
+      } catch(e) {
+        pendingSpan.innerText = "Error";
       }
     }
 
@@ -770,26 +804,32 @@ function calcFromUnit() {
       let balanceField = document.getElementById('balanceDue');
       let dueGroup = document.getElementById('dueDateGroup');
       let dateField = document.getElementById('paymentDueDate');
+      let currentBillUdhaar = 0;
 
-      // If the box is completely empty, don't show red numbers yet
-      if (paidField === "") {
+      if (paidField !== "") {
+        let balance = total - paid;
+        if (balance > 0) {
+          balanceField.value = balance.toFixed(2);
+          dueGroup.classList.remove('hidden');
+          dateField.required = true;
+          currentBillUdhaar = balance;
+        } else {
+          balanceField.value = "0.00";
+          dueGroup.classList.add('hidden');
+          dateField.required = false;
+          dateField.value = "";
+        }
+      } else {
         balanceField.value = "";
         dueGroup.classList.add('hidden');
         dateField.required = false;
-        return;
       }
 
-      let balance = total - paid;
-
-      if (balance > 0) {
-        balanceField.value = balance.toFixed(2);
-        dueGroup.classList.remove('hidden');
-        dateField.required = true; // Make sure a date is picked!
-      } else {
-        balanceField.value = "0.00";
-        dueGroup.classList.add('hidden');
-        dateField.required = false;
-        dateField.value = ""; // Clear the date if paid in full
+      // Update the Live Supplier Badge automatically
+      let newPendingSpan = document.getElementById('suppNewPending');
+      if (newPendingSpan) {
+        let totalWithThisBill = (typeof currentSupplierBalance !== 'undefined' ? currentSupplierBalance : 0) + currentBillUdhaar;
+        newPendingSpan.innerText = totalWithThisBill.toFixed(2);
       }
     }
 
