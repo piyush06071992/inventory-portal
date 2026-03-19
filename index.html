@@ -752,10 +752,13 @@ function calcFromUnit() {
         
         // Color coding: Red if losing money, Green if profitable
         marginLabel.style.color = marginPercent > 0 ? "var(--color3)" : "red";
-   } else {
+      } else {
         marginLabel.innerText = "0%";
         marginLabel.style.color = "var(--text)";
       }
+      
+      // Link the Total Price changes to the Udhaar calculator instantly!
+      if (typeof calcUdhaar === "function") calcUdhaar();
     }
 
     // --- UDHAAR CALCULATOR ---
