@@ -369,10 +369,9 @@ let html5QrCode;
         config,
         (decodedText) => {
           if (navigator.vibrate) navigator.vibrate(50); // Vibration feedback
-          document.getElementById('barcodeInput').value = decodedText;
-          msg.innerText = "✅ Scanned!";
+       document.getElementById('barcodeInput').value = decodedText;
+          msg.innerText = "✅ Barcode Detected! Now enter Qty and hit UPDATE.";
           stopScanner();
-          checkBarcodeMemory(); 
         },
         (errorMessage) => { }
       ).catch(err => {
