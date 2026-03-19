@@ -387,29 +387,41 @@ let html5QrCode;
 
  async function checkBarcodeMemory() {
   const barcode = document.getElementById('barcodeInput').value;
-  const scriptURL = "https://script.google.com/macros/s/AKfycbxySneFzP5acFfXE-SA8UowZAcmSWPt3nype5qf1hO_PfoDL4Rh_t1G-AUoKoP39lZDlg/exec"; // Your Google Web App URL
-  const nameDisplay = document.getElementById('scanMsg'); // Or wherever you show the product name
+  const scriptURL = "https://script.google.com/macros/s/AKfycbxySneFzP5acFfXE-SA8UowZAcmSWPt3nype5qf1hO_PfoDL4Rh_t1G-AUoKoP39lZDlg/exec";
+  const nameDisplay = document.getElementById('scanMsg');
 
   if (!barcode) return;
 
-  nameDisplay.innerText = "🔍 Searching inventory...";
+  nameDisplay.innerText = "🔍 Searching Inventory...";
 
   try {
-    // Calling the "Bridge" to Google
     const response = await fetch(`${scriptURL}?action=getDetails&barcode=${barcode}`);
-    const data = await response.json();
+    const res = await response.json();
 
-    if (data.success) {
-      // SUCCESS: Item found in Google Sheet!
-      nameDisplay.innerHTML = `<b style="color:green">Found: ${data.name}</b><br>Price: ₹${data.price}`;
+    if (res.success) {
+      nameDisplay.innerHTML = `<b style="color:green">✅ Item Recognized: ${res.itemName}</b>`;
       
-      // If you have a Price input box, we can fill it automatically:
-      if(document.getElementById('itemPrice')) {
-         document.getElementById('itemPrice').value = data.price;
-      }
+      // --- AUTO-FILL THE FORM BOXES ---
+      if(res.category) document.getElementById('category').value = res.category;
+      if(res.itemName) document.getElementById('itemName').value = res.itemName;
+      if(res.companyName) document.getElementById('companyName').value = res.companyName;
+      if(res.gst) document.getElementById('gstRate').value = res.gst;
+      if(res.minSellPrice) document.getElementById('minSellPrice').value = res.minSellPrice;
+      if(res.minStockQty) document.getElementById('minStockQty').value = res.minStockQty;
+      if(res.unitPrice) document.getElementById('unitPrice').value = res.unitPrice;
+      if(res.supplierName) document.getElementById('supplierName').value = res.supplierName;
+
+      // --- UPDATE THE STOCK BADGE ---
+      currentAvailableStock = parseFloat(res.qty) || 0;
+      document.getElementById('stockBadge').style.display = "block";
+      document.getElementById('currStock').innerText = currentAvailableStock;
+      
+      // Trigger the math for "After Save" stock display
+      updateProjectedStock();
+      
     } else {
-      // NOT FOUND: This is a new item
-      nameDisplay.innerHTML = `<b style="color:red">Item Not Found</b><br>Please enter details to add it.`;
+      nameDisplay.innerHTML = `<b style="color:orange">✨ New Item Detected. Please fill details manually.</b>`;
+      document.getElementById('stockBadge').style.display = "none";
     }
   } catch (error) {
     nameDisplay.innerText = "❌ Connection Error";
