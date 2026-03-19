@@ -840,7 +840,8 @@ function calcFromUnit() {
       let suppVal = document.getElementById('supplierName').value;
       if (suppVal === "ADD_NEW") suppVal = document.getElementById('newSupplierName').value;
 
-      const data = {
+  const data = {
+        barcode: document.getElementById('barcodeInput').value, // Added Barcode for Column A
         supplierName: suppVal, 
         companyName: compVal,
         supplierGst: currentGst,
@@ -861,7 +862,10 @@ function calcFromUnit() {
         transactionId: document.getElementById('transactionId').value, 
         billFiles: bills, 
         productFiles: products,
-        expiryDate: document.getElementById('expiryDate').value
+        expiryDate: document.getElementById('expiryDate').value,
+        amountPaid: document.getElementById('amountPaid').value,
+        balanceDue: document.getElementById('balanceDue').value,
+        dueDate: document.getElementById('paymentDueDate').value
       };
       
       google.script.run
