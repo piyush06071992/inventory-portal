@@ -752,9 +752,41 @@ function calcFromUnit() {
         
         // Color coding: Red if losing money, Green if profitable
         marginLabel.style.color = marginPercent > 0 ? "var(--color3)" : "red";
-      } else {
+   } else {
         marginLabel.innerText = "0%";
         marginLabel.style.color = "var(--text)";
+      }
+    }
+
+    // --- UDHAAR CALCULATOR ---
+    function calcUdhaar() {
+      let total = parseFloat(document.getElementById('totalPrice').value) || 0;
+      let paidField = document.getElementById('amountPaid').value;
+      let paid = parseFloat(paidField) || 0;
+      
+      let balanceField = document.getElementById('balanceDue');
+      let dueGroup = document.getElementById('dueDateGroup');
+      let dateField = document.getElementById('paymentDueDate');
+
+      // If the box is completely empty, don't show red numbers yet
+      if (paidField === "") {
+        balanceField.value = "";
+        dueGroup.classList.add('hidden');
+        dateField.required = false;
+        return;
+      }
+
+      let balance = total - paid;
+
+      if (balance > 0) {
+        balanceField.value = balance.toFixed(2);
+        dueGroup.classList.remove('hidden');
+        dateField.required = true; // Make sure a date is picked!
+      } else {
+        balanceField.value = "0.00";
+        dueGroup.classList.add('hidden');
+        dateField.required = false;
+        dateField.value = ""; // Clear the date if paid in full
       }
     }
 
