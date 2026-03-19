@@ -1,1 +1,895 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <base target="_top">
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="theme-color" content="#ff6b81">
+<script src="https://cdnjs.cloudflare.com/ajax/libs/html5-qrcode/2.3.8/html5-qrcode.min.js"></script>
+  <style>
+    :root {
+      --bg-gradient: linear-gradient(135deg, #ff9a9e 0%, #fecfef 99%, #fecfef 100%);
+      --surface: #ffffff;
+      --text: #2f3640;
+      --border: #dcdde1;
+      --color1: #ff6b81; /* Pink/Red */
+      --color2: #1e90ff; /* Blue */
+      --color3: #2ed573; /* Green */
+      --color4: #ffa502; /* Orange */
+      --color5: #9c88ff; /* Purple */
+    }
+    body { font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; background: var(--bg-gradient); color: var(--text); margin: 0; padding: 20px; display: flex; justify-content: center; min-height: 100vh;}
+    .container { background: var(--surface); width: 100%; max-width: 650px; padding: 30px; border-radius: 16px; box-shadow: 0 10px 25px rgba(0,0,0,0.1); border-top: 5px solid var(--color1); }
+    h2 { 
+      text-align: center; 
+      background: linear-gradient(to right, var(--color1), var(--color2), var(--color5)); 
+      -webkit-background-clip: text; 
+      -webkit-text-fill-color: transparent; 
+      margin-top: 0; 
+      text-transform: uppercase; 
+      letter-spacing: 2px; 
+      font-weight: 900;
+      font-size: 28px;
+    }
+    .form-group { margin-bottom: 15px; }
+    label { display: block; margin-bottom: 5px; font-weight: 700; font-size: 13px; color: #57606f;}
+    input, select, button { width: 100%; padding: 12px; border: 2px solid var(--border); border-radius: 8px; box-sizing: border-box; font-size: 15px; transition: 0.3s;}
+    input:focus, select:focus { outline: none; border-color: var(--color2); box-shadow: 0 0 5px rgba(30,144,255,0.3); }
+    
+    button { color: white; font-weight: bold; border: none; cursor: pointer; margin-top: 10px; transition: 0.2s; text-transform: uppercase; letter-spacing: 1px; box-shadow: 0 4px 6px rgba(0,0,0,0.1);}
+    #btnStock { background: var(--color2); } #btnStock:hover { background: #0070d2; }
+    #btnExp { background: var(--color4); } #btnExp:hover { background: #e08e00; }
+    #btnStaff { background: var(--color5); } #btnStaff:hover { background: #826ae5; }
+    #btnPay { background: var(--color3); } #btnPay:hover { background: #25b861; }
+    #btnRep { background: var(--color1); } #btnRep:hover { background: #e55a6d; }
+    #loginBtn { background: var(--color1); }
+    #logoutBtn { background: #636e72; width: auto; float: right; padding: 8px 20px; font-size: 14px; margin-top: -52px; border-radius: 8px; }
+#logoutBtn:hover { background: #2d3436; }
+    .nav-tabs { display: flex; gap: 8px; margin-bottom: 25px; flex-wrap: wrap; justify-content: center; }
+    .nav-tabs button { background: #f1f2f6; color: #57606f; margin: 0; width: auto; padding: 10px 18px; font-size: 13px; border-radius: 20px; box-shadow: none; border: 1px solid #ced6e0;}
+    .nav-tabs button.active { background: var(--color1); color: white; border: none; box-shadow: 0 4px 10px rgba(255,107,129,0.3);}
+    
+    .breakdown-box { background: #f8f9fa; border: 2px dashed var(--color2); padding: 15px; border-radius: 8px; margin-top: 15px; font-size: 14px; }
+    .breakdown-box div { display: flex; justify-content: space-between; margin-bottom: 5px; }
+    .breakdown-box .total-line { font-weight: bold; border-top: 2px solid #dfe6e9; padding-top: 8px; margin-top: 8px; color: var(--color1); font-size: 16px;}
+    
+    .advance-box { background: #eccc68; color: #2f3542; padding: 10px; border-radius: 8px; font-weight: bold; text-align: center; margin-bottom: 15px; border: 2px dashed #ff7f50; }
+    .file-input-box { background: #f1f2f6; padding: 10px; border-radius: 8px; border: 1px solid #ced6e0; margin-bottom: 10px;}
+    
+    .hidden { display: none !important; }
+#msg { 
+      text-align: center; 
+      font-weight: 900; 
+      margin-top: 20px; 
+      font-size: 18px; 
+      background: #f1f2f6; 
+      border-radius: 8px;
+      min-height: 30px;
+      line-height: 30px;
+    }
+    table { width: 100%; border-collapse: collapse; margin-top: 20px; font-size: 12px; }
+    th, td { border: 1px solid var(--border); padding: 8px; text-align: left; }
+    th { background-color: var(--color1); color: white; }
+    .table-container { overflow-x: auto; }
+    .password-wrapper { position: relative; display: flex; align-items: center; }
+.password-wrapper input { padding-right: 40px; }
+.toggle-password { position: absolute; right: 10px; cursor: pointer; font-size: 18px; }
+/* Dashboard Menu Styles */
+    .dashboard-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(130px, 1fr)); gap: 15px; padding: 10px 0; }
+    .dash-btn { padding: 25px 10px; font-size: 14px; font-weight: bold; color: white; border: none; border-radius: 12px; cursor: pointer; display: flex; flex-direction: column; align-items: center; justify-content: center; box-shadow: 0 6px 15px rgba(0,0,0,0.15); transition: 0.2s; margin-top: 0;}
+    .dash-btn:hover { transform: translateY(-3px); box-shadow: 0 8px 20px rgba(0,0,0,0.2); }
+    .dash-btn span { font-size: 28px; margin-bottom: 8px; }
+    
+    .dash-stock { background: linear-gradient(135deg, var(--color2), #00a8ff); }
+    .dash-exp { background: linear-gradient(135deg, var(--color4), #ff7f50); }
+    .dash-staff { background: linear-gradient(135deg, var(--color5), #8c7ae6); }
+    .dash-pay { background: linear-gradient(135deg, var(--color3), #20bf6b); }
+    .dash-rep { background: linear-gradient(135deg, var(--color1), #ff4757); }
+    
+    .back-btn { background: #f1f2f6; color: #2f3640; border: 2px solid #ced6e0; padding: 8px 15px; border-radius: 8px; font-size: 14px; cursor: pointer; margin-bottom: 20px; font-weight: bold; width: auto; display: inline-block; box-shadow: none; text-transform: none;}
+    .back-btn:hover { background: #dfe4ea; }
+    /* Make dropdowns sleeker on mobile */
+    select { 
+      padding: 8px 12px !important; 
+      height: 42px !important; 
+      font-size: 14px !important; 
+    }
+  </style>
+</head>
+<body>
 
+  <div class="container" id="loginScreen">
+    <h2>Sarandipity Login</h2>
+    <div class="form-group"><label>Email ID</label><input type="email" id="loginEmail" required></div>
+    <div class="form-group">
+  <label>Password</label>
+  <div class="password-wrapper">
+    <input type="password" id="loginPassword" required>
+    <span class="toggle-password" onclick="togglePass('loginPassword')">👁️</span>
+  </div>
+</div>
+    <button onclick="attemptLogin()" id="loginBtn">Secure Login</button>
+    <div id="loginError" style="color: red; text-align: center; margin-top: 10px;"></div>
+  </div>
+
+  <div class="container hidden" id="appScreen">
+    <button onclick="logout()" id="logoutBtn">Logout</button>
+    <h2>Sarandipity Portal</h2>
+    
+    <div id="dashboardMenu" class="dashboard-grid">
+      <button class="dash-btn dash-stock" onclick="openModule('stock')"><span>📦</span>Stock Entry</button>
+      <button class="dash-btn dash-exp" onclick="openModule('expense')"><span>💸</span>Expenses</button>
+      <button class="dash-btn dash-staff" id="dashStaff" onclick="openModule('staff')"><span>👥</span>Add Staff</button>
+      <button class="dash-btn dash-pay" id="dashPay" onclick="openModule('pay')"><span>💰</span>Staff Pay</button>
+      <button class="dash-btn dash-rep" id="dashRep" onclick="openModule('report')"><span>📊</span>Reports</button>
+    </div>
+
+    <button id="backToMenuBtn" class="back-btn hidden" onclick="goBackToMenu()">← Back to Dashboard</button>
+
+    <form id="stockForm" class="hidden" onsubmit="submitStock(event)">
+      
+     <div class="form-group" style="background: #f1f2f6; padding: 15px; border-radius: 12px; border: 2px solid var(--color5); margin-bottom: 20px;">
+        <label style="color:var(--color5); font-weight: bold; margin-bottom: 10px; display: block;">📷 Quick Scan</label>
+        
+        <div id="reader" style="width: 100%; border-radius: 8px; overflow: hidden; display: none; margin-bottom: 10px;"></div>
+        
+        <div style="display: flex; gap: 10px;">
+          <input type="text" id="barcodeInput" placeholder="Scan or type code..." style="flex: 2; height: 50px; font-size: 18px;" oninput="checkBarcodeMemory()">
+          <button type="button" id="btnScan" onclick="startScanner()" style="flex: 1; background: var(--color5); margin: 0; height: 50px;">Scan</button>
+        </div>
+        <div id="scanMsg" style="text-align: center; font-size: 12px; margin-top: 5px; color: var(--color5);"></div>
+      </div>
+
+      <div class="form-group">
+        <label style="color:var(--color2)">Category</label>
+        <select id="category" required onchange="handleCategory()">
+          <option value="">Loading...</option>
+        </select>
+        <input type="text" id="newCategory" class="hidden" placeholder="Type new category..." style="margin-top: 8px; text-transform: capitalize; border-color: var(--color2);">
+      </div>
+
+      <div class="form-group">
+        <label style="color:var(--color2)">Item Name</label>
+        <select id="itemName" required onchange="handleItem()">
+          <option value="">Loading...</option>
+        </select>
+        <input type="text" id="newItemName" class="hidden" placeholder="Type new item..." style="margin-top: 8px; text-transform: capitalize; border-color: var(--color2);">
+      </div>
+   <div class="form-group">
+        <label style="color:var(--color2)">Company Name</label>
+        <select id="companyName" required onchange="handleCompany()">
+          <option value="">Loading...</option>
+        </select>
+        <input type="text" id="newCompanyName" class="hidden" placeholder="Type new company..." style="margin-top: 8px; text-transform: capitalize; border-color: var(--color2);">
+      </div>
+
+      <div id="stockBadge" style="display:none; margin-bottom: 12px; font-size: 13px; font-weight: bold; padding: 10px; border-radius: 8px; background: #f8f9fa; border-left: 6px solid var(--color2); box-shadow: 0 2px 4px rgba(0,0,0,0.05);">
+        📦 Current Stock: <span id="currStock">0</span> | <span style="color:var(--color3)">After Save: <span id="newStock">0</span></span>
+      </div>
+
+      <div class="form-group" style="display: flex; gap: 10px;">
+        <div style="flex: 1;"><label>Quantity</label><input type="number" id="qty" required oninput="calcFromUnit()"></div>
+        <div style="flex: 1;"><label>GST Rate (%)</label><input type="number" id="gstRate" required oninput="calcFromUnit()"></div>
+      </div>
+
+      <div class="form-group" style="display: flex; gap: 10px;">
+        <div style="flex: 1;"><label>Min Selling Price (₹)</label><input type="number" id="minSellPrice" step="0.01" required oninput="calcFromUnit()"></div>
+        <div style="flex: 1;"><label>Min Stock Qty</label><input type="number" id="minStockQty" required oninput="calcFromUnit()"></div>
+      </div>
+
+      <div class="form-group">
+        <label style="color:var(--color4)">Expiry Date (Optional)</label>
+        <input type="date" id="expiryDate" style="border-color: var(--color4);">
+      </div>
+      <div class="form-group" style="display: flex; gap: 10px;">
+        <div style="flex: 1;"><label>Total Price (Inc. GST)</label><input type="number" id="totalPrice" step="0.01" oninput="calcFromTotal()"></div>
+        <div style="flex: 1;"><label>Unit Price (Inc. GST)</label><input type="number" id="unitPrice" step="0.01" oninput="calcFromUnit()"></div>
+      </div>
+      
+      <div class="breakdown-box">
+        <div><span>Base Price:</span> <span id="lblBase">₹0.00</span></div>
+        <div><span>CGST:</span> <span id="lblCGST">₹0.00</span></div>
+        <div><span>SGST:</span> <span id="lblSGST">₹0.00</span></div>
+        <div class="total-line"><span>Total:</span> <span id="lblTotal">₹0.00</span></div>
+        <div style="margin-top: 10px; color: var(--color3); font-weight: bold; border-top: 1px solid #eee; padding-top: 10px;">
+  <span>Estimated Profit Margin:</span> <span id="lblMargin">0%</span>
+</div>
+      </div>
+      <div class="form-group" style="background: #f8f9fa; padding: 12px; border-radius: 8px; border-left: 4px solid var(--color5); margin-bottom: 15px;">
+        <label style="color:var(--color5); margin-bottom: 10px; display: block;">Supplier Details</label>
+        
+        <select id="supplierName" required onchange="handleSupplier()" style="margin-bottom: 8px;">
+          <option value="">Loading Suppliers...</option>
+        </select>
+        <input type="text" id="newSupplierName" class="hidden" placeholder="Type new supplier name..." style="margin-bottom: 8px; text-transform: capitalize; border-color: var(--color5);">
+        
+        <div style="display: flex; gap: 10px; margin-bottom: 8px;">
+          <div style="flex: 1;"><input type="text" id="supplierGst" placeholder="Supplier GST No." style="text-transform: uppercase;"></div>
+          <div style="flex: 1;"><input type="text" id="supplierContact" placeholder="10-digit Mobile" pattern="[0-9]{10}" oninput="updateContactLinks()"></div>
+        </div>
+
+        <div id="contactActionBox" class="hidden" style="display: flex; gap: 10px;">
+          <a id="btnCall" href="#" style="flex: 1; background: #2ed573; color: white; text-align: center; padding: 10px; border-radius: 8px; text-decoration: none; font-weight: bold; box-shadow: 0 4px 6px rgba(0,0,0,0.1);">📞 Call</a>
+          <a id="btnWa" href="#" target="_blank" style="flex: 1; background: #25d366; color: white; text-align: center; padding: 10px; border-radius: 8px; text-decoration: none; font-weight: bold; box-shadow: 0 4px 6px rgba(0,0,0,0.1);">💬 WhatsApp</a>
+        </div>
+      </div>
+
+      <div class="form-group"><label style="color:var(--color4)">Payment Mode</label>
+        <select id="paymentMode" onchange="toggleTxn('paymentMode', 'txnGroup', 'transactionId')" required>
+          <option value="Cash">Cash</option><option value="UPI">UPI</option><option value="Bank Transfer">Bank Transfer</option>
+        </select>
+      </div>
+      <div class="form-group hidden" id="txnGroup"><label>Transaction ID</label><input type="text" id="transactionId"></div>
+      
+      <div class="file-input-box">
+        <label style="color:var(--color5)">Upload Bill Images/PDFs (Multiple allowed)</label>
+        <input type="file" id="billFiles" accept="image/*,application/pdf" multiple>
+      </div>
+      <div class="file-input-box">
+        <label style="color:var(--color3)">Upload Product Images (Multiple allowed)</label>
+        <input type="file" id="productFiles" accept="image/*" multiple>
+      </div>
+      
+      <div style="display: flex; gap: 10px; margin-top: 10px;">
+        <button type="submit" id="btnStockNext" onclick="setSubmitMode('next')" style="flex: 1; background: var(--color5); margin-top: 0;">Save & Add Next</button>
+        <button type="submit" id="btnStock" onclick="setSubmitMode('final')" style="flex: 1; background: var(--color2); margin-top: 0;">Save & Close</button>
+      </div>
+    </form>
+
+    <form id="expenseForm" class="hidden" onsubmit="submitExpense(event)">
+      <div class="form-group"><label style="color:var(--color4)">Expense Type</label><input type="text" id="expenseType" list="expList" required><datalist id="expList"></datalist></div>
+      <div class="form-group"><label>Amount (₹)</label><input type="number" id="expAmount" step="0.01" required></div>
+      <div class="file-input-box">
+        <label style="color:var(--color2)">Upload Bill Images/PDFs (Multiple allowed)</label>
+        <input type="file" id="expenseFiles" accept="image/*,application/pdf" multiple>
+      </div>
+      <button type="submit" id="btnExp">Save Expense Data</button>
+    </form>
+
+    <form id="staffForm" class="hidden" onsubmit="submitStaff(event)">
+      <div class="form-group"><label style="color:var(--color5)">Staff Email</label><input type="email" id="staffEmail" required></div>
+      <div class="form-group">
+  <label>Temp Password</label>
+  <div class="password-wrapper">
+    <input type="password" id="staffPass" required>
+    <span class="toggle-password" onclick="togglePass('staffPass')">👁️</span>
+  </div>
+</div>
+      <div class="form-group"><label style="color:var(--color1)">Role (Select or Type New)</label><input type="text" id="staffRole" list="roleList" required><datalist id="roleList"></datalist></div>
+      <div class="form-group"><label>Mobile Number</label><input type="text" id="staffMobile" pattern="[0-9]{10}" required></div>
+      <div class="form-group"><label>Address</label><input type="text" id="staffAddress" required></div>
+      <div class="form-group"><label>Bank Account Number</label><input type="text" id="staffBank" required></div>
+      <div class="form-group"><label>IFSC Code</label><input type="text" id="staffIFSC" required></div>
+      <div class="form-group"><label>Aadhaar Number</label><input type="text" id="staffAadhaar" pattern="[0-9]{12}" required></div>
+      <div class="form-group"><label style="color:var(--color3)">Promised Monthly Salary (₹)</label><input type="number" id="staffSalary" step="0.01" required></div>
+      <button type="submit" id="btnStaff">Register Staff</button>
+    </form>
+
+    <form id="payForm" class="hidden" onsubmit="submitPay(event)">
+      <div class="form-group"><label style="color:var(--color3)">Staff Email</label>
+        <select id="payStaffEmail" onchange="fetchAdvance()" required><option value="">Select Staff...</option></select>
+      </div>
+      
+      <div id="advanceDisplay" class="advance-box hidden">Outstanding Advance to Recover: ₹<span id="advAmount">0.00</span></div>
+
+      <div class="form-group"><label>Payment Type</label>
+        <select id="payType" onchange="togglePayType()" required>
+          <option value="Salary">Issue Salary</option><option value="Advance">Give Advance</option>
+        </select>
+      </div>
+      <div class="form-group"><label style="color:var(--color1)">Amount to Send (₹)</label><input type="number" id="payAmount" step="0.01" required></div>
+      
+      <div class="form-group hidden" id="advanceDetailsGroup">
+        <label style="color:var(--color4)">Advance Details / Reason</label>
+        <input type="text" id="payAdvanceDetails" placeholder="e.g., Medical emergency">
+        <label style="margin-top:10px;">EMI Months (For Recovery)</label>
+        <input type="number" id="payEmi">
+      </div>
+      
+      <div class="form-group" id="deductGroup"><label style="color:var(--color1)">Deduct Previous Advance (₹)</label><input type="number" id="payDeduct"></div>
+      
+      <div class="form-group"><label>Payment Mode</label>
+        <select id="payMode" onchange="toggleTxn('payMode', 'payTxnGroup', 'payTxnId')" required>
+          <option value="Cash">Cash</option><option value="UPI">UPI</option><option value="Bank Transfer">Bank Transfer</option>
+        </select>
+      </div>
+      <div class="form-group hidden" id="payTxnGroup"><label>Transaction ID</label><input type="text" id="payTxnId"></div>
+      <button type="submit" id="btnPay">Issue Payment</button>
+    </form>
+
+    <div id="reportBox" class="hidden">
+      <div class="form-group"><label style="color:var(--color1)">Report Type</label><select id="repType"><option value="stock">Stock Report</option><option value="expense">Expense Report</option></select></div>
+      <div class="form-group" style="display:flex; gap:10px;">
+        <div style="flex:1"><label>Start Date</label><input type="date" id="repStart" required></div>
+        <div style="flex:1"><label>End Date</label><input type="date" id="repEnd" required></div>
+      </div>
+      <button onclick="fetchReport()" id="btnRep">Generate Report</button>
+      <div class="table-container" id="reportTableArea"></div>
+    </div>
+
+    <div id="msg"></div>
+  </div>
+
+  <script>
+    let currentUser = localStorage.getItem('sarandipity_user') || "";
+
+window.onload = function() {
+  if (currentUser) {
+    document.getElementById('loginScreen').classList.add('hidden');
+    document.getElementById('appScreen').classList.remove('hidden');
+    loadDropdowns();
+  }
+};
+    let finalMath = { base: 0, cgst: 0, sgst: 0, total: 0 };
+    let learnedGstMap = {}; 
+    let globalSuppliers = []; 
+    let globalCatItemMap = {}; // Memory for Category -> Items
+    let globalAllItems = [];   // Backup list of all items
+    let currentAvailableStock = 0;
+    let stockSubmitMode = "final"; 
+    function setSubmitMode(mode) { stockSubmitMode = mode; }
+let html5QrCode;
+
+    function startScanner() {
+     
+      const btn = document.getElementById('btnScan');
+      const readerDiv = document.getElementById('reader');
+      const msg = document.getElementById('scanMsg');
+
+      // Toggle Logic: If scanning, stop it
+      if (html5QrCode && html5QrCode.isScanning) {
+        stopScanner();
+        return;
+      }
+
+      readerDiv.style.display = "block";
+      btn.innerText = "Stop";
+      btn.style.background = "var(--color1)";
+      msg.innerText = "Initializing Camera...";
+
+      html5QrCode = new Html5Qrcode("reader");
+      
+      const config = { 
+        fps: 20, 
+        qrbox: { width: 250, height: 150 },
+        aspectRatio: 1.0 
+      };
+
+      html5QrCode.start(
+        { facingMode: "environment" }, 
+        config,
+        (decodedText) => {
+          if (navigator.vibrate) navigator.vibrate(50); // Vibration feedback
+          document.getElementById('barcodeInput').value = decodedText;
+          msg.innerText = "✅ Scanned!";
+          stopScanner();
+          checkBarcodeMemory(); 
+        },
+        (errorMessage) => { }
+      ).catch(err => {
+        msg.innerText = "❌ Error: " + err;
+        alert("Camera Blocked! Please go to Chrome Settings -> Site Settings -> Camera and Allow access.");
+        stopScanner();
+      });
+    }
+
+    function stopScanner() {
+      if (html5QrCode) {
+        html5QrCode.stop().then(() => {
+          document.getElementById('reader').style.display = "none";
+          document.getElementById('btnScan').innerText = "Scan";
+          document.getElementById('btnScan').style.background = "var(--color5)";
+          document.getElementById('scanMsg').innerText = "";
+        }).catch(err => console.log("Stopped"));
+      }
+    }
+
+    function checkBarcodeMemory() {
+      console.log("Barcode ready for lookup: " + document.getElementById('barcodeInput').value);
+    }
+    function logout() {
+  if(confirm("Are you sure you want to logout?")) {
+    currentUser = "";
+localStorage.removeItem('sarandipity_user');
+    document.getElementById('loginEmail').value = "";
+    document.getElementById('loginPassword').value = "";
+    document.getElementById('appScreen').classList.add('hidden');
+    document.getElementById('loginScreen').classList.remove('hidden');
+    document.getElementById('loginBtn').innerText = "Secure Login";
+    document.getElementById('loginError').innerText = "";
+  }
+}
+function togglePass(id) {
+  const input = document.getElementById(id);
+  const type = input.getAttribute('type') === 'password' ? 'text' : 'password';
+  input.setAttribute('type', type);
+}
+    function attemptLogin() {
+      const email = document.getElementById('loginEmail').value;
+      const pass = document.getElementById('loginPassword').value;
+      document.getElementById('loginBtn').innerText = "Verifying...";
+      google.script.run.withSuccessHandler(res => {
+        if(res.success) {
+          currentUser = res.user;
+localStorage.setItem('sarandipity_user', res.user);
+          document.getElementById('loginScreen').classList.add('hidden');
+          document.getElementById('appScreen').classList.remove('hidden');
+          if(res.role !== "Owner") {
+          document.getElementById('dashStaff').style.display = 'none';
+            document.getElementById('dashRep').style.display = 'none';
+            document.getElementById('dashPay').style.display = 'none';
+          }
+          loadDropdowns();
+        } else {
+          document.getElementById('loginError').innerText = res.message;
+          document.getElementById('loginBtn').innerText = "Secure Login";
+        }
+      }).login(email, pass);
+    }
+
+    function loadDropdowns() {
+      google.script.run.withSuccessHandler(data => {
+        populateSelect('category', data.categories);
+        populateSelect('itemName', data.items);
+        populateSelect('companyName', data.companies);
+        populateDatalist('expList', data.expenses);
+        populateDatalist('roleList', data.roles);
+        
+        learnedGstMap = data.catGstMap; 
+        globalSuppliers = data.suppliers; 
+        globalCatItemMap = data.catItemMap; // Save the dependent logic
+        globalAllItems = data.items;        // Save the master item list
+        
+        const suppSel = document.getElementById('supplierName');
+        suppSel.innerHTML = '<option value="">Select Supplier...</option>';
+        globalSuppliers.forEach(s => { let opt = document.createElement('option'); opt.value = s.name; opt.innerText = s.name; suppSel.appendChild(opt); });
+        let addSupp = document.createElement('option'); addSupp.value = "ADD_NEW"; addSupp.innerText = "➕ Add New Supplier..."; suppSel.appendChild(addSupp);
+
+        const staffSel = document.getElementById('payStaffEmail');
+        staffSel.innerHTML = '<option value="">Select Staff...</option>';
+        data.staff.forEach(s => { let opt = document.createElement('option'); opt.value = s; opt.innerText = s; staffSel.appendChild(opt); });
+      }).getDropdownData();
+    }
+    function populateSelect(id, items) {
+      const sel = document.getElementById(id);
+      sel.innerHTML = '<option value="">Select Option...</option>';
+      items.forEach(item => { let opt = document.createElement('option'); opt.value = item; opt.innerText = item; sel.appendChild(opt); });
+      let addNew = document.createElement('option'); addNew.value = "ADD_NEW"; addNew.innerText = "➕ Add New Option..."; sel.appendChild(addNew);
+    }
+
+    function handleCategory() {
+      const cat = document.getElementById('category').value;
+      const newCat = document.getElementById('newCategory');
+      
+      if (cat === "ADD_NEW") { 
+        newCat.classList.remove('hidden'); 
+        newCat.required = true; 
+        document.getElementById('gstRate').value = ''; 
+        populateSelect('itemName', []); // Show empty list for a brand new category
+      } else { 
+        newCat.classList.add('hidden'); 
+        newCat.required = false; 
+        checkGstMemory(); 
+        
+        // Smart Dependent Dropdown Logic!
+        if (cat && globalCatItemMap[cat] && globalCatItemMap[cat].length > 0) {
+          populateSelect('itemName', globalCatItemMap[cat]); // Only show relevant items
+        } else {
+          populateSelect('itemName', globalAllItems); // Show all if no history yet
+        }
+      }
+      
+      // Reset the item typing box just in case it was open
+      document.getElementById('newItemName').classList.add('hidden');
+      document.getElementById('newItemName').required = false;
+    }
+function handleItem() {
+      const item = document.getElementById('itemName').value;
+      const newItem = document.getElementById('newItemName');
+      if (item === "ADD_NEW") { newItem.classList.remove('hidden'); newItem.required = true; } 
+      else { newItem.classList.add('hidden'); newItem.required = false; }
+      fetchLiveStock(); // This triggers the lookup
+    }
+   function handleCompany() {
+      const comp = document.getElementById('companyName').value;
+      const newComp = document.getElementById('newCompanyName');
+      if (comp === "ADD_NEW") { newComp.classList.remove('hidden'); newComp.required = true; } 
+      else { newComp.classList.add('hidden'); newComp.required = false; }
+      fetchLiveStock(); // This triggers the lookup
+    }
+
+    function populateDatalist(id, items) {
+      const dl = document.getElementById(id);
+      dl.innerHTML = "";
+      items.forEach(item => { let option = document.createElement('option'); option.value = item; dl.appendChild(option); });
+    }
+
+    function openModule(module) {
+      document.getElementById('dashboardMenu').classList.add('hidden');
+      document.getElementById('backToMenuBtn').classList.remove('hidden');
+      ['stockForm', 'expenseForm', 'staffForm', 'payForm', 'reportBox'].forEach(f => document.getElementById(f).classList.add('hidden'));
+      
+      if(module==='stock') { document.getElementById('stockForm').classList.remove('hidden'); document.querySelector('.container').style.borderTopColor = 'var(--color2)'; }
+      if(module==='expense') { document.getElementById('expenseForm').classList.remove('hidden'); document.querySelector('.container').style.borderTopColor = 'var(--color4)';}
+      if(module==='staff') { document.getElementById('staffForm').classList.remove('hidden'); document.querySelector('.container').style.borderTopColor = 'var(--color5)';}
+      if(module==='pay') { document.getElementById('payForm').classList.remove('hidden'); document.querySelector('.container').style.borderTopColor = 'var(--color3)';}
+      if(module==='report') { document.getElementById('reportBox').classList.remove('hidden'); document.querySelector('.container').style.borderTopColor = 'var(--color1)';}
+    }
+
+    function goBackToMenu() {
+      ['stockForm', 'expenseForm', 'staffForm', 'payForm', 'reportBox'].forEach(f => document.getElementById(f).classList.add('hidden'));
+      document.getElementById('backToMenuBtn').classList.add('hidden');
+      document.getElementById('dashboardMenu').classList.remove('hidden');
+      document.querySelector('.container').style.borderTopColor = 'var(--color1)';
+    }
+
+    function toggleTxn(selectId, groupId, inputId) {
+      const mode = document.getElementById(selectId).value;
+      const grp = document.getElementById(groupId);
+      if (mode === 'Cash') { grp.classList.add('hidden'); document.getElementById(inputId).value = ''; } 
+      else { grp.classList.remove('hidden'); }
+    }
+
+    function togglePayType() {
+      const type = document.getElementById('payType').value;
+      if(type === 'Advance') { 
+        document.getElementById('advanceDetailsGroup').classList.remove('hidden'); 
+        document.getElementById('deductGroup').classList.add('hidden'); 
+        document.getElementById('payDeduct').value = ''; 
+      } else { 
+        document.getElementById('advanceDetailsGroup').classList.add('hidden'); 
+        document.getElementById('deductGroup').classList.remove('hidden'); 
+        document.getElementById('payEmi').value = ''; 
+        document.getElementById('payAdvanceDetails').value = ''; 
+      }
+    }
+
+    function fetchAdvance() {
+      const email = document.getElementById('payStaffEmail').value;
+      const display = document.getElementById('advanceDisplay');
+      if (!email) { display.classList.add('hidden'); return; }
+      
+      display.classList.remove('hidden');
+      document.getElementById('advAmount').innerText = "Loading...";
+      
+      google.script.run.withSuccessHandler(amount => {
+        document.getElementById('advAmount').innerText = parseFloat(amount).toFixed(2);
+      }).getStaffAdvance(email);
+    }
+    function handleSupplier() {
+      const supp = document.getElementById('supplierName').value;
+      const newSupp = document.getElementById('newSupplierName');
+      const actionBox = document.getElementById('contactActionBox');
+
+      if (supp === "ADD_NEW") { 
+        newSupp.classList.remove('hidden'); newSupp.required = true; 
+        document.getElementById('supplierGst').value = ''; document.getElementById('supplierContact').value = '';
+        actionBox.classList.add('hidden');
+      } else { 
+        newSupp.classList.add('hidden'); newSupp.required = false; 
+        // Auto-fill logic
+        let found = globalSuppliers.find(s => s.name === supp);
+        if (found) {
+          document.getElementById('supplierGst').value = found.gst;
+          document.getElementById('supplierContact').value = found.contact;
+          updateContactLinks(); // Show buttons automatically!
+        }
+      }
+    }
+
+    function updateContactLinks() {
+      const num = document.getElementById('supplierContact').value;
+      const actionBox = document.getElementById('contactActionBox');
+      const btnCall = document.getElementById('btnCall');
+      const btnWa = document.getElementById('btnWa');
+
+      // Show buttons only if exactly 10 numeric digits are entered
+      if (num.length === 10 && !isNaN(num)) {
+        actionBox.classList.remove('hidden');
+        btnCall.href = "tel:+91" + num;
+        btnWa.href = "https://wa.me/91" + num; 
+      } else {
+        actionBox.classList.add('hidden');
+      }
+    }
+    function checkGstMemory() {
+      let cat = document.getElementById('category').value;
+      if (learnedGstMap && learnedGstMap[cat] !== undefined && learnedGstMap[cat] !== "") {
+        document.getElementById('gstRate').value = learnedGstMap[cat];
+        calcFromUnit(); // Recalculate the math automatically
+      }
+    }
+
+function calcFromUnit() {
+      let qtyField = document.getElementById('qty');
+      let minField = document.getElementById('minStockQty');
+      
+      let qty = parseFloat(qtyField.value) || 0;
+      let minStock = parseFloat(minField.value) || 0;
+      let unit = parseFloat(document.getElementById('unitPrice').value) || 0;
+      
+      // --- FULL CELL HIGH-VISIBILITY ALERT ---
+      if (qty > 0 && minStock > 0 && qty <= minStock) {
+        qtyField.style.backgroundColor = "#ffa502"; 
+        qtyField.style.color = "white";            
+        qtyField.style.fontWeight = "900";         
+        qtyField.style.border = "2px solid #e67e22"; 
+      } else {
+        qtyField.style.backgroundColor = "white";
+        qtyField.style.color = "var(--text)";
+        qtyField.style.fontWeight = "normal";
+        qtyField.style.border = "2px solid var(--border)";
+      }
+
+      let total = qty * unit;
+      document.getElementById('totalPrice').value = total > 0 ? total.toFixed(2) : "";
+      processTaxes(total);
+      
+      // --- UPDATE THE STOCK BADGE NUMBERS ---
+      updateProjectedStock(); 
+    }
+    
+    function calcFromTotal() {
+      let qty = parseFloat(document.getElementById('qty').value) || 0;
+      let total = parseFloat(document.getElementById('totalPrice').value) || 0;
+      if (qty > 0) document.getElementById('unitPrice').value = (total / qty).toFixed(2);
+      processTaxes(total);
+    }
+    
+    function processTaxes(totalInc) {
+      let gst = parseFloat(document.getElementById('gstRate').value) || 0;
+      let base = totalInc / (1 + (gst / 100));
+      let totalTax = totalInc - base;
+      
+      finalMath = { base: base.toFixed(2), cgst: (totalTax / 2).toFixed(2), sgst: (totalTax / 2).toFixed(2), total: totalInc.toFixed(2) };
+      
+      document.getElementById('lblBase').innerText = `₹${finalMath.base}`;
+      document.getElementById('lblCGST').innerText = `₹${finalMath.cgst}`;
+      document.getElementById('lblSGST').innerText = `₹${finalMath.sgst}`;
+      document.getElementById('lblTotal').innerText = `₹${finalMath.total}`;
+
+      // --- NEW PROFIT MARGIN LOGIC ---
+      let costPrice = parseFloat(document.getElementById('unitPrice').value) || 0;
+      let sellPrice = parseFloat(document.getElementById('minSellPrice').value) || 0;
+      let marginLabel = document.getElementById('lblMargin');
+
+      if (costPrice > 0 && sellPrice > 0) {
+        let profit = sellPrice - costPrice;
+        let marginPercent = (profit / costPrice) * 100;
+        marginLabel.innerText = marginPercent.toFixed(1) + "%";
+        
+        // Color coding: Red if losing money, Green if profitable
+        marginLabel.style.color = marginPercent > 0 ? "var(--color3)" : "red";
+      } else {
+        marginLabel.innerText = "0%";
+        marginLabel.style.color = "var(--text)";
+      }
+    }
+
+    // --- MULTIPLE FILE PROCESSOR ---
+    async function getBase64Files(inputId) {
+      const files = document.getElementById(inputId).files;
+      let fileArray = [];
+      for(let i = 0; i < files.length; i++) {
+        let file = files[i];
+        let base64 = await new Promise(resolve => {
+          let reader = new FileReader();
+          reader.onload = e => resolve(e.target.result.split(',')[1]);
+          reader.readAsDataURL(file);
+        });
+        fileArray.push({ name: file.name, type: file.type, base64: base64 });
+      }
+      return fileArray;
+    }
+
+    // --- SUBMISSIONS ---
+   async function submitStock(e) {
+      e.preventDefault();
+      const btnNext = document.getElementById('btnStockNext');
+      const btnFinal = document.getElementById('btnStock');
+      const msgDiv = document.getElementById('msg');
+      
+      // Save the current supplier selection before we do anything
+      const currentSupplier = document.getElementById('supplierName').value;
+      const currentGst = document.getElementById('supplierGst').value;
+      const currentContact = document.getElementById('supplierContact').value;
+
+      btnNext.innerText = "Saving...";
+      btnNext.disabled = true;
+      btnFinal.disabled = true;
+
+      let bills = await getBase64Files('billFiles');
+      let products = await getBase64Files('productFiles');
+
+      let catVal = document.getElementById('category').value;
+      if (catVal === "ADD_NEW") catVal = document.getElementById('newCategory').value;
+      
+      let itemVal = document.getElementById('itemName').value;
+      if (itemVal === "ADD_NEW") itemVal = document.getElementById('newItemName').value;
+
+      let compVal = document.getElementById('companyName').value;
+      if (compVal === "ADD_NEW") compVal = document.getElementById('newCompanyName').value;
+
+      let suppVal = document.getElementById('supplierName').value;
+      if (suppVal === "ADD_NEW") suppVal = document.getElementById('newSupplierName').value;
+
+      const data = {
+        supplierName: suppVal, 
+        companyName: compVal,
+        supplierGst: currentGst,
+        supplierContact: currentContact,
+        user: currentUser, 
+        category: catVal, 
+        itemName: itemVal,
+        qty: document.getElementById('qty').value, 
+        minSellPrice: document.getElementById('minSellPrice').value,
+        minStockQty: document.getElementById('minStockQty').value, 
+        gst: document.getElementById('gstRate').value,
+        unitPrice: document.getElementById('unitPrice').value, 
+        totalPrice: finalMath.total, 
+        basePrice: finalMath.base,
+        cgst: finalMath.cgst, 
+        sgst: finalMath.sgst, 
+        paymentMode: document.getElementById('paymentMode').value,
+        transactionId: document.getElementById('transactionId').value, 
+        billFiles: bills, 
+        productFiles: products,
+        expiryDate: document.getElementById('expiryDate').value
+      };
+      
+      google.script.run
+        .withSuccessHandler(res => {
+          // Force the success message to show
+          msgDiv.innerText = res || "Stock Saved!";
+          msgDiv.style.color = "var(--color3)";
+          setTimeout(() => { msgDiv.innerText = ""; }, 5000);
+
+          btnNext.disabled = false;
+          btnFinal.disabled = false;
+          btnNext.innerText = "Save & Add Next";
+
+          if (stockSubmitMode === "next") {
+            // PARTIAL RESET
+            ['category', 'newCategory', 'itemName', 'newItemName', 'companyName', 'newCompanyName', 'qty', 'minSellPrice', 'minStockQty', 'gstRate', 'unitPrice', 'totalPrice', 'expiryDate'].forEach(id => {
+              let el = document.getElementById(id);
+              if(el) { el.value = ""; if(el.tagName === 'SELECT') el.selectedIndex = 0; }
+            });
+            document.getElementById('newCategory').classList.add('hidden');
+            document.getElementById('newItemName').classList.add('hidden');
+            document.getElementById('newCompanyName').classList.add('hidden');
+            
+            processTaxes(0); 
+            window.scrollTo(0,0); 
+
+            // Reload dropdowns BUT keep the supplier selected
+            google.script.run.withSuccessHandler(newData => {
+              // Standard dropdown load
+              populateSelect('category', newData.categories);
+              populateSelect('itemName', newData.items);
+              populateSelect('companyName', newData.companies);
+              learnedGstMap = newData.catGstMap; 
+              globalSuppliers = newData.suppliers; 
+              globalCatItemMap = newData.catItemMap;
+              globalAllItems = newData.items;
+
+              // Re-fill Supplier list and RE-SELECT the previous one
+              const suppSel = document.getElementById('supplierName');
+              suppSel.innerHTML = '<option value="">Select Supplier...</option>';
+              globalSuppliers.forEach(s => { 
+                let opt = document.createElement('option'); 
+                opt.value = s.name; 
+                opt.innerText = s.name; 
+                suppSel.appendChild(opt); 
+              });
+              let addSupp = document.createElement('option'); 
+              addSupp.value = "ADD_NEW"; 
+              addSupp.innerText = "➕ Add New Supplier..."; 
+              suppSel.appendChild(addSupp);
+
+              // RE-APPLY THE STICKY VALUES
+              suppSel.value = currentSupplier;
+              document.getElementById('supplierGst').value = currentGst;
+              document.getElementById('supplierContact').value = currentContact;
+              updateContactLinks();
+
+            }).getDropdownData();
+
+          } else {
+            // FULL RESET
+            document.getElementById('stockForm').reset();
+            processTaxes(0);
+            goBackToMenu();
+            loadDropdowns();
+          }
+        })
+        .withFailureHandler(err => {
+          alert("Critical Error: " + err.message);
+          btnNext.disabled = false;
+          btnFinal.disabled = false;
+          btnNext.innerText = "Save & Add Next";
+        })
+        .saveStock(data);
+    }
+
+    function submitStaff(e) {
+      e.preventDefault();
+      document.getElementById('btnStaff').innerText = "Saving...";
+      const data = {
+        email: document.getElementById('staffEmail').value, password: document.getElementById('staffPass').value, role: document.getElementById('staffRole').value,
+        mobile: document.getElementById('staffMobile').value, address: document.getElementById('staffAddress').value, bank: document.getElementById('staffBank').value,
+        ifsc: document.getElementById('staffIFSC').value, aadhaar: document.getElementById('staffAadhaar').value, salary: document.getElementById('staffSalary').value
+      };
+      google.script.run.withSuccessHandler(res => { showMsg(res, "var(--color5)"); document.getElementById('staffForm').reset(); document.getElementById('btnStaff').innerText = "Register Staff"; loadDropdowns();}).addStaff(data);
+    }
+
+    function submitPay(e) {
+      e.preventDefault();
+      document.getElementById('btnPay').innerText = "Processing...";
+      const data = {
+        user: currentUser, staffEmail: document.getElementById('payStaffEmail').value, payType: document.getElementById('payType').value,
+        amount: document.getElementById('payAmount').value, paymentMode: document.getElementById('payMode').value, transactionId: document.getElementById('payTxnId').value,
+        emiMonths: document.getElementById('payEmi').value || "N/A", deductAdvance: document.getElementById('payDeduct').value || "0", advanceDetails: document.getElementById('payAdvanceDetails').value || "N/A"
+      };
+      google.script.run.withSuccessHandler(res => { 
+        showMsg(res, "var(--color3)"); document.getElementById('payForm').reset(); togglePayType(); toggleTxn('payMode','payTxnGroup','payTxnId'); document.getElementById('btnPay').innerText = "Issue Payment"; fetchAdvance();
+      }).saveStaffPayment(data);
+    }
+
+    function fetchReport() {
+      const type = document.getElementById('repType').value;
+      const start = document.getElementById('repStart').value;
+      const end = document.getElementById('repEnd').value;
+      if(!start || !end) return alert("Please select both dates.");
+      
+      document.getElementById('btnRep').innerText = "Fetching...";
+      google.script.run.withSuccessHandler(res => {
+        document.getElementById('btnRep').innerText = "Generate Report";
+        let html = "<table>";
+        if(res.length === 0) html += "<tr><td>No data found for this range.</td></tr>";
+        else {
+          res.forEach((row, i) => {
+            html += "<tr>";
+            row.forEach(cell => { html += i === 0 ? `<th>${cell}</th>` : `<td>${cell}</td>`; });
+            html += "</tr>";
+          });
+        }
+        html += "</table>";
+        document.getElementById('reportTableArea').innerHTML = html;
+      }).generateReport(type, start, end);
+    }
+
+    function showMsg(text, color) {
+      const msg = document.getElementById('msg');
+      msg.innerText = text;
+      msg.style.color = text.includes("Error") ? "red" : color;
+      setTimeout(() => { msg.innerText = ""; }, 4000);
+    }
+    function fetchLiveStock() {
+      const item = document.getElementById('itemName').value;
+      const comp = document.getElementById('companyName').value;
+      const badge = document.getElementById('stockBadge');
+      
+      if (item && comp && item !== "ADD_NEW" && comp !== "ADD_NEW") {
+        document.getElementById('currStock').innerText = "Loading...";
+        badge.style.display = "block";
+        
+        google.script.run.withSuccessHandler(stock => {
+          currentAvailableStock = parseFloat(stock) || 0;
+          document.getElementById('currStock').innerText = currentAvailableStock;
+          updateProjectedStock();
+        }).getAvailableStock(item, comp);
+      } else {
+        badge.style.display = "none";
+        currentAvailableStock = 0;
+      }
+    }
+
+    function updateProjectedStock() {
+      let enteredQty = parseFloat(document.getElementById('qty').value) || 0;
+      document.getElementById('newStock').innerText = currentAvailableStock + enteredQty;
+    }
+  </script>
+</body>
+</html>
