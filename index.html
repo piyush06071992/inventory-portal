@@ -406,28 +406,47 @@ function togglePass(id) {
   const type = input.getAttribute('type') === 'password' ? 'text' : 'password';
   input.setAttribute('type', type);
 }
-    function attemptLogin() {
-      const email = document.getElementById('loginEmail').value;
-      const pass = document.getElementById('loginPassword').value;
-      document.getElementById('loginBtn').innerText = "Verifying...";
-      google.script.run.withSuccessHandler(res => {
-        if(res.success) {
-          currentUser = res.user;
-localStorage.setItem('sarandipity_user', res.user);
-          document.getElementById('loginScreen').classList.add('hidden');
-          document.getElementById('appScreen').classList.remove('hidden');
-          if(res.role !== "Owner") {
-          document.getElementById('dashStaff').style.display = 'none';
-            document.getElementById('dashRep').style.display = 'none';
-            document.getElementById('dashPay').style.display = 'none';
-          }
-          loadDropdowns();
-        } else {
-          document.getElementById('loginError').innerText = res.message;
-          document.getElementById('loginBtn').innerText = "Secure Login";
-        }
-      }).login(email, pass);
+  async function attemptLogin() {
+  const email = document.getElementById('loginEmail').value;
+  const pass = document.getElementById('loginPassword').value;
+  const btn = document.getElementById('loginBtn');
+  const errorMsg = document.getElementById('loginError');
+
+  btn.innerText = "Verifying...";
+  btn.disabled = true;
+
+  // 1. YOUR BRIDGE ADDRESS (Paste your Web App URL here)
+  const scriptURL = "PASTE_YOUR_URL_HERE"; 
+
+  // 2. THE CALL: We send the email and password to Google
+  try {
+    const response = await fetch(`${scriptURL}?action=login&email=${email}&pass=${pass}`);
+    const res = await response.json();
+
+    if (res.success) {
+      currentUser = res.user;
+      localStorage.setItem('sarandipity_user', res.user);
+      document.getElementById('loginScreen').classList.add('hidden');
+      document.getElementById('appScreen').classList.remove('hidden');
+
+      if (res.role !== "Owner") {
+        document.getElementById('dashStaff').style.display = 'none';
+        document.getElementById('dashRep').style.display = 'none';
+        document.getElementById('dashPay').style.display = 'none';
+      }
+      loadDropdowns();
+    } else {
+      errorMsg.innerText = res.message;
+      btn.innerText = "Secure Login";
+      btn.disabled = false;
     }
+  } catch (error) {
+    errorMsg.innerText = "Connection Error. Please check internet.";
+    btn.innerText = "Secure Login";
+    btn.disabled = false;
+    console.error(error);
+  }
+}
 
     function loadDropdowns() {
       google.script.run.withSuccessHandler(data => {
