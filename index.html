@@ -487,8 +487,13 @@ function togglePass(id) {
   }
 }
 
-    function loadDropdowns() {
-      google.script.run.withSuccessHandler(data => {
+    async function loadDropdowns() {
+      const scriptURL = "https://script.google.com/macros/s/AKfycbxySneFzP5acFfXE-SA8UowZAcmSWPt3nype5qf1hO_PfoDL4Rh_t1G-AUoKoP39lZDlg/exec";
+      
+      try {
+        const response = await fetch(`${scriptURL}?action=getDropdowns`);
+        const data = await response.json();
+        
         populateSelect('category', data.categories);
         populateSelect('itemName', data.items);
         populateSelect('companyName', data.companies);
@@ -497,8 +502,8 @@ function togglePass(id) {
         
         learnedGstMap = data.catGstMap; 
         globalSuppliers = data.suppliers; 
-        globalCatItemMap = data.catItemMap; // Save the dependent logic
-        globalAllItems = data.items;        // Save the master item list
+        globalCatItemMap = data.catItemMap; 
+        globalAllItems = data.items; 
         
         const suppSel = document.getElementById('supplierName');
         suppSel.innerHTML = '<option value="">Select Supplier...</option>';
@@ -508,7 +513,9 @@ function togglePass(id) {
         const staffSel = document.getElementById('payStaffEmail');
         staffSel.innerHTML = '<option value="">Select Staff...</option>';
         data.staff.forEach(s => { let opt = document.createElement('option'); opt.value = s; opt.innerText = s; staffSel.appendChild(opt); });
-      }).getDropdownData();
+      } catch (err) {
+        console.error("Dropdown Load Error:", err);
+      }
     }
     function populateSelect(id, items) {
       const sel = document.getElementById(id);
