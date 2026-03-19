@@ -810,73 +810,80 @@ function calcFromUnit() {
     }
 
     // --- SUBMISSIONS ---
-   async function submitStock(e) {
+ async function submitStock(e) {
       e.preventDefault();
       const btnNext = document.getElementById('btnStockNext');
       const btnFinal = document.getElementById('btnStock');
       const msgDiv = document.getElementById('msg');
       
-      // Save the current supplier selection before we do anything
-      const currentSupplier = document.getElementById('supplierName').value;
-      const currentGst = document.getElementById('supplierGst').value;
-      const currentContact = document.getElementById('supplierContact').value;
-
       btnNext.innerText = "Saving...";
       btnNext.disabled = true;
       btnFinal.disabled = true;
 
-      let bills = await getBase64Files('billFiles');
-      let products = await getBase64Files('productFiles');
-
-      let catVal = document.getElementById('category').value;
-      if (catVal === "ADD_NEW") catVal = document.getElementById('newCategory').value;
-      
-      let itemVal = document.getElementById('itemName').value;
-      if (itemVal === "ADD_NEW") itemVal = document.getElementById('newItemName').value;
-
-      let compVal = document.getElementById('companyName').value;
-      if (compVal === "ADD_NEW") compVal = document.getElementById('newCompanyName').value;
-
-      let suppVal = document.getElementById('supplierName').value;
-      if (suppVal === "ADD_NEW") suppVal = document.getElementById('newSupplierName').value;
-
-  const data = {
-        barcode: document.getElementById('barcodeInput').value, // Added Barcode for Column A
-        supplierName: suppVal, 
-        companyName: compVal,
-        supplierGst: currentGst,
-        supplierContact: currentContact,
-        user: currentUser, 
-        category: catVal, 
-        itemName: itemVal,
-        qty: document.getElementById('qty').value, 
-        minSellPrice: document.getElementById('minSellPrice').value,
-        minStockQty: document.getElementById('minStockQty').value, 
-        gst: document.getElementById('gstRate').value,
-        unitPrice: document.getElementById('unitPrice').value, 
-        totalPrice: finalMath.total, 
-        basePrice: finalMath.base,
-        cgst: finalMath.cgst, 
-        sgst: finalMath.sgst, 
-        paymentMode: document.getElementById('paymentMode').value,
-        transactionId: document.getElementById('transactionId').value, 
-        billFiles: bills, 
-        productFiles: products,
-        expiryDate: document.getElementById('expiryDate').value,
-        amountPaid: document.getElementById('amountPaid').value,
-        balanceDue: document.getElementById('balanceDue').value,
-        dueDate: document.getElementById('paymentDueDate').value
-      };
-      
-  const scriptURL = "https://script.google.com/macros/s/AKfycbxySneFzP5acFfXE-SA8UowZAcmSWPt3nype5qf1hO_PfoDL4Rh_t1G-AUoKoP39lZDlg/exec";
-      
       try {
+        // 1. Gather variables securely
+        const currentSupplier = document.getElementById('supplierName').value;
+        const currentGst = document.getElementById('supplierGst').value;
+        const currentContact = document.getElementById('supplierContact').value;
+
+        let bills = await getBase64Files('billFiles');
+        let products = await getBase64Files('productFiles');
+
+        let catVal = document.getElementById('category').value;
+        if (catVal === "ADD_NEW") catVal = document.getElementById('newCategory').value;
+        
+        let itemVal = document.getElementById('itemName').value;
+        if (itemVal === "ADD_NEW") itemVal = document.getElementById('newItemName').value;
+
+        let compVal = document.getElementById('companyName').value;
+        if (compVal === "ADD_NEW") compVal = document.getElementById('newCompanyName').value;
+
+        let suppVal = document.getElementById('supplierName').value;
+        if (suppVal === "ADD_NEW") suppVal = document.getElementById('newSupplierName').value;
+
+        // 2. Build the data package
+        const data = {
+          barcode: document.getElementById('barcodeInput').value || "",
+          supplierName: suppVal || "", 
+          companyName: compVal || "",
+          supplierGst: currentGst || "",
+          supplierContact: currentContact || "",
+          user: currentUser || "", 
+          category: catVal || "", 
+          itemName: itemVal || "",
+          qty: document.getElementById('qty').value || "", 
+          minSellPrice: document.getElementById('minSellPrice').value || "",
+          minStockQty: document.getElementById('minStockQty').value || "", 
+          gst: document.getElementById('gstRate').value || "",
+          unitPrice: document.getElementById('unitPrice').value || "", 
+          totalPrice: finalMath.total || "", 
+          basePrice: finalMath.base || "",
+          cgst: finalMath.cgst || "", 
+          sgst: finalMath.sgst || "", 
+          paymentMode: document.getElementById('paymentMode').value || "",
+          transactionId: document.getElementById('transactionId').value || "", 
+          billFiles: bills || [], 
+          productFiles: products || [],
+          expiryDate: document.getElementById('expiryDate').value || "",
+          amountPaid: document.getElementById('amountPaid').value || "",
+          balanceDue: document.getElementById('balanceDue').value || "",
+          dueDate: document.getElementById('paymentDueDate').value || ""
+        };
+        
+        // 3. Send securely over the Bridge
+        const scriptURL = "https://script.google.com/macros/s/AKfycbxySneFzP5acFfXE-SA8UowZAcmSWPt3nype5qf1hO_PfoDL4Rh_t1G-AUoKoP39lZDlg/exec";
+        
         const response = await fetch(`${scriptURL}?action=saveStock`, {
           method: "POST",
+          headers: {
+            "Content-Type": "text/plain;charset=utf-8" // Bypasses strict CORS blocks
+          },
           body: JSON.stringify(data)
         });
+        
         const res = await response.json();
 
+        // 4. Handle Success
         if (res.success) {
           msgDiv.innerText = res.message || "Stock Saved!";
           msgDiv.style.color = "var(--color3)";
@@ -887,7 +894,6 @@ function calcFromUnit() {
           btnNext.innerText = "Save & Add Next";
 
           if (stockSubmitMode === "next") {
-            // PARTIAL RESET (Added Udhaar boxes to clear)
             ['category', 'newCategory', 'itemName', 'newItemName', 'companyName', 'newCompanyName', 'qty', 'minSellPrice', 'minStockQty', 'gstRate', 'unitPrice', 'totalPrice', 'expiryDate', 'amountPaid', 'balanceDue', 'paymentDueDate'].forEach(id => {
               let el = document.getElementById(id);
               if(el) { el.value = ""; if(el.tagName === 'SELECT') el.selectedIndex = 0; }
@@ -900,7 +906,6 @@ function calcFromUnit() {
             processTaxes(0); 
             window.scrollTo(0,0); 
 
-            // Reload dropdowns BUT keep the supplier selected
             await loadDropdowns();
             const suppSel = document.getElementById('supplierName');
             suppSel.value = currentSupplier;
@@ -909,7 +914,6 @@ function calcFromUnit() {
             updateContactLinks();
 
           } else {
-            // FULL RESET
             document.getElementById('stockForm').reset();
             processTaxes(0);
             document.getElementById('dueDateGroup').classList.add('hidden');
@@ -919,8 +923,10 @@ function calcFromUnit() {
         } else {
           throw new Error(res.message);
         }
+
       } catch (err) {
-        alert("Critical Error: " + err.message);
+        // THIS WILL CATCH ANY FREEZES
+        alert("App Error: " + err.message);
         btnNext.disabled = false;
         btnFinal.disabled = false;
         btnNext.innerText = "Save & Add Next";
