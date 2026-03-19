@@ -408,8 +408,13 @@ let html5QrCode;
       if(res.gst) document.getElementById('gstRate').value = res.gst;
       if(res.minSellPrice) document.getElementById('minSellPrice').value = res.minSellPrice;
       if(res.minStockQty) document.getElementById('minStockQty').value = res.minStockQty;
-      if(res.unitPrice) document.getElementById('unitPrice').value = res.unitPrice;
-      if(res.supplierName) document.getElementById('supplierName').value = res.supplierName;
+if(res.unitPrice) document.getElementById('unitPrice').value = res.unitPrice;
+      
+      if(res.supplierName) {
+        document.getElementById('supplierName').value = res.supplierName;
+        // This line is important: it tells the app to "look up" the contact details for this supplier
+        handleSupplier(); 
+      }
 
       // --- UPDATE THE STOCK BADGE ---
       currentAvailableStock = parseFloat(res.qty) || 0;
