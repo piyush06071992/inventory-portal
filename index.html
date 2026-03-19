@@ -135,10 +135,17 @@
         
         <div id="reader" style="width: 100%; border-radius: 8px; overflow: hidden; display: none; margin-bottom: 10px;"></div>
         
-        <div style="display: flex; gap: 10px;">
-          <input type="text" id="barcodeInput" placeholder="Scan or type code..." style="flex: 2; height: 50px; font-size: 18px;" oninput="checkBarcodeMemory()">
-          <button type="button" id="btnScan" onclick="startScanner()" style="flex: 1; background: var(--color5); margin: 0; height: 50px;">Scan</button>
-        </div>
+       <div style="display: flex; flex-direction: column; gap: 10px;">
+  <div style="display: flex; gap: 10px;">
+    <input type="text" id="barcodeInput" placeholder="Scan or type code..." style="flex: 2; height: 50px; font-size: 18px;">
+    <button type="button" id="btnScan" onclick="startScanner()" style="flex: 1; background: var(--color5); margin: 0; height: 50px;">Scan</button>
+  </div>
+  
+  <div style="display: flex; gap: 10px;">
+    <input type="number" id="quickStockQty" placeholder="Enter New Stock Quantity" style="flex: 2; height: 50px; border: 2px solid var(--color3);">
+    <button type="button" id="btnQuickUpdate" onclick="quickStockUpdate()" style="flex: 1; background: var(--color3); margin: 0; height: 50px;">UPDATE</button>
+  </div>
+</div>
         <div id="scanMsg" style="text-align: center; font-size: 12px; margin-top: 5px; color: var(--color5);"></div>
       </div>
 
