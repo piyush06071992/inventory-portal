@@ -787,8 +787,20 @@ function calcFromUnit() {
       let qtyField = document.getElementById('qty');
       let minField = document.getElementById('minStockQty');
       
-      let qty = parseFloat(qtyField.value) || 0;
+      let enteredQty = parseFloat(qtyField.value) || 0;
       let minStock = parseFloat(minField.value) || 0;
+      let projectedTotal = currentAvailableStock + enteredQty; // Calculation based on TOTAL stock
+      
+      // --- ALERT LOGIC ---
+      if (enteredQty > 0 && minStock > 0 && projectedTotal <= minStock) {
+        qtyField.style.backgroundColor = "#ffa502"; 
+        qtyField.style.color = "white";            
+        qtyField.style.fontWeight = "900";         
+      } else {
+        qtyField.style.backgroundColor = "white";
+        qtyField.style.color = "var(--text)";
+        qtyField.style.fontWeight = "normal";
+      }
       let unit = parseFloat(document.getElementById('unitPrice').value) || 0;
       
       // --- FULL CELL HIGH-VISIBILITY ALERT ---
