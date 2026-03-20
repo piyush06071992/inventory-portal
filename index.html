@@ -145,8 +145,10 @@
         <div id="scanMsg" style="text-align: center; font-size: 12px; margin-top: 5px; color: var(--color5);"></div>
       </div>
 
-      <div class="form-group">
-        <label style="color:var(--color2)">Category</label>
+     <div class="form-card">
+        <div class="card-title">📦 Product Identity</div>
+        <div class="form-group">
+          <label style="color:var(--color2)">Category</label>
         <select id="category" required onchange="handleCategory()">
           <option value="">Loading...</option>
         </select>
@@ -165,10 +167,9 @@
         <select id="companyName" required onchange="handleCompany()">
           <option value="">Loading...</option>
         </select>
-       <input type="text" id="newCompanyName" class="hidden" placeholder="Type new company..." style="margin-top: 8px; text-transform: capitalize; border-color: var(--color2);">
+<input type="text" id="newCompanyName" class="hidden" placeholder="Type new company..." style="margin-top: 8px; text-transform: capitalize; border-color: var(--color2);">
       </div>
-
-      <button type="button" id="btnNextStep" onclick="document.getElementById('wizardStep2').classList.remove('hidden'); this.style.display='none';" style="background: var(--color2); width: 100%; padding: 15px; font-size: 16px; margin-top: 10px; margin-bottom: 20px; border-radius: 8px; font-weight: 900; box-shadow: 0 4px 10px rgba(30,144,255,0.3);">Next: Enter Quantities & Prices ➡️</button>
+      </div> <button type="button" id="btnNextStep" onclick="document.getElementById('wizardStep2').classList.remove('hidden'); this.style.display='none';" style="background: var(--color2); width: 100%; padding: 15px; font-size: 16px; margin-top: 10px; margin-bottom: 20px; border-radius: 8px; font-weight: 900; box-shadow: 0 4px 10px rgba(30,144,255,0.3);">Next: Enter Quantities & Prices ➡️</button>
 
       <div id="wizardStep2" class="hidden">
 
@@ -263,8 +264,6 @@
         <label style="color:var(--color3)">Upload Product Images (Multiple allowed)</label>
         <input type="file" id="productFiles" accept="image/*" multiple>
       </div>
-      
-  
       
       </div> <div style="display: flex; gap: 10px; margin-top: 10px;">
         <button type="submit" id="btnStockNext" onclick="setSubmitMode('next')" style="flex: 1; background: var(--color5); margin-top: 0;">Save & Add Next</button>
