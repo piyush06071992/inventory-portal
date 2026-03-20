@@ -438,12 +438,14 @@ async function syncInventory() {
   if (!barcode) return;
 
   // 1. CHECK LOCAL MEMORY FIRST (0.001 Seconds)
-  const localMatch = localInventory.find(item => item.barcode.toString() === barcode.toString());
+  const localMatch = localInventory.find(item => 
+    item.barcode && item.barcode.toString() === barcode.toString()
+  );
 
   if (localMatch) {
     fillStockForm(localMatch);
     nameDisplay.innerHTML = `<b style="color:green">⚡ Instant Match: ${localMatch.itemName}</b>`;
-    return; // Stop here, no need to call the internet!
+    return; // EXIT THE FUNCTION IMMEDIATELY
   }
 
   // 2. IF NOT IN LOCAL, ASK GOOGLE (Fallback)
