@@ -348,7 +348,7 @@
   <script>
     let currentUser = localStorage.getItem('sarandipity_user') || "";
     let localInventory = JSON.parse(localStorage.getItem('sarandipity_inventory')) || [];
-
+    let currentSearchId = 0; // NEW: The "Kill Switch" for old searches
 window.onload = function() {
   if (currentUser) {
     document.getElementById('loginScreen').classList.add('hidden');
