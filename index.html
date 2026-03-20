@@ -437,26 +437,24 @@ async function syncInventory() {
   // Create a unique ID for THIS specific search attempt
   const thisSearchId = ++currentSearchId; 
 
-  // 1. CHECK LOCAL MEMORY FIRST (0.001 Seconds)
-  // 1. CHECK LOCAL MEMORY FIRST (0.001 Seconds)
+  // 1. CHECK LOCAL MEMORY FIRST
   const localMatch = localInventory.find(item => 
     item.barcode && item.barcode.toString() === barcode.toString()
   );
 
-if (localMatch) {
+  if (localMatch) {
     fillStockForm(localMatch);
-    // Use a slight delay to ensure nothing else overwrites this success
     setTimeout(() => {
       nameDisplay.innerHTML = `<b style="color:green; font-size:16px;">⚡ Instant Match: ${localMatch.itemName}</b>`;
     }, 100);
     return; 
   }
 
-  // 2. IF NOT IN LOCAL, ASK GOOGLE (Fallback)
+  // 2. IF NOT IN LOCAL, ASK GOOGLE
   nameDisplay.innerText = "🔍 Searching Cloud...";
   const scriptURL = "https://script.google.com/macros/s/AKfycbxySneFzP5acFfXE-SA8UowZAcmSWPt3nype5qf1hO_PfoDL4Rh_t1G-AUoKoP39lZDlg/exec";
 
-try {
+  try {
     const response = await fetch(`${scriptURL}?action=getDetails&barcode=${barcode}`);
     const res = await response.json();
 
@@ -482,9 +480,11 @@ try {
       document.getElementById('currStock').innerText = "0";
       currentAvailableStock = 0;
       updateProjectedStock();
-      // ------------------------------
     }
-  } catch (e) { nameDisplay.innerText = "❌ Offline Mode"; }
+  } catch (e) { 
+    nameDisplay.innerText = "❌ Offline Mode"; 
+  }
+} // <-- THIS CLOSING BRACKET WAS MISSING!
 
 // Helper to fill the boxes
 function fillStockForm(data) {
