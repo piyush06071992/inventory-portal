@@ -784,10 +784,21 @@ function handleItem() {
     }
 
 function calcFromUnit() {
-      let qtyField = document.getElementById('qty');
-      let minField = document.getElementById('minStockQty');
+      const qtyField = document.getElementById('qty');
+      const minField = document.getElementById('minStockQty');
       
-      let enteredQty = parseFloat(qtyField.value) || 0;
+      const enteredQty = parseFloat(qtyField.value) || 0;
+      const minStockValue = parseFloat(minField.value) || 0;
+      const totalAfterSave = (parseFloat(currentAvailableStock) || 0) + enteredQty;
+
+      // Logic: If (Existing + New) is less than the Minimum we want to keep
+      if (minStockValue > 0 && totalAfterSave < minStockValue) {
+        qtyField.style.background = "#ffa502"; // Orange alert
+        qtyField.style.color = "white";
+      } else {
+        qtyField.style.background = "white";
+        qtyField.style.color = "var(--text)";
+      }
       let minStock = parseFloat(minField.value) || 0;
       let projectedTotal = currentAvailableStock + enteredQty; // Calculation based on TOTAL stock
       
