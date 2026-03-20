@@ -442,10 +442,13 @@ async function syncInventory() {
     item.barcode && item.barcode.toString() === barcode.toString()
   );
 
-  if (localMatch) {
+if (localMatch) {
     fillStockForm(localMatch);
-    nameDisplay.innerHTML = `<b style="color:green">⚡ Instant Match: ${localMatch.itemName}</b>`;
-    return; // EXIT THE FUNCTION IMMEDIATELY
+    // Use a slight delay to ensure nothing else overwrites this success
+    setTimeout(() => {
+      nameDisplay.innerHTML = `<b style="color:green; font-size:16px;">⚡ Instant Match: ${localMatch.itemName}</b>`;
+    }, 100);
+    return; 
   }
 
   // 2. IF NOT IN LOCAL, ASK GOOGLE (Fallback)
