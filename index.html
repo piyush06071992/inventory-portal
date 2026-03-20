@@ -786,53 +786,74 @@ function handleItem() {
 function calcFromUnit() {
       const qtyField = document.getElementById('qty');
       const minField = document.getElementById('minStockQty');
-      
       const enteredQty = parseFloat(qtyField.value) || 0;
       const minStockValue = parseFloat(minField.value) || 0;
       const totalAfterSave = (parseFloat(currentAvailableStock) || 0) + enteredQty;
 
-      // Logic: If (Existing + New) is less than the Minimum we want to keep
+      // 1. LOW STOCK ALERT LOGIC
       if (minStockValue > 0 && totalAfterSave < minStockValue) {
-        qtyField.style.background = "#ffa502"; // Orange alert
+        qtyField.style.backgroundColor = "#ffa502"; // Orange Alert
         qtyField.style.color = "white";
-      } else {
-        qtyField.style.background = "white";
-        qtyField.style.color = "var(--text)";
-      }
-      let minStock = parseFloat(minField.value) || 0;
-      let projectedTotal = currentAvailableStock + enteredQty; // Calculation based on TOTAL stock
-      
-      // --- ALERT LOGIC ---
-      if (enteredQty > 0 && minStock > 0 && projectedTotal <= minStock) {
-        qtyField.style.backgroundColor = "#ffa502"; 
-        qtyField.style.color = "white";            
-        qtyField.style.fontWeight = "900";         
+        qtyField.style.fontWeight = "900";
       } else {
         qtyField.style.backgroundColor = "white";
         qtyField.style.color = "var(--text)";
         qtyField.style.fontWeight = "normal";
-      }
-      let unit = parseFloat(document.getElementById('unitPrice').value) || 0;
-      
-      // --- FULL CELL HIGH-VISIBILITY ALERT ---
-      if (qty > 0 && minStock > 0 && qty <= minStock) {
-        qtyField.style.backgroundColor = "#ffa502"; 
-        qtyField.style.color = "white";            
-        qtyField.style.fontWeight = "900";         
-        qtyField.style.border = "2px solid #e67e22"; 
-      } else {
-        qtyField.style.backgroundColor = "white";
-        qtyField.style.color = "var(--text)";
-        qtyField.style.fontWeight = "normal";
-        qtyField.style.border = "2px solid var(--border)";
       }
 
-      let total = qty * unit;
-      document.getElementById('totalPrice').value = total > 0 ? total.toFixed(2) : "";
-      processTaxes(total);
+      // 2. UNIT PRICE -> TOTAL PRICE CALCULATION
+      const unit = parseFloat(document.getElementById('unitPrice').value) || 0;
+      const total = enteredQty * unit;
+      if (enteredQty > 0 && unit > 0) {
+        document.getElementById('totalPrice').value = total.toFixed(2);
+      }
       
-      // --- UPDATE THE STOCK BADGE NUMBERS ---
+      processTaxes(total);
       updateProjectedStock(); 
+    }
+
+    function calcFromTotal() {
+      const enteredQty = parseFloat(document.getElementById('qty').value) || 0;
+      const total = parseFloat(document.getElementById('totalPrice').value) || 0;
+      
+      // 3. TOTAL PRICE -> UNIT PRICE CALCULATION
+      if (enteredQty > 0) {
+        document.getElementById('unitPrice').value = (total / enteredQty).toFixed(2);
+      }
+      processTaxes(total);
+    }
+
+    function processTaxes(totalInc) {
+      const gst = parseFloat(document.getElementById('gstRate').value) || 0;
+      const base = totalInc / (1 + (gst / 100));
+      const totalTax = totalInc - base;
+      
+      finalMath = { 
+        base: base.toFixed(2), 
+        cgst: (totalTax / 2).toFixed(2), 
+        sgst: (totalTax / 2).toFixed(2), 
+        total: totalInc.toFixed(2) 
+      };
+      
+      document.getElementById('lblBase').innerText = `₹${finalMath.base}`;
+      document.getElementById('lblCGST').innerText = `₹${finalMath.cgst}`;
+      document.getElementById('lblSGST').innerText = `₹${finalMath.sgst}`;
+      document.getElementById('lblTotal').innerText = `₹${finalMath.total}`;
+
+      // PROFIT MARGIN CALC
+      const costPrice = parseFloat(document.getElementById('unitPrice').value) || 0;
+      const sellPrice = parseFloat(document.getElementById('minSellPrice').value) || 0;
+      const marginLabel = document.getElementById('lblMargin');
+
+      if (costPrice > 0 && sellPrice > 0) {
+        const profit = sellPrice - costPrice;
+        const marginPercent = (profit / costPrice) * 100;
+        marginLabel.innerText = marginPercent.toFixed(1) + "%";
+        marginLabel.style.color = marginPercent > 0 ? "var(--color3)" : "red";
+      } else {
+        marginLabel.innerText = "0%";
+      }
+      if (typeof calcUdhaar === "function") calcUdhaar();
     }
     
     function calcFromTotal() {
