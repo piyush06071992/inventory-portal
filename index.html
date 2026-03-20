@@ -20,8 +20,15 @@
       --color4: #ffa502; /* Orange */
       --color5: #9c88ff; /* Purple */
     }
-    body { font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; background: var(--bg-gradient); color: var(--text); margin: 0; padding: 20px; display: flex; justify-content: center; min-height: 100vh;}
-    .container { background: var(--surface); width: 100%; max-width: 650px; padding: 30px; border-radius: 12px; box-shadow: 0 4px 20px rgba(0,0,0,0.06); border: 1px solid var(--border); }
+    body { font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; background: var(--bg-gradient); color: var(--text); margin: 0; padding: 10px; display: flex; justify-content: center; min-height: 100vh;}
+    .container { background: var(--surface); width: 100%; max-width: 100%; padding: 15px; border-radius: 0; box-shadow: none; border: none; }
+    
+    /* Force all inputs and labels to be finger-friendly and eye-friendly */
+    label { display: block; margin-bottom: 8px; font-weight: 700; font-size: 16px; color: #2f3640; }
+    input, select, button { width: 100%; padding: 14px; border: 1.5px solid var(--border); border-radius: 8px; box-sizing: border-box; font-size: 16px !important; }
+    
+    /* Tighten the cards for mobile screens */
+    .form-card { background: #ffffff; padding: 15px; border-radius: 12px; border: 1px solid var(--border); box-shadow: 0 2px 8px rgba(0,0,0,0.04); margin-bottom: 15px; width: 100%; box-sizing: border-box;}
     h2 { 
       text-align: center; 
       background: linear-gradient(to right, var(--color1), var(--color2), var(--color5)); 
