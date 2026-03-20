@@ -959,7 +959,7 @@ function calcFromUnit() {
           document.getElementById('scanMsg').innerText = "";
           // -------------------------------------
 
-          if (stockSubmitMode === "next") {
+   if (stockSubmitMode === "next") {
             ['category', 'newCategory', 'itemName', 'newItemName', 'companyName', 'newCompanyName', 'qty', 'minSellPrice', 'minStockQty', 'gstRate', 'unitPrice', 'totalPrice', 'expiryDate', 'amountPaid', 'balanceDue', 'paymentDueDate'].forEach(id => {
               let el = document.getElementById(id);
               if(el) { el.value = ""; if(el.tagName === 'SELECT') el.selectedIndex = 0; }
@@ -968,6 +968,11 @@ function calcFromUnit() {
             document.getElementById('newItemName').classList.add('hidden');
             document.getElementById('newCompanyName').classList.add('hidden');
             document.getElementById('dueDateGroup').classList.add('hidden');
+            
+            // --- HIDE THE WIZARD FOR THE NEXT ITEM ---
+            document.getElementById('wizardStep2').classList.add('hidden');
+            document.getElementById('btnNextStep').style.display = 'block';
+            // -----------------------------------------
             
             processTaxes(0); 
             window.scrollTo(0,0); 
