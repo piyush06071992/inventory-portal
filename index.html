@@ -876,8 +876,8 @@ function calcFromUnit() {
         marginLabel.style.color = "var(--text)";
       }
       
-      // Link the Total Price changes to the Udhaar calculator instantly!
-      if (typeof calcUdhaar === "function") calcUdhaar();
+     // Force the Udhaar calculation to refresh whenever the price changes
+      calcUdhaar(); 
     }
 
     // --- UDHAAR CALCULATOR ---
