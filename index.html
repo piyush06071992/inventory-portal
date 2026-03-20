@@ -193,10 +193,13 @@
         <label style="color:var(--color4)">Expiry Date (Optional)</label>
         <input type="date" id="expiryDate" style="border-color: var(--color4);">
       </div>
-      <div class="form-group" style="display: flex; gap: 10px;">
-        <div style="flex: 1;"><label>Total Price (Inc. GST)</label><input type="number" id="totalPrice" step="0.01" oninput="calcFromTotal()"></div>
-        <div style="flex: 1;"><label>Unit Price (Inc. GST)</label><input type="number" id="unitPrice" step="0.01" oninput="calcFromUnit()"></div>
-      </div>
+
+      <div class="form-card">
+        <div class="card-title">💰 Pricing & Profit</div>
+        <div class="form-group" style="display: flex; gap: 10px;">
+          <div style="flex: 1;"><label>Total Price (Inc. GST)</label><input type="number" id="totalPrice" step="0.01" oninput="calcFromTotal()"></div>
+          <div style="flex: 1;"><label>Unit Price (Inc. GST)</label><input type="number" id="unitPrice" step="0.01" oninput="calcFromUnit()"></div>
+        </div>
       
       <div class="breakdown-box">
         <div><span>Base Price:</span> <span id="lblBase">₹0.00</span></div>
