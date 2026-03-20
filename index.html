@@ -880,41 +880,36 @@ function calcFromUnit() {
       calcUdhaar(); 
     }
 
-    // --- UDHAAR CALCULATOR ---
-    function calcUdhaar() {
-      let total = parseFloat(document.getElementById('totalPrice').value) || 0;
-      let paidField = document.getElementById('amountPaid').value;
-      let paid = parseFloat(paidField) || 0;
+   function calcUdhaar() {
+      const total = parseFloat(document.getElementById('totalPrice').value) || 0;
+      const paidField = document.getElementById('amountPaid');
+      const paidValue = parseFloat(paidField.value) || 0;
       
-      let balanceField = document.getElementById('balanceDue');
-      let dueGroup = document.getElementById('dueDateGroup');
-      let dateField = document.getElementById('paymentDueDate');
-      let currentBillUdhaar = 0;
+      const balanceField = document.getElementById('balanceDue');
+      const dueGroup = document.getElementById('dueDateGroup');
+      const dateField = document.getElementById('paymentDueDate');
 
-      if (paidField !== "") {
-        let balance = total - paid;
-        if (balance > 0) {
-          balanceField.value = balance.toFixed(2);
-          dueGroup.classList.remove('hidden');
-          dateField.required = true;
-          currentBillUdhaar = balance;
-        } else {
-          balanceField.value = "0.00";
-          dueGroup.classList.add('hidden');
-          dateField.required = false;
-          dateField.value = "";
-        }
+      // Calculate the difference
+      let balance = total - paidValue;
+
+      // Update the Balance Due box (Show red if there is debt)
+      if (balance > 0) {
+        balanceField.value = balance.toFixed(2);
+        balanceField.style.color = "#d63031"; // Red for Udhaar
+        dueGroup.classList.remove('hidden');
+        dateField.required = true;
       } else {
-        balanceField.value = "";
+        balanceField.value = "0.00";
+        balanceField.style.color = "#2ed573"; // Green for Clear
         dueGroup.classList.add('hidden');
         dateField.required = false;
       }
 
-      // Update the Live Supplier Badge automatically
-      let newPendingSpan = document.getElementById('suppNewPending');
+      // Update the "Live Supplier Badge" if it exists
+      const newPendingSpan = document.getElementById('suppNewPending');
       if (newPendingSpan) {
-        let totalWithThisBill = (typeof currentSupplierBalance !== 'undefined' ? currentSupplierBalance : 0) + currentBillUdhaar;
-        newPendingSpan.innerText = totalWithThisBill.toFixed(2);
+        const existingDebt = typeof currentSupplierBalance !== 'undefined' ? currentSupplierBalance : 0;
+        newPendingSpan.innerText = (existingDebt + balance).toFixed(2);
       }
     }
 
