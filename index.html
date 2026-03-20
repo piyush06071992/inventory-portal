@@ -462,6 +462,10 @@ if (localMatch) {
   try {
     const response = await fetch(`${scriptURL}?action=getDetails&barcode=${barcode}`);
     const res = await response.json();
+
+    // IF A NEWER SEARCH HAS STARTED, KILL THIS OLD ONE IMMEDIATELY
+    if (thisSearchId !== currentSearchId) return; 
+
     if (res.success) {
       fillStockForm(res);
       nameDisplay.innerHTML = `<b style="color:green">✅ Cloud Match: ${res.itemName}</b>`;
