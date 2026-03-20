@@ -922,8 +922,7 @@ function calcFromUnit() {
         });
         
         const res = await response.json();
-
-        // 4. Handle Success
+// 4. Handle Success
         if (res.success) {
           msgDiv.innerText = res.message || "Stock Saved!";
           msgDiv.style.color = "var(--color3)";
@@ -932,6 +931,21 @@ function calcFromUnit() {
           btnNext.disabled = false;
           btnFinal.disabled = false;
           btnNext.innerText = "Save & Add Next";
+
+          // --- CLEAR STALE BADGES AND MEMORY ---
+          document.getElementById('stockBadge').style.display = "none";
+          document.getElementById('currStock').innerText = "0";
+          document.getElementById('newStock').innerText = "0";
+          currentAvailableStock = 0;
+
+          document.getElementById('supplierBalanceBadge').classList.add('hidden');
+          document.getElementById('suppPending').innerText = "0.00";
+          document.getElementById('suppNewPending').innerText = "0.00";
+          currentSupplierBalance = 0;
+          
+          document.getElementById('barcodeInput').value = "";
+          document.getElementById('scanMsg').innerText = "";
+          // -------------------------------------
 
           if (stockSubmitMode === "next") {
             ['category', 'newCategory', 'itemName', 'newItemName', 'companyName', 'newCompanyName', 'qty', 'minSellPrice', 'minStockQty', 'gstRate', 'unitPrice', 'totalPrice', 'expiryDate', 'amountPaid', 'balanceDue', 'paymentDueDate'].forEach(id => {
