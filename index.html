@@ -433,51 +433,50 @@ async function syncInventory() {
 
  async function checkBarcodeMemory() {
   const barcode = document.getElementById('barcodeInput').value;
-  const scriptURL = "https://script.google.com/macros/s/AKfycbxySneFzP5acFfXE-SA8UowZAcmSWPt3nype5qf1hO_PfoDL4Rh_t1G-AUoKoP39lZDlg/exec";
   const nameDisplay = document.getElementById('scanMsg');
 
   if (!barcode) return;
 
-  nameDisplay.innerText = "🔍 Searching Inventory...";
+  // 1. CHECK LOCAL MEMORY FIRST (0.001 Seconds)
+  const localMatch = localInventory.find(item => item.barcode.toString() === barcode.toString());
+
+  if (localMatch) {
+    fillStockForm(localMatch);
+    nameDisplay.innerHTML = `<b style="color:green">⚡ Instant Match: ${localMatch.itemName}</b>`;
+    return; // Stop here, no need to call the internet!
+  }
+
+  // 2. IF NOT IN LOCAL, ASK GOOGLE (Fallback)
+  nameDisplay.innerText = "🔍 Searching Cloud...";
+  const scriptURL = "https://script.google.com/macros/s/AKfycbxySneFzP5acFfXE-SA8UowZAcmSWPt3nype5qf1hO_PfoDL4Rh_t1G-AUoKoP39lZDlg/exec";
 
   try {
     const response = await fetch(`${scriptURL}?action=getDetails&barcode=${barcode}`);
     const res = await response.json();
-
     if (res.success) {
-      nameDisplay.innerHTML = `<b style="color:green">✅ Item Recognized: ${res.itemName}</b>`;
-      
-      // --- AUTO-FILL THE FORM BOXES ---
-      if(res.category) document.getElementById('category').value = res.category;
-      if(res.itemName) document.getElementById('itemName').value = res.itemName;
-      if(res.companyName) document.getElementById('companyName').value = res.companyName;
-      if(res.gst) document.getElementById('gstRate').value = res.gst;
-      if(res.minSellPrice) document.getElementById('minSellPrice').value = res.minSellPrice;
-      if(res.minStockQty) document.getElementById('minStockQty').value = res.minStockQty;
-if(res.unitPrice) document.getElementById('unitPrice').value = res.unitPrice;
-      
-      if(res.supplierName) {
-        document.getElementById('supplierName').value = res.supplierName;
-        // This line is important: it tells the app to "look up" the contact details for this supplier
-        handleSupplier(); 
-      }
-
-      // --- UPDATE THE STOCK BADGE ---
-      currentAvailableStock = parseFloat(res.qty) || 0;
-      document.getElementById('stockBadge').style.display = "block";
-      document.getElementById('currStock').innerText = currentAvailableStock;
-      
-      // Trigger the math for "After Save" stock display
-      updateProjectedStock();
-      
+      fillStockForm(res);
+      nameDisplay.innerHTML = `<b style="color:green">✅ Cloud Match: ${res.itemName}</b>`;
     } else {
-      nameDisplay.innerHTML = `<b style="color:orange">✨ New Item Detected. Please fill details manually.</b>`;
+      nameDisplay.innerHTML = `<b style="color:orange">✨ New Item Detected.</b>`;
       document.getElementById('stockBadge').style.display = "none";
     }
-  } catch (error) {
-    nameDisplay.innerText = "❌ Connection Error";
-    console.error(error);
-  }
+  } catch (e) { nameDisplay.innerText = "❌ Offline Mode"; }
+}
+
+// Helper to fill the boxes
+function fillStockForm(data) {
+  if(data.category) document.getElementById('category').value = data.category;
+  if(data.itemName) document.getElementById('itemName').value = data.itemName;
+  if(data.companyName) document.getElementById('companyName').value = data.companyName;
+  if(data.gst) document.getElementById('gstRate').value = data.gst;
+  if(data.minSellPrice) document.getElementById('minSellPrice').value = data.minSellPrice;
+  if(data.minStockQty) document.getElementById('minStockQty').value = data.minStockQty;
+  if(data.unitPrice) document.getElementById('unitPrice').value = data.unitPrice;
+  if(data.supplierName) { document.getElementById('supplierName').value = data.supplierName; handleSupplier(); }
+  currentAvailableStock = parseFloat(data.qty) || 0;
+  document.getElementById('stockBadge').style.display = "block";
+  document.getElementById('currStock').innerText = currentAvailableStock;
+  updateProjectedStock();
 }
     function logout() {
   if(confirm("Are you sure you want to logout?")) {
