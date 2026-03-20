@@ -456,7 +456,7 @@ if (localMatch) {
   nameDisplay.innerText = "🔍 Searching Cloud...";
   const scriptURL = "https://script.google.com/macros/s/AKfycbxySneFzP5acFfXE-SA8UowZAcmSWPt3nype5qf1hO_PfoDL4Rh_t1G-AUoKoP39lZDlg/exec";
 
-  try {
+try {
     const response = await fetch(`${scriptURL}?action=getDetails&barcode=${barcode}`);
     const res = await response.json();
 
@@ -468,10 +468,23 @@ if (localMatch) {
       nameDisplay.innerHTML = `<b style="color:green">✅ Cloud Match: ${res.itemName}</b>`;
     } else {
       nameDisplay.innerHTML = `<b style="color:orange">✨ New Item Detected.</b>`;
+      
+      // --- THE FIX: WIPE OLD DATA ---
+      document.getElementById('category').value = "";
+      document.getElementById('itemName').value = "";
+      document.getElementById('companyName').value = "";
+      document.getElementById('gstRate').value = "";
+      document.getElementById('unitPrice').value = "";
+      document.getElementById('minSellPrice').value = "";
+      document.getElementById('supplierName').value = "";
+      
       document.getElementById('stockBadge').style.display = "none";
+      document.getElementById('currStock').innerText = "0";
+      currentAvailableStock = 0;
+      updateProjectedStock();
+      // ------------------------------
     }
   } catch (e) { nameDisplay.innerText = "❌ Offline Mode"; }
-}
 
 // Helper to fill the boxes
 function fillStockForm(data) {
