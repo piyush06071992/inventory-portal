@@ -165,8 +165,12 @@
         <select id="companyName" required onchange="handleCompany()">
           <option value="">Loading...</option>
         </select>
-        <input type="text" id="newCompanyName" class="hidden" placeholder="Type new company..." style="margin-top: 8px; text-transform: capitalize; border-color: var(--color2);">
+       <input type="text" id="newCompanyName" class="hidden" placeholder="Type new company..." style="margin-top: 8px; text-transform: capitalize; border-color: var(--color2);">
       </div>
+
+      <button type="button" id="btnNextStep" onclick="document.getElementById('wizardStep2').classList.remove('hidden'); this.style.display='none';" style="background: var(--color2); width: 100%; padding: 15px; font-size: 16px; margin-top: 10px; margin-bottom: 20px; border-radius: 8px; font-weight: 900; box-shadow: 0 4px 10px rgba(30,144,255,0.3);">Next: Enter Quantities & Prices ➡️</button>
+
+      <div id="wizardStep2" class="hidden">
 
       <div id="stockBadge" style="display:none; margin-bottom: 12px; font-size: 13px; font-weight: bold; padding: 10px; border-radius: 8px; background: #f8f9fa; border-left: 6px solid var(--color2); box-shadow: 0 2px 4px rgba(0,0,0,0.05);">
         📦 Current Stock: <span id="currStock">0</span> | <span style="color:var(--color3)">After Save: <span id="newStock">0</span></span>
@@ -260,7 +264,12 @@
         <input type="file" id="productFiles" accept="image/*" multiple>
       </div>
       
-      <div style="display: flex; gap: 10px; margin-top: 10px;">
+      <div class="file-input-box">
+        <label style="color:var(--color3)">Upload Product Images (Multiple allowed)</label>
+        <input type="file" id="productFiles" accept="image/*" multiple>
+      </div>
+      
+      </div> <div style="display: flex; gap: 10px; margin-top: 10px;">
         <button type="submit" id="btnStockNext" onclick="setSubmitMode('next')" style="flex: 1; background: var(--color5); margin-top: 0;">Save & Add Next</button>
         <button type="submit" id="btnStock" onclick="setSubmitMode('final')" style="flex: 1; background: var(--color2); margin-top: 0;">Save & Close</button>
       </div>
