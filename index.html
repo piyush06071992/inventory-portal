@@ -294,7 +294,10 @@
         <button type="submit" id="btnStock" onclick="setSubmitMode('final')" style="flex: 1; background: var(--color2); margin: 0; height: 55px;">Save & Close</button>
       </div>
     </div> </form>
-
+<div style="display: flex; gap: 10px; margin-top: 20px; padding-bottom: 30px;">
+      <button type="submit" id="btnStockNext" onclick="setSubmitMode('next')" style="flex: 1; background: var(--color5); margin: 0; height: 55px;">Save & Add Next</button>
+      <button type="submit" id="btnStock" onclick="setSubmitMode('final')" style="flex: 1; background: var(--color2); margin: 0; height: 55px;">Save & Close</button>
+    </div>
     <form id="expenseForm" class="hidden" onsubmit="submitExpense(event)">
       <div class="form-group"><label style="color:var(--color4)">Expense Type</label><input type="text" id="expenseType" list="expList" required><datalist id="expList"></datalist></div>
       <div class="form-group"><label>Amount (₹)</label><input type="number" id="expAmount" step="0.01" required></div>
