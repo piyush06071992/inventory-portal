@@ -133,9 +133,11 @@
     <div id="loginError" style="color: red; text-align: center; margin-top: 10px;"></div>
   </div>
 
-  <div class="container hidden" id="appScreen">
-    <button onclick="logout()" id="logoutBtn">Logout</button>
-    <h2>Sarandipity Portal</h2>
+  <div class="container hidden" id="appScreen" style="padding-top: 5px;">
+    <div style="display: flex; justify-content: flex-end; margin-bottom: 10px;">
+       <button onclick="logout()" id="logoutBtn" style="width: auto; padding: 6px 15px; margin: 0;">Logout ⏻</button>
+    </div>
+    <h2 style="margin-bottom: 20px;">Sarandipity Portal</h2>
     
     <div id="dashboardMenu" class="dashboard-grid">
       <button class="dash-btn dash-stock" onclick="openModule('stock')"><span>📦</span>Stock Entry</button>
