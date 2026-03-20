@@ -881,35 +881,37 @@ function calcFromUnit() {
     }
 
    function calcUdhaar() {
-      const total = parseFloat(document.getElementById('totalPrice').value) || 0;
-      const paidField = document.getElementById('amountPaid');
-      const paidValue = parseFloat(paidField.value) || 0;
-      
+      const totalBill = parseFloat(document.getElementById('totalPrice').value) || 0;
+      const amountPaid = parseFloat(document.getElementById('amountPaid').value) || 0;
       const balanceField = document.getElementById('balanceDue');
       const dueGroup = document.getElementById('dueDateGroup');
       const dateField = document.getElementById('paymentDueDate');
 
-      // Calculate the difference
-      let balance = total - paidValue;
+      // 1. Calculate this specific bill's result
+      let thisBillBalance = totalBill - amountPaid;
+      balanceField.value = thisBillBalance.toFixed(2);
 
-      // Update the Balance Due box (Show red if there is debt)
-      if (balance > 0) {
-        balanceField.value = balance.toFixed(2);
-        balanceField.style.color = "#d63031"; // Red for Udhaar
+      // 2. UI Updates (Colors and Date)
+      if (thisBillBalance > 0) {
+        balanceField.style.color = "#d63031"; // Red for Debt
         dueGroup.classList.remove('hidden');
         dateField.required = true;
       } else {
-        balanceField.value = "0.00";
-        balanceField.style.color = "#2ed573"; // Green for Clear
+        balanceField.style.color = "#2ed573"; // Green for Paid/Overpaid
         dueGroup.classList.add('hidden');
         dateField.required = false;
       }
 
-      // Update the "Live Supplier Badge" if it exists
+      // 3. THE FIX: Update the Total Supplier Debt Badge
       const newPendingSpan = document.getElementById('suppNewPending');
       if (newPendingSpan) {
-        const existingDebt = typeof currentSupplierBalance !== 'undefined' ? currentSupplierBalance : 0;
-        newPendingSpan.innerText = (existingDebt + balance).toFixed(2);
+        const pastDebt = typeof currentSupplierBalance !== 'undefined' ? currentSupplierBalance : 0;
+        // Total = Old Debt + (New Bill - Amount Paid)
+        let totalRemainingDebt = pastDebt + thisBillBalance;
+        newPendingSpan.innerText = totalRemainingDebt.toFixed(2);
+        
+        // If they cleared the whole debt, turn the text green
+        newPendingSpan.style.color = totalRemainingDebt <= 0 ? "#2ed573" : "#d63031";
       }
     }
 
