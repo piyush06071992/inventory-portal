@@ -827,32 +827,14 @@ function calcFromUnit() {
       const base = totalInc / (1 + (gst / 100));
       const totalTax = totalInc - base;
       
-      finalMath = { 
-        base: base.toFixed(2), 
-        cgst: (totalTax / 2).toFixed(2), 
-        sgst: (totalTax / 2).toFixed(2), 
-        total: totalInc.toFixed(2) 
-      };
+      finalMath = { base: base.toFixed(2), cgst: (totalTax / 2).toFixed(2), sgst: (totalTax / 2).toFixed(2), total: totalInc.toFixed(2) };
       
       document.getElementById('lblBase').innerText = `₹${finalMath.base}`;
       document.getElementById('lblCGST').innerText = `₹${finalMath.cgst}`;
       document.getElementById('lblSGST').innerText = `₹${finalMath.sgst}`;
       document.getElementById('lblTotal').innerText = `₹${finalMath.total}`;
 
-      // PROFIT MARGIN CALC
-      const costPrice = parseFloat(document.getElementById('unitPrice').value) || 0;
-      const sellPrice = parseFloat(document.getElementById('minSellPrice').value) || 0;
-      const marginLabel = document.getElementById('lblMargin');
-
-      if (costPrice > 0 && sellPrice > 0) {
-        const profit = sellPrice - costPrice;
-        const marginPercent = (profit / costPrice) * 100;
-        marginLabel.innerText = marginPercent.toFixed(1) + "%";
-        marginLabel.style.color = marginPercent > 0 ? "var(--color3)" : "red";
-      } else {
-        marginLabel.innerText = "0%";
-      }
-      if (typeof calcUdhaar === "function") calcUdhaar();
+      calcUdhaar(); // This forces the "Balance Due" to update immediately
     }
     
     function calcFromTotal() {
