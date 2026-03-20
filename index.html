@@ -435,8 +435,12 @@ async function syncInventory() {
   const barcode = document.getElementById('barcodeInput').value;
   const nameDisplay = document.getElementById('scanMsg');
 
-  if (!barcode) return;
+  if (!barcode) { nameDisplay.innerText = ""; return; }
 
+  // Create a unique ID for THIS specific search attempt
+  const thisSearchId = ++currentSearchId; 
+
+  // 1. CHECK LOCAL MEMORY FIRST (0.001 Seconds)
   // 1. CHECK LOCAL MEMORY FIRST (0.001 Seconds)
   const localMatch = localInventory.find(item => 
     item.barcode && item.barcode.toString() === barcode.toString()
