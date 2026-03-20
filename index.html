@@ -139,7 +139,7 @@
     </div>
     <h2 style="margin-bottom: 20px;">Sarandipity Portal</h2>
     
-    <div id="dashboardMenu" class="dashboard-grid">
+   <div id="dashboardMenu" class="dashboard-grid">
       <button class="dash-btn dash-stock" onclick="openModule('stock')"><span>📦</span>Stock Entry</button>
       <button class="dash-btn dash-exp" onclick="openModule('expense')"><span>💸</span>Expenses</button>
       <button class="dash-btn dash-staff" id="dashStaff" onclick="openModule('staff')"><span>👥</span>Add Staff</button>
@@ -150,151 +150,123 @@
     <button id="backToMenuBtn" class="back-btn hidden" onclick="goBackToMenu()">← Back to Dashboard</button>
 
     <form id="stockForm" class="hidden" onsubmit="submitStock(event)">
-      
-    <div class="form-card">
+      <div class="form-card">
         <div class="card-title">📷 Quick Scan</div>
-        
         <div id="reader" style="width: 100%; border-radius: 8px; overflow: hidden; display: none; margin-bottom: 10px;"></div>
-        
-     <div style="display: flex; gap: 10px;">
- <input type="number" id="barcodeInput" inputmode="numeric" pattern="[0-9]*" placeholder="Scan or type code..." style="flex: 2; height: 50px; font-size: 18px;" oninput="checkBarcodeMemory()">
-  <button type="button" id="btnScan" onclick="startScanner()" style="flex: 1; background: var(--color5); margin: 0; height: 50px;">Scan</button>
-</div>
+        <div style="display: flex; gap: 10px;">
+          <input type="number" id="barcodeInput" inputmode="numeric" pattern="[0-9]*" placeholder="Scan or type code..." style="flex: 2; height: 50px; font-size: 18px;" oninput="checkBarcodeMemory()">
+          <button type="button" id="btnScan" onclick="startScanner()" style="flex: 1; background: var(--color5); margin: 0; height: 50px;">Scan</button>
+        </div>
         <div id="scanMsg" style="text-align: center; font-size: 12px; margin-top: 5px; color: var(--color5);"></div>
       </div>
 
-     <div class="form-card">
+      <div class="form-card">
         <div class="card-title">📦 Product Identity</div>
         <div class="form-group">
           <label style="color:var(--color2)">Category</label>
-        <select id="category" required onchange="handleCategory()">
-          <option value="">Loading...</option>
-        </select>
-        <input type="text" id="newCategory" class="hidden" placeholder="Type new category..." style="margin-top: 8px; text-transform: capitalize; border-color: var(--color2);">
-      </div>
-
-      <div class="form-group">
-        <label style="color:var(--color2)">Item Name</label>
-        <select id="itemName" required onchange="handleItem()">
-          <option value="">Loading...</option>
-        </select>
-        <input type="text" id="newItemName" class="hidden" placeholder="Type new item..." style="margin-top: 8px; text-transform: capitalize; border-color: var(--color2);">
-      </div>
-   <div class="form-group">
-        <label style="color:var(--color2)">Company Name</label>
-        <select id="companyName" required onchange="handleCompany()">
-          <option value="">Loading...</option>
-        </select>
-<input type="text" id="newCompanyName" class="hidden" placeholder="Type new company..." style="margin-top: 8px; text-transform: capitalize; border-color: var(--color2);">
-      </div>
-      </div> <button type="button" id="btnNextStep" onclick="document.getElementById('wizardStep2').classList.remove('hidden'); this.style.display='none';" style="background: var(--color2); width: 100%; padding: 15px; font-size: 16px; margin-top: 10px; margin-bottom: 20px; border-radius: 8px; font-weight: 900; box-shadow: 0 4px 10px rgba(30,144,255,0.3);">Next: Enter Quantities & Prices ➡️</button>
-
-     <div id="wizardStep2" class="hidden">
-
-      <div class="form-card">
-        <div class="card-title">🔢 Inventory & Alerts</div>
-        
-        <div id="stockBadge" style="display:none; margin-bottom: 12px; font-size: 15px; font-weight: bold; padding: 12px; border-radius: 8px; background: #f8f9fa; border-left: 6px solid var(--color2); margin-bottom: 20px;">
-          📦 Current Stock: <span id="currStock">0</span> | <span style="color:var(--color3)">After Save: <span id="newStock">0</span></span>
+          <select id="category" required onchange="handleCategory()"><option value="">Loading...</option></select>
+          <input type="text" id="newCategory" class="hidden" placeholder="Type new category..." style="margin-top: 8px; text-transform: capitalize; border-color: var(--color2);">
         </div>
-
-        <div class="form-group" style="display: flex; gap: 10px;">
-        <div style="flex: 1;"><label>Quantity</label><input type="number" id="qty" required oninput="calcFromUnit()"></div>
-        <div style="flex: 1;"><label>GST Rate (%)</label><input type="number" id="gstRate" required oninput="calcFromUnit()"></div>
-      </div>
-
-      <div class="form-group" style="display: flex; gap: 10px;">
-        <div style="flex: 1;"><label>Min Selling Price (₹)</label><input type="number" id="minSellPrice" step="0.01" required oninput="calcFromUnit()"></div>
-       <div style="flex: 1;"><label>Min Stock Qty</label><input type="number" id="minStockQty" required oninput="calcFromUnit(); updateProjectedStock();"></div>
-      </div>
-      </div> <div class="form-group">
-        <label style="color:var(--color4)">Expiry Date (Optional)</label>
-        <input type="date" id="expiryDate" style="border-color: var(--color4);">
-      </div>
-
-      <div class="form-card">
-        <div class="card-title">💰 Pricing & Profit</div>
-        <div class="form-group" style="display: flex; gap: 10px;">
-          <div style="flex: 1;"><label>Total Price (Inc. GST)</label><input type="number" id="totalPrice" step="0.01" oninput="calcFromTotal()"></div>
-          <div style="flex: 1;"><label>Unit Price (Inc. GST)</label><input type="number" id="unitPrice" step="0.01" oninput="calcFromUnit()"></div>
-        </div>
-      
-      <div class="breakdown-box">
-        <div><span>Base Price:</span> <span id="lblBase">₹0.00</span></div>
-        <div><span>CGST:</span> <span id="lblCGST">₹0.00</span></div>
-        <div><span>SGST:</span> <span id="lblSGST">₹0.00</span></div>
-        <div class="total-line"><span>Total:</span> <span id="lblTotal">₹0.00</span></div>
-      <div style="margin-top: 10px; color: var(--color3); font-weight: bold; border-top: 1px solid #eee; padding-top: 10px;">
-          <span>Estimated Profit Margin:</span> <span id="lblMargin">0%</span>
-        </div>
-      </div>
-      </div> <div class="form-card">
-        <div class="card-title">🏭 Supplier & Credit</div>
-        
         <div class="form-group">
-          <label style="color:var(--color5)">Select Supplier</label>
-        
-        <select id="supplierName" required onchange="handleSupplier()" style="margin-bottom: 8px;">
-          <option value="">Loading Suppliers...</option>
-        </select>
-      <input type="text" id="newSupplierName" class="hidden" placeholder="Type new supplier name..." style="margin-bottom: 8px; text-transform: capitalize; border-color: var(--color5);">
-        
-        <div id="supplierBalanceBadge" class="hidden" style="margin-bottom: 12px; font-size: 13px; font-weight: bold; padding: 10px; border-radius: 8px; background: #ffeaa7; border-left: 6px solid #d63031; color: #d63031;">
-          ⚠️ Past Udhaar: ₹<span id="suppPending">0.00</span> <br>
-          <span style="color:var(--text); font-size: 12px;">Total After This Bill: ₹<span id="suppNewPending">0.00</span></span>
+          <label style="color:var(--color2)">Item Name</label>
+          <select id="itemName" required onchange="handleItem()"><option value="">Loading...</option></select>
+          <input type="text" id="newItemName" class="hidden" placeholder="Type new item..." style="margin-top: 8px; text-transform: capitalize; border-color: var(--color2);">
         </div>
-
-        <div style="display: flex; gap: 10px; margin-bottom: 8px;">
-          <div style="flex: 1;"><input type="text" id="supplierGst" placeholder="Supplier GST No." style="text-transform: uppercase;"></div>
-          <div style="flex: 1;"><input type="text" id="supplierContact" placeholder="10-digit Mobile" pattern="[0-9]{10}" oninput="updateContactLinks()"></div>
-        </div>
-
-        <div id="contactActionBox" class="hidden" style="display: flex; gap: 10px;">
-          <a id="btnCall" href="#" style="flex: 1; background: #2ed573; color: white; text-align: center; padding: 10px; border-radius: 8px; text-decoration: none; font-weight: bold; box-shadow: 0 4px 6px rgba(0,0,0,0.1);">📞 Call</a>
-          <a id="btnWa" href="#" target="_blank" style="flex: 1; background: #25d366; color: white; text-align: center; padding: 10px; border-radius: 8px; text-decoration: none; font-weight: bold; box-shadow: 0 4px 6px rgba(0,0,0,0.1);">💬 WhatsApp</a>
+        <div class="form-group">
+          <label style="color:var(--color2)">Company Name</label>
+          <select id="companyName" required onchange="handleCompany()"><option value="">Loading...</option></select>
+          <input type="text" id="newCompanyName" class="hidden" placeholder="Type new company..." style="margin-top: 8px; text-transform: capitalize; border-color: var(--color2);">
         </div>
       </div>
 
-    <div class="form-group"><label style="color:var(--color4)">Payment Mode</label>
-        <select id="paymentMode" onchange="toggleTxn('paymentMode', 'txnGroup', 'transactionId')" required>
-          <option value="Cash">Cash</option><option value="UPI">UPI</option><option value="Bank Transfer">Bank Transfer</option>
-        </select>
-      </div>
-      <div class="form-group hidden" id="txnGroup"><label>Transaction ID</label><input type="text" id="transactionId"></div>
+      <button type="button" id="btnNextStep" onclick="document.getElementById('wizardStep2').classList.remove('hidden'); this.style.display='none';" style="background: var(--color2); width: 100%; padding: 15px; font-size: 16px; margin-top: 10px; margin-bottom: 20px; border-radius: 8px; font-weight: 900;">Next: Enter Quantities & Prices ➡️</button>
 
-      <div class="form-group" style="background: #fff3cd; padding: 12px; border-radius: 8px; border-left: 4px solid var(--color4); margin-top: 15px;">
-        <label style="color:var(--color4); margin-bottom: 10px; display: block; font-weight: bold;">Payment & Udhaar (Credit)</label>
-        
-        <div style="display: flex; gap: 10px;">
-          <div style="flex: 1;">
-            <label>Amount Paid (₹)</label>
-            <input type="number" id="amountPaid" step="0.01" oninput="calcUdhaar()" placeholder="e.g. 500">
+      <div id="wizardStep2" class="hidden">
+        <div class="form-card">
+          <div class="card-title">🔢 Inventory & Alerts</div>
+          <div id="stockBadge" style="display:none; margin-bottom: 12px; font-size: 15px; font-weight: bold; padding: 12px; border-radius: 8px; background: #f8f9fa; border-left: 6px solid var(--color2);">
+            📦 Current Stock: <span id="currStock">0</span> | <span style="color:var(--color3)">After Save: <span id="newStock">0</span></span>
           </div>
-          <div style="flex: 1;">
-            <label>Balance Due (₹)</label>
-            <input type="number" id="balanceDue" step="0.01" readonly style="background:#f1f2f6; font-weight:900; color:red;">
+          <div class="form-group" style="display: flex; gap: 10px;">
+            <div style="flex: 1;"><label>Quantity</label><input type="number" id="qty" required oninput="calcFromUnit()"></div>
+            <div style="flex: 1;"><label>GST Rate (%)</label><input type="number" id="gstRate" required oninput="calcFromUnit()"></div>
+          </div>
+          <div class="form-group" style="display: flex; gap: 10px;">
+            <div style="flex: 1;"><label>Min Selling Price (₹)</label><input type="number" id="minSellPrice" step="0.01" required oninput="calcFromUnit()"></div>
+            <div style="flex: 1;"><label>Min Stock Qty</label><input type="number" id="minStockQty" required oninput="calcFromUnit(); updateProjectedStock();"></div>
+          </div>
+          <div class="form-group">
+            <label style="color:var(--color4)">Expiry Date (Optional)</label>
+            <input type="date" id="expiryDate" style="border-color: var(--color4);">
           </div>
         </div>
 
-      <div class="form-group hidden" id="dueDateGroup" style="margin-top: 10px;">
-          <label style="color:var(--color1)">Payment Due Date</label>
-          <input type="date" id="paymentDueDate" style="border-color: var(--color1);">
+        <div class="form-card">
+          <div class="card-title">💰 Pricing & Profit</div>
+          <div class="form-group" style="display: flex; gap: 10px;">
+            <div style="flex: 1;"><label>Total Price</label><input type="number" id="totalPrice" step="0.01" oninput="calcFromTotal()"></div>
+            <div style="flex: 1;"><label>Unit Price</label><input type="number" id="unitPrice" step="0.01" oninput="calcFromUnit()"></div>
+          </div>
+          <div class="breakdown-box">
+            <div><span>Base Price:</span> <span id="lblBase">₹0.00</span></div>
+            <div><span>CGST:</span> <span id="lblCGST">₹0.00</span></div>
+            <div><span>SGST:</span> <span id="lblSGST">₹0.00</span></div>
+            <div class="total-line"><span>Total:</span> <span id="lblTotal">₹0.00</span></div>
+            <div style="margin-top: 10px; color: var(--color3); font-weight: bold; border-top: 1px solid #eee; padding-top: 10px;">
+              <span>Estimated Profit Margin:</span> <span id="lblMargin">0%</span>
+            </div>
+          </div>
         </div>
-      </div> <div class="file-input-box">
-        <label style="color:var(--color5)">Upload Bill Images/PDFs (Multiple allowed)</label>
-        <input type="file" id="billFiles" accept="image/*,application/pdf" multiple>
-      </div>
-   <div class="file-input-box">
-      <label style="color:var(--color3)">Upload Product Images (Multiple allowed)</label>
-     <input type="file" id="productFiles" accept="image/*" multiple>
-      </div>
-      
-      <div style="display: flex; gap: 10px; margin-top: 20px; padding-bottom: 20px;">
-        <button type="submit" id="btnStockNext" onclick="setSubmitMode('next')" style="flex: 1; background: var(--color5); margin: 0; height: 55px;">Save & Add Next</button>
-        <button type="submit" id="btnStock" onclick="setSubmitMode('final')" style="flex: 1; background: var(--color2); margin: 0; height: 55px;">Save & Close</button>
-      </div>
 
-    </div> </form> <form id="expenseForm"
+        <div class="form-card">
+          <div class="card-title">🏭 Supplier & Credit</div>
+          <div class="form-group">
+            <label style="color:var(--color5)">Select Supplier</label>
+            <select id="supplierName" required onchange="handleSupplier()"><option value="">Loading...</option></select>
+            <input type="text" id="newSupplierName" class="hidden" placeholder="Type new supplier..." style="margin-top: 8px; border-color: var(--color5);">
+            <div id="supplierBalanceBadge" class="hidden" style="margin-top: 10px; padding: 10px; border-radius: 8px; background: #ffeaa7; color: #d63031; font-weight: bold;">
+              ⚠️ Past Udhaar: ₹<span id="suppPending">0.00</span> | Total After: ₹<span id="suppNewPending">0.00</span>
+            </div>
+          </div>
+          <div style="display: flex; gap: 10px; margin-bottom: 8px;">
+            <div style="flex: 1;"><input type="text" id="supplierGst" placeholder="GST No."></div>
+            <div style="flex: 1;"><input type="text" id="supplierContact" placeholder="Mobile" oninput="updateContactLinks()"></div>
+          </div>
+          <div id="contactActionBox" class="hidden" style="display: flex; gap: 10px;">
+            <a id="btnCall" href="#" style="flex: 1; background: #2ed573; color: white; text-align: center; padding: 10px; border-radius: 8px; text-decoration: none; font-weight: bold;">📞 Call</a>
+            <a id="btnWa" href="#" target="_blank" style="flex: 1; background: #25d366; color: white; text-align: center; padding: 10px; border-radius: 8px; text-decoration: none; font-weight: bold;">💬 WA</a>
+          </div>
+        </div>
+
+        <div class="form-card">
+          <div class="card-title">💳 Payment Details</div>
+          <div class="form-group">
+            <label>Payment Mode</label>
+            <select id="paymentMode" onchange="toggleTxn('paymentMode', 'txnGroup', 'transactionId')" required>
+              <option value="Cash">Cash</option><option value="UPI">UPI</option><option value="Bank Transfer">Bank Transfer</option>
+            </select>
+          </div>
+          <div class="form-group hidden" id="txnGroup"><label>Transaction ID</label><input type="text" id="transactionId"></div>
+          <div style="background: #fff3cd; padding: 12px; border-radius: 8px; border-left: 4px solid var(--color4);">
+            <div style="display: flex; gap: 10px;">
+              <div style="flex: 1;"><label>Amount Paid</label><input type="number" id="amountPaid" step="0.01" oninput="calcUdhaar()"></div>
+              <div style="flex: 1;"><label>Balance Due</label><input type="number" id="balanceDue" readonly style="background:#f1f2f6; font-weight:900; color:red;"></div>
+            </div>
+            <div class="form-group hidden" id="dueDateGroup" style="margin-top: 10px;">
+              <label>Payment Due Date</label><input type="date" id="paymentDueDate">
+            </div>
+          </div>
+        </div>
+
+        <div class="file-input-box"><label>Bill Images/PDF</label><input type="file" id="billFiles" multiple></div>
+        <div class="file-input-box"><label>Product Images</label><input type="file" id="productFiles" multiple></div>
+
+        <div style="display: flex; gap: 10px; margin-top: 20px; padding-bottom: 20px;">
+          <button type="submit" id="btnStockNext" onclick="setSubmitMode('next')" style="flex: 1; background: var(--color5); height: 55px;">Save & Next</button>
+          <button type="submit" id="btnStock" onclick="setSubmitMode('final')" style="flex: 1; background: var(--color2); height: 55px;">Save & Close</button>
+        </div>
+      </div>
+    </form>
       <div class="form-group"><label style="color:var(--color4)">Expense Type</label><input type="text" id="expenseType" list="expList" required><datalist id="expList"></datalist></div>
       <div class="form-group"><label>Amount (₹)</label><input type="number" id="expAmount" step="0.01" required></div>
       <div class="file-input-box">
