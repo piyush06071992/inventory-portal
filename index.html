@@ -979,7 +979,7 @@ function calcFromUnit() {
           msgDiv.innerText = res.message || "Stock Saved!";
           msgDiv.style.color = "var(--color3)";
           setTimeout(() => { msgDiv.innerText = ""; }, 5000);
-
+await syncInventory();
           btnNext.disabled = false;
           btnFinal.disabled = false;
           btnNext.innerText = "Save & Add Next";
