@@ -1,7 +1,8 @@
-// Firebase Configuration for Business Saarthi
+// Firebase Configuration for Business Saarthi with Explicit Database Routing
 const firebaseConfig = {
   apiKey: "AIzaSyBuYDgbmycHMjHGupeoZV2lvv_Z0n7WyoY",
   authDomain: "business-saarthi.firebaseapp.com",
+  databaseURL: "https://business-saarthi-default-rtdb.firebaseio.com",
   projectId: "business-saarthi",
   storageBucket: "business-saarthi.firebasestorage.app",
   messagingSenderId: "556256084111",
@@ -11,5 +12,5 @@ const firebaseConfig = {
 // Initialize Firebase globally using the compatibility layer instance
 if (!firebase.apps.length) {
     firebase.initializeApp(firebaseConfig);
-    console.log("Firebase initialized successfully on Business Saarthi Portal.");
+    console.log("Firebase initialized successfully with Realtime Database connection.");
 }
