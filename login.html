@@ -1,0 +1,120 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>Shop Login - Business Saarthi</title>
+    
+    <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-auth-compat.js"></script>
+    
+    <script src="./auth.js"></script>
+    <link rel="stylesheet" href="./style.css">
+    
+    <style>
+        /* View PIN Input Wrapper matching the landing page look */
+        .pin-wrapper {
+            position: relative;
+            width: 100%;
+            margin-bottom: 15px;
+        }
+        .view-btn-toggle {
+            position: absolute;
+            right: 18px;
+            top: 50%;
+            transform: translateY(-50%);
+            color: var(--accent);
+            cursor: pointer;
+            font-size: 16px;
+            user-select: none;
+            -webkit-user-select: none;
+            font-weight: 900;
+        }
+        .pin-wrapper input {
+            margin-bottom: 0;
+            padding-right: 85px;
+        }
+    </style>
+</head>
+<body>
+
+    <div style="display: flex; flex-direction: column; align-items: center; justify-content: center; min-height: 100vh; width: 100%;">
+
+        <div class="main-container">
+            <div class="header-frame">
+                <h1>BUSINESS SAARTHI</h1>
+            </div>
+
+            <div class="form-content">
+                <h2>SHOP PORTAL LOGIN</h2>
+                
+                <input type="text" id="login-identifier" placeholder="ENTER EMAIL OR PHONE NUMBER">
+                
+                <div class="pin-wrapper">
+                    <input type="password" id="login-pin" placeholder="ENTER 6-DIGIT SECURE PIN" inputmode="numeric" maxlength="6">
+                    <span id="toggle-txt" class="view-btn-toggle" onclick="handleToggleView()">SHOW</span>
+                </div>
+
+                <button onclick="handlePortalLogin()" id="login-submit-btn">LOGIN TO PORTAL</button>
+                
+                <div class="toggle-link" onclick="window.location.href='./index.html'">
+                    NEW SHOP? CREATE ACCOUNT
+                </div>
+                
+                <div id="msg" class="message" style="color: var(--accent); margin-top: 15px;"></div>
+            </div>
+        </div>
+
+    </div>
+
+    <script>
+        // Toggle Password Visibility
+        function handleToggleView() {
+            const field = document.getElementById('login-pin');
+            const txt = document.getElementById('toggle-txt');
+            if (field.type === 'password') {
+                field.type = 'text';
+                txt.innerText = 'HIDE';
+            } else {
+                field.type = 'password';
+                txt.innerText = 'SHOW';
+            }
+        }
+
+        // Handle Portal Login Submission
+        function handlePortalLogin() {
+            const identifier = document.getElementById('login-identifier').value.trim();
+            const pin = document.getElementById('login-pin').value;
+            const msg = document.getElementById('msg');
+            const loginBtn = document.getElementById('login-submit-btn');
+            
+            msg.innerText = "";
+
+            if (!identifier || !pin) {
+                msg.style.color = "var(--accent)";
+                msg.innerText = "BOTH FIELDS ARE MANDATORY!";
+                return;
+            }
+            if (pin.length !== 6) {
+                msg.style.color = "var(--accent)";
+                msg.innerText = "PIN MUST BE EXACTLY 6 DIGITS!";
+                return;
+            }
+
+            loginBtn.innerText = "AUTHENTICATING...";
+            loginBtn.disabled = true;
+
+            console.log("Attempting login verification for:", identifier, "with PIN:", pin);
+            
+            msg.style.color = "green";
+            msg.innerText = "PROCESSING PORTAL ACCESS...";
+
+            // Right here: Next step is to match this info with our Realtime Database/Firestore profiles!
+            setTimeout(() => {
+                loginBtn.innerText = "LOGIN TO PORTAL";
+                loginBtn.disabled = false;
+            }, 1500);
+        }
+    </script>
+</body>
+</html>
