@@ -4,14 +4,43 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <title>Business Saarthi</title>
+    
+    <link rel="manifest" href="./manifest.json">
+    <meta name="theme-color" content="#1E3A8A">
+    <link rel="apple-touch-icon" href="https://cdn-icons-png.flaticon.com/512/3081/3081648.png">
+    
     <link rel="stylesheet" href="./style.css">
     <style>
+        /* Top App Installation Banner Styling */
+        .install-banner {
+            background: var(--navy-blue);
+            color: var(--white);
+            padding: 15px;
+            text-align: center;
+            width: 100%;
+            box-sizing: border-box;
+            border-bottom: 4px solid var(--accent);
+        }
+        .install-banner button {
+            width: auto;
+            display: inline-block;
+            padding: 8px 15px;
+            margin: 0 0 0 10px;
+            font-size: 14px;
+            background: var(--accent);
+            box-shadow: none;
+        }
+        .install-banner button:active {
+            transform: none;
+            box-shadow: none;
+        }
+
+        /* View PIN Input Wrapper */
         .pin-wrapper {
             position: relative;
             width: 100%;
             margin-bottom: 15px;
         }
-        /* Hidden layout overlay toggle button */
         .view-btn-toggle {
             position: absolute;
             right: 18px;
@@ -22,7 +51,6 @@
             font-size: 16px;
             user-select: none;
             -webkit-user-select: none;
-            font-weight: 900;
         }
         .pin-wrapper input {
             margin-bottom: 0;
@@ -32,23 +60,32 @@
 </head>
 <body>
 
-    <div class="main-container">
+    <div id="install-banner" class="install-banner" style="display: none;">
+        <span>INSTALL SAARTHI FOR A BETTER EXPERIENCE</span>
+        <button id="install-button">INSTALL NOW</button>
+    </div>
+
+    <div class="main-container" style="margin-top: 20px;">
         <div class="header-frame">
             <h1>BUSINESS SAARTHI</h1>
         </div>
 
         <div class="form-content">
-            <h2>SECURE GATEWAY</h2>
+            <h2>SHOP REGISTRATION</h2>
+            
+            <input type="text" id="biz-name" placeholder="ENTER BUSINESS NAME">
+            <input type="email" id="email-id" placeholder="ENTER EMAIL ID">
+            <input type="text" id="phone-num" placeholder="ENTER PHONE NUMBER" inputmode="numeric" maxlength="10">
             
             <div class="pin-wrapper">
-                <input type="password" id="pin" placeholder="6-DIGIT SECURE PIN" inputmode="numeric" maxlength="6">
+                <input type="password" id="pin" placeholder="CREATE 6-DIGIT SECURE PIN" inputmode="numeric" maxlength="6">
                 <span id="toggle-txt" class="view-btn-toggle" onclick="handleToggleView()">SHOW</span>
             </div>
 
-            <button onclick="routeGateway('login')" id="login-gateway-btn">LOGIN TO PORTAL</button>
+            <button onclick="handleRegistration()" id="register-btn">REGISTER</button>
             
-            <div class="toggle-link" onclick="routeGateway('register')" style="margin-top: 25px;">
-                NEW SHOP? CREATE ACCOUNT
+            <div class="toggle-link" onclick="window.location.href='./login.html'">
+                ALREADY REGISTERED? LOGIN
             </div>
             
             <div id="msg" class="message" style="color: var(--accent); margin-top: 15px;"></div>
@@ -56,6 +93,34 @@
     </div>
 
     <script>
+        // PWA Service Worker Registration
+        if ('serviceWorker' in navigator) {
+            window.addEventListener('load', () => {
+                navigator.serviceWorker.register('./sw.js').catch(err => console.log(err));
+            });
+        }
+
+        // PWA Installation Trigger Logic
+        let deferredPrompt;
+        const installBanner = document.getElementById('install-banner');
+        const installButton = document.getElementById('install-button');
+
+        window.addEventListener('beforeinstallprompt', (e) => {
+            e.preventDefault();
+            deferredPrompt = e;
+            installBanner.style.display = 'block';
+        });
+
+        installButton.addEventListener('click', async () => {
+            if (deferredPrompt) {
+                deferredPrompt.prompt();
+                await deferredPrompt.userChoice;
+                installBanner.style.display = 'none';
+                deferredPrompt = null;
+            }
+        });
+
+        // Toggle Password Visibility
         function handleToggleView() {
             const field = document.getElementById('pin');
             const txt = document.getElementById('toggle-txt');
@@ -68,18 +133,32 @@
             }
         }
 
-        function routeGateway(destination) {
-            const pinVal = document.getElementById('pin').value;
+        // Input Verification Validation
+        function handleRegistration() {
+            const bizName = document.getElementById('biz-name').value.trim();
+            const email = document.getElementById('email-id').value.trim();
+            const phone = document.getElementById('phone-num').value.trim();
+            const pin = document.getElementById('pin').value;
             const msg = document.getElementById('msg');
             msg.innerText = "";
 
-            if (pinVal.length !== 6) {
-                msg.innerText = "PLEASE ENTER 6-DIGIT PIN FIRST!";
+            if (!bizName || !email || !phone || !pin) {
+                msg.innerText = "ALL FIELDS ARE MANDATORY!";
                 return;
             }
+            if (phone.length !== 10) {
+                msg.innerText = "PHONE NUMBER MUST BE 10 DIGITS!";
+                return;
+            }
+            if (pin.length !== 6) {
+                msg.innerText = "PIN MUST BE EXACTLY 6 DIGITS!";
+                return;
+            }
+
+            msg.style.color = "green";
+            msg.innerText = "PROCESSING REGISTRATION SUBMISSION...";
             
-            // Forwards parameters straight to separate static pages
-            window.location.href = `./${destination}.html?pin=${pinVal}`;
+            // Database registration link goes here next!
         }
     </script>
 </body>
