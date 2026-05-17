@@ -7,9 +7,10 @@
     
     <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-auth-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-database-compat.js"></script>
     
-    <script src="./auth.js"></script>
-    <link rel="stylesheet" href="./style.css">
+    <script src="/auth.js"></script>
+    <link rel="stylesheet" href="/style.css">
     
     <style>
         /* View PIN Input Wrapper */
@@ -70,7 +71,7 @@
 
                     <button onclick="handlePortalLogin()" id="login-submit-btn">LOGIN TO PORTAL</button>
                     
-                    <div class="toggle-link" onclick="window.location.href='./index.html'">
+                    <div class="toggle-link" onclick="window.location.href='/index.html'">
                         NEW SHOP? CREATE ACCOUNT
                     </div>
                 </div>
@@ -172,10 +173,8 @@
             firebase.auth().signInWithPhoneNumber(formattedPhone, appVerifier)
                 .then((confirmationResult) => {
                     resetConfirmationResult = confirmationResult;
-                    
                     document.getElementById('forgot-phone-block').style.display = 'none';
                     document.getElementById('forgot-otp-block').style.display = 'block';
-                    
                     msg.style.color = "green";
                     msg.innerText = "RESET OTP SENT SUCCESSFULLY!";
                 })
@@ -190,8 +189,9 @@
                 });
         }
 
-        // Verify OTP code and save new 6-digit credential rule
+        // Verify OTP code and save new 6-digit credential rule to database
         function verifyAndResetPin() {
+            const phone = document.getElementById('forgot-phone').value.trim();
             const code = document.getElementById('reset-otp-code').value.trim();
             const newPin = document.getElementById('new-pin').value;
             const msg = document.getElementById('msg');
@@ -204,34 +204,43 @@
                 return;
             }
 
-            btn.innerText = "UPDATING...";
+            btn.innerText = "UPDATING PIN...";
             btn.disabled = true;
 
             resetConfirmationResult.confirm(code)
                 .then((result) => {
-                    msg.style.color = "green";
-                    msg.innerText = "PHONE VERIFIED! SAVING NEW SECURE PIN...";
-                    
-                    // Database hook to update PIN index file profile goes here!
-                    alert("PIN Updated Successfully! Logging in...");
-                    window.location.href = './dashboard.html';
+                    // Update only the securePin field inside the shop's existing database folder
+                    firebase.database().ref('shops/' + phone).update({
+                        securePin: newPin
+                    }, (error) => {
+                        if (error) {
+                            msg.style.color = "var(--accent)";
+                            msg.innerText = "DATABASE UPDATE FAILED: " + error.message;
+                            btn.innerText = "UPDATE PIN & LOG IN";
+                            btn.disabled = false;
+                        } else {
+                            msg.style.color = "green";
+                            msg.innerText = "PIN UPDATED! LOGGING IN...";
+                            alert("PIN Updated Successfully!");
+                            window.location.href = '/dashboard.html';
+                        }
+                    });
                 })
                 .catch((error) => {
                     console.error(error);
                     msg.style.color = "var(--accent)";
                     msg.innerText = "INVALID OR EXPIRED OTP CODE!";
-                })
-                .finally(() => {
                     btn.innerText = "UPDATE PIN & LOG IN";
                     btn.disabled = false;
                 });
         }
 
-        // Standard Portal Verification
+        // Standard Database Login (SMS Cost = ₹0)
         function handlePortalLogin() {
             const identifier = document.getElementById('login-identifier').value.trim();
             const pin = document.getElementById('login-pin').value;
             const msg = document.getElementById('msg');
+            const loginBtn = document.getElementById('login-submit-btn');
             
             msg.innerText = "";
 
@@ -246,8 +255,62 @@
                 return;
             }
 
-            msg.style.color = "green";
-            msg.innerText = "AUTHENTICATING ACCOUNT ACCESS...";
+            loginBtn.innerText = "AUTHENTICATING...";
+            loginBtn.disabled = true;
+
+            // Option A: If input is a 10-digit phone number, look it up instantly
+            if (/^\d{10}$/.test(identifier)) {
+                firebase.database().ref('shops/' + identifier).once('value')
+                    .then((snapshot) => {
+                        const shopData = snapshot.val();
+                        if (shopData && shopData.securePin === pin) {
+                            msg.style.color = "green";
+                            msg.innerText = "ACCESS GRANTED! REDIRECTING...";
+                            window.location.href = '/dashboard.html';
+                        } else {
+                            msg.style.color = "var(--accent)";
+                            msg.innerText = "INVALID PHONE NUMBER OR SECURE PIN!";
+                            loginBtn.innerText = "LOGIN TO PORTAL";
+                            loginBtn.disabled = false;
+                        }
+                    }).catch(err => {
+                        msg.innerText = "SERVER ERROR: " + err.message;
+                        loginBtn.disabled = false;
+                    });
+            } else {
+                // Option B: If input is an email string, query across the shop nodes
+                firebase.database().ref('shops').orderByChild('emailId').equalTo(identifier).once('value')
+                    .then((snapshot) => {
+                        if (snapshot.exists()) {
+                            let accessGranted = false;
+                            snapshot.forEach((childSnapshot) => {
+                                const shopData = childSnapshot.val();
+                                if (childSnapshot.val().securePin === pin) {
+                                    accessGranted = true;
+                                }
+                            });
+
+                            if (accessGranted) {
+                                msg.style.color = "green";
+                                msg.innerText = "ACCESS GRANTED! REDIRECTING...";
+                                window.location.href = '/dashboard.html';
+                            } else {
+                                msg.style.color = "var(--accent)";
+                                msg.innerText = "INVALID SECURE PIN!";
+                                loginBtn.innerText = "LOGIN TO PORTAL";
+                                loginBtn.disabled = false;
+                            }
+                        } else {
+                            msg.style.color = "var(--accent)";
+                            msg.innerText = "NO ACCOUNT FOUND WITH THIS EMAIL ID!";
+                            loginBtn.innerText = "LOGIN TO PORTAL";
+                            loginBtn.disabled = false;
+                        }
+                    }).catch(err => {
+                        msg.innerText = "SERVER ERROR: " + err.message;
+                        loginBtn.disabled = false;
+                    });
+            }
         }
     </script>
 </body>
