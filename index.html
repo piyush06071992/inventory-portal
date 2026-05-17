@@ -34,22 +34,11 @@
             letter-spacing: 0.5px;
         }
 
-        .install-card-overlay .btn-row {
-            display: flex;
-            gap: 10px;
-        }
-
         .install-card-overlay button {
             margin-top: 0;
             padding: 14px;
             font-size: 16px;
-        }
-
-        .install-dismiss-btn {
-            background: transparent !important;
-            color: var(--navy-blue) !important;
-            border: 4px solid var(--navy-blue) !important;
-            box-shadow: 3px 3px 0px var(--navy-blue) !important;
+            width: 100%; /* Spans full width now */
         }
 
         /* View PIN Input Wrapper */
@@ -86,10 +75,7 @@
 
         <div id="install-banner" class="install-card-overlay">
             <p>INSTALL SAARTHI FOR A FASTER & BETTER EXPERIENCE!</p>
-            <div class="btn-row">
-                <button id="dismiss-banner-btn" class="install-dismiss-btn">LATER</button>
-                <button id="install-button" style="background-color: #10B981; box-shadow: 3px 3px 0px var(--navy-blue);">INSTALL NOW</button>
-            </div>
+            <button id="install-button" style="background-color: #10B981; box-shadow: 3px 3px 0px var(--navy-blue);">INSTALL NOW</button>
         </div>
 
         <div class="main-container">
@@ -133,7 +119,6 @@
         let deferredPrompt;
         const installBanner = document.getElementById('install-banner');
         const installButton = document.getElementById('install-button');
-        const dismissButton = document.getElementById('dismiss-banner-btn');
 
         window.addEventListener('beforeinstallprompt', (e) => {
             e.preventDefault();
@@ -148,10 +133,6 @@
                 installBanner.style.display = 'none';
                 deferredPrompt = null;
             }
-        });
-
-        dismissButton.addEventListener('click', () => {
-            installBanner.style.display = 'none';
         });
 
         // Toggle Password Visibility Component
