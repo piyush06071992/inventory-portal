@@ -4,34 +4,29 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <title>Business Saarthi</title>
-    
-    <link rel="manifest" href="manifest.json">
-    <meta name="theme-color" content="#1E3A8A">
-    <link rel="apple-touch-icon" href="https://cdn-icons-png.flaticon.com/512/3081/3081648.png">
-    
     <link rel="stylesheet" href="./style.css">
     <style>
-        /* Special container to position the view text inside/beside the input */
-        .pin-container {
+        .pin-wrapper {
             position: relative;
             width: 100%;
             margin-bottom: 15px;
         }
-        .view-toggle {
+        /* Hidden layout overlay toggle button */
+        .view-btn-toggle {
             position: absolute;
-            right: 15px;
+            right: 18px;
             top: 50%;
             transform: translateY(-50%);
             color: var(--accent);
             cursor: pointer;
-            font-size: 14px;
+            font-size: 16px;
             user-select: none;
             -webkit-user-select: none;
+            font-weight: 900;
         }
-        /* Make sure text doesn't overlap the view button */
-        .pin-container input {
+        .pin-wrapper input {
             margin-bottom: 0;
-            padding-right: 70px;
+            padding-right: 85px;
         }
     </style>
 </head>
@@ -43,62 +38,48 @@
         </div>
 
         <div class="form-content">
-            <h2 id="portal-title">SECURE GATEWAY</h2>
+            <h2>SECURE GATEWAY</h2>
             
-            <div class="pin-container">
+            <div class="pin-wrapper">
                 <input type="password" id="pin" placeholder="6-DIGIT SECURE PIN" inputmode="numeric" maxlength="6">
-                <span id="toggle-view-btn" class="view-toggle" onclick="togglePinVisibility()">SHOW</span>
+                <span id="toggle-txt" class="view-btn-toggle" onclick="handleToggleView()">SHOW</span>
             </div>
 
-            <button onclick="goToLogin()" id="action-login-btn">GO TO LOGIN</button>
+            <button onclick="routeGateway('login')" id="login-gateway-btn">LOGIN TO PORTAL</button>
             
-            <button onclick="goToRegister()" id="action-reg-btn" style="background: transparent; color: var(--navy-blue); border: 4px solid var(--navy-blue); box-shadow: 5px 5px 0px var(--navy-blue);">
-                GO TO REGISTER
-            </button>
+            <div class="toggle-link" onclick="routeGateway('register')" style="margin-top: 25px;">
+                NEW SHOP? CREATE ACCOUNT
+            </div>
             
-            <div id="msg" class="message"></div>
+            <div id="msg" class="message" style="color: var(--accent); margin-top: 15px;"></div>
         </div>
     </div>
 
     <script>
-        // Toggles between password type and text type
-        function togglePinVisibility() {
-            const pinInput = document.getElementById('pin');
-            const toggleBtn = document.getElementById('toggle-view-btn');
-            
-            if (pinInput.type === 'password') {
-                pinInput.type = 'text';
-                toggleBtn.innerText = 'HIDE';
+        function handleToggleView() {
+            const field = document.getElementById('pin');
+            const txt = document.getElementById('toggle-txt');
+            if (field.type === 'password') {
+                field.type = 'text';
+                txt.innerText = 'HIDE';
             } else {
-                pinInput.type = 'password';
-                toggleBtn.innerText = 'SHOW';
+                field.type = 'password';
+                txt.innerText = 'SHOW';
             }
         }
 
-        function getPin() {
-            return document.getElementById('pin').value;
-        }
+        function routeGateway(destination) {
+            const pinVal = document.getElementById('pin').value;
+            const msg = document.getElementById('msg');
+            msg.innerText = "";
 
-        function goToLogin() {
-            const pinVal = getPin();
             if (pinVal.length !== 6) {
-                const msg = document.getElementById('msg');
-                msg.style.color = "var(--accent)";
                 msg.innerText = "PLEASE ENTER 6-DIGIT PIN FIRST!";
                 return;
             }
-            window.location.href = `./login.html?pin=${pinVal}`;
-        }
-
-        function goToRegister() {
-            const pinVal = getPin();
-            if (pinVal.length !== 6) {
-                const msg = document.getElementById('msg');
-                msg.style.color = "var(--accent)";
-                msg.innerText = "PLEASE ENTER 6-DIGIT PIN FIRST!";
-                return;
-            }
-            window.location.href = `./register.html?pin=${pinVal}`;
+            
+            // Forwards parameters straight to separate static pages
+            window.location.href = `./${destination}.html?pin=${pinVal}`;
         }
     </script>
 </body>
