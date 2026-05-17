@@ -13,7 +13,6 @@
     <link rel="stylesheet" href="/style.css">
     
     <style>
-        /* View PIN Input Wrapper */
         .pin-wrapper {
             position: relative;
             width: 100%;
@@ -112,7 +111,6 @@
     </div>
 
     <script>
-        // Toggle Input Visibility Function
         function handleToggleView(fieldId, textId) {
             const field = document.getElementById(fieldId);
             const txt = document.getElementById(textId);
@@ -125,7 +123,6 @@
             }
         }
 
-        // View Switching Logics
         function switchToForgotMode() {
             document.getElementById('login-fields-block').style.display = 'none';
             document.getElementById('forgot-phone-block').style.display = 'block';
@@ -141,7 +138,6 @@
             document.getElementById('msg').innerText = "";
         }
 
-        // Initialize Firebase Invisible reCAPTCHA Guard
         window.onload = function() {
             window.recaptchaVerifier = new firebase.auth.RecaptchaVerifier('recaptcha-container', {
                 'size': 'invisible',
@@ -151,7 +147,6 @@
 
         let resetConfirmationResult = null;
 
-        // Dispatch Reset OTP SMS Engine
         function sendResetOtp() {
             const phone = document.getElementById('forgot-phone').value.trim();
             const msg = document.getElementById('msg');
@@ -189,7 +184,6 @@
                 });
         }
 
-        // Verify OTP code and save new 6-digit credential rule to database
         function verifyAndResetPin() {
             const phone = document.getElementById('forgot-phone').value.trim();
             const code = document.getElementById('reset-otp-code').value.trim();
@@ -209,7 +203,6 @@
 
             resetConfirmationResult.confirm(code)
                 .then((result) => {
-                    // Update only the securePin field inside the shop's existing database folder
                     firebase.database().ref('shops/' + phone).update({
                         securePin: newPin
                     }, (error) => {
@@ -235,6 +228,51 @@
                 });
         }
 
+        // Shared Evaluation Core Block to handle Lifecycle Checks
+        function evaluateUserSubscriptionLifecycle(shopData, userKey, loginButtonReference) {
+            const msg = document.getElementById('msg');
+            const now = new Date();
+            const trialEnd = new Date(shopData.trialEndsAt);
+            const lockoutEnd = new Date(shopData.lockoutEndsAt);
+            const status = shopData.paymentStatus;
+
+            // Phase 4 Check: Exceeded 60 days total without paying -> AUTOMATIC DATA PURGE
+            if (status !== "PAID" && now > lockoutEnd) {
+                firebase.database().ref('shops/' + userKey).remove()
+                    .then(() => {
+                        msg.style.color = "var(--accent)";
+                        msg.innerText = "ACCOUNT EXPIRED AND ALL DATA PERMANENTLY PURGED DUE TO NON-PAYMENT!";
+                    })
+                    .catch((err) => {
+                        msg.innerText = "PURGE ACTION FAILED: " + err.message;
+                    })
+                    .finally(() => {
+                        loginButtonReference.innerText = "LOGIN TO PORTAL";
+                        loginButtonReference.disabled = false;
+                    });
+                return;
+            }
+
+            // Phase 3 Check: Past 30-day trial but inside the 60-day grace period window -> BLOCK ACCESS
+            if (status !== "PAID" && now > trialEnd) {
+                msg.style.color = "var(--accent)";
+                msg.innerText = "ACCOUNT LOCKED! PLEASE PAY RENT TO RESTORE ACCESS.";
+                sessionStorage.setItem("lockedUserPhone", userKey);
+                setTimeout(() => {
+                    window.location.href = '/billing.html';
+                }, 2500);
+                return;
+            }
+
+            // Phase 1 & 2 Check: Inside active Trial or marked as Paid -> SUCCESSFUL ENTRY
+            msg.style.color = "green";
+            msg.innerText = "ACCESS GRANTED! REDIRECTING...";
+            sessionStorage.setItem("activeUserPhone", userKey);
+            setTimeout(() => {
+                window.location.href = '/dashboard.html';
+            }, 1000);
+        }
+
         // Standard Database Login (SMS Cost = ₹0)
         function handlePortalLogin() {
             const identifier = document.getElementById('login-identifier').value.trim();
@@ -258,15 +296,13 @@
             loginBtn.innerText = "AUTHENTICATING...";
             loginBtn.disabled = true;
 
-            // Option A: If input is a 10-digit phone number, look it up instantly
+            // Option A: Phone Number Identifier Login Match
             if (/^\d{10}$/.test(identifier)) {
                 firebase.database().ref('shops/' + identifier).once('value')
                     .then((snapshot) => {
                         const shopData = snapshot.val();
                         if (shopData && shopData.securePin === pin) {
-                            msg.style.color = "green";
-                            msg.innerText = "ACCESS GRANTED! REDIRECTING...";
-                            window.location.href = '/dashboard.html';
+                            evaluateUserSubscriptionLifecycle(shopData, identifier, loginBtn);
                         } else {
                             msg.style.color = "var(--accent)";
                             msg.innerText = "INVALID PHONE NUMBER OR SECURE PIN!";
@@ -278,22 +314,25 @@
                         loginBtn.disabled = false;
                     });
             } else {
-                // Option B: If input is an email string, query across the shop nodes
+                // Option B: Email Identifier Login Search Match
                 firebase.database().ref('shops').orderByChild('emailId').equalTo(identifier).once('value')
                     .then((snapshot) => {
                         if (snapshot.exists()) {
-                            let accessGranted = false;
+                            let matchFound = false;
+                            let matchedKey = "";
+                            let matchedData = null;
+
                             snapshot.forEach((childSnapshot) => {
-                                const shopData = childSnapshot.val();
-                                if (childSnapshot.val().securePin === pin) {
-                                    accessGranted = true;
+                                const data = childSnapshot.val();
+                                if (data.securePin === pin) {
+                                    matchFound = true;
+                                    matchedKey = childSnapshot.key;
+                                    matchedData = data;
                                 }
                             });
 
-                            if (accessGranted) {
-                                msg.style.color = "green";
-                                msg.innerText = "ACCESS GRANTED! REDIRECTING...";
-                                window.location.href = '/dashboard.html';
+                            if (matchFound) {
+                                evaluateUserSubscriptionLifecycle(matchedData, matchedKey, loginBtn);
                             } else {
                                 msg.style.color = "var(--accent)";
                                 msg.innerText = "INVALID SECURE PIN!";
