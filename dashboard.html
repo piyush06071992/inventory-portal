@@ -1,0 +1,31 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Dashboard - Business Saarthi</title>
+    <link rel="stylesheet" href="/style.css">
+</head>
+<body>
+    <div style="display: flex; flex-direction: column; align-items: center; justify-content: center; min-height: 100vh; width: 100%;">
+        <div class="main-container">
+            <div class="header-frame">
+                <h1>BUSINESS SAARTHI</h1>
+            </div>
+            <div class="form-content" style="text-align: center;">
+                <h2>WELCOME TO PORTAL</h2>
+                <p style="color: var(--navy-blue); font-size: 16px; margin-bottom: 25px; font-weight: bold;">
+                    YOUR SHOP MANAGEMENT DASHBOARD IS READY!
+                </p>
+                <button onclick="handleLogout()" style="background-color: var(--accent);">LOGOUT FROM PORTAL</button>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        function handleLogout() {
+            window.location.href = '/login.html';
+        }
+    </script>
+</body>
+</html>
