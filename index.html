@@ -9,9 +9,13 @@
     <meta name="theme-color" content="#1E3A8A">
     <link rel="apple-touch-icon" href="https://cdn-icons-png.flaticon.com/512/3081/3081648.png">
     
+    <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-auth-compat.js"></script>
+    
+    <script src="./auth.js"></script>
     <link rel="stylesheet" href="./style.css">
+    
     <style>
-        /* Modernized Responsive Install Banner Overlay */
         .install-card-overlay {
             background: #FFFFFF;
             border: 5px solid var(--navy-blue);
@@ -23,25 +27,20 @@
             max-width: 420px;
             box-sizing: border-box;
             text-align: center;
-            display: none; /* Controlled by PWA handler */
+            display: none;
             animation: slideDown 0.4s ease-out;
         }
-
         .install-card-overlay p {
             color: var(--navy-blue);
             margin: 0 0 15px 0;
             font-size: 16px;
-            letter-spacing: 0.5px;
         }
-
         .install-card-overlay button {
             margin-top: 0;
             padding: 14px;
             font-size: 16px;
-            width: 100%; /* Spans full width now */
+            width: 100%;
         }
-
-        /* View PIN Input Wrapper */
         .pin-wrapper {
             position: relative;
             width: 100%;
@@ -62,7 +61,6 @@
             margin-bottom: 0;
             padding-right: 85px;
         }
-
         @keyframes slideDown {
             from { transform: translateY(-20px); opacity: 0; }
             to { transform: translateY(0); opacity: 1; }
@@ -84,22 +82,39 @@
             </div>
 
             <div class="form-content">
-                <h2>SHOP REGISTRATION</h2>
+                <h2 id="form-title">SHOP REGISTRATION</h2>
                 
-                <input type="text" id="biz-name" placeholder="ENTER BUSINESS NAME">
-                <input type="email" id="email-id" placeholder="ENTER EMAIL ID">
-                <input type="text" id="phone-num" placeholder="ENTER PHONE NUMBER" inputmode="numeric" maxlength="10">
-                
-                <div class="pin-wrapper">
-                    <input type="password" id="pin" placeholder="CREATE 6-DIGIT SECURE PIN" inputmode="numeric" maxlength="6">
-                    <span id="toggle-txt" class="view-btn-toggle" onclick="handleToggleView()">SHOW</span>
+                <div id="registration-fields">
+                    <input type="text" id="biz-name" placeholder="ENTER BUSINESS NAME">
+                    <input type="email" id="email-id" placeholder="ENTER EMAIL ID">
+                    <input type="text" id="phone-num" placeholder="ENTER PHONE NUMBER" inputmode="numeric" maxlength="10">
+                    
+                    <div class="pin-wrapper">
+                        <input type="password" id="pin" placeholder="CREATE 6-DIGIT SECURE PIN" inputmode="numeric" maxlength="6">
+                        <span id="toggle-txt" class="view-btn-toggle" onclick="handleToggleView()">SHOW</span>
+                    </div>
+
+                    <button onclick="handleRegistration()" id="register-btn">REGISTER</button>
+                    
+                    <div class="toggle-link" onclick="window.location.href='./login.html'">
+                        ALREADY REGISTERED? LOGIN
+                    </div>
                 </div>
 
-                <button onclick="handleRegistration()" id="register-btn">REGISTER</button>
-                
-                <div class="toggle-link" onclick="window.location.href='./login.html'">
-                    ALREADY REGISTERED? LOGIN
+                <div id="otp-fields" style="display: none;">
+                    <p style="text-align: center; color: var(--navy-blue); font-size: 16px; margin-bottom: 15px;">
+                        ENTER THE 6-DIGIT OTP SENT TO YOUR MOBILE
+                    </p>
+                    <input type="text" id="otp-code" placeholder="ENTER OTP CODE" inputmode="numeric" maxlength="6">
+                    
+                    <button onclick="verifyOtpCode()" id="otp-btn" style="background-color: #10B981;">VERIFY & CONFIRM</button>
+                    
+                    <div class="toggle-link" onclick="cancelOtpView()">
+                        ← BACK TO DETAILS
+                    </div>
                 </div>
+                
+                <div id="recaptcha-container"></div>
                 
                 <div id="msg" class="message" style="color: var(--accent); margin-top: 15px;"></div>
             </div>
@@ -108,14 +123,14 @@
     </div>
 
     <script>
-        // PWA Service Worker Onboarding Registration
+        // Service Worker Loader
         if ('serviceWorker' in navigator) {
             window.addEventListener('load', () => {
                 navigator.serviceWorker.register('./sw.js').catch(err => console.log(err));
             });
         }
 
-        // Dedicated Mobile PWA Installation Hook
+        // PWA Banner Hooks
         let deferredPrompt;
         const installBanner = document.getElementById('install-banner');
         const installButton = document.getElementById('install-button');
@@ -135,7 +150,6 @@
             }
         });
 
-        // Toggle Password Visibility Component
         function handleToggleView() {
             const field = document.getElementById('pin');
             const txt = document.getElementById('toggle-txt');
@@ -148,30 +162,118 @@
             }
         }
 
-        // Basic Client Form Submission Guard
+        // Global Variable to Hold the Verification Engine Confirmation Token
+        let confirmationResultObj = null;
+
+        // Initialize Firebase Invisible reCAPTCHA Security Verification Guard
+        window.onload = function() {
+            window.recaptchaVerifier = new firebase.auth.RecaptchaVerifier('recaptcha-container', {
+                'size': 'invisible',
+                'callback': (response) => { /* reCAPTCHA solved automatically */ }
+            });
+        };
+
+        // Trigger SMS Verification Process Flow
         function handleRegistration() {
             const bizName = document.getElementById('biz-name').value.trim();
             const email = document.getElementById('email-id').value.trim();
             const phone = document.getElementById('phone-num').value.trim();
             const pin = document.getElementById('pin').value;
             const msg = document.getElementById('msg');
+            const regBtn = document.getElementById('register-btn');
+            
             msg.innerText = "";
 
             if (!bizName || !email || !phone || !pin) {
+                msg.style.color = "var(--accent)";
                 msg.innerText = "ALL FIELDS ARE MANDATORY!";
                 return;
             }
             if (phone.length !== 10) {
+                msg.style.color = "var(--accent)";
                 msg.innerText = "PHONE NUMBER MUST BE 10 DIGITS!";
                 return;
             }
             if (pin.length !== 6) {
+                msg.style.color = "var(--accent)";
                 msg.innerText = "PIN MUST BE EXACTLY 6 DIGITS!";
                 return;
             }
 
-            msg.style.color = "green";
-            msg.innerText = "PROCESSING REGISTRATION SUBMISSION...";
+            regBtn.innerText = "SENDING OTP SMS...";
+            regBtn.disabled = true;
+
+            // Formats standard Indian country calling sorting code (+91)
+            const formattedPhoneNumber = "+91" + phone;
+            const appVerifier = window.recaptchaVerifier;
+
+            firebase.auth().signInWithPhoneNumber(formattedPhoneNumber, appVerifier)
+                .then((confirmationResult) => {
+                    // SMS Sent successfully! Store confirmation handler reference token
+                    confirmationResultObj = confirmationResult;
+                    
+                    // Toggle views seamlessly inside the UI frame container block
+                    document.getElementById('registration-fields').style.display = 'none';
+                    document.getElementById('otp-fields').style.display = 'block';
+                    document.getElementById('form-title').innerText = "VERIFY OTP";
+                    
+                    msg.style.color = "green";
+                    msg.innerText = "OTP SMS DISPATCHED SUCCESSFULLY!";
+                })
+                .catch((error) => {
+                    console.error("SMS Delivery Failed:", error);
+                    msg.style.color = "var(--accent)";
+                    msg.innerText = "SMS ERROR: " + error.message;
+                })
+                .finally(() => {
+                    regBtn.innerText = "REGISTER";
+                    regBtn.disabled = false;
+                });
+        }
+
+        // Validate Sent User Token Pin Credentials Match Input Code
+        function verifyOtpCode() {
+            const code = document.getElementById('otp-code').value.trim();
+            const msg = document.getElementById('msg');
+            const otpBtn = document.getElementById('otp-btn');
+            msg.innerText = "";
+
+            if (code.length !== 6) {
+                msg.style.color = "var(--accent)";
+                msg.innerText = "PLEASE ENTER VALID 6-DIGIT CODE!";
+                return;
+            }
+
+            otpBtn.innerText = "VERIFYING...";
+            otpBtn.disabled = true;
+
+            confirmationResultObj.confirm(code)
+                .then((result) => {
+                    // Phone verified successfully! User object registered in auth channel instance
+                    const user = result.user;
+                    msg.style.color = "green";
+                    msg.innerText = "PHONE VERIFIED! SAVING PORTAL ACCOUNT...";
+                    
+                    // Temp route confirmation redirect placeholder target
+                    alert("Registration Successful! Welcome to Saarthi Portal.");
+                    window.location.href = './dashboard.html';
+                })
+                .catch((error) => {
+                    console.error("Invalid OTP Verification Token:", error);
+                    msg.style.color = "var(--accent)";
+                    msg.innerText = "INVALID OR EXPIRED OTP code!";
+                })
+                .finally(() => {
+                    otpBtn.innerText = "VERIFY & CONFIRM";
+                    otpBtn.disabled = false;
+                });
+        }
+
+        function cancelOtpView() {
+            document.getElementById('otp-fields').style.display = 'none';
+            document.getElementById('registration-fields').style.display = 'block';
+            document.getElementById('form-title').innerText = "SHOP REGISTRATION";
+            document.getElementById('msg').innerText = "";
         }
     </script>
 </body>
