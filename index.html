@@ -13,90 +13,55 @@
 </head>
 <body>
 
-    <div id="install-banner" style="display: none; background: #1E3A8A; color: white; padding: 15px; text-align: center; position: fixed; top: 0; left: 0; width: 100%; z-index: 9999; font-family: sans-serif; box-shadow: 0 4px 6px rgba(0,0,0,0.1);">
-        <span id="install-text">Install Saarthi for a better experience!</span>
-        <button id="install-button" style="background: #fbbf24; color: #1e3a8a; border: none; padding: 8px 15px; margin-left: 10px; font-weight: bold; border-radius: 5px; cursor: pointer;">
-            INSTALL NOW
-        </button>
-        <span id="close-banner" style="margin-left: 15px; cursor: pointer; font-weight: bold; padding: 5px;">✕</span>
-    </div>
-
     <div class="main-container">
         <div class="header-frame">
             <h1>BUSINESS SAARTHI</h1>
         </div>
 
         <div class="form-content">
-            <h2 id="form-title">SHOP LOGIN</h2>
+            <h2 id="portal-title">SECURE GATEWAY</h2>
             
-            <div id="register-fields" style="display: none;">
-                <input type="text" id="shop-name" placeholder="SHOP NAME (e.g., Sarandipity)">
-                <input type="email" id="reg-email" placeholder="EMAIL ID (REQUIRED)">
-                <input type="tel" id="reg-mobile" placeholder="MOBILE NUMBER (10 DIGITS)" inputmode="numeric" maxlength="10">
-            </div>
+            <input type="password" id="pin" placeholder="ENTER 6-DIGIT SECURE PIN" inputmode="numeric" maxlength="6">
 
-            <div id="login-fields">
-                <input type="text" id="login-id" placeholder="EMAIL OR MOBILE NUMBER">
-            </div>
-
-            <input type="password" id="pin" placeholder="6-DIGIT SECURE PIN" inputmode="numeric" maxlength="6">
-
-            <button id="main-btn">LOGIN TO PORTAL</button>
+            <button onclick="goToLogin()" id="action-login-btn">GO TO LOGIN</button>
             
-            <div class="options-row">
-                <span id="forgot-pin">FORGOT PIN?</span>
-            </div>
-
-            <div class="toggle-link" id="toggle-mode">NEW SHOP? CREATE ACCOUNT</div>
+            <button onclick="goToRegister()" id="action-reg-btn" style="background: transparent; color: var(--navy-blue); border: 4px solid var(--navy-blue); box-shadow: 5px 5px 0px var(--navy-blue);">
+                GO TO REGISTER
+            </button>
+            
             <div id="msg" class="message"></div>
         </div>
     </div>
 
     <script>
-        // 1. Service Worker Registration
-        if ('serviceWorker' in navigator) {
-            window.addEventListener('load', () => {
-                navigator.serviceWorker.register('./sw.js')
-                    .then(reg => console.log('Service Worker Active'))
-                    .catch(err => console.log('Service Worker Error', err));
-            });
+        // Simple routing verification script
+        function getPin() {
+            return document.getElementById('pin').value;
         }
 
-        // 2. Installation Logic
-        let deferredPrompt;
-        const installBanner = document.getElementById('install-banner');
-        const installButton = document.getElementById('install-button');
-        const installText = document.getElementById('install-text');
-
-        window.addEventListener('beforeinstallprompt', (e) => {
-            e.preventDefault();
-            deferredPrompt = e;
-            installBanner.style.display = 'block';
-        });
-
-        installButton.addEventListener('click', async () => {
-            if (deferredPrompt) {
-                deferredPrompt.prompt();
-                const { outcome } = await deferredPrompt.userChoice;
-                installBanner.style.display = 'none';
-                deferredPrompt = null;
+        function goToLogin() {
+            const pinVal = getPin();
+            if (pinVal.length !== 6) {
+                const msg = document.getElementById('msg');
+                msg.style.color = "var(--accent)";
+                msg.innerText = "PLEASE ENTER 6-DIGIT PIN FIRST!";
+                return;
             }
-        });
-
-        // iPhone Detection
-        const isIos = /iPad|iPhone|iPod/.test(navigator.userAgent) && !window.MSStream;
-        const isStandalone = window.matchMedia('(display-mode: standalone)').matches;
-        if (isIos && !isStandalone) {
-            installBanner.style.display = 'block';
-            installText.innerText = "To Install: Tap 'Share' then 'Add to Home Screen' ↓";
-            installButton.style.display = 'none';
+            // Passes the PIN over to the standalone login page query string
+            window.location.href = `./login.html?pin=${pinVal}`;
         }
 
-        document.getElementById('close-banner').addEventListener('click', () => {
-            installBanner.style.display = 'none';
-        });
+        function goToRegister() {
+            const pinVal = getPin();
+            if (pinVal.length !== 6) {
+                const msg = document.getElementById('msg');
+                msg.style.color = "var(--accent)";
+                msg.innerText = "PLEASE ENTER 6-DIGIT PIN FIRST!";
+                return;
+            }
+            // Passes the PIN over to the standalone registration page query string
+            window.location.href = `./register.html?pin=${pinVal}`;
+        }
     </script>
-
-    <script type="module" src="./auth.js"></script>
 </body>
 </html>
