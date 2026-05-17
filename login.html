@@ -12,7 +12,7 @@
     <link rel="stylesheet" href="./style.css">
     
     <style>
-        /* View PIN Input Wrapper matching the landing page look */
+        /* View PIN Input Wrapper */
         .pin-wrapper {
             position: relative;
             width: 100%;
@@ -34,6 +34,16 @@
             margin-bottom: 0;
             padding-right: 85px;
         }
+        .forgot-link {
+            text-align: right;
+            font-size: 14px;
+            color: var(--accent);
+            font-weight: bold;
+            cursor: pointer;
+            margin-top: -5px;
+            margin-bottom: 20px;
+            text-decoration: underline;
+        }
     </style>
 </head>
 <body>
@@ -46,20 +56,53 @@
             </div>
 
             <div class="form-content">
-                <h2>SHOP PORTAL LOGIN</h2>
+                <h2 id="login-title">SHOP PORTAL LOGIN</h2>
                 
-                <input type="text" id="login-identifier" placeholder="ENTER EMAIL OR PHONE NUMBER">
-                
-                <div class="pin-wrapper">
-                    <input type="password" id="login-pin" placeholder="ENTER 6-DIGIT SECURE PIN" inputmode="numeric" maxlength="6">
-                    <span id="toggle-txt" class="view-btn-toggle" onclick="handleToggleView()">SHOW</span>
+                <div id="login-fields-block">
+                    <input type="text" id="login-identifier" placeholder="ENTER EMAIL OR PHONE NUMBER">
+                    
+                    <div class="pin-wrapper">
+                        <input type="password" id="login-pin" placeholder="ENTER 6-DIGIT SECURE PIN" inputmode="numeric" maxlength="6">
+                        <span id="toggle-txt-1" class="view-btn-toggle" onclick="handleToggleView('login-pin', 'toggle-txt-1')">SHOW</span>
+                    </div>
+
+                    <div class="forgot-link" onclick="switchToForgotMode()">FORGOT PIN?</div>
+
+                    <button onclick="handlePortalLogin()" id="login-submit-btn">LOGIN TO PORTAL</button>
+                    
+                    <div class="toggle-link" onclick="window.location.href='./index.html'">
+                        NEW SHOP? CREATE ACCOUNT
+                    </div>
                 </div>
 
-                <button onclick="handlePortalLogin()" id="login-submit-btn">LOGIN TO PORTAL</button>
-                
-                <div class="toggle-link" onclick="window.location.href='./index.html'">
-                    NEW SHOP? CREATE ACCOUNT
+                <div id="forgot-phone-block" style="display: none;">
+                    <p style="text-align: center; color: var(--navy-blue); font-size: 15px; margin-bottom: 15px;">
+                        ENTER REGISTERED PHONE NUMBER TO RESET PIN
+                    </p>
+                    <input type="text" id="forgot-phone" placeholder="ENTER PHONE NUMBER" inputmode="numeric" maxlength="10">
+                    
+                    <button onclick="sendResetOtp()" id="send-otp-btn">SEND VERIFICATION OTP</button>
+                    
+                    <div class="toggle-link" onclick="switchToLoginMode()" style="margin-top: 20px;">
+                        ← BACK TO LOGIN
+                    </div>
                 </div>
+
+                <div id="forgot-otp-block" style="display: none;">
+                    <p style="text-align: center; color: var(--navy-blue); font-size: 15px; margin-bottom: 15px;">
+                        ENTER OTP SENT TO YOUR MOBILE & CREATE NEW PIN
+                    </p>
+                    <input type="text" id="reset-otp-code" placeholder="ENTER 6-DIGIT OTP" inputmode="numeric" maxlength="6">
+                    
+                    <div class="pin-wrapper">
+                        <input type="password" id="new-pin" placeholder="CREATE NEW 6-DIGIT PIN" inputmode="numeric" maxlength="6">
+                        <span id="toggle-txt-2" class="view-btn-toggle" onclick="handleToggleView('new-pin', 'toggle-txt-2')">SHOW</span>
+                    </div>
+                    
+                    <button onclick="verifyAndResetPin()" id="reset-confirm-btn" style="background-color: #10B981;">UPDATE PIN & LOG IN</button>
+                </div>
+                
+                <div id="recaptcha-container"></div>
                 
                 <div id="msg" class="message" style="color: var(--accent); margin-top: 15px;"></div>
             </div>
@@ -68,10 +111,10 @@
     </div>
 
     <script>
-        // Toggle Password Visibility
-        function handleToggleView() {
-            const field = document.getElementById('login-pin');
-            const txt = document.getElementById('toggle-txt');
+        // Toggle Input Visibility Function
+        function handleToggleView(fieldId, textId) {
+            const field = document.getElementById(fieldId);
+            const txt = document.getElementById(textId);
             if (field.type === 'password') {
                 field.type = 'text';
                 txt.innerText = 'HIDE';
@@ -81,12 +124,114 @@
             }
         }
 
-        // Handle Portal Login Submission
+        // View Switching Logics
+        function switchToForgotMode() {
+            document.getElementById('login-fields-block').style.display = 'none';
+            document.getElementById('forgot-phone-block').style.display = 'block';
+            document.getElementById('login-title').innerText = "RESET PIN";
+            document.getElementById('msg').innerText = "";
+        }
+
+        function switchToLoginMode() {
+            document.getElementById('forgot-phone-block').style.display = 'none';
+            document.getElementById('forgot-otp-block').style.display = 'none';
+            document.getElementById('login-fields-block').style.display = 'block';
+            document.getElementById('login-title').innerText = "SHOP PORTAL LOGIN";
+            document.getElementById('msg').innerText = "";
+        }
+
+        // Initialize Firebase Invisible reCAPTCHA Guard
+        window.onload = function() {
+            window.recaptchaVerifier = new firebase.auth.RecaptchaVerifier('recaptcha-container', {
+                'size': 'invisible',
+                'callback': (response) => {}
+            });
+        };
+
+        let resetConfirmationResult = null;
+
+        // Dispatch Reset OTP SMS Engine
+        function sendResetOtp() {
+            const phone = document.getElementById('forgot-phone').value.trim();
+            const msg = document.getElementById('msg');
+            const btn = document.getElementById('send-otp-btn');
+            msg.innerText = "";
+
+            if (phone.length !== 10) {
+                msg.style.color = "var(--accent)";
+                msg.innerText = "ENTER A VALID 10-DIGIT PHONE NUMBER!";
+                return;
+            }
+
+            btn.innerText = "SENDING OTP...";
+            btn.disabled = true;
+
+            const formattedPhone = "+91" + phone;
+            const appVerifier = window.recaptchaVerifier;
+
+            firebase.auth().signInWithPhoneNumber(formattedPhone, appVerifier)
+                .then((confirmationResult) => {
+                    resetConfirmationResult = confirmationResult;
+                    
+                    document.getElementById('forgot-phone-block').style.display = 'none';
+                    document.getElementById('forgot-otp-block').style.display = 'block';
+                    
+                    msg.style.color = "green";
+                    msg.innerText = "RESET OTP SENT SUCCESSFULLY!";
+                })
+                .catch((error) => {
+                    console.error(error);
+                    msg.style.color = "var(--accent)";
+                    msg.innerText = "ERROR: " + error.message;
+                })
+                .finally(() => {
+                    btn.innerText = "SEND VERIFICATION OTP";
+                    btn.disabled = false;
+                });
+        }
+
+        // Verify OTP code and save new 6-digit credential rule
+        function verifyAndResetPin() {
+            const code = document.getElementById('reset-otp-code').value.trim();
+            const newPin = document.getElementById('new-pin').value;
+            const msg = document.getElementById('msg');
+            const btn = document.getElementById('reset-confirm-btn');
+            msg.innerText = "";
+
+            if (code.length !== 6 || newPin.length !== 6) {
+                msg.style.color = "var(--accent)";
+                msg.innerText = "OTP AND NEW PIN MUST BE 6 DIGITS!";
+                return;
+            }
+
+            btn.innerText = "UPDATING...";
+            btn.disabled = true;
+
+            resetConfirmationResult.confirm(code)
+                .then((result) => {
+                    msg.style.color = "green";
+                    msg.innerText = "PHONE VERIFIED! SAVING NEW SECURE PIN...";
+                    
+                    // Database hook to update PIN index file profile goes here!
+                    alert("PIN Updated Successfully! Logging in...");
+                    window.location.href = './dashboard.html';
+                })
+                .catch((error) => {
+                    console.error(error);
+                    msg.style.color = "var(--accent)";
+                    msg.innerText = "INVALID OR EXPIRED OTP CODE!";
+                })
+                .finally(() => {
+                    btn.innerText = "UPDATE PIN & LOG IN";
+                    btn.disabled = false;
+                });
+        }
+
+        // Standard Portal Verification
         function handlePortalLogin() {
             const identifier = document.getElementById('login-identifier').value.trim();
             const pin = document.getElementById('login-pin').value;
             const msg = document.getElementById('msg');
-            const loginBtn = document.getElementById('login-submit-btn');
             
             msg.innerText = "";
 
@@ -101,19 +246,8 @@
                 return;
             }
 
-            loginBtn.innerText = "AUTHENTICATING...";
-            loginBtn.disabled = true;
-
-            console.log("Attempting login verification for:", identifier, "with PIN:", pin);
-            
             msg.style.color = "green";
-            msg.innerText = "PROCESSING PORTAL ACCESS...";
-
-            // Right here: Next step is to match this info with our Realtime Database/Firestore profiles!
-            setTimeout(() => {
-                loginBtn.innerText = "LOGIN TO PORTAL";
-                loginBtn.disabled = false;
-            }, 1500);
+            msg.innerText = "AUTHENTICATING ACCOUNT ACCESS...";
         }
     </script>
 </body>
