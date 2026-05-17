@@ -11,11 +11,13 @@
     
     <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-auth-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-database-compat.js"></script>
     
-    <script src="./auth.js"></script>
-    <link rel="stylesheet" href="./style.css">
+    <script src="/auth.js"></script>
+    <link rel="stylesheet" href="/style.css">
     
     <style>
+        /* Modernized Responsive Install Banner Overlay */
         .install-card-overlay {
             background: #FFFFFF;
             border: 5px solid var(--navy-blue);
@@ -27,20 +29,25 @@
             max-width: 420px;
             box-sizing: border-box;
             text-align: center;
-            display: none;
+            display: none; /* Controlled by PWA prompt logic */
             animation: slideDown 0.4s ease-out;
         }
+
         .install-card-overlay p {
             color: var(--navy-blue);
             margin: 0 0 15px 0;
             font-size: 16px;
+            letter-spacing: 0.5px;
         }
+
         .install-card-overlay button {
             margin-top: 0;
             padding: 14px;
             font-size: 16px;
             width: 100%;
         }
+
+        /* View PIN Input Wrapper layout */
         .pin-wrapper {
             position: relative;
             width: 100%;
@@ -61,6 +68,7 @@
             margin-bottom: 0;
             padding-right: 85px;
         }
+
         @keyframes slideDown {
             from { transform: translateY(-20px); opacity: 0; }
             to { transform: translateY(0); opacity: 1; }
@@ -96,7 +104,7 @@
 
                     <button onclick="handleRegistration()" id="register-btn">REGISTER</button>
                     
-                    <div class="toggle-link" onclick="window.location.href='./login.html'">
+                    <div class="toggle-link" onclick="window.location.href='/login.html'">
                         ALREADY REGISTERED? LOGIN
                     </div>
                 </div>
@@ -123,14 +131,14 @@
     </div>
 
     <script>
-        // Service Worker Loader
+        // PWA Service Worker Onboarding Registration
         if ('serviceWorker' in navigator) {
             window.addEventListener('load', () => {
                 navigator.serviceWorker.register('./sw.js').catch(err => console.log(err));
             });
         }
 
-        // PWA Banner Hooks
+        // Mobile Progressive App Installation Hook
         let deferredPrompt;
         const installBanner = document.getElementById('install-banner');
         const installButton = document.getElementById('install-button');
@@ -150,6 +158,7 @@
             }
         });
 
+        // PIN Input Value View Visibility Toggle
         function handleToggleView() {
             const field = document.getElementById('pin');
             const txt = document.getElementById('toggle-txt');
@@ -162,18 +171,18 @@
             }
         }
 
-        // Global Variable to Hold the Verification Engine Confirmation Token
+        // Global variable tracking verification sequence instances
         let confirmationResultObj = null;
 
-        // Initialize Firebase Invisible reCAPTCHA Security Verification Guard
+        // Initialize Invisible reCAPTCHA Engine Hook
         window.onload = function() {
             window.recaptchaVerifier = new firebase.auth.RecaptchaVerifier('recaptcha-container', {
                 'size': 'invisible',
-                'callback': (response) => { /* reCAPTCHA solved automatically */ }
+                'callback': (response) => {}
             });
         };
 
-        // Trigger SMS Verification Process Flow
+        // Trigger Phone SMS Dispatch Process
         function handleRegistration() {
             const bizName = document.getElementById('biz-name').value.trim();
             const email = document.getElementById('email-id').value.trim();
@@ -203,16 +212,13 @@
             regBtn.innerText = "SENDING OTP SMS...";
             regBtn.disabled = true;
 
-            // Formats standard Indian country calling sorting code (+91)
             const formattedPhoneNumber = "+91" + phone;
             const appVerifier = window.recaptchaVerifier;
 
             firebase.auth().signInWithPhoneNumber(formattedPhoneNumber, appVerifier)
                 .then((confirmationResult) => {
-                    // SMS Sent successfully! Store confirmation handler reference token
                     confirmationResultObj = confirmationResult;
                     
-                    // Toggle views seamlessly inside the UI frame container block
                     document.getElementById('registration-fields').style.display = 'none';
                     document.getElementById('otp-fields').style.display = 'block';
                     document.getElementById('form-title').innerText = "VERIFY OTP";
@@ -231,8 +237,13 @@
                 });
         }
 
-        // Validate Sent User Token Pin Credentials Match Input Code
+        // Validate OTP Entry Code & Persist Clean Data Struct to Database
         function verifyOtpCode() {
+            const bizName = document.getElementById('biz-name').value.trim();
+            const email = document.getElementById('email-id').value.trim();
+            const phone = document.getElementById('phone-num').value.trim();
+            const pin = document.getElementById('pin').value;
+            
             const code = document.getElementById('otp-code').value.trim();
             const msg = document.getElementById('msg');
             const otpBtn = document.getElementById('otp-btn');
@@ -244,26 +255,38 @@
                 return;
             }
 
-            otpBtn.innerText = "VERIFYING...";
+            otpBtn.innerText = "VERIFYING OTP...";
             otpBtn.disabled = true;
 
             confirmationResultObj.confirm(code)
                 .then((result) => {
-                    // Phone verified successfully! User object registered in auth channel instance
-                    const user = result.user;
                     msg.style.color = "green";
                     msg.innerText = "PHONE VERIFIED! SAVING PORTAL ACCOUNT...";
                     
-                    // Temp route confirmation redirect placeholder target
-                    alert("Registration Successful! Welcome to Saarthi Portal.");
-                    window.location.href = './dashboard.html';
+                    // Write data explicitly to Realtime Database endpoint profile tree
+                    firebase.database().ref('shops/' + phone).set({
+                        businessName: bizName,
+                        emailId: email,
+                        phoneNumber: phone,
+                        securePin: pin,
+                        registeredAt: new Date().toISOString()
+                    }, (error) => {
+                        if (error) {
+                            msg.style.color = "var(--accent)";
+                            msg.innerText = "DATABASE ERROR: " + error.message;
+                            otpBtn.innerText = "VERIFY & CONFIRM";
+                            otpBtn.disabled = false;
+                        } else {
+                            msg.innerText = "REGISTRATION SUCCESSFUL! REDIRECTING...";
+                            alert("Account Registered Successfully under " + bizName);
+                            window.location.href = '/dashboard.html';
+                        }
+                    });
                 })
                 .catch((error) => {
                     console.error("Invalid OTP Verification Token:", error);
                     msg.style.color = "var(--accent)";
-                    msg.innerText = "INVALID OR EXPIRED OTP code!";
-                })
-                .finally(() => {
+                    msg.innerText = "INVALID OR EXPIRED OTP CODE!";
                     otpBtn.innerText = "VERIFY & CONFIRM";
                     otpBtn.disabled = false;
                 });
