@@ -10,6 +10,30 @@
     <link rel="apple-touch-icon" href="https://cdn-icons-png.flaticon.com/512/3081/3081648.png">
     
     <link rel="stylesheet" href="./style.css">
+    <style>
+        /* Special container to position the view text inside/beside the input */
+        .pin-container {
+            position: relative;
+            width: 100%;
+            margin-bottom: 15px;
+        }
+        .view-toggle {
+            position: absolute;
+            right: 15px;
+            top: 50%;
+            transform: translateY(-50%);
+            color: var(--accent);
+            cursor: pointer;
+            font-size: 14px;
+            user-select: none;
+            -webkit-user-select: none;
+        }
+        /* Make sure text doesn't overlap the view button */
+        .pin-container input {
+            margin-bottom: 0;
+            padding-right: 70px;
+        }
+    </style>
 </head>
 <body>
 
@@ -21,7 +45,10 @@
         <div class="form-content">
             <h2 id="portal-title">SECURE GATEWAY</h2>
             
-            <input type="password" id="pin" placeholder="ENTER 6-DIGIT SECURE PIN" inputmode="numeric" maxlength="6">
+            <div class="pin-container">
+                <input type="password" id="pin" placeholder="6-DIGIT SECURE PIN" inputmode="numeric" maxlength="6">
+                <span id="toggle-view-btn" class="view-toggle" onclick="togglePinVisibility()">SHOW</span>
+            </div>
 
             <button onclick="goToLogin()" id="action-login-btn">GO TO LOGIN</button>
             
@@ -34,7 +61,20 @@
     </div>
 
     <script>
-        // Simple routing verification script
+        // Toggles between password type and text type
+        function togglePinVisibility() {
+            const pinInput = document.getElementById('pin');
+            const toggleBtn = document.getElementById('toggle-view-btn');
+            
+            if (pinInput.type === 'password') {
+                pinInput.type = 'text';
+                toggleBtn.innerText = 'HIDE';
+            } else {
+                pinInput.type = 'password';
+                toggleBtn.innerText = 'SHOW';
+            }
+        }
+
         function getPin() {
             return document.getElementById('pin').value;
         }
@@ -47,7 +87,6 @@
                 msg.innerText = "PLEASE ENTER 6-DIGIT PIN FIRST!";
                 return;
             }
-            // Passes the PIN over to the standalone login page query string
             window.location.href = `./login.html?pin=${pinVal}`;
         }
 
@@ -59,7 +98,6 @@
                 msg.innerText = "PLEASE ENTER 6-DIGIT PIN FIRST!";
                 return;
             }
-            // Passes the PIN over to the standalone registration page query string
             window.location.href = `./register.html?pin=${pinVal}`;
         }
     </script>
