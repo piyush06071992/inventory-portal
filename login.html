@@ -229,9 +229,38 @@
         }
 
         // Shared Evaluation Core Block to handle Lifecycle Checks
+      // Shared Evaluation Core Block to handle Lifecycle Checks + Auto-Upgrade Old Accounts
         function evaluateUserSubscriptionLifecycle(shopData, userKey, loginButtonReference) {
             const msg = document.getElementById('msg');
             const now = new Date();
+            
+            // --- AUTOMATED ON-THE-FLY UPGRADE FOR OLD ACCOUNTS ---
+            // If an older account logs in and is missing the lifecycle parameters, create them instantly!
+            if (!shopData.trialEndsAt || !shopData.lockoutEndsAt || !shopData.paymentStatus) {
+                console.log("Old account detected. Migrating data schema on-the-fly for key:", userKey);
+                
+                const registrationDate = shopData.registeredAt ? new Date(shopData.registeredAt) : new Date();
+                
+                const calculatedTrialEnd = new Date(registrationDate);
+                calculatedTrialEnd.setDate(calculatedTrialEnd.getDate() + 30);
+                
+                const calculatedLockoutEnd = new Date(registrationDate);
+                calculatedLockoutEnd.setDate(calculatedLockoutEnd.getDate() + 60);
+                
+                // Save the missing variables back to this user's specific folder in Firebase
+                firebase.database().ref('shops/' + userKey).update({
+                    trialEndsAt: calculatedTrialEnd.toISOString(),
+                    lockoutEndsAt: calculatedLockoutEnd.toISOString(),
+                    paymentStatus: shopData.paymentStatus || "TRIAL"
+                });
+
+                // Update our local variables in memory so the rest of the login checks work smoothly right now
+                shopData.trialEndsAt = calculatedTrialEnd.toISOString();
+                shopData.lockoutEndsAt = calculatedLockoutEnd.toISOString();
+                shopData.paymentStatus = shopData.paymentStatus || "TRIAL";
+            }
+            // -----------------------------------------------------
+
             const trialEnd = new Date(shopData.trialEndsAt);
             const lockoutEnd = new Date(shopData.lockoutEndsAt);
             const status = shopData.paymentStatus;
