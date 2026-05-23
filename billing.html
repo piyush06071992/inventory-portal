@@ -4,100 +4,57 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <title>Account Locked - Business Saarthi</title>
-    
     <link rel="stylesheet" href="/style.css">
-    
     <style>
-        .lock-icon {
-            font-size: 50px;
-            color: var(--accent);
-            margin-bottom: 10px;
-            animation: pulse 2s infinite;
-        }
-        .billing-card {
-            background: #F3F4F6;
-            border: 3px dashed var(--navy-blue);
-            border-radius: 12px;
-            padding: 15px;
-            margin: 20px 0;
-            text-align: center;
-        }
-        .price-tag {
-            font-size: 28px;
-            color: var(--navy-blue);
-            font-weight: 900;
-            margin: 5px 0;
-        }
-        .upi-id {
-            background: #FFFFFF;
-            padding: 8px;
-            border-radius: 6px;
-            font-size: 14px;
-            font-weight: bold;
-            color: #374151;
-            border: 1px solid #D1D5DB;
-            word-break: break-all;
-            margin-top: 10px;
-        }
-        @keyframes pulse {
-            0% { transform: scale(1); }
-            50% { transform: scale(1.08); }
-            100% { transform: scale(1); }
-        }
+        .lock-icon { font-size: 50px; color: var(--accent); margin-bottom: 10px; animation: pulse 2s infinite; }
+        .billing-card { background: #F3F4F6; border: 3px dashed var(--navy-blue); border-radius: 12px; padding: 15px; margin: 20px 0; text-align: center; }
+        .price-tag { font-size: 28px; color: var(--navy-blue); font-weight: 900; margin: 5px 0; }
+        @keyframes pulse { 0% { transform: scale(1); } 50% { transform: scale(1.08); } 100% { transform: scale(1); } }
     </style>
 </head>
 <body>
-
     <div style="display: flex; flex-direction: column; align-items: center; justify-content: center; min-height: 100vh; width: 100%;">
-
         <div class="main-container">
             <div class="header-frame">
                 <h1>BUSINESS SAARTHI</h1>
             </div>
-
             <div class="form-content" style="text-align: center;">
                 <div class="lock-icon">🔒</div>
                 <h2>PORTAL ACCESS LOCKED</h2>
-                
-                <p style="color: var(--navy-blue); font-size: 15px; line-height: 1.5; margin-bottom: 10px;">
-                    Your 30-day free trial has completed. To reactivate your store dashboards and safeguard your inventory profiles, please clear the monthly portal rent.
+                <p style="color: var(--navy-blue); font-size: 15px; line-height: 1.5;">
+                    Your access has expired. Pay your monthly portal rent to instantly unlock your dashboard and resume operations.
                 </p>
-
                 <div class="billing-card">
-                    <span style="font-size: 12px; font-weight: bold; color: #6B7280; letter-spacing: 1px;">MONTHLY RENT</span>
+                    <span style="font-size: 12px; font-weight: bold; color: #6B7280;">MONTHLY SUBSCRIPTION</span>
                     <div class="price-tag">₹299 / Month</div>
-                    <span style="font-size: 11px; color: var(--accent); font-weight: bold;">⚠️ UNPAID ACCOUNTS PURGE AUTOMATICALLY AFTER 30 DAYS</span>
                 </div>
 
-                <p style="font-size: 13px; font-weight: bold; text-align: left; margin-bottom: 5px; color: var(--navy-blue);">
-                    METHOD 1: PAY VIA UPI ID
-                </p>
-                <div class="upi-id" id="upi-target">your-payment-vpa@okaxis</div>
-
-                <button onclick="redirectToWhatsAppSupport()" style="background-color: #25D366; margin-top: 25px; box-shadow: 4px 4px 0px #128C7E;">
-                    💬 SEND PAYMENT SCREENSHOT
+                <button onclick="payViaRazorpay()" style="background-color: #1E40AF; box-shadow: 4px 4px 0px var(--accent); font-weight: 900;">
+                    💳 PAY SECURELY VIA RAZORPAY
                 </button>
 
                 <div class="toggle-link" onclick="window.location.href='/login.html'" style="margin-top: 20px;">
-                    ← BACK TO LOGIN SCREEN
+                    ← BACK TO LOGIN
                 </div>
             </div>
         </div>
-
     </div>
 
     <script>
-        // Extract locked user identity metadata from context layer memory
-        const targetShop = sessionStorage.getItem("lockedUserPhone") || "Unknown Shop Account";
+        const currentShop = sessionStorage.getItem("lockedUserPhone") || "unknown";
 
-        // Handle Support Messaging Dispatch
-        function redirectToWhatsAppSupport() {
-            const adminPhone = "918278752771"; // Your mobile contact endpoint 
-            const textMessage = encodeURIComponent(
-                `Hello Business Saarthi Support,\n\nI have transferred my monthly rental subscription for Shop Number: ${targetShop}.\n\nAttached is my transaction payment screenshot. Please verify my portal access!`
-            );
+        function payViaRazorpay() {
+            if(currentShop === "unknown") {
+                alert("Session Error: Please return to login page and try signing in again.");
+                window.location.href = '/login.html';
+                return;
+            }
             
-            window.open(`https://wa.me/${adminPhone}?text=${textMessage}`, '_blank');
+            // Your active Razorpay Payment Page URL
+            const baseRazorpayUrl = "https://rzp.io/rzp/Ehul117N"; 
+            
+            // Appending the phone numbers cleanly to tracking parameters
+            window.location.href = `${baseRazorpayUrl}?phone=${currentShop}&notes[shop_phone]=${currentShop}`;
         }
     </script>
 </body>
