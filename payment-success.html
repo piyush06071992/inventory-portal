@@ -2,86 +2,119 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>Payment Successful - Business Saarthi</title>
-    <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
-    <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-database-compat.js"></script>
-    <script src="/auth.js"></script>
-    <link rel="stylesheet" href="/style.css">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Verification Processing - Business Saarthi</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.1/font/bootstrap-icons.css">
+    
+    <style>
+        body {
+            font-family: 'Inter', sans-serif;
+            background-color: #f4f6f9;
+        }
+        .status-container {
+            max-width: 500px;
+            margin: 80px auto;
+        }
+        .card-status {
+            border: none;
+            border-radius: 16px;
+            box-shadow: 0 8px 24px rgba(0, 0, 0, 0.05);
+            background: #ffffff;
+        }
+        .spinner-pulse {
+            width: 3.5rem;
+            height: 3.5rem;
+            color: #fd7e14;
+        }
+    </style>
 </head>
 <body>
-    <div style="display: flex; flex-direction: column; align-items: center; justify-content: center; min-height: 100vh; width: 100%;">
-        <div class="main-container" style="text-align: center;">
-            <div class="header-frame">
-                <h1>TRANSACTION VERIFIED</h1>
+
+<div class="container status-container px-3">
+    <div class="card card-status text-center p-4 p-md-5">
+        <div class="card-body">
+            
+            <div class="mb-4">
+                <div class="spinner-border spinner-pulse mb-3" role="status">
+                    <span class="visually-hidden">Loading...</span>
+                </div>
+                <h3 class="fw-bold text-dark" id="status-title">Verifying Payment Link</h3>
+                <p class="text-muted" id="status-desc">We are validating your submitted UTR log against our incoming bank account statement. This workspace will auto-refresh once confirmed.</p>
             </div>
-            <div class="form-content">
-                <div style="font-size: 60px; color: #10B981; margin-bottom: 15px;">✅</div>
-                <h2 id="status-heading">PROCESSING UNLOCK...</h2>
-                <p id="status-msg" style="color: var(--navy-blue); font-size: 15px; margin-bottom: 20px;">
-                    Please hold tight. We are securely updating your portal license parameters...
-                </p>
-                <div id="loader-bar" style="width: 100%; height: 6px; background: #E5E7EB; border-radius: 3px; overflow: hidden; position: relative;">
-                    <div style="width: 50%; height: 100%; background: #10B981; position: absolute; animation: load 1.5s infinite linear;"></div>
+
+            <div class="text-start bg-light rounded-3 p-3 mb-4 small">
+                <div class="d-flex justify-content-between mb-2">
+                    <span class="text-muted">Account Workspace:</span>
+                    <span class="fw-semibold text-dark" id="log-phone">--</span>
+                </div>
+                <div class="d-flex justify-content-between">
+                    <span class="text-muted">Logged UTR Reference:</span>
+                    <span class="fw-semibold text-dark text-monospace" id="log-utr">--</span>
                 </div>
             </div>
+
+            <div class="border-top pt-3">
+                <a href="tel:+919999999999" class="btn btn-link btn-sm text-decoration-none text-secondary fw-medium">
+                    <i class="bi bi-telephone-outbound"></i> Contact Admin Support
+                </a>
+            </div>
+
         </div>
     </div>
+</div>
 
-    <style>
-        @keyframes load { 0% { left: -50%; } 100% { left: 100%; } }
-    </style>
+<script src="https://www.gstatic.com/firebasejs/9.6.1/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/9.6.1/firebase-database-compat.js"></script>
 
-    <script>
-        window.onload = function() {
-            const urlParams = new URLSearchParams(window.location.search);
+<script>
+    const firebaseConfig = {
+        apiKey: "YOUR_API_KEY",
+        authDomain: "business-saarthi.firebaseapp.com",
+        databaseURL: "https://business-saarthi-default-rtdb.firebaseio.com",
+        projectId: "business-saarthi",
+        storageBucket: "business-saarthi.appspot.com",
+        messagingSenderId: "YOUR_SENDER_ID",
+        appId: "YOUR_APP_ID"
+    };
+    firebase.initializeApp(firebaseConfig);
+
+    window.onload = function() {
+        const shopPhone = sessionStorage.getItem("lockedUserPhone") || "unknown";
+        document.getElementById("log-phone").innerText = shopPhone;
+
+        if (shopPhone === "unknown") {
+            window.location.href = "login.html";
+            return;
+        }
+
+        // Attach a continuous snapshot stream listener to user's database record node
+        firebase.database().ref(`users/${shopPhone}`).on('value', (snapshot) => {
+            const userData = snapshot.val();
             
-            // Extracts the phone identification tracking variables from the URL redirect string
-            const shopPhone = urlParams.get('phone');
-            const paymentId = urlParams.get('razorpay_payment_id');
-
-            const heading = document.getElementById('status-heading');
-            const message = document.getElementById('status-msg');
-
-            if (!shopPhone) {
-                heading.innerText = "LINKING ERROR";
-                message.innerText = "Payment completed but couldn't resolve shop identity automatically. Please share receipt with support.";
-                document.getElementById('loader-bar').style.display = 'none';
-                return;
-            }
-
-            // Extends the lease parameters 30 and 60 days into the future respectively
-            const extendedExpiry = new Date();
-            extendedExpiry.setDate(extendedExpiry.getDate() + 30);
-
-            const extendedLockout = new Date();
-            extendedLockout.setDate(extendedLockout.getDate() + 60);
-
-            // Execute automated database update profile change live
-            firebase.database().ref('shops/' + shopPhone).update({
-                paymentStatus: "PAID",
-                trialEndsAt: extendedExpiry.toISOString(),
-                lockoutEndsAt: extendedLockout.toISOString(),
-                lastPaymentId: paymentId || "OFFLINE_COMPLETED",
-                lastPaymentTime: new Date().toISOString()
-            }, (error) => {
-                if (error) {
-                    heading.innerText = "DATABASE WRITE FAILED";
-                    message.innerText = "Error completing updates: " + error.message;
-                } else {
-                    heading.innerText = "PORTAL UNLOCKED!";
-                    heading.style.color = "#10B981";
-                    message.innerText = "Your account subscription is now verified! Redirecting to dashboard...";
-                    
-                    sessionStorage.removeItem("lockedUserPhone");
-                    sessionStorage.setItem("activeUserPhone", shopPhone);
+            if (userData) {
+                // If an active status field switch is received, clear session states and bypass gateway roadblock straight into system dashboard
+                if (userData.portalStatus === "active") {
+                    document.getElementById("status-title").innerText = "Payment Confirmed!";
+                    document.getElementById("status-title").classList.replace("text-dark", "text-success");
+                    document.getElementById("status-desc").innerText = "Success! Access granted. Initializing active core configurations...";
                     
                     setTimeout(() => {
-                        window.location.href = '/dashboard.html';
-                    }, 2500);
+                        window.location.href = "dashboard.html";
+                    }, 2000);
+                } 
+                // Display text adjustments if the request node is securely sitting inside the review tables
+                else if (userData.portalStatus === "pending_verification") {
+                    document.getElementById("status-title").innerText = "Verification Pending";
+                    // Display an obscured layout of the recorded UTR parameter key
+                    if(userData.lastSubmittedUtr) {
+                        document.getElementById("log-utr").innerText = userData.lastSubmittedUtr;
+                    }
                 }
-            });
-        };
-    </script>
+            }
+        });
+    };
+</script>
 </body>
 </html>
