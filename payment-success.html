@@ -89,12 +89,12 @@
             return;
         }
 
-        // Attach a continuous snapshot stream listener to user's database record node
+        // Attach persistent listener stream to capture admin account state toggles
         firebase.database().ref(`users/${shopPhone}`).on('value', (snapshot) => {
             const userData = snapshot.val();
             
             if (userData) {
-                // If an active status field switch is received, clear session states and bypass gateway roadblock straight into system dashboard
+                // If profile state turns active, transition instantly to core platform dashboard
                 if (userData.portalStatus === "active") {
                     document.getElementById("status-title").innerText = "Payment Confirmed!";
                     document.getElementById("status-title").classList.replace("text-dark", "text-success");
@@ -104,10 +104,9 @@
                         window.location.href = "dashboard.html";
                     }, 2000);
                 } 
-                // Display text adjustments if the request node is securely sitting inside the review tables
+                // Display layout adjustments if the request is safely locked inside review states
                 else if (userData.portalStatus === "pending_verification") {
                     document.getElementById("status-title").innerText = "Verification Pending";
-                    // Display an obscured layout of the recorded UTR parameter key
                     if(userData.lastSubmittedUtr) {
                         document.getElementById("log-utr").innerText = userData.lastSubmittedUtr;
                     }
