@@ -6,10 +6,39 @@
     <title>Account Locked - Business Saarthi</title>
     <link rel="stylesheet" href="/style.css">
     <style>
-        .lock-icon { font-size: 50px; color: var(--accent); margin-bottom: 10px; animation: pulse 2s infinite; }
-        .billing-card { background: #F3F4F6; border: 3px dashed var(--navy-blue); border-radius: 12px; padding: 15px; margin: 20px 0; text-align: center; }
-        .price-tag { font-size: 28px; color: var(--navy-blue); font-weight: 900; margin: 5px 0; }
-        @keyframes pulse { 0% { transform: scale(1); } 50% { transform: scale(1.08); } 100% { transform: scale(1); } }
+        .lock-icon { 
+            font-size: 50px; 
+            color: var(--accent); 
+            margin-bottom: 10px; 
+            animation: pulse 2s infinite; 
+        }
+        .billing-card { 
+            background: #F3F4F6; 
+            border: 3px dashed var(--navy-blue); 
+            border-radius: 12px; 
+            padding: 15px; 
+            margin: 20px 0; 
+            text-align: center; 
+        }
+        .price-tag { 
+            font-size: 28px; 
+            color: var(--navy-blue); 
+            font-weight: 900; 
+            margin: 5px 0; 
+        }
+        /* Centering container for the Razorpay script embed button */
+        .payment-button-container {
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            margin: 25px 0 15px 0;
+            min-height: 50px;
+        }
+        @keyframes pulse { 
+            0% { transform: scale(1); } 
+            50% { transform: scale(1.08); } 
+            100% { transform: scale(1); } 
+        }
     </style>
 </head>
 <body>
@@ -29,9 +58,17 @@
                     <div class="price-tag">₹299 / Month</div>
                 </div>
 
-                <button onclick="payViaRazorpay()" style="background-color: #1E40AF; box-shadow: 4px 4px 0px var(--accent); font-weight: 900;">
-                    💳 PAY SECURELY VIA RAZORPAY
-                </button>
+                <div class="payment-button-container">
+                    <div class="razorpay-embed-btn" id="saarthi-rzp-btn" data-url="https://pages.razorpay.com/pl_Ssq5QPjhHhrkxX/view" data-text="Pay Now" data-color="#FF0000" data-size="large">
+                      <script>
+                        (function(){
+                          var d=document; var x=!d.getElementById('razorpay-embed-btn-js')
+                          if(x){ var s=d.createElement('script'); s.defer=!0;s.id='razorpay-embed-btn-js';
+                          s.src='https://cdn.razorpay.com/static/embed_btn/bundle.js';d.body.appendChild(s);} else{var rzp=window['__rzp__'];
+                          rzp && rzp.init && rzp.init()}})();
+                      </script>
+                    </div>
+                </div>
 
                 <div class="toggle-link" onclick="window.location.href='/login.html'" style="margin-top: 20px;">
                     ← BACK TO LOGIN
@@ -41,21 +78,22 @@
     </div>
 
     <script>
-        const currentShop = sessionStorage.getItem("lockedUserPhone") || "unknown";
-
-        function payViaRazorpay() {
-            if(currentShop === "unknown") {
-                alert("Session Error: Please return to login page and try signing in again.");
-                window.location.href = '/login.html';
-                return;
+        window.onload = function() {
+            // Pick up the phone number of the locked-out store session
+            const currentShop = sessionStorage.getItem("lockedUserPhone") || "unknown";
+            const rzpButtonTarget = document.getElementById("saarthi-rzp-btn");
+            
+            if (rzpButtonTarget && currentShop !== "unknown") {
+                // Get the original setup URL from the embed button data attribute
+                const originalUrl = rzpButtonTarget.getAttribute("data-url");
+                
+                // Append tracking tags to link payments straight to their phone profile records
+                const automatedTrackingUrl = `${originalUrl}?phone=${currentShop}&notes[shop_phone]=${currentShop}`;
+                
+                // Update the button target live before execution
+                rzpButtonTarget.setAttribute("data-url", automatedTrackingUrl);
             }
-            
-            // Your active Razorpay Payment Page URL
-            const baseRazorpayUrl = "https://rzp.io/rzp/Ehul117N"; 
-            
-            // Appending the phone numbers cleanly to tracking parameters
-            window.location.href = `${baseRazorpayUrl}?phone=${currentShop}&notes[shop_phone]=${currentShop}`;
-        }
+        };
     </script>
 </body>
 </html>
