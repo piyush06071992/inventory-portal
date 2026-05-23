@@ -1,0 +1,87 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>Payment Successful - Business Saarthi</title>
+    <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-database-compat.js"></script>
+    <script src="/auth.js"></script>
+    <link rel="stylesheet" href="/style.css">
+</head>
+<body>
+    <div style="display: flex; flex-direction: column; align-items: center; justify-content: center; min-height: 100vh; width: 100%;">
+        <div class="main-container" style="text-align: center;">
+            <div class="header-frame">
+                <h1>TRANSACTION VERIFIED</h1>
+            </div>
+            <div class="form-content">
+                <div style="font-size: 60px; color: #10B981; margin-bottom: 15px;">✅</div>
+                <h2 id="status-heading">PROCESSING UNLOCK...</h2>
+                <p id="status-msg" style="color: var(--navy-blue); font-size: 15px; margin-bottom: 20px;">
+                    Please hold tight. We are securely updating your portal license parameters...
+                </p>
+                <div id="loader-bar" style="width: 100%; height: 6px; background: #E5E7EB; border-radius: 3px; overflow: hidden; position: relative;">
+                    <div style="width: 50%; height: 100%; background: #10B981; position: absolute; animation: load 1.5s infinite linear;"></div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <style>
+        @keyframes load { 0% { left: -50%; } 100% { left: 100%; } }
+    </style>
+
+    <script>
+        window.onload = function() {
+            const urlParams = new URLSearchParams(window.location.search);
+            
+            // Extracts the phone identification tracking variables from the URL redirect string
+            const shopPhone = urlParams.get('phone');
+            const paymentId = urlParams.get('razorpay_payment_id');
+
+            const heading = document.getElementById('status-heading');
+            const message = document.getElementById('status-msg');
+
+            if (!shopPhone) {
+                heading.innerText = "LINKING ERROR";
+                message.innerText = "Payment completed but couldn't resolve shop identity automatically. Please share receipt with support.";
+                document.getElementById('loader-bar').style.display = 'none';
+                return;
+            }
+
+            // Extends the lease parameters 30 and 60 days into the future respectively
+            const extendedExpiry = new Date();
+            extendedExpiry.setDate(extendedExpiry.getDate() + 30);
+
+            const extendedLockout = new Date();
+            extendedLockout.setDate(extendedLockout.getDate() + 60);
+
+            // Execute automated database update profile change live
+            firebase.database().ref('shops/' + shopPhone).update({
+                paymentStatus: "PAID",
+                trialEndsAt: extendedExpiry.toISOString(),
+                lockoutEndsAt: extendedLockout.toISOString(),
+                lastPaymentId: paymentId || "OFFLINE_COMPLETED",
+                lastPaymentTime: new Date().toISOString()
+            }, (error) => {
+                if (error) {
+                    heading.innerText = "DATABASE WRITE FAILED";
+                    message.innerText = "Error completing updates: " + error.message;
+                } else {
+                    heading.innerText = "PORTAL UNLOCKED!";
+                    heading.style.color = "#10B981";
+                    message.innerText = "Your account subscription is now verified! Redirecting to dashboard...";
+                    
+                    sessionStorage.removeItem("lockedUserPhone");
+                    sessionStorage.setItem("activeUserPhone", shopPhone);
+                    
+                    setTimeout(() => {
+                        window.location.href = '/dashboard.html';
+                    }, 2500);
+                }
+            });
+        };
+    </script>
+</body>
+</html>
