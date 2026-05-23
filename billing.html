@@ -115,7 +115,7 @@
 <script src="https://www.gstatic.com/firebasejs/9.6.1/firebase-database-compat.js"></script>
 
 <script>
-    // TODO: Update this block with your production Firebase credentials
+    // Production Firebase initialization parameters
     const firebaseConfig = {
         apiKey: "YOUR_API_KEY",
         authDomain: "business-saarthi.firebaseapp.com",
@@ -128,39 +128,39 @@
     firebase.initializeApp(firebaseConfig);
 
     window.onload = function() {
-        // Extract session values securely passed down from core portal entry login routing logic
+        // Extract dynamically assigned session storage metrics
         const shopPhone = sessionStorage.getItem("lockedUserPhone") || "9999999999";
         const variableRent = sessionStorage.getItem("calculatedRentAmount") || "1500"; 
         
-        // Push the dynamic value straight to the UI element
+        // Push the formatted dynamic value to the UI ledger
         document.getElementById("display-rent").innerText = parseFloat(variableRent).toFixed(2);
 
-        // Core Destination Setup
-        const personalUPI = "yourname@okaxis"; // <-- REPLACE THIS WITH YOUR REAL PERSONAL UPI ID
-        const merchantName = "Vision Mathematics"; 
+        // Core Verified Destructural Routing Details
+        const personalUPI = "rana.rpiyush.piyush826@okhdfcbank.com"; 
+        const merchantName = "Piyush Rana"; 
         const txnRefNote = encodeURIComponent(`Saarthi Rent ${shopPhone}`);
 
-        // Assemble standard NPCI unified deep link string
+        // Assemble strict NPCI specification string structure
         const upiUrl = `upi://pay?pa=${personalUPI}&pn=${encodeURIComponent(merchantName)}&am=${variableRent}&tn=${txnRefNote}&cu=INR`;
 
-        // Bind directly into HTML DOM node element
+        // Direct binding to DOM anchor node
         const upiBtn = document.getElementById("upi-intent-link");
         upiBtn.setAttribute("href", upiUrl);
     };
 
-    // Subform event click sequence listener logic
+    // Form confirmation processing logic string
     document.getElementById("verify-utr-btn").addEventListener("click", function() {
         const utrValue = document.getElementById("utr-input").value.trim();
         const shopPhone = sessionStorage.getItem("lockedUserPhone") || "unknown";
         const variableRent = sessionStorage.getItem("calculatedRentAmount") || "0";
 
-        // Strict validation for standard 12-digit numerical Indian banking receipt structures
+        // Validate Indian Interbank settlement token length
         if (utrValue.length !== 12 || isNaN(utrValue)) {
             alert("Invalid Format! Please provide a clean 12-digit numerical UPI UTR Number found on your payment receipt.");
             return;
         }
 
-        // Push transaction block payload into dedicated Realtime Database parsing tracking queues
+        // Write verification payload into primary queue node paths
         firebase.database().ref(`payment_verifications/${utrValue}`).set({
             phone: shopPhone,
             amountPaid: variableRent,
@@ -168,12 +168,13 @@
             timestamp: firebase.database.ServerValue.TIMESTAMP,
             status: "pending"
         }).then(() => {
-            // Drop account state to pending evaluation so workspace can gracefully show verification screen
+            // Update master record tracker profile flags 
             return firebase.database().ref(`users/${shopPhone}`).update({
-                portalStatus: "pending_verification"
+                portalStatus: "pending_verification",
+                lastSubmittedUtr: utrValue
             });
         }).then(() => {
-            // Forward user safely along to the landing checkpoint file page
+            // Forward safely along to the landing checkpoint page
             window.location.href = "payment-success.html";
         }).catch((err) => {
             alert("Database Error: " + err.message);
