@@ -50,7 +50,7 @@
                     <div class="spinner-border spinner-border-sm text-warning" role="status"></div>
                     <div>
                         <strong class="d-block text-dark small">Automated Sync Active</strong>
-                        <span class="text-muted x-small d-block" style="font-size: 0.78rem;">Upon successful payment, your workspace will unlock automatically within seconds.</span>
+                        <span class="text-muted x-small d-block" style="font-size: 0.78rem;">Upon payment, your workspace will unlock automatically.</span>
                     </div>
                 </div>
             </div>
@@ -78,9 +78,21 @@
         const shopPhone = localStorage.getItem("activeUserPhone");
         if (!shopPhone) return;
 
-        // Watch for payment status change in database
+        // Auto-Activation and Date Reset Logic
         firebase.database().ref(`shops/${shopPhone}/paymentStatus`).on('value', (snapshot) => {
             if (snapshot.val() === "PAID") {
+                
+                // Calculate dates for next 30 days
+                const newTrial = new Date();
+                newTrial.setDate(newTrial.getDate() + 30);
+                const newLockout = new Date();
+                newLockout.setDate(newLockout.getDate() + 60);
+
+                firebase.database().ref(`shops/${shopPhone}`).update({
+                    trialEndsAt: newTrial.toISOString(),
+                    lockoutEndsAt: newLockout.toISOString()
+                });
+
                 firebase.database().ref(`users/${shopPhone}`).update({ portalStatus: "active" })
                 .then(() => { window.location.href = "dashboard.html"; });
             }
