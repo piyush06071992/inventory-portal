@@ -47,13 +47,12 @@
     if (!firebase.apps.length) { firebase.initializeApp(firebaseConfig); }
 
     function payNow() {
-        // Get phone number from storage
-        const shopPhone = localStorage.getItem("activeUserPhone") || sessionStorage.getItem("activeUserPhone");
+        // 1. Get phone from storage OR prompt the user if they are truly disconnected
+        let shopPhone = localStorage.getItem("activeUserPhone") || sessionStorage.getItem("activeUserPhone");
         
         if (!shopPhone) {
-            alert("Could not detect your account. Please log in first.");
-            window.location.href = "login.html";
-            return;
+            shopPhone = prompt("Session not detected. Please enter your registered phone number to unlock your account:");
+            if (!shopPhone) return; // Exit if user cancels
         }
         
         var options = {
@@ -68,6 +67,7 @@
                 const newLockout = new Date();
                 newLockout.setDate(newLockout.getDate() + 60);
 
+                // Update database using the phone number we found
                 firebase.database().ref(`shops/${shopPhone}`).update({
                     paymentStatus: "PAID",
                     trialEndsAt: newTrial.toISOString(),
@@ -75,7 +75,10 @@
                     paymentId: response.razorpay_payment_id
                 }).then(() => {
                     firebase.database().ref(`users/${shopPhone}`).update({ portalStatus: "active" })
-                    .then(() => { window.location.href = "dashboard.html"; });
+                    .then(() => { 
+                        alert("Payment successful! Redirecting to dashboard...");
+                        window.location.href = "dashboard.html"; 
+                    });
                 });
             },
             "prefill": { "contact": shopPhone }
