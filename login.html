@@ -71,6 +71,7 @@
     </div>
 
     <script>
+        // Restored fully active project production credentials configuration structure mapping
         const firebaseConfig = {
             apiKey: "AIzaSyBuyDgbmychMjHGupeoZV21vv_Z0n7WyoY",
             authDomain: "business-saarthi.firebaseapp.com",
@@ -84,6 +85,7 @@
         if (!firebase.apps.length) { firebase.initializeApp(firebaseConfig); }
 
         let challengeListenerRef = null;
+        let internalTimeoutId = null;
 
         function generateUniqueTokenId() {
             return 'session_' + Math.random().toString(36).substr(2, 9) + Date.now().toString(36);
@@ -128,6 +130,8 @@
             if (phone.length !== 10) { msg.innerText = "ENTER A VALID 10-DIGIT PHONE NUMBER!"; return; }
 
             btn.innerText = "SENDING OTP..."; btn.disabled = true;
+            msg.innerText = "";
+
             firebase.auth().signInWithPhoneNumber("+91" + phone, window.recaptchaVerifier)
                 .then((confirmationResult) => {
                     resetConfirmationResult = confirmationResult;
@@ -135,7 +139,11 @@
                     document.getElementById('forgot-otp-block').style.display = 'block';
                     msg.style.color = "green"; msg.innerText = "RESET OTP SENT SUCCESSFULLY!";
                 })
-                .catch((error) => { msg.style.color = "var(--accent)"; msg.innerText = "ERROR: " + error.message; })
+                .catch((error) => { 
+                    console.error(error);
+                    msg.style.color = "var(--accent)"; 
+                    msg.innerText = "ERROR: " + error.message; 
+                })
                 .finally(() => { btn.innerText = "SEND VERIFICATION OTP"; btn.disabled = false; });
         }
 
@@ -191,19 +199,40 @@
 
             if (shopData.activeSessionId) {
                 msg.style.color = "orange";
-                msg.innerText = "ACCOUNT BUSY! WAITING FOR 15-SEC TIMEOUT OR ACCESS FROM RUNNING WORKSPACE...";
+                msg.innerText = "ACCOUNT BUSY! WAITING 15 SECONDS FOR CURRENT DEVICE RESPONSE...";
 
+                // Broadcast challenge payload properties parameters straight to node
                 firebase.database().ref('shops/' + userKey + '/sessionChallenge').set({
                     requestingToken: currentSessionToken, status: "pending"
                 });
 
+                // Clear any existing listeners or timers safely before starting new ones
                 if(challengeListenerRef) challengeListenerRef.off();
+                if(internalTimeoutId) clearTimeout(internalTimeoutId);
+
+                // Start the 15-second local fallback countdown trigger timer loop
+                internalTimeoutId = setTimeout(() => {
+                    if (challengeListenerRef) challengeListenerRef.off();
+                    
+                    // Force deployment authentication override after 15 seconds have passed
+                    firebase.database().ref('shops/' + userKey).update({
+                        activeSessionId: currentSessionToken,
+                        sessionChallenge: null
+                    }).then(() => {
+                        sessionStorage.setItem("mySessionToken", currentSessionToken);
+                        sessionStorage.setItem("activeUserPhone", userKey);
+                        routeToDashboard();
+                    });
+                }, 15000);
+
                 challengeListenerRef = firebase.database().ref('shops/' + userKey);
-                
                 challengeListenerRef.on('value', (shopSnapshot) => {
                     const latestData = shopSnapshot.val();
-                    
-                    if (latestData && latestData.activeSessionId === currentSessionToken) {
+                    if (!latestData) return;
+
+                    // Gained authorization early via manual allowance click from active user device
+                    if (latestData.activeSessionId === currentSessionToken) {
+                        if(internalTimeoutId) clearTimeout(internalTimeoutId);
                         challengeListenerRef.off();
                         sessionStorage.setItem("mySessionToken", currentSessionToken);
                         sessionStorage.setItem("activeUserPhone", userKey);
@@ -211,10 +240,12 @@
                         return;
                     }
 
-                    if (latestData && !latestData.sessionChallenge && latestData.activeSessionId !== currentSessionToken) {
+                    // Explicit denial response returned from running counter device dashboard setting
+                    if (!latestData.sessionChallenge && latestData.activeSessionId !== currentSessionToken) {
+                        if(internalTimeoutId) clearTimeout(internalTimeoutId);
                         challengeListenerRef.off();
                         msg.style.color = "var(--accent)";
-                        msg.innerText = "LOGIN REQUEST DENIED BY ACTIVE WORKING DASHBOARD.";
+                        msg.innerText = "LOGIN REQUEST REJECTED BY RUNNING WORKSPACE.";
                         loginButtonReference.innerText = "LOGIN TO PORTAL";
                         loginButtonReference.disabled = false;
                     }
@@ -230,6 +261,36 @@
             document.getElementById('msg').style.color = "green";
             document.getElementById('msg').innerText = "ACCESS GRANTED! REDIRECTING...";
             setTimeout(() => { window.location.href = '/dashboard.html'; }, 1000);
+        }
+
+        function handlePortalLogin() {
+            const identifier = document.getElementById('login-identifier').value.trim();
+            const pin = document.getElementById('login-pin').value;
+            const msg = document.getElementById('msg');
+            const loginBtn = document.getElementById('login-submit-btn');
+            msg.innerText = "";
+
+            if (!identifier || !pin) { msg.innerText = "BOTH FIELDS ARE MANDATORY!"; return; }
+            if (pin.length !== 6) { msg.innerText = "PIN MUST BE EXACTLY 6 DIGITS!"; return; }
+
+            loginBtn.innerText = "AUTHENTICATING..."; loginBtn.disabled = true;
+
+            if (/^\d{10}$/.test(identifier)) {
+                firebase.database().ref('shops/' + identifier).once('value').then((snapshot) => {
+                    const shopData = snapshot.val();
+                    if (shopData && shopData.securePin === pin) { evaluateUserSubscriptionLifecycle(shopData, identifier, loginBtn); } 
+                    else { msg.innerText = "INVALID SECURE PIN!"; loginBtn.innerText = "LOGIN TO PORTAL"; loginBtn.disabled = false; }
+                }).catch(err => { msg.innerText = "SERVER ERROR: " + err.message; loginBtn.disabled = false; });
+            } else {
+                firebase.database().ref('shops').orderByChild('emailId').equalTo(identifier).once('value').then((snapshot) => {
+                    if (snapshot.exists()) {
+                        let matchedKey = "", matchedData = null;
+                        snapshot.forEach((child) => { if (child.val().securePin === pin) { matchedKey = child.key; matchedData = child.val(); } });
+                        if (matchedData) { evaluateUserSubscriptionLifecycle(matchedData, matchedKey, loginBtn); } 
+                        else { msg.innerText = "INVALID SECURE PIN!"; loginBtn.innerText = "LOGIN TO PORTAL"; loginBtn.disabled = false; }
+                    } else { msg.innerText = "NO ACCOUNT FOUND WITH THIS EMAIL ID!"; loginBtn.innerText = "LOGIN TO PORTAL"; loginBtn.disabled = false; }
+                }).catch(err => { msg.innerText = "SERVER ERROR: " + err.message; loginBtn.disabled = false; });
+            }
         }
     </script>
 </body>
