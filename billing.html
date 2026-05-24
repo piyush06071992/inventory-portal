@@ -80,12 +80,14 @@
         messagingSenderId: "556256084111",
         appId: "1:556256084111:web:b06208d94c5f5cae3170fa"
     };
-    firebase.initializeApp(firebaseConfig);
+    
+    if (!firebase.apps.length) {
+        firebase.initializeApp(firebaseConfig);
+    }
 
     window.onload = function() {
         const shopPhone = sessionStorage.getItem("lockedUserPhone") || "9999999999";
         
-        // Formulate dynamic pre-filled text parameter string for WhatsApp routing
         const waMessage = encodeURIComponent(`Hello Admin, my Business Saarthi workspace account (${shopPhone}) is locked. I want to pay the ₹50 platform rent fee. Please check and unlock.`);
         document.getElementById("whatsapp-link").setAttribute("href", `https://wa.me/918278752771?text=${waMessage}`);
 
@@ -94,23 +96,21 @@
             phone: shopPhone,
             timestamp: firebase.database.ServerValue.TIMESTAMP,
             status: "pending"
-        }).then(() => {
-            // Signal a secondary flag to update profile state variables inside database trees
-            return firebase.database().ref(`users/${shopPhone}`).update({
-                portalStatus: "lock_notified"
-            });
         });
 
-        // Continuous streaming layout database reference parameter listener
-        firebase.database().ref(`users/${shopPhone}/portalStatus`).on('value', (snapshot) => {
-            if (snapshot.val() === "active") {
-                document.getElementById("sync-title").innerText = "Access Granted!";
-                document.getElementById("sync-title").classList.replace("text-dark", "text-success");
-                document.getElementById("sync-desc").innerText = "Success! Admin verified your clearance. Loading dashboard profiles...";
-                
-                setTimeout(() => {
-                    window.location.href = "dashboard.html";
-                }, 1500);
+        // Continuous streaming loop looking directly up to master subscription clearance node changes
+        firebase.database().ref(`shops/${shopPhone}/paymentStatus`).on('value', (snapshot) => {
+            if (snapshot.val() === "PAID") {
+                // Ensure the side profile status node mirrors authorization fields
+                firebase.database().ref(`users/${shopPhone}`).update({ portalStatus: "active" }).then(() => {
+                    document.getElementById("sync-title").innerText = "Access Granted!";
+                    document.getElementById("sync-title").classList.replace("text-dark", "text-success");
+                    document.getElementById("sync-desc").innerText = "Success! Admin verified your clearance. Loading dashboard profiles...";
+                    
+                    setTimeout(() => {
+                        window.location.href = "dashboard.html";
+                    }, 1500);
+                });
             }
         });
     };
