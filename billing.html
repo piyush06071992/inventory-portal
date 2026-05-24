@@ -13,14 +13,8 @@
         .billing-container { max-width: 500px; margin: 80px auto; }
         .card-billing { border: none; border-radius: 16px; box-shadow: 0 8px 24px rgba(0, 0, 0, 0.05); background: #ffffff; overflow: hidden; }
         .accent-bar { height: 6px; background: linear-gradient(90deg, #dc3545, #fd7e14); }
-        .rent-badge { font-size: 2.5rem; font-weight: 700; color: #1e293b; }
-        .btn-action { font-weight: 600; padding: 12px 20px; border-radius: 10px; display: inline-flex; align-items: center; justify-content: center; gap: 8px; text-decoration: none; width: 100%; transition: all 0.2s ease; }
-        .btn-call { background-color: #198754; color: white; }
-        .btn-call:hover { background-color: #157347; color: white; transform: translateY(-1px); }
-        .btn-wa { background-color: #25d366; color: white; }
-        .btn-wa:hover { background-color: #20ba5a; color: white; transform: translateY(-1px); }
-        .status-tracker { background-color: #f8fafc; border: 1px solid #e2e8f0; border-radius: 12px; padding: 16px; }
-        .btn-pay:hover { background-color: #1e3a8a !important; opacity: 0.9; transform: translateY(-1px); }
+        .rent-badge { font-size: 2.5rem; font-weight: 700; color: #1e293b; margin-bottom: 20px; }
+        .status-tracker { background-color: #f8fafc; border: 1px solid #e2e8f0; border-radius: 12px; padding: 16px; margin-top: 20px; }
     </style>
 </head>
 <body>
@@ -33,37 +27,40 @@
             <div class="mb-4">
                 <i class="bi bi-shield-lock-fill text-danger" style="font-size: 3.5rem;"></i>
                 <h2 class="fw-bold mt-2">Workspace Locked</h2>
-                <p class="text-muted">Your Business Saarthi application utility features are currently restricted due to outstanding dues.</p>
+                <p class="text-muted">Your utility features are restricted due to outstanding dues.</p>
             </div>
 
             <div class="bg-light rounded-3 p-3 mb-4">
                 <span class="text-uppercase text-muted fw-semibold small d-block mb-1">Platform Renewal Fee</span>
                 <div class="rent-badge">₹50.00</div>
-            </div>
-
-           <div class="mb-4">
-                <button onclick="startRazorpayPayment()" class="btn-action btn-pay shadow-sm" style="background: #1e3a8a; color: white; border: none; padding: 15px;">
-                    <i class="bi bi-credit-card-2-front-fill"></i> Pay ₹50 Now (Razorpay)
-                </button>
+                
+                <div class="razorpay-embed-btn" data-url="https://pages.razorpay.com/pl_Ssq5QPjhHhrkxX/view" data-text="Pay ₹50 Now" data-color="#FF0000" data-size="large">
+                    <script>
+                        (function(){
+                            var d=document; var x=!d.getElementById('razorpay-embed-btn-js')
+                            if(x){ var s=d.createElement('script'); s.defer=!0;s.id='razorpay-embed-btn-js';
+                            s.src='https://cdn.razorpay.com/static/embed_btn/bundle.js';d.body.appendChild(s);} else{var rzp=window['__rzp__'];
+                            rzp && rzp.init && rzp.init()}})();
+                    </script>
+                </div>
             </div>
 
             <div class="status-tracker text-start">
                 <div class="d-flex align-items-center gap-3">
                     <div class="spinner-border spinner-border-sm text-warning" role="status"></div>
                     <div>
-                        <strong class="d-block text-dark small" id="sync-title">Unlock Request Sent</strong>
-                        <span class="text-muted x-small d-block" id="sync-desc" style="font-size: 0.78rem;">Admin has been notified. Please complete your transaction offline via UPI. This workspace will auto-refresh the split second Admin approves your clearance.</span>
+                        <strong class="d-block text-dark small">Automated Sync Active</strong>
+                        <span class="text-muted x-small d-block" style="font-size: 0.78rem;">Upon successful payment, your workspace will unlock automatically within seconds.</span>
                     </div>
                 </div>
             </div>
-
         </div>
     </div>
 </div>
 
-<script src="https://checkout.razorpay.com/v1/checkout.js"></script>
 <script src="https://www.gstatic.com/firebasejs/9.6.1/firebase-app-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/9.6.1/firebase-database-compat.js"></script>
+
 <script>
     const firebaseConfig = {
         apiKey: "AIzaSyBuyDgbmychMjHGupeoZV21vv_Z0n7WyoY",
@@ -75,36 +72,17 @@
         appId: "1:556256084111:web:b06208d94c5f5cae3170fa"
     };
     
-    if (!firebase.apps.length) {
-        firebase.initializeApp(firebaseConfig);
-    }
+    if (!firebase.apps.length) { firebase.initializeApp(firebaseConfig); }
 
     window.onload = function() {
-        const shopPhone = sessionStorage.getItem("lockedUserPhone") || "9999999999";
-        
-        const waMessage = encodeURIComponent(`Hello Admin, my Business Saarthi workspace account (${shopPhone}) is locked. I want to pay the ₹50 platform rent fee. Please check and unlock.`);
-        document.getElementById("whatsapp-link").setAttribute("href", `https://wa.me/918278752771?text=${waMessage}`);
+        const shopPhone = localStorage.getItem("activeUserPhone");
+        if (!shopPhone) return;
 
-        // Automatically log a pending entry into the Admin evaluation queue log table
-        firebase.database().ref(`manual_unlock_requests/${shopPhone}`).set({
-            phone: shopPhone,
-            timestamp: firebase.database.ServerValue.TIMESTAMP,
-            status: "pending"
-        });
-
-        // Continuous streaming loop looking directly up to master subscription clearance node changes
+        // Watch for payment status change in database
         firebase.database().ref(`shops/${shopPhone}/paymentStatus`).on('value', (snapshot) => {
             if (snapshot.val() === "PAID") {
-                // Ensure the side profile status node mirrors authorization fields
-                firebase.database().ref(`users/${shopPhone}`).update({ portalStatus: "active" }).then(() => {
-                    document.getElementById("sync-title").innerText = "Access Granted!";
-                    document.getElementById("sync-title").classList.replace("text-dark", "text-success");
-                    document.getElementById("sync-desc").innerText = "Success! Admin verified your clearance. Loading dashboard profiles...";
-                    
-                    setTimeout(() => {
-                        window.location.href = "dashboard.html";
-                    }, 1500);
-                });
+                firebase.database().ref(`users/${shopPhone}`).update({ portalStatus: "active" })
+                .then(() => { window.location.href = "dashboard.html"; });
             }
         });
     };
