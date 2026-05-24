@@ -215,9 +215,8 @@
             }
         }
 
-        function routeToDashboard() {
-            document.getElementById('msg').style.color = "green"; document.getElementById('msg').innerText = "ACCESS GRANTED! REDIRECTING...";
-            setTimeout(() => { window.location.href = '/dashboard.html'; }, 1000);
+       function routeToDashboard() {
+            // No action needed here, the login time is handled in evaluateUserSubscriptionLifecycle
         }
 
         function handlePortalLogin() {
