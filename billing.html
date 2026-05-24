@@ -130,19 +130,17 @@
     window.onload = function() {
         // Extract dynamically assigned session storage metrics
         const shopPhone = sessionStorage.getItem("lockedUserPhone") || "9999999999";
+        const variableRent = sessionStorage.getItem("calculatedRentAmount") || "1500"; 
         
-        // FOR TESTING MODE: Forcing the amount to 50 as requested
-        const variableRent = "50"; 
-        
-        // Push the formatted testing value to the UI ledger
+        // Push the formatted dynamic value to the UI ledger
         document.getElementById("display-rent").innerText = parseFloat(variableRent).toFixed(2);
 
-        // Fixed Details: Using your exact bank account name to prevent "No Account Found"
+        // Core Verified Destructural Routing Details
         const personalUPI = "rana.rpiyush.piyush826@okhdfcbank.com"; 
         const merchantName = "Piyush Rana"; 
         const txnRefNote = encodeURIComponent(`Saarthi Rent ${shopPhone}`);
 
-        // Assembling clean personal-to-personal UPI deep link string
+        // Assemble strict NPCI specification string structure
         const upiUrl = `upi://pay?pa=${personalUPI}&pn=${encodeURIComponent(merchantName)}&am=${variableRent}&tn=${txnRefNote}&cu=INR`;
 
         // Direct binding to DOM anchor node
@@ -154,7 +152,7 @@
     document.getElementById("verify-utr-btn").addEventListener("click", function() {
         const utrValue = document.getElementById("utr-input").value.trim();
         const shopPhone = sessionStorage.getItem("lockedUserPhone") || "unknown";
-        const variableRent = "50"; // Keeps it tracked as 50 in database logs during testing
+        const variableRent = sessionStorage.getItem("calculatedRentAmount") || "0";
 
         // Validate Indian Interbank settlement token length
         if (utrValue.length !== 12 || isNaN(utrValue)) {
