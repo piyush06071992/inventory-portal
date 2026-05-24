@@ -1,11 +1,10 @@
 // ============================================================================
-// GLOBAL SESSION GATEKEEPER & DEVICE CONFLICT MANAGER
+// GLOBAL SESSION GATEKEEPER & DEVICE CONFLICT MANAGER (LOCALSTORAGE VERSION)
 // ============================================================================
 
 let globalCountdownInterval = null;
 let activeDatabaseStream = null;
 
-// Dynamically inject Bootstrap Icons for the warning modal UI if missing
 if (!document.querySelector('link[href*="bootstrap-icons"]')) {
     const iconLink = document.createElement('link');
     iconLink.rel = 'stylesheet';
@@ -13,7 +12,6 @@ if (!document.querySelector('link[href*="bootstrap-icons"]')) {
     document.head.appendChild(iconLink);
 }
 
-// Inject CSS styles for the Gatekeeper Modal Overlay
 const gatekeeperStyles = document.createElement('style');
 gatekeeperStyles.innerHTML = `
     .device-modal-overlay-global { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(15, 23, 42, 0.95); display: flex; align-items: center; justify-content: center; z-index: 100000; padding: 15px; box-sizing: border-box; font-family: sans-serif; }
@@ -29,13 +27,15 @@ gatekeeperStyles.innerHTML = `
 document.head.appendChild(gatekeeperStyles);
 
 function setupGlobalDeviceListener() {
-    const activeUser = sessionStorage.getItem("activeUserPhone");
-    const myToken = sessionStorage.getItem("mySessionToken");
+    const activeUser = localStorage.getItem("activeUserPhone");
+    const myToken = localStorage.getItem("mySessionToken");
 
-    // CRITICAL FIX: If a user is logged in (legacy session) but lacks the new secure token, boot them out to refresh it!
+    // CRITICAL FIX: Ghost Token Check. If logged in via Firebase but missing our secure token -> Force Logout
     if (activeUser && !myToken && !window.location.pathname.endsWith("login.html") && window.location.pathname !== "/") {
-        sessionStorage.clear();
-        window.location.href = '/login.html';
+        firebase.auth().signOut().then(() => {
+            localStorage.clear();
+            window.location.href = '/login.html';
+        });
         return;
     }
 
@@ -49,12 +49,14 @@ function setupGlobalDeviceListener() {
         const data = snapshot.val();
         if (!data) return;
 
-        // SCENARIO 1: We lost the token battle. A new device took over the active session.
+        // SCENARIO 1: We lost the token battle. Evict this device immediately and kill Firebase Auth.
         if (data.activeSessionId && data.activeSessionId !== myToken) {
             activeDatabaseStream.off();
-            sessionStorage.clear();
-            alert("Session Revoked! Your account successfully logged in from a new device.");
-            window.location.href = '/login.html';
+            firebase.auth().signOut().then(() => {
+                localStorage.clear();
+                alert("Session Revoked! Your account successfully logged in from a new device.");
+                window.location.href = '/login.html';
+            });
             return;
         }
 
@@ -105,7 +107,7 @@ function triggerGlobalConflictOverlay(shopPhone, requestingToken) {
         const timerUI = document.getElementById('global-countdown-timer');
         if (timerUI) timerUI.innerText = secondsLeft;
 
-        // TIMEOUT EXPIRED: The active device missed the window. Hand over the keys to the new device!
+        // TIMEOUT EXPIRED: The active device missed the window. Hand over the keys!
         if (secondsLeft <= 0) {
             clearInterval(globalCountdownInterval);
             globalCountdownInterval = null;
@@ -113,10 +115,8 @@ function triggerGlobalConflictOverlay(shopPhone, requestingToken) {
             firebase.database().ref('shops/' + shopPhone).update({
                 activeSessionId: requestingToken,
                 sessionChallenge: null
-            }).then(() => {
-                sessionStorage.clear();
-                window.location.href = '/login.html';
             });
+            // (Scenario 1 listener will catch this change and force the Firebase signOut automatically)
         }
     }, 1000);
 }
@@ -130,21 +130,15 @@ function respondToGlobalConflict(resolution, shopPhone, requestingToken) {
     }
 
     if (resolution === 'allow') {
-        // User manually clicked allow. Grant access immediately.
         firebase.database().ref('shops/' + shopPhone).update({
             activeSessionId: requestingToken,
             sessionChallenge: null
-        }).then(() => {
-            sessionStorage.clear();
-            window.location.href = '/login.html';
         });
     } else {
-        // User manually rejected. Delete the challenge.
         firebase.database().ref('shops/' + shopPhone + '/sessionChallenge').remove();
     }
 }
 
-// Guaranteed execution startup wrapper (Fixes PWA loading misses)
 function initGatekeeper() { setTimeout(setupGlobalDeviceListener, 500); }
 if (document.readyState === "loading") { document.addEventListener("DOMContentLoaded", initGatekeeper); } 
 else { initGatekeeper(); }
