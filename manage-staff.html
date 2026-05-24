@@ -371,9 +371,29 @@
         }
     }
 
-    function payStaff(upi, name) {
-        if(!upi) return alert("No UPI ID/Bank details saved. Pay in Cash.");
-        window.location.href = `upi://pay?pa=${upi}&pn=${encodeURIComponent(name)}&cu=INR`;
+   let pendingPaymentData = {};
+
+    function payStaff(upi, name, id) {
+        pendingPaymentData = { upi, name, id };
+        document.getElementById('modal-title').innerText = "Pay " + name;
+        document.getElementById('salary-modal').style.display = 'flex';
+    }
+
+    function processPayment(method) {
+        const start = document.getElementById('sal-start').value;
+        const end = document.getElementById('sal-end').value;
+        const amt = document.getElementById('sal-amt').value;
+        if (!start || !end || !amt) return alert("Fill all salary details!");
+
+        const record = { start, end, amt, method, date: new Date().toISOString() };
+        firebase.database().ref('shops/' + localStorage.getItem("activeUserPhone") + '/staff/' + pendingPaymentData.id + '/salaryHistory').push(record);
+
+        if (method === 'UPI' && pendingPaymentData.upi) {
+            window.location.href = `upi://pay?pa=${pendingPaymentData.upi}&pn=${encodeURIComponent(pendingPaymentData.name)}&am=${amt}&cu=INR`;
+        } else {
+            alert("Salary record saved as Cash payment.");
+        }
+        document.getElementById('salary-modal').style.display = 'none';
     }
 
     function sendPinWA(name, phone, pin) {
