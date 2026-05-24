@@ -167,8 +167,33 @@
 
     window.onload = function() {
         if (typeof verifySingleSession === 'function') verifySingleSession();
+        loadRoles(); // Load roles first
         loadStaff();
     };
+
+    function loadRoles() {
+        const activeUserPhone = localStorage.getItem("activeUserPhone");
+        firebase.database().ref('shops/' + activeUserPhone + '/settings/roles').once('value', (snapshot) => {
+            const select = document.getElementById('stf-role');
+            select.innerHTML = '';
+            const roles = snapshot.exists() ? snapshot.val() : ['Cashier', 'Inventory Manager', 'Sales Executive'];
+            roles.forEach(r => select.innerHTML += `<option value="${r}">${r}</option>`);
+        });
+    }
+
+    function addNewRole() {
+        const newRole = prompt("Enter new role name:");
+        if (!newRole) return;
+        const activeUserPhone = localStorage.getItem("activeUserPhone");
+        
+        firebase.database().ref('shops/' + activeUserPhone + '/settings/roles').once('value', (snapshot) => {
+            let roles = snapshot.exists() ? snapshot.val() : ['Cashier', 'Inventory Manager', 'Sales Executive'];
+            if (!roles.includes(newRole)) {
+                roles.push(newRole);
+                firebase.database().ref('shops/' + activeUserPhone + '/settings/roles').set(roles).then(() => loadRoles());
+            }
+        });
+    }
 
     function switchTab(tab) {
         currentFilter = tab;
