@@ -1,0 +1,374 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>Manage Staff - Business Saarthi</title>
+    
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.1/font/bootstrap-icons.css">
+    <link rel="stylesheet" href="/style.css">
+
+    <style>
+        body { font-family: 'Inter', sans-serif; background-color: #f1f5f9; margin: 0; padding: 0; }
+        .wrapper { display: flex; flex-direction: column; align-items: center; min-height: 100vh; width: 100%; padding: 20px 12px; box-sizing: border-box; }
+        
+        .header-section { width: 100%; max-width: 700px; display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px; }
+        .header-section h1 { font-size: 22px; font-weight: 700; color: #1e3a8a; margin: 0; display: flex; align-items: center; gap: 8px;}
+        
+        .btn-top-action { background: linear-gradient(135deg, #0d9488, #0f766e); color: white; border: none; padding: 12px 20px; border-radius: 12px; font-size: 15px; font-weight: 600; cursor: pointer; box-shadow: 0 4px 12px rgba(13, 148, 136, 0.3); }
+        .btn-top-action-back { background: #ffffff; color: #475569; border: 2px solid #cbd5e1; padding: 10px 16px; border-radius: 12px; font-weight: 600; cursor: pointer; text-decoration: none; display: flex; align-items: center; gap: 6px;}
+
+        /* Form Container */
+        .form-card { width: 100%; max-width: 700px; background: #ffffff; border-radius: 16px; padding: 24px; box-shadow: 0 4px 20px rgba(0, 0, 0, 0.05); margin-bottom: 20px; border: 1px solid #e2e8f0; display: none; }
+        .form-group { margin-bottom: 15px; }
+        .form-group label { display: block; font-size: 13px; font-weight: 600; color: #475569; margin-bottom: 6px; text-transform: uppercase; }
+        .form-control-custom { width: 100%; padding: 12px; font-size: 15px; border: 2px solid #cbd5e1; border-radius: 10px; box-sizing: border-box; background-color: #fff; color: #0f172a; font-weight: 500; }
+        .form-control-custom:focus { outline: none; border-color: #0d9488; }
+        .grid-2 { display: grid; grid-template-columns: repeat(2, 1fr); gap: 14px; }
+        
+        .action-row { display: flex; gap: 12px; margin-top: 20px; }
+        .btn-save { flex: 2; background: linear-gradient(135deg, #10b981, #059669); color: white; border: none; padding: 16px; border-radius: 12px; font-weight: 700; cursor: pointer; }
+        .btn-cancel { flex: 1; background-color: #f1f5f9; color: #64748b; border: 1px solid #cbd5e1; padding: 16px; border-radius: 12px; font-weight: 600; cursor: pointer; }
+
+        /* Tabs */
+        .tab-container { width: 100%; max-width: 700px; display: flex; gap: 10px; margin-bottom: 15px; }
+        .tab-btn { flex: 1; padding: 12px; border: none; border-radius: 10px; font-weight: 600; cursor: pointer; background: #e2e8f0; color: #64748b; transition: all 0.2s; }
+        .tab-btn.active { background: #1e3a8a; color: #ffffff; }
+
+        /* Staff Cards with Accordion */
+        .staff-list-container { width: 100%; max-width: 700px; display: flex; flex-direction: column; gap: 16px; }
+        .staff-card { background: #ffffff; border-radius: 16px; padding: 20px; box-shadow: 0 4px 15px rgba(0, 0, 0, 0.04); border: 1px solid #e2e8f0; transition: all 0.2s ease; border-left: 5px solid #10b981; }
+        .staff-card.terminated { border-left: 5px solid #ef4444; opacity: 0.85; }
+        
+        .sc-header { display: flex; justify-content: space-between; align-items: center; cursor: pointer; }
+        .sc-header-left { display: flex; flex-direction: column; }
+        .sc-name { font-size: 18px; font-weight: 700; color: #1e3a8a; margin: 0; text-transform: uppercase; }
+        .sc-role { font-size: 14px; color: #64748b; margin: 4px 0 0 0; font-weight: 600; display: flex; align-items: center; gap: 6px;}
+        .sc-badge { background: #dcfce7; color: #166534; padding: 3px 8px; border-radius: 6px; font-size: 11px; font-weight: 700; }
+        .terminated .sc-badge { background: #fee2e2; color: #991b1b; }
+        .sc-toggle-icon { font-size: 20px; color: #94a3b8; transition: transform 0.3s; }
+        
+        /* Hidden Body */
+        .sc-body { display: none; margin-top: 15px; padding-top: 15px; border-top: 1px solid #f1f5f9; }
+        
+        .sc-details { display: grid; grid-template-columns: 1fr; gap: 8px; margin-bottom: 16px; font-size: 14px; color: #334155; }
+        .sc-details i { color: #0d9488; width: 20px; text-align: center; margin-right: 6px; }
+        .pin-box { background: #f8fafc; border: 1px dashed #cbd5e1; padding: 8px 12px; border-radius: 8px; display: inline-block; font-weight: 700; color: #0f172a; letter-spacing: 2px;}
+
+        .sc-actions-grid { display: grid; grid-template-columns: repeat(2, 1fr); gap: 10px; }
+        .btn-sc { border: none; padding: 10px; border-radius: 10px; font-size: 13px; font-weight: 600; display: flex; align-items: center; justify-content: center; gap: 6px; cursor: pointer; color: white; }
+        .btn-wa { background: #25D366; }
+        .btn-pay { background: #8b5cf6; }
+        .btn-attn { background: #f59e0b; }
+        .btn-pin { background: #3b82f6; grid-column: span 2;}
+        
+        /* Admin Actions */
+        .admin-actions { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-top: 10px; padding-top: 10px; border-top: 1px dashed #e2e8f0; }
+        .btn-edit { background: #f1f5f9; color: #475569; }
+        .btn-delete { background: #fee2e2; color: #ef4444; }
+
+        @media (max-width: 480px) { .grid-2 { grid-template-columns: 1fr; gap: 10px; } }
+    </style>
+</head>
+<body>
+
+<div class="wrapper">
+    <div class="header-section">
+        <a href="/dashboard.html" class="btn-top-action-back"><i class="bi bi-arrow-left"></i> Back</a>
+        <button class="btn-top-action" onclick="toggleStaffForm()"><i class="bi bi-person-plus-fill"></i> Add Staff</button>
+    </div>
+    <div class="header-section" style="margin-bottom: 10px;">
+        <h1><i class="bi bi-people-fill text-primary"></i> STAFF DIRECTORY</h1>
+    </div>
+
+    <div class="form-card" id="add-staff-form">
+        <h2 style="font-size: 18px; margin-top: 0; color: #0f172a; border-bottom: 2px solid #f1f5f9; padding-bottom: 10px;" id="form-title">Onboard New Staff</h2>
+        
+        <div class="form-group">
+            <label>Full Legal Name *</label>
+            <input type="text" id="stf-name" class="form-control-custom" placeholder="e.g., Ramesh Kumar">
+        </div>
+
+        <div class="grid-2">
+            <div class="form-group">
+                <label>Mobile Number (Login ID) *</label>
+                <input type="number" id="stf-phone" class="form-control-custom" placeholder="10 Digits" inputmode="numeric" oninput="if(this.value.length > 10) this.value = this.value.slice(0, 10);">
+            </div>
+            <div class="form-group">
+                <label>Assigned Role *</label>
+                <select id="stf-role" class="form-control-custom">
+                    <option value="Cashier">Cashier</option>
+                    <option value="Inventory Manager">Inventory Manager</option>
+                    <option value="Sales Executive">Sales Executive</option>
+                    <option value="Shop Helper">Shop Helper</option>
+                </select>
+            </div>
+        </div>
+
+        <div class="grid-2">
+            <div class="form-group">
+                <label>Aadhar Number</label>
+                <input type="number" id="stf-aadhar" class="form-control-custom" placeholder="12 Digits" inputmode="numeric" oninput="if(this.value.length > 12) this.value = this.value.slice(0, 12);">
+            </div>
+            <div class="form-group">
+                <label>Base Monthly Salary (₹)</label>
+                <input type="number" id="stf-salary" class="form-control-custom" placeholder="e.g., 15000">
+            </div>
+        </div>
+
+        <div class="form-group">
+            <label>Salary UPI ID / Bank Details</label>
+            <input type="text" id="stf-upi" class="form-control-custom" placeholder="username@upi or Bank Acct Info">
+        </div>
+
+        <div class="form-group">
+            <label>Current Address</label>
+            <textarea id="stf-address" class="form-control-custom" rows="2" placeholder="Local living address"></textarea>
+        </div>
+
+        <div class="action-row">
+            <button class="btn-cancel" onclick="toggleStaffForm()">Cancel</button>
+            <button class="btn-save" onclick="saveStaff()"><i class="bi bi-cloud-arrow-up-fill"></i> Save Profile</button>
+        </div>
+    </div>
+
+    <div class="tab-container">
+        <button class="tab-btn active" id="tab-active" onclick="switchTab('active')">Active Team</button>
+        <button class="tab-btn" id="tab-past" onclick="switchTab('past')">Past Staff</button>
+    </div>
+
+    <div class="staff-list-container" id="staff-list">
+        <p style="text-align: center; color: #64748b; width: 100%;">Loading staff records...</p>
+    </div>
+
+</div>
+
+<script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-auth-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-database-compat.js"></script>
+<script src="/auth.js"></script>
+
+<script>
+    let currentEditingStaffId = null;
+    let globalStaffData = {}; 
+    let currentFilter = 'active'; // 'active' or 'past'
+
+    window.onload = function() {
+        if (typeof verifySingleSession === 'function') verifySingleSession();
+        loadStaff();
+    };
+
+    function switchTab(tab) {
+        currentFilter = tab;
+        document.getElementById('tab-active').className = tab === 'active' ? 'tab-btn active' : 'tab-btn';
+        document.getElementById('tab-past').className = tab === 'past' ? 'tab-btn active' : 'tab-btn';
+        renderStaffList();
+    }
+
+    function toggleStaffForm() {
+        const form = document.getElementById('add-staff-form');
+        if (form.style.display === 'block') {
+            form.style.display = 'none';
+            resetForm();
+        } else {
+            form.style.display = 'block';
+            document.getElementById('form-title').innerText = "Onboard New Staff";
+        }
+    }
+
+    function resetForm() {
+        currentEditingStaffId = null;
+        document.getElementById('stf-name').value = '';
+        document.getElementById('stf-phone').value = '';
+        document.getElementById('stf-role').value = 'Cashier';
+        document.getElementById('stf-aadhar').value = '';
+        document.getElementById('stf-salary').value = '';
+        document.getElementById('stf-upi').value = '';
+        document.getElementById('stf-address').value = '';
+    }
+
+    function generateSecurePin() {
+        return Math.floor(100000 + Math.random() * 900000).toString(); // 6 digit random
+    }
+
+    function saveStaff() {
+        const activeUserPhone = localStorage.getItem("activeUserPhone");
+        if (!activeUserPhone) return alert("Session expired. Please login again.");
+
+        const name = document.getElementById('stf-name').value.trim();
+        const phone = document.getElementById('stf-phone').value.trim();
+        const role = document.getElementById('stf-role').value;
+        const aadhar = document.getElementById('stf-aadhar').value.trim();
+        const salary = document.getElementById('stf-salary').value.trim();
+        const upi = document.getElementById('stf-upi').value.trim();
+        const address = document.getElementById('stf-address').value.trim();
+
+        if (!name || phone.length !== 10) return alert("Full Name and a valid 10-digit Mobile Number are required!");
+
+        const staffId = currentEditingStaffId ? currentEditingStaffId : Date.now().toString();
+        const existingData = currentEditingStaffId && globalStaffData[staffId] ? globalStaffData[staffId] : {};
+
+        const staffData = {
+            id: staffId,
+            name: name,
+            phone: phone,
+            role: role,
+            aadhar: aadhar,
+            baseSalary: salary,
+            upiId: upi,
+            address: address,
+            status: existingData.status || "Active", 
+            securePin: existingData.securePin || generateSecurePin(), // Create PIN if new
+            joinedAt: existingData.joinedAt || new Date().toISOString()
+        };
+
+        firebase.database().ref('shops/' + activeUserPhone + '/staff/' + staffId).set(staffData, (error) => {
+            if (error) { alert("Error saving: " + error.message); } 
+            else {
+                alert(currentEditingStaffId ? "Profile Updated!" : "Staff Onboarded! A secure login PIN has been generated.");
+                toggleStaffForm(); 
+            }
+        });
+    }
+
+    function loadStaff() {
+        const activeUserPhone = localStorage.getItem("activeUserPhone");
+        if (!activeUserPhone) return;
+
+        firebase.database().ref('shops/' + activeUserPhone + '/staff').on('value', (snapshot) => {
+            globalStaffData = snapshot.exists() ? snapshot.val() : {};
+            renderStaffList();
+        });
+    }
+
+    function renderStaffList() {
+        const listContainer = document.getElementById('staff-list');
+        listContainer.innerHTML = '';
+
+        if (Object.keys(globalStaffData).length === 0) {
+            listContainer.innerHTML = '<p style="text-align: center; color: #64748b; background: #fff; padding: 20px; border-radius: 12px;">No staff records found.</p>';
+            return;
+        }
+
+        const staffArray = Object.values(globalStaffData).sort((a, b) => b.id - a.id);
+        
+        let displayCount = 0;
+
+        staffArray.forEach(stf => {
+            // Filter logic
+            if (currentFilter === 'active' && stf.status === 'Terminated') return;
+            if (currentFilter === 'past' && stf.status !== 'Terminated') return;
+            
+            displayCount++;
+            const isTerminated = stf.status === 'Terminated';
+            
+            const card = document.createElement('div');
+            card.className = `staff-card ${isTerminated ? 'terminated' : ''}`;
+            card.innerHTML = `
+                <div class="sc-header" onclick="toggleAccordion('${stf.id}')">
+                    <div class="sc-header-left">
+                        <p class="sc-name">${stf.name}</p>
+                        <p class="sc-role"><span class="sc-badge">${stf.status}</span> ${stf.role}</p>
+                    </div>
+                    <i class="bi bi-chevron-down sc-toggle-icon" id="sc-icon-${stf.id}"></i>
+                </div>
+
+                <div class="sc-body" id="sc-body-${stf.id}">
+                    <div class="sc-details">
+                        <div><i class="bi bi-telephone-fill"></i> +91 ${stf.phone}</div>
+                        ${stf.baseSalary ? `<div><i class="bi bi-cash-stack"></i> Base Salary: ₹${stf.baseSalary}/mo</div>` : ''}
+                        ${stf.upiId ? `<div><i class="bi bi-bank2"></i> Account/UPI: ${stf.upiId}</div>` : ''}
+                        ${stf.aadhar ? `<div><i class="bi bi-person-vcard"></i> Aadhar: ${stf.aadhar}</div>` : ''}
+                        ${!isTerminated ? `<div style="margin-top: 10px;"><i class="bi bi-key-fill text-danger"></i> Login PIN: <span class="pin-box">${stf.securePin}</span></div>` : ''}
+                    </div>
+                    
+                    ${!isTerminated ? `
+                    <div class="sc-actions-grid">
+                        <button class="btn-sc btn-pin" onclick="sendPinWA('${stf.name}', '${stf.phone}', '${stf.securePin}')"><i class="bi bi-whatsapp"></i> Send Login PIN to Staff</button>
+                        <button class="btn-sc btn-attn" onclick="alert('Attendance Module Opening...')"><i class="bi bi-calendar-check"></i> Log Attendance</button>
+                        <button class="btn-sc btn-pay" onclick="payStaff('${stf.upiId || ''}', '${stf.name}')"><i class="bi bi-currency-rupee"></i> Pay Salary</button>
+                    </div>
+                    ` : ''}
+
+                    <div class="admin-actions">
+                        <button class="btn-sc btn-edit" onclick="editStaff('${stf.id}')"><i class="bi bi-pencil-square"></i> Edit Details</button>
+                        ${!isTerminated 
+                            ? `<button class="btn-sc btn-delete" onclick="terminateStaff('${stf.id}', '${stf.name}')"><i class="bi bi-person-dash-fill"></i> Terminate</button>`
+                            : `<button class="btn-sc btn-edit" style="color: #10b981;" onclick="reactivateStaff('${stf.id}', '${stf.name}')"><i class="bi bi-person-check-fill"></i> Reactivate</button>`
+                        }
+                    </div>
+                </div>
+            `;
+            listContainer.appendChild(card);
+        });
+
+        if(displayCount === 0) {
+             listContainer.innerHTML = `<p style="text-align: center; color: #64748b;">No ${currentFilter} staff found.</p>`;
+        }
+    }
+
+    function toggleAccordion(id) {
+        const body = document.getElementById('sc-body-' + id);
+        const icon = document.getElementById('sc-icon-' + id);
+        if (body.style.display === 'block') {
+            body.style.display = 'none';
+            icon.style.transform = 'rotate(0deg)';
+        } else {
+            body.style.display = 'block';
+            icon.style.transform = 'rotate(180deg)';
+        }
+    }
+
+    function editStaff(id) {
+        const data = globalStaffData[id];
+        if(!data) return;
+
+        currentEditingStaffId = id;
+        document.getElementById('stf-name').value = data.name || '';
+        document.getElementById('stf-phone').value = data.phone || '';
+        document.getElementById('stf-role').value = data.role || 'Cashier';
+        document.getElementById('stf-aadhar').value = data.aadhar || '';
+        document.getElementById('stf-salary').value = data.baseSalary || '';
+        document.getElementById('stf-upi').value = data.upiId || '';
+        document.getElementById('stf-address').value = data.address || '';
+        
+        document.getElementById('add-staff-form').style.display = 'block';
+        document.getElementById('form-title').innerText = "Edit Staff Profile";
+        window.scrollTo({ top: 0, behavior: 'smooth' });
+    }
+
+    function terminateStaff(id, name) {
+        const activeUserPhone = localStorage.getItem("activeUserPhone");
+        const reason = prompt(`WARNING: You are terminating ${name}.\n\nThey will immediately lose portal access. Please enter a reason (Resigned, Fired, etc.):`);
+        
+        if (reason) {
+            firebase.database().ref('shops/' + activeUserPhone + '/staff/' + id).update({
+                status: 'Terminated',
+                terminationReason: reason,
+                terminatedOn: new Date().toISOString()
+            }).then(() => alert(`${name} has been moved to Past Staff.`));
+        }
+    }
+
+    function reactivateStaff(id, name) {
+        const activeUserPhone = localStorage.getItem("activeUserPhone");
+        if(confirm(`Reactivate ${name}? They will regain login access immediately.`)) {
+             firebase.database().ref('shops/' + activeUserPhone + '/staff/' + id).update({ status: 'Active' });
+        }
+    }
+
+    function payStaff(upi, name) {
+        if(!upi) return alert("No UPI ID/Bank details saved. Pay in Cash.");
+        window.location.href = `upi://pay?pa=${upi}&pn=${encodeURIComponent(name)}&cu=INR`;
+    }
+
+    function sendPinWA(name, phone, pin) {
+        const shopName = document.getElementById('display-shop-name') ? document.getElementById('display-shop-name').innerText : "Our Shop";
+        const msg = `Hello ${name}, welcome to ${shopName}!%0A%0AHere are your login details for the staff portal:%0A*Portal Link:* (Your Website Link Here)%0A*Login ID:* ${phone}%0A*Secure PIN:* ${pin}%0A%0APlease do not share this PIN with anyone.`;
+        window.open(`https://wa.me/91${phone}?text=${msg}`, '_blank');
+    }
+</script>
+
+</body>
+</html>
