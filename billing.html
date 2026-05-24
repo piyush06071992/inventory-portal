@@ -15,8 +15,8 @@
             color: #333333;
         }
         .billing-container {
-            max-width: 550px;
-            margin: 60px auto;
+            max-width: 650px;
+            margin: 50px auto;
         }
         .card-billing {
             border: none;
@@ -34,11 +34,18 @@
             font-weight: 700;
             color: #1e293b;
         }
+        .qr-box {
+            background: #ffffff;
+            padding: 12px;
+            border: 2px dashed #cbd5e1;
+            border-radius: 12px;
+            display: inline-block;
+        }
         .btn-upi {
             background-color: #0d6efd;
             color: #ffffff;
             font-weight: 600;
-            padding: 12px 24px;
+            padding: 12px 20px;
             border-radius: 8px;
             transition: all 0.2s ease;
             text-decoration: none;
@@ -65,6 +72,21 @@
             text-align: center;
             font-weight: 600;
         }
+        .divider-text {
+            display: flex;
+            align-items: center;
+            text-align: center;
+            color: #64748b;
+            font-weight: 500;
+            font-size: 0.9rem;
+        }
+        .divider-text::before, .divider-text::after {
+            content: '';
+            flex: 1;
+            border-bottom: 1px solid #e2e8f0;
+        }
+        .divider-text:not(:empty)::before { margin-right: .75em; }
+        .divider-text:not(:empty)::after { margin-left: .75em; }
     </style>
 </head>
 <body>
@@ -72,30 +94,49 @@
 <div class="container billing-container px-3">
     <div class="card card-billing">
         <div class="accent-bar"></div>
-        <div class="card-body p-4 p-md-5 text-center">
+        <div class="card-body p-4 p-md-5">
             
-            <div class="mb-4">
-                <i class="bi bi-exclamation-triangle-fill text-danger" style="font-size: 3.5rem;"></i>
+            <div class="text-center mb-4">
+                <i class="bi bi-exclamation-triangle-fill text-danger" style="font-size: 3.2rem;"></i>
                 <h2 class="fw-bold mt-2">Access Restricted</h2>
-                <p class="text-muted">Your Business Saarthi workspace is currently locked due to pending monthly platform rent.</p>
+                <p class="text-muted">Your workspace is currently locked due to pending monthly platform rent.</p>
             </div>
 
-            <div class="bg-light rounded-3 p-3 mb-4">
+            <div class="bg-light rounded-3 p-3 mb-4 text-center">
                 <span class="text-uppercase text-muted fw-semibold small d-block mb-1">Total Outstanding Amount</span>
                 <div class="rent-badge">₹<span id="display-rent">0.00</span></div>
             </div>
 
-            <div class="mb-4">
-                <a id="upi-intent-link" href="#" class="btn-upi shadow-sm">
-                    <i class="bi bi-wallet2"></i> Pay Rent via Any UPI App
-                </a>
-                <small class="text-muted d-block mt-2">
-                    <i class="bi bi-phone"></i> Best used on mobile/tablet. Tapping auto-launches GPay, PhonePe, or Paytm.
-                </small>
+            <div class="row g-4 align-items-center mb-4">
+                
+                <div class="col-md-6 text-center">
+                    <h6 class="fw-bold text-secondary mb-3"><i class="bi bi-tablet-landscape"></i> On Phone or Tablet?</h6>
+                    <a id="upi-intent-link" href="#" class="btn-upi shadow-sm">
+                        <i class="bi bi-wallet2"></i> Pay via UPI App
+                    </a>
+                    <small class="text-muted d-block mt-2 px-2">
+                        Tapping auto-launches PhonePe, GPay, or Paytm installed on this device.
+                    </small>
+                </div>
+
+                <div class="col-12 d-md-none">
+                    <div class="divider-text">OR</div>
+                </div>
+
+                <div class="col-md-6 text-center border-start-md">
+                    <h6 class="fw-bold text-secondary mb-2"><i class="bi bi-laptop"></i> On Computer?</h6>
+                    <div class="qr-box shadow-sm">
+                        <img id="upi-qr-image" src="" alt="Scan to Pay" style="width: 150px; height: 150px;">
+                    </div>
+                    <small class="text-muted d-block mt-2 fw-medium">
+                        <i class="bi bi-qr-code-scan"></i> Scan QR using any UPI app
+                    </small>
+                </div>
+
             </div>
 
             <div class="verification-zone text-start">
-                <h5 class="fw-bold mb-2 text-dark"><i class="bi bi-shield-check text-primary"></i> Instant Verification</h5>
+                <h5 class="fw-bold mb-1 text-dark"><i class="bi bi-shield-check text-primary"></i> Instant Verification</h5>
                 <p class="text-muted small mb-3">Once the payment settles inside your banking application, please paste your 12-digit UPI Ref / UTR reference code below to request account clearance.</p>
                 
                 <div class="mb-3">
@@ -115,7 +156,7 @@
 <script src="https://www.gstatic.com/firebasejs/9.6.1/firebase-database-compat.js"></script>
 
 <script>
-    // Production Firebase configuration credentials
+    // Live project initialization credentials
     const firebaseConfig = {
         apiKey: "AIzaSyBuyDgbmychMjHGupeoZV21vv_Z0n7WyoY",
         authDomain: "business-saarthi.firebaseapp.com",
@@ -128,16 +169,16 @@
     firebase.initializeApp(firebaseConfig);
 
     window.onload = function() {
-        // Extract dynamically assigned session storage metrics
+        // Extract session values securely passed down from core portal entry login logic
         const shopPhone = sessionStorage.getItem("lockedUserPhone") || "9999999999";
         
         // TESTING MODE: Forcing the amount to 50 as requested
         const variableRent = "50"; 
         
-        // Push the formatted testing value to the UI ledger
+        // Push the formatted dynamic value straight to the UI element
         document.getElementById("display-rent").innerText = parseFloat(variableRent).toFixed(2);
 
-        // Updated Configuration Details
+        // Core Destination Setup
         const personalUPI = "piyush0607@ybl"; 
         const merchantName = "Piyush Rana"; 
         const txnRefNote = encodeURIComponent(`Saarthi Rent ${shopPhone}`);
@@ -145,24 +186,28 @@
         // Assemble standard NPCI unified deep link string
         const upiUrl = `upi://pay?pa=${personalUPI}&pn=${encodeURIComponent(merchantName)}&am=${variableRent}&tn=${txnRefNote}&cu=INR`;
 
-        // Direct binding to DOM anchor node
+        // 1. Bind string link to direct mobile intent click anchor node
         const upiBtn = document.getElementById("upi-intent-link");
         upiBtn.setAttribute("href", upiUrl);
+
+        // 2. Render dynamic QR layout image source via secure cloud engine
+        const qrApiUrl = `https://api.qrserver.com/v1/create-qr-code/?size=150x150&data=${encodeURIComponent(upiUrl)}`;
+        document.getElementById("upi-qr-image").setAttribute("src", qrApiUrl);
     };
 
-    // Form confirmation processing logic string
+    // Subform event click sequence listener logic
     document.getElementById("verify-utr-btn").addEventListener("click", function() {
         const utrValue = document.getElementById("utr-input").value.trim();
         const shopPhone = sessionStorage.getItem("lockedUserPhone") || "unknown";
         const variableRent = "50"; 
 
-        // Validate Indian Interbank settlement token length
+        // Strict validation for standard 12-digit numerical Indian banking receipt structures
         if (utrValue.length !== 12 || isNaN(utrValue)) {
             alert("Invalid Format! Please provide a clean 12-digit numerical UPI UTR Number found on your payment receipt.");
             return;
         }
 
-        // Write verification payload into primary queue node paths
+        // Push transaction block payload into dedicated Realtime Database parsing tracking queues
         firebase.database().ref(`payment_verifications/${utrValue}`).set({
             phone: shopPhone,
             amountPaid: variableRent,
@@ -170,13 +215,13 @@
             timestamp: firebase.database.ServerValue.TIMESTAMP,
             status: "pending"
         }).then(() => {
-            // Update master record tracker profile flags 
+            // Drop account state to pending evaluation so workspace can gracefully show verification screen
             return firebase.database().ref(`users/${shopPhone}`).update({
                 portalStatus: "pending_verification",
                 lastSubmittedUtr: utrValue
             });
         }).then(() => {
-            // Forward safely along to the landing checkpoint page
+            // Forward user safely along to the landing checkpoint file page
             window.location.href = "payment-success.html";
         }).catch((err) => {
             alert("Database Error: " + err.message);
