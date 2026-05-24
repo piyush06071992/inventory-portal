@@ -188,38 +188,41 @@
             }
 
             const currentSessionToken = generateUniqueTokenId();
-            sessionStorage.setItem("mySessionToken", currentSessionToken);
-            sessionStorage.setItem("activeUserPhone", userKey);
 
-            // Intercept Verification Trigger
             if (shopData.activeSessionId) {
                 msg.style.color = "orange";
-                msg.innerText = "ACCOUNT BUSY! REQUESTING PERMISSION FROM RUNNING WORKSPACE...";
+                msg.innerText = "ACCOUNT BUSY! WAITING FOR 15-MIN TIMEOUT OR ACCESS FROM RUNNING WORKSPACE...";
 
                 firebase.database().ref('shops/' + userKey + '/sessionChallenge').set({
                     requestingToken: currentSessionToken, status: "pending"
                 });
 
                 if(challengeListenerRef) challengeListenerRef.off();
-                challengeListenerRef = firebase.database().ref('shops/' + userKey + '/sessionChallenge');
-                challengeListenerRef.on('value', (challengeSnapshot) => {
-                    const challenge = challengeSnapshot.val();
-                    if (!challenge) return;
+                challengeListenerRef = firebase.database().ref('shops/' + userKey);
+                
+                challengeListenerRef.on('value', (shopSnapshot) => {
+                    const latestData = shopSnapshot.val();
+                    
+                    // If the active token matches this machine, the challenge was either approved manually or timed out
+                    if (latestData && latestData.activeSessionId === currentSessionToken) {
+                        challengeListenerRef.off();
+                        sessionStorage.setItem("mySessionToken", currentSessionToken);
+                        sessionStorage.setItem("activeUserPhone", userKey);
+                        routeToDashboard();
+                        return;
+                    }
 
-                    if (challenge.status === "allowed" && challenge.requestingToken === currentSessionToken) {
-                        challengeListenerRef.off();
-                        firebase.database().ref('shops/' + userKey).update({
-                            activeSessionId: currentSessionToken, sessionChallenge: null
-                        }).then(() => { routeToDashboard(); });
-                    } 
-                    else if (challenge.status === "denied" && challenge.requestingToken === currentSessionToken) {
-                        challengeListenerRef.off();
-                        firebase.database().ref('shops/' + userKey + '/sessionChallenge').remove();
-                        msg.style.color = "var(--accent)"; msg.innerText = "LOGIN REJECTED BY RUNNING WORKSPACE CONSOLE!";
-                        loginButtonReference.innerText = "LOGIN TO PORTAL"; loginButtonReference.disabled = false;
+                    // Handles an explicit denial from the primary active device context
+                    if (latestData && !latestData.sessionChallenge && latestData.activeSessionId !== currentSessionToken) {
+                        msg.style.color = "var(--accent)";
+                        msg.innerText = "LOGIN REQUEST DENIED BY ACTIVE WORKING DASHBOARD.";
+                        loginButtonReference.innerText = "LOGIN TO PORTAL";
+                        loginButtonReference.disabled = false;
                     }
                 });
             } else {
+                sessionStorage.setItem("mySessionToken", currentSessionToken);
+                sessionStorage.setItem("activeUserPhone", userKey);
                 firebase.database().ref('shops/' + userKey).update({ activeSessionId: currentSessionToken }).then(() => { routeToDashboard(); });
             }
         }
