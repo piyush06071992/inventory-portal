@@ -1,4 +1,4 @@
-// GLOBAL ONE-DEVICE ENFORCER
+// GLOBAL ONE-DEVICE ENFORCER (FOOLPROOF)
 const firebaseConfig = {
     apiKey: "AIzaSyBuYDgbmycHMjHGupeoZV2lvv_Z0n7WyoY",
     authDomain: "business-saarthi.firebaseapp.com",
@@ -9,55 +9,42 @@ const firebaseConfig = {
     appId: "1:556256084111:web:14e841b0e7bfff653170fa"
 };
 
+// Initialize only if not initialized
 if (typeof firebase !== 'undefined' && !firebase.apps.length) {
     firebase.initializeApp(firebaseConfig);
 }
+
+// THE FOOLPROOF LISTENER
+firebase.auth().onAuthStateChanged((user) => {
+    if (user) {
+        console.log("Auth Debug: User is logged in. Starting tracker...");
+        verifySingleSession();
+    }
+});
 
 function verifySingleSession() {
     const activeUser = localStorage.getItem("activeUserPhone");
     const myLoginTime = localStorage.getItem("myLoginTime");
 
-    // 1. Debugging check: See if variables are loaded
-    console.log("Auth Debug - Active User:", activeUser);
-    console.log("Auth Debug - My Login Time:", myLoginTime);
-
     if (!activeUser || !myLoginTime) {
-        console.log("Auth Debug: No user or login time found in storage.");
+        console.log("Auth Debug: No local storage data found.");
         return;
     }
-    
+
     // Ignore login pages
-    const path = window.location.pathname;
-    if (path.includes("login.html") || path === "/" || path === "/index.html") return;
+    if (window.location.pathname.includes("login.html") || window.location.pathname === "/") return;
 
-    // 2. Debugging check: Log the exact database path being queried
-    const dbPath = 'shops/' + activeUser + '/lastLoginTime';
-    console.log("Auth Debug - Checking Database Path:", dbPath);
-
-    firebase.database().ref(dbPath).on('value', (snapshot) => {
+    // Start the listener
+    firebase.database().ref('shops/' + activeUser + '/lastLoginTime').on('value', (snapshot) => {
         const serverTime = snapshot.val();
+        console.log("Auth Debug: Server Time is", serverTime, "Local Time is", myLoginTime);
         
-        // Check if data actually exists
-        if (!snapshot.exists()) {
-            console.log("Auth Debug: Path exists in database, but no data found (lastLoginTime is empty).");
-            return;
-        }
-
-        console.log("Auth Debug - Server Time:", serverTime);
-        
-        // Strict comparison
         if (serverTime && serverTime != myLoginTime) {
-            console.log("Auth Debug: Mismatch found! Logging out.");
+            console.log("Auth Debug: TIMESTAMPS DON'T MATCH. LOGGING OUT.");
             localStorage.clear();
             firebase.auth().signOut().then(() => {
-                alert("Logged out: You are logged in on another device.");
                 window.location.href = '/login.html';
             });
         }
     });
 }
-
-// Start the check after a short delay
-setTimeout(verifySingleSession, 500);
-// Ensure the listener starts when the file loads
-verifySingleSession();
