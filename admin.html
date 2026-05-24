@@ -139,15 +139,21 @@
                 const item = dataContainer[key];
                 if (item.status === "pending") {
                     totalRequests++;
-                    listHtmlBuffer += `
-                        <div class="request-item shadow-sm animate__animated animate__fadeIn">
-                            <div>
-                                <strong class="text-dark d-block"><i class="bi bi-shop text-secondary"></i> Shop: +91 ${item.phone}</strong>
-                                <small class="text-muted text-monospace">Type: Manual Check Verification Queue</small>
+                   listHtmlBuffer += `
+                        <div class="request-item shadow-sm animate__animated animate__fadeIn flex-column align-items-stretch gap-3">
+                            <div class="d-flex justify-content-between align-items-center">
+                                <div>
+                                    <strong class="text-dark d-block"><i class="bi bi-shop text-secondary"></i> Shop: +91 ${item.phone}</strong>
+                                    <small class="text-muted text-monospace">Type: Manual Check Verification Queue</small>
+                                </div>
+                                <button class="btn btn-dark btn-sm fw-semibold px-3" onclick="executeManualAccountClearance('${item.phone}')">
+                                    <i class="bi bi-unlock-fill text-warning"></i> Approve & Unlock
+                                </button>
                             </div>
-                            <button class="btn btn-dark btn-sm fw-semibold px-3" onclick="executeManualAccountClearance('${item.phone}')">
-                                <i class="bi bi-unlock-fill text-warning"></i> Approve & Unlock
-                            </button>
+                            <div class="input-group input-group-sm">
+                                <span class="input-group-text bg-white text-secondary" style="font-size: 0.75rem;"><i class="bi bi-receipt"></i> Txn ID (Optional)</span>
+                                <input type="text" id="txnid-${item.phone}" class="form-control" placeholder="Enter bank reference or transaction number">
+                            </div>
                         </div>`;
                 }
             });
