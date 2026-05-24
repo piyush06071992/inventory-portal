@@ -138,10 +138,23 @@
         <button class="tab-btn" id="tab-past" onclick="switchTab('past')">Past Staff</button>
     </div>
 
-    <div class="staff-list-container" id="staff-list">
+  <div class="staff-list-container" id="staff-list">
         <p style="text-align: center; color: #64748b; width: 100%;">Loading staff records...</p>
     </div>
+</div>
 
+<div id="salary-modal" style="display:none; position:fixed; top:0; left:0; width:100%; height:100%; background:rgba(0,0,0,0.5); z-index:1000; align-items:center; justify-content:center;">
+    <div style="background:white; padding:20px; border-radius:16px; width:90%; max-width:400px;">
+        <h3 id="modal-title">Pay Salary</h3>
+        <input type="date" id="sal-start" class="form-control-custom" placeholder="Period Start">
+        <input type="date" id="sal-end" class="form-control-custom" style="margin-top:10px;" placeholder="Period End">
+        <input type="number" id="sal-amt" class="form-control-custom" style="margin-top:10px;" placeholder="Amount (₹)">
+        <div class="action-row">
+            <button class="btn-cancel" onclick="document.getElementById('salary-modal').style.display='none'">Cancel</button>
+            <button class="btn-sc btn-pay" style="flex:2" onclick="processPayment('UPI')">Pay via UPI</button>
+            <button class="btn-sc btn-attn" style="flex:1" onclick="processPayment('Cash')">Cash</button>
+        </div>
+    </div>
 </div>
 
 <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
