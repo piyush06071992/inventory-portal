@@ -29,11 +29,11 @@
         
         <div class="mb-3">
             <label class="form-label small fw-bold text-secondary">Admin Email ID</label>
-            <input type="email" id="admin-email" class="form-control form-control-lg" placeholder="Enter Admin Email">
+            <input type="email" id="admin-email" class="form-control EXP-input" placeholder="Enter Admin Email">
         </div>
         <div class="mb-4">
             <label class="form-label small fw-bold text-secondary">Security Password</label>
-            <input type="password" id="admin-pass" class="form-control form-control-lg" placeholder="Enter System Password">
+            <input type="password" id="admin-pass" class="form-control EXP-input" placeholder="Enter System Password">
         </div>
         <button id="login-btn" class="btn btn-primary btn-lg w-100 fw-semibold">Authorize Console Access</button>
     </div>
@@ -44,7 +44,7 @@
                 <h4 class="fw-bold text-dark m-0"><i class="bi bi-cpu-fill text-primary"></i> Saarthi Revenue Core</h4>
                 <small class="text-muted">Real-time cross-device workspace validation tracker</small>
             </div>
-          <div class="d-flex gap-2">
+            <div class="d-flex gap-2">
                 <span class="badge bg-danger counter-badge" id="queue-count">0 Requests</span>
                 <span class="badge bg-warning text-dark counter-badge fw-bold" id="inactive-total-count" style="background: linear-gradient(135deg, #ffc107, #fd7e14); color: #fff !important; box-shadow: 0 4px 10px rgba(253, 126, 20, 0.3);">0 Inactive Shops</span>
             </div>
@@ -75,9 +75,11 @@
         messagingSenderId: "556256084111",
         appId: "1:556256084111:web:b06208d94c5f5cae3170fa"
     };
-    firebase.initializeApp(firebaseConfig);
+    
+    if (!firebase.apps.length) {
+        firebase.initializeApp(firebaseConfig);
+    }
 
-    // Static Administrative Verification Key Profiles
     const targetEmail = "rana.rpiyush.piyush826@gmail.com";
     const targetPass = "9817138521Ps$";
 
@@ -86,7 +88,6 @@
         const passInput = document.getElementById("admin-pass").value;
 
         if (emailInput === targetEmail && passInput === targetPass) {
-            // Authentication successful: Transition UI structures
             document.getElementById("auth-panel").classList.add("d-none");
             document.getElementById("dashboard-panel").classList.remove("d-none");
             initializeLiveDashboardEngine();
@@ -95,8 +96,8 @@
         }
     });
 
-   function initializeLiveDashboardEngine() {
-        // Live counter for total inactive shops globally across the database
+    function initializeLiveDashboardEngine() {
+        // Live counter for total inactive shops globally across the database scope
         firebase.database().ref("shops").on('value', (snapshot) => {
             const shopsData = snapshot.val();
             const inactiveCounterNode = document.getElementById("inactive-total-count");
@@ -105,7 +106,6 @@
             if (shopsData) {
                 Object.keys(shopsData).forEach(key => {
                     const shop = shopsData[key];
-                    // Counts shops that are not in an active status (Adjust labels if needed)
                     if (shop.paymentStatus !== "TRIAL" && shop.paymentStatus !== "PAID") {
                         inactiveCount++;
                     }
@@ -131,7 +131,6 @@
                 return;
             }
 
-            // Loop and render data rows dynamically
             let totalRequests = 0;
             let listHtmlBuffer = "";
 
@@ -139,8 +138,8 @@
                 const item = dataContainer[key];
                 if (item.status === "pending") {
                     totalRequests++;
-                   listHtmlBuffer += `
-                        <div class="request-item shadow-sm animate__animated animate__fadeIn flex-column align-items-stretch gap-3">
+                    listHtmlBuffer += `
+                        <div class="request-item shadow-sm flex-column align-items-stretch gap-3">
                             <div class="d-flex justify-content-between align-items-center">
                                 <div>
                                     <strong class="text-dark d-block"><i class="bi bi-shop text-secondary"></i> Shop: +91 ${item.phone}</strong>
@@ -174,29 +173,37 @@
         });
     }
 
-// High-performance atomic operation to run data changes directly inside database nodes
     window.executeManualAccountClearance = function(shopPhone) {
         if (!confirm(`Confirm offline payment received from ${shopPhone} and unlock their access?`)) return;
 
-        // Extract value from optional transaction input element field
         const txnIdField = document.getElementById(`txnid-${shopPhone}`);
         const txnIdValue = txnIdField ? txnIdField.value.trim() : "";
 
-        // 1. Flip active state parameters inside user data profiles tree paths
+        // Subscription Lifespans calculations shifting 30 days into the future starting right now
+        const now = new Date();
+        const nextPaymentDue = new Date();
+        nextPaymentDue.setDate(now.getDate() + 30);
+        
+        const nextDataPurgeGrace = new Date();
+        nextDataPurgeGrace.setDate(now.getDate() + 60);
+
+        // 1. Force the active user flag state change over inside structural parameters path
         firebase.database().ref(`users/${shopPhone}`).update({
             portalStatus: "active",
             lastTxnId: txnIdValue || null
         }).then(() => {
-            // Update the master shop object payment status field
+            // 2. Synchronously write the core PAID tokens and offset values to the main shops tree directory node
             return firebase.database().ref(`shops/${shopPhone}`).update({
                 paymentStatus: "PAID",
+                trialEndsAt: nextPaymentDue.toISOString(),
+                lockoutEndsAt: nextDataPurgeGrace.toISOString(),
                 lastTxnId: txnIdValue || null
             });
         }).then(() => {
-            // 2. Clear out request metadata tracking objects from listing views cleanly
+            // 3. Purge the matching clearance record trace block from incoming log queues safely
             return firebase.database().ref(`manual_unlock_requests/${shopPhone}`).remove();
         }).then(() => {
-            alert(`Shop Profile ${shopPhone} successfully unlocked in live database runtime state!`);
+            alert(`Shop profile successfully unlocked! Active subscription window reset for 30 days starting from today.`);
         }).catch(err => {
             alert("Execution Reference Exception: " + err.message);
         });
