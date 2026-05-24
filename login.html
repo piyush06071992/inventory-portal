@@ -45,7 +45,7 @@
             margin-bottom: 20px;
             text-decoration: underline;
         }
-        /* Real-time Multi-Device Alert Layer Modal Overlays */
+        /* Device Conflict Interactive Overlay Layout UI */
         .device-modal-overlay {
             position: fixed;
             top: 0; left: 0; width: 100%; height: 100%;
@@ -150,17 +150,7 @@
     </div>
 
     <script>
-        const firebaseConfig = {
-            apiKey: "AIzaSyBuyDgbmychMjHGupeoZV21vv_Z0n7WyoY",
-            authDomain: "business-saarthi.firebaseapp.com",
-            databaseURL: "https://business-saarthi-default-rtdb.firebaseio.com",
-            projectId: "business-saarthi",
-            storageBucket: "business-saarthi.firebasestorage.app",
-            messagingSenderId: "556256084111",
-            appId: "1:556256084111:web:b06208d94c5f5cae3170fa"
-        };
-        firebase.initializeApp(firebaseConfig);
-
+        // NOTE: Configuration variable declarations have been dropped to reuse configurations declared inside /auth.js cleanly!
         let activeListenerRef = null;
         let countdownIntervalId = null;
 
@@ -333,12 +323,10 @@
                 return;
             }
 
-            // CROSS DEVICE ENTRY CONTROLLER
             const currentSessionToken = generateUniqueTokenId();
             sessionStorage.setItem("mySessionToken", currentSessionToken);
             sessionStorage.setItem("activeUserPhone", userKey);
 
-            // If an active connection exists, send a hardware intercept challenge signal parameter vector
             if (shopData.activeSessionId) {
                 msg.style.color = "orange";
                 msg.innerText = "ACCOUNT BUSY! ASKING PERMISSION FROM PREVIOUS DEVICE...";
@@ -348,7 +336,6 @@
                     status: "pending"
                 });
 
-                // Attach dynamic real-time target nodes lookup listener inside second device
                 if(activeListenerRef) activeListenerRef.off();
                 activeListenerRef = firebase.database().ref('shops/' + userKey + '/sessionChallenge');
                 activeListenerRef.on('value', (challengeSnapshot) => {
@@ -372,7 +359,6 @@
                     }
                 });
             } else {
-                // Ground structural initialization mapping without lock constraints
                 firebase.database().ref('shops/' + userKey).update({
                     activeSessionId: currentSessionToken
                 }).then(() => { routeToDashboard(); });
@@ -462,8 +448,7 @@
             }
         }
 
-        // DYNAMIC GLOBAL DISPATCH INTERCEPT LISTENER ENGINE
-        // This background loop watches for incoming challenge logs if this device is already logged in elsewhere
+        // BACKGROUND LISTENER PREVENTATIVE SYSTEM FOR CONCURRENT SESSION LOGINS
         setInterval(() => {
             const activeUser = sessionStorage.getItem("activeUserPhone");
             const myToken = sessionStorage.getItem("mySessionToken");
@@ -473,7 +458,6 @@
                     const data = snapshot.val();
                     if (!data) return;
 
-                    // If my token does not match active reference id, someone else gained authorization access
                     if (data.activeSessionId && data.activeSessionId !== myToken) {
                         sessionStorage.clear();
                         alert("Session Disconnected! Signed in from another device console framework.");
@@ -481,7 +465,6 @@
                         return;
                     }
 
-                    // Intercept incoming challenge properties vectors
                     if (data.sessionChallenge && data.sessionChallenge.status === "pending") {
                         triggerLocalConflictOverlayTimer(activeUser);
                     }
@@ -503,7 +486,6 @@
                     countdownIntervalId = null;
                     document.getElementById('device-conflict-modal').style.display = 'none';
                     
-                    // Relinquish access gracefully on timeout sequence
                     sessionStorage.clear();
                     alert("Session Timeout! Relinquished terminal workspace token context access rights to incoming device target.");
                     window.location.href = '/login.html';
