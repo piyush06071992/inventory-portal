@@ -142,10 +142,11 @@
                 .catch((error) => { msg.innerText = "INVALID OR EXPIRED OTP CODE!"; btn.disabled = false; });
         }
 
-        function evaluateUserSubscriptionLifecycle(shopData, userKey, loginButtonReference) {
+       function evaluateUserSubscriptionLifecycle(shopData, userKey, loginButtonReference) {
             const msg = document.getElementById('msg');
             const now = new Date();
             
+            // Keep your existing Trial/Payment checks
             if (!shopData.trialEndsAt || !shopData.lockoutEndsAt || !shopData.paymentStatus) {
                 const regDate = shopData.registeredAt ? new Date(shopData.registeredAt) : new Date();
                 const tEnd = new Date(regDate); tEnd.setDate(tEnd.getDate() + 30);
@@ -169,50 +170,18 @@
                 return;
             }
 
-            const currentSessionToken = generateUniqueTokenId();
-
-            if (shopData.activeSessionId) {
-                msg.style.color = "orange";
-                msg.innerText = "ACCOUNT BUSY! WAITING 15 SECONDS FOR CURRENT DEVICE RESPONSE...";
-
-                firebase.database().ref('shops/' + userKey + '/sessionChallenge').set({
-                    requestingToken: currentSessionToken, status: "pending"
-                });
-
-                if(challengeListenerRef) challengeListenerRef.off();
-                if(internalTimeoutId) clearTimeout(internalTimeoutId);
-
-                internalTimeoutId = setTimeout(() => {
-                    if (challengeListenerRef) challengeListenerRef.off();
-                    firebase.database().ref('shops/' + userKey).update({ activeSessionId: currentSessionToken, sessionChallenge: null }).then(() => {
-                        localStorage.setItem("mySessionToken", currentSessionToken); localStorage.setItem("activeUserPhone", userKey); routeToDashboard();
-                    });
-                }, 16000); 
-
-                challengeListenerRef = firebase.database().ref('shops/' + userKey);
-                challengeListenerRef.on('value', (shopSnapshot) => {
-                    const latestData = shopSnapshot.val();
-                    if (!latestData) return;
-
-                    if (latestData.activeSessionId === currentSessionToken) {
-                        if(internalTimeoutId) clearTimeout(internalTimeoutId);
-                        challengeListenerRef.off();
-                        localStorage.setItem("mySessionToken", currentSessionToken); localStorage.setItem("activeUserPhone", userKey); routeToDashboard();
-                        return;
-                    }
-
-                    if (!latestData.sessionChallenge && latestData.activeSessionId !== currentSessionToken) {
-                        if(internalTimeoutId) clearTimeout(internalTimeoutId);
-                        challengeListenerRef.off();
-                        msg.style.color = "var(--accent)"; msg.innerText = "LOGIN REQUEST REJECTED BY RUNNING WORKSPACE.";
-                        loginButtonReference.innerText = "LOGIN TO PORTAL"; loginButtonReference.disabled = false;
-                    }
-                });
-            } else {
-                localStorage.setItem("mySessionToken", currentSessionToken);
+            // SIMPLIFIED LOGIC: Update timestamp and go
+            const loginTime = Date.now().toString();
+            firebase.database().ref('shops/' + userKey).update({
+                lastLoginTime: loginTime
+            }).then(() => {
+                localStorage.setItem("myLoginTime", loginTime);
                 localStorage.setItem("activeUserPhone", userKey);
-                firebase.database().ref('shops/' + userKey).update({ activeSessionId: currentSessionToken }).then(() => { routeToDashboard(); });
-            }
+                
+                document.getElementById('msg').style.color = "green";
+                document.getElementById('msg').innerText = "ACCESS GRANTED! REDIRECTING...";
+                setTimeout(() => { window.location.href = '/dashboard.html'; }, 1000);
+            });
         }
 
        function routeToDashboard() {
