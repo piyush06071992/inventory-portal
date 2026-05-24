@@ -17,19 +17,42 @@ function verifySingleSession() {
     const activeUser = localStorage.getItem("activeUserPhone");
     const myLoginTime = localStorage.getItem("myLoginTime");
 
-    if (!activeUser || !myLoginTime) return;
-    if (window.location.pathname.endsWith("login.html") || window.location.pathname === "/") return;
+    // 1. Debugging check: See if variables are loaded
+    console.log("Auth Debug - Active User:", activeUser);
+    console.log("Auth Debug - My Login Time:", myLoginTime);
 
-    // Stream the authorized timestamp from the database
-    firebase.database().ref('shops/' + activeUser + '/lastLoginTime').on('value', (snapshot) => {
+    if (!activeUser || !myLoginTime) {
+        console.log("Auth Debug: No user or login time found in storage.");
+        return;
+    }
+    
+    // Ignore login pages
+    const path = window.location.pathname;
+    if (path.includes("login.html") || path === "/" || path === "/index.html") return;
+
+    // 2. Debugging check: Log the exact database path being queried
+    const dbPath = 'shops/' + activeUser + '/lastLoginTime';
+    console.log("Auth Debug - Checking Database Path:", dbPath);
+
+    firebase.database().ref(dbPath).on('value', (snapshot) => {
         const serverTime = snapshot.val();
         
-        // If the server time is different than what we have locally, someone else logged in!
+        // Check if data actually exists
+        if (!snapshot.exists()) {
+            console.log("Auth Debug: Path exists in database, but no data found (lastLoginTime is empty).");
+            return;
+        }
+
+        console.log("Auth Debug - Server Time:", serverTime);
+        
+        // Strict comparison
         if (serverTime && serverTime != myLoginTime) {
+            console.log("Auth Debug: Mismatch found! Logging out.");
             localStorage.clear();
-            firebase.auth().signOut();
-            alert("Logged out: You are logged in on another device.");
-            window.location.href = '/login.html';
+            firebase.auth().signOut().then(() => {
+                alert("Logged out: You are logged in on another device.");
+                window.location.href = '/login.html';
+            });
         }
     });
 }
