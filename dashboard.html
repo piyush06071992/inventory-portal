@@ -211,7 +211,14 @@
         appId: "1:556256084111:web:b06208d94c5f5cae3170fa"
     };
     firebase.initializeApp(firebaseConfig);
-
+// Force unregister the old Service Worker
+    if ('serviceWorker' in navigator) {
+        navigator.serviceWorker.getRegistrations().then(function(registrations) {
+            for (let registration of registrations) {
+                registration.unregister();
+            }
+        });
+    }
    window.onload = function() {
         // 1. FIXED: Changed sessionStorage to localStorage to match login.html
         const activeUserPhone = localStorage.getItem("activeUserPhone");
