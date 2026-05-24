@@ -424,6 +424,18 @@
         const msg = `Hello ${name}, welcome to ${shopName}!%0A%0AHere are your login details for the staff portal:%0A*Portal Link:* (Your Website Link Here)%0A*Login ID:* ${phone}%0A*Secure PIN:* ${pin}%0A%0APlease do not share this PIN with anyone.`;
         window.open(`https://wa.me/91${phone}?text=${msg}`, '_blank');
     }
+    function deleteRole(roleName) {
+        // Check if any staff currently has this role
+        const staffUsingRole = Object.values(globalStaffData).some(s => s.role === roleName);
+        if (staffUsingRole) return alert("Cannot delete this role! Some staff members are still assigned to it.");
+        
+        const activeUserPhone = localStorage.getItem("activeUserPhone");
+        firebase.database().ref('shops/' + activeUserPhone + '/settings/roles').once('value', (snapshot) => {
+            let roles = snapshot.val();
+            roles = roles.filter(r => r !== roleName);
+            firebase.database().ref('shops/' + activeUserPhone + '/settings/roles').set(roles).then(() => loadRoles());
+        });
+    }
 </script>
 
 </body>
