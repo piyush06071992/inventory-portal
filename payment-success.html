@@ -40,7 +40,7 @@
                 <div class="spinner-border spinner-pulse mb-3" role="status">
                     <span class="visually-hidden">Loading...</span>
                 </div>
-                <h3 class="fw-bold text-dark" id="status-title">Verifying Payment Link</h3>
+                <h3 class="fw-bold text-dark" id="status-title">Verifying Payment</h3>
                 <p class="text-muted" id="status-desc">We are validating your submitted UTR log against our incoming bank account statement. This workspace will auto-refresh once confirmed.</p>
             </div>
 
@@ -69,14 +69,15 @@
 <script src="https://www.gstatic.com/firebasejs/9.6.1/firebase-database-compat.js"></script>
 
 <script>
+    // Configured live using your active project variables from image_11deea.jpg
     const firebaseConfig = {
-        apiKey: "YOUR_API_KEY",
+        apiKey: "AIzaSyBuyDgbmychMjHGupeoZV21vv_Z0n7WyoY",
         authDomain: "business-saarthi.firebaseapp.com",
         databaseURL: "https://business-saarthi-default-rtdb.firebaseio.com",
         projectId: "business-saarthi",
-        storageBucket: "business-saarthi.appspot.com",
-        messagingSenderId: "YOUR_SENDER_ID",
-        appId: "YOUR_APP_ID"
+        storageBucket: "business-saarthi.firebasestorage.app",
+        messagingSenderId: "556256084111",
+        appId: "1:556256084111:web:b06208d94c5f5cae3170fa"
     };
     firebase.initializeApp(firebaseConfig);
 
