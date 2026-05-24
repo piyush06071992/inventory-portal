@@ -95,7 +95,25 @@
         }
     });
 
-    function initializeLiveDashboardEngine() {
+   function initializeLiveDashboardEngine() {
+        // Live counter for total inactive shops globally across the database
+        firebase.database().ref("shops").on('value', (snapshot) => {
+            const shopsData = snapshot.val();
+            const inactiveCounterNode = document.getElementById("inactive-total-count");
+            let inactiveCount = 0;
+            
+            if (shopsData) {
+                Object.keys(shopsData).forEach(key => {
+                    const shop = shopsData[key];
+                    // Counts shops that are not in an active status (Adjust labels if needed)
+                    if (shop.paymentStatus !== "TRIAL" && shop.paymentStatus !== "PAID") {
+                        inactiveCount++;
+                    }
+                });
+            }
+            inactiveCounterNode.innerText = `${inactiveCount} Inactive Shops`;
+        });
+
         // Bind real-time background query path listener targeting the active transaction queue
         firebase.database().ref("manual_unlock_requests").on('value', (snapshot) => {
             const dataContainer = snapshot.val();
