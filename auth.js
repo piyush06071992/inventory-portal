@@ -1,5 +1,6 @@
 // Global Session Listener and Device Gatekeeper Engine
 let globalCountdownInterval = null;
+let databaseActiveStreamRef = null;
 
 // Ensure Bootstrap Icons are loaded for the warning symbols across all pages
 if (!document.querySelector('link[href*="bootstrap-icons"]')) {
@@ -37,33 +38,49 @@ gatekeeperStyles.innerHTML = `
 document.head.appendChild(gatekeeperStyles);
 
 function setupGlobalDeviceListener() {
-    setInterval(() => {
-        const activeUser = sessionStorage.getItem("activeUserPhone");
-        const myToken = sessionStorage.getItem("mySessionToken");
+    const activeUser = sessionStorage.getItem("activeUserPhone");
+    const myToken = sessionStorage.getItem("mySessionToken");
 
-        if (!activeUser || !myToken || globalCountdownInterval) return;
-        if (window.location.pathname.includes("login.html")) return;
+    // Exit immediately if this specific page tab instance isn't authenticated yet
+    if (!activeUser || !myToken) return;
 
-        firebase.database().ref('shops/' + activeUser).once('value').then((snapshot) => {
-            const data = snapshot.val();
-            if (!data) return;
+    // Do not instantiate interception popups if the current window tab is explicitly showing login page
+    if (window.location.pathname.endsWith("login.html")) return;
 
-            // Scenario A: Force immediate eviction if current session key token changed on database
-            if (data.activeSessionId && data.activeSessionId !== myToken) {
-                sessionStorage.clear();
-                alert("Session Disconnected! Access revoked because this account signed in from another device.");
-                window.location.href = '/login.html';
-                return;
+    // Remove any legacy open listeners to prevent stack allocation leaks
+    if (databaseActiveStreamRef) databaseActiveStreamRef.off();
+
+    databaseActiveStreamRef = firebase.database().ref('shops/' + activeUser);
+    databaseActiveStreamRef.on('value', (snapshot) => {
+        const data = snapshot.val();
+        if (!data) return;
+
+        // Condition A: Another machine won the authorization token sequence challenge -> Evict this session
+        if (data.activeSessionId && data.activeSessionId !== myToken) {
+            databaseActiveStreamRef.off();
+            sessionStorage.clear();
+            alert("Session Disconnected! Access revoked because this account signed in from another device.");
+            window.location.href = '/login.html';
+            return;
+        }
+
+        // Condition B: Incoming request from an external terminal -> Trigger alert UI modal overlay instantly
+        if (data.sessionChallenge && data.sessionChallenge.status === "pending") {
+            if (data.activeSessionId === myToken && !globalCountdownInterval) {
+                triggerGlobalConflictOverlay(activeUser);
             }
-
-            // Scenario B: Handle an active request challenge coming from an external machine
-            if (data.sessionChallenge && data.sessionChallenge.status === "pending") {
-                if (data.activeSessionId === myToken) {
-                    triggerGlobalConflictOverlay(activeUser);
-                }
+        } else {
+            // Remove popup modal container elements automatically if the challenge node gets purged elsewhere
+            const existingModal = document.getElementById('global-device-conflict-modal');
+            if (existingModal && !data.sessionChallenge) {
+                clearInterval(globalCountdownInterval);
+                globalCountdownInterval = null;
+                existingModal.remove();
             }
-        });
-    }, 2000); // Swapped tracking check interval pacing up to 2 seconds for aggressive responsiveness
+        }
+    }, (error) => {
+        console.error("Core streaming disconnect event context exception: ", error);
+    });
 }
 
 function triggerGlobalConflictOverlay(shopPhone) {
@@ -87,7 +104,7 @@ function triggerGlobalConflictOverlay(shopPhone) {
     `;
     document.body.appendChild(modalOverlay);
 
-    let totalSecondsLeft = 15; // Set precisely back to 15 seconds
+    let totalSecondsLeft = 15;
     
     document.getElementById('global-btn-deny').onclick = () => respondToGlobalConflict('deny', shopPhone);
     document.getElementById('global-btn-allow').onclick = () => respondToGlobalConflict('allow', shopPhone);
@@ -102,23 +119,15 @@ function triggerGlobalConflictOverlay(shopPhone) {
             clearInterval(globalCountdownInterval);
             globalCountdownInterval = null;
             
-            if(document.getElementById('global-device-conflict-modal')) {
+            if (databaseActiveStreamRef) databaseActiveStreamRef.off();
+            
+            if (document.getElementById('global-device-conflict-modal')) {
                 document.getElementById('global-device-conflict-modal').remove();
             }
             
-            // 15-Second Timeout: Automatically allow incoming request to claim access rights
-            firebase.database().ref('shops/' + shopPhone + '/sessionChallenge').once('value').then((snap) => {
-                const chal = snap.val();
-                if (chal && chal.status === "pending") {
-                    firebase.database().ref('shops/' + shopPhone).update({
-                        activeSessionId: chal.requestingToken,
-                        sessionChallenge: null
-                    }).then(() => {
-                        sessionStorage.clear();
-                        window.location.href = '/login.html';
-                    });
-                }
-            });
+            // Session transfer action rules execute via background operations automatically inside login.html page scripts
+            sessionStorage.clear();
+            window.location.href = '/login.html';
         }
     }, 1000);
 }
@@ -132,6 +141,8 @@ function respondToGlobalConflict(resolution, shopPhone) {
     }
 
     if (resolution === 'allow') {
+        if (databaseActiveStreamRef) databaseActiveStreamRef.off();
+        
         firebase.database().ref('shops/' + shopPhone + '/sessionChallenge').once('value').then((snap) => {
             const chal = snap.val();
             if (chal) {
@@ -145,11 +156,13 @@ function respondToGlobalConflict(resolution, shopPhone) {
             }
         });
     } else {
-        // Clear challenge path state to signify rejection to the requesting client
+        // Rejection strategy execution drops out the tracking entry properties straight from the db tree layout
         firebase.database().ref('shops/' + shopPhone + '/sessionChallenge').remove();
     }
 }
 
+// Attach the initiation routines directly to target the global webpage element construction timeline rules
 document.addEventListener("DOMContentLoaded", () => {
-    setupGlobalDeviceListener();
+    // Small timeout ensures pages that utilize custom loading sequences clear dependency parameters prior to mapping loops
+    setTimeout(setupGlobalDeviceListener, 500);
 });
