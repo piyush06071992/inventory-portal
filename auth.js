@@ -18,15 +18,15 @@ gatekeeperStyles.innerHTML = `
         z-index: 100000; padding: 15px; box-sizing: border-box; font-family: sans-serif;
     }
     .device-modal-card-global {
-        background: #ffffff; width: 100%; max-width: 400px; border-radius: 20px; padding: 25px;
+        background: #ffffff; width: 100%; max-width: 420px; border-radius: 20px; padding: 25px;
         text-align: center; box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.3); box-sizing: border-box;
         border: 4px solid #1e3a8a;
     }
     .device-modal-card-global h3 { color: #1e3a8a; margin: 15px 0 10px 0; font-weight: 700; font-size: 20px; }
     .device-modal-card-global p { color: #64748b; font-size: 14px; margin-bottom: 15px; line-height: 1.5; }
     .timer-circle-global {
-        width: 60px; height: 60px; border-radius: 50%; background: #f1f5f9; border: 3px solid #b91c1c;
-        display: flex; align-items: center; justify-content: center; font-size: 24px; font-weight: 700;
+        width: 90px; height: 90px; border-radius: 50%; background: #f1f5f9; border: 3px solid #b91c1c;
+        display: flex; align-items: center; justify-content: center; font-size: 20px; font-weight: 700;
         color: #b91c1c; margin: 15px auto;
     }
     .modal-btn-row-global { display: flex; gap: 10px; margin-top: 20px; }
@@ -41,17 +41,14 @@ function setupGlobalDeviceListener() {
         const activeUser = sessionStorage.getItem("activeUserPhone");
         const myToken = sessionStorage.getItem("mySessionToken");
 
-        // Skip tracking if the user isn't actively authenticated on this screen instance
         if (!activeUser || !myToken || globalCountdownInterval) return;
-
-        // Skip checking if we are currently standing on the login view itself
         if (window.location.pathname.includes("login.html")) return;
 
         firebase.database().ref('shops/' + activeUser).once('value').then((snapshot) => {
             const data = snapshot.val();
             if (!data) return;
 
-            // Scenario A: Another session token took authority over the node pointer
+            // Scenario A: Force immediate eviction if current session key token changed on database
             if (data.activeSessionId && data.activeSessionId !== myToken) {
                 sessionStorage.clear();
                 alert("Session Disconnected! Access revoked because this account signed in from another device.");
@@ -59,9 +56,8 @@ function setupGlobalDeviceListener() {
                 return;
             }
 
-            // Scenario B: Incoming secondary device login detected -> Intercept current session page
+            // Scenario B: Handle an active request challenge coming from an external machine
             if (data.sessionChallenge && data.sessionChallenge.status === "pending") {
-                // Secure Check: Only trigger alert modal if this device is the authorized owner token
                 if (data.activeSessionId === myToken) {
                     triggerGlobalConflictOverlay(activeUser);
                 }
@@ -81,27 +77,33 @@ function triggerGlobalConflictOverlay(shopPhone) {
         <div class="device-modal-card-global">
             <i class="bi bi-exclamation-triangle-fill" style="font-size: 3.5rem; color: #eab308;"></i>
             <h3>Another Device Login Attempt</h3>
-            <p>A second machine is attempting to log in using your account credentials. Do you want to allow them access?</p>
-            <div class="timer-circle-global" id="global-countdown-timer">15</div>
+            <p>A secondary device is trying to access your workspace. If you do not deny this request within 15 minutes, this terminal session will automatically transfer access control to them.</p>
+            <div class="timer-circle-global" id="global-countdown-timer">15:00</div>
             <div class="modal-btn-row-global">
                 <button class="modal-btn-global btn-deny-global" id="global-btn-deny">DENY ACCESS</button>
-                <button class="modal-btn-global btn-allow-global" id="global-btn-allow">ALLOW</button>
+                <button class="modal-btn-global btn-allow-global" id="global-btn-allow">ALLOW LOGIN</button>
             </div>
         </div>
     `;
     document.body.appendChild(modalOverlay);
 
-    let durationLeft = 15;
+    let totalSecondsLeft = 900; // 15 Minutes window duration allocation value
     
     document.getElementById('global-btn-deny').onclick = () => respondToGlobalConflict('deny', shopPhone);
     document.getElementById('global-btn-allow').onclick = () => respondToGlobalConflict('allow', shopPhone);
 
     globalCountdownInterval = setInterval(() => {
-        durationLeft--;
+        totalSecondsLeft--;
+        
+        // Calculate format conversion for minute tracking readouts
+        let mins = Math.floor(totalSecondsLeft / 60);
+        let secs = totalSecondsLeft % 60;
+        let displayTime = `${mins}:${secs < 10 ? '0' : ''}${secs}`;
+        
         const timerUI = document.getElementById('global-countdown-timer');
-        if (timerUI) timerUI.innerText = durationLeft;
+        if (timerUI) timerUI.innerText = displayTime;
 
-        if (durationLeft <= 0) {
+        if (totalSecondsLeft <= 0) {
             clearInterval(globalCountdownInterval);
             globalCountdownInterval = null;
             
@@ -109,12 +111,18 @@ function triggerGlobalConflictOverlay(shopPhone) {
                 document.getElementById('global-device-conflict-modal').remove();
             }
             
-            // Timeout condition: Force current device session logout, ceding control to new device
-            sessionStorage.clear();
-            firebase.database().ref('shops/' + shopPhone + '/sessionChallenge').update({
-                status: "allowed"
-            }).then(() => {
-                window.location.href = '/login.html';
+            // 15-Minute Timeout: Automatically allow incoming request to claim access rights
+            firebase.database().ref('shops/' + shopPhone + '/sessionChallenge').once('value').then((snap) => {
+                const chal = snap.val();
+                if (chal && chal.status === "pending") {
+                    firebase.database().ref('shops/' + shopPhone).update({
+                        activeSessionId: chal.requestingToken,
+                        sessionChallenge: null
+                    }).then(() => {
+                        sessionStorage.clear();
+                        window.location.href = '/login.html';
+                    });
+                }
             });
         }
     }, 1000);
@@ -129,20 +137,24 @@ function respondToGlobalConflict(resolution, shopPhone) {
     }
 
     if (resolution === 'allow') {
-        firebase.database().ref('shops/' + shopPhone + '/sessionChallenge').update({
-            status: "allowed"
-        }).then(() => {
-            sessionStorage.clear();
-            window.location.href = '/login.html';
+        firebase.database().ref('shops/' + shopPhone + '/sessionChallenge').once('value').then((snap) => {
+            const chal = snap.val();
+            if (chal) {
+                firebase.database().ref('shops/' + shopPhone).update({
+                    activeSessionId: chal.requestingToken,
+                    sessionChallenge: null
+                }).then(() => {
+                    sessionStorage.clear();
+                    window.location.href = '/login.html';
+                });
+            }
         });
     } else {
-        firebase.database().ref('shops/' + shopPhone + '/sessionChallenge').update({
-            status: "denied"
-        });
+        // Clear challenge path state to signify rejection to the requesting client
+        firebase.database().ref('shops/' + shopPhone + '/sessionChallenge').remove();
     }
 }
 
-// Automatically mount background runtime listener processes once page elements mount safely
 document.addEventListener("DOMContentLoaded", () => {
     setupGlobalDeviceListener();
 });
