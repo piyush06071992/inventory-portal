@@ -76,15 +76,13 @@
         <div class="card-serial">2</div>
         <div class="card-title"><i class="bi bi-geo-alt-fill text-danger"></i> Contact & Local Address</div>
         
-        <div class="grid-2">
-            <div class="form-group">
-                <label>Primary Mobile Number</label>
-                <input type="number" id="phone-num-1" class="form-control-custom" placeholder="10-Digit Mobile" inputmode="numeric" oninput="limitDigitLength(this, 10)">
-            </div>
-            <div class="form-group">
-                <label>Secondary Mobile (Optional)</label>
-                <input type="number" id="phone-num-2" class="form-control-custom" placeholder="Alternative Phone" inputmode="numeric" oninput="limitDigitLength(this, 10)">
-            </div>
+        <div class="form-group">
+            <label>Registered Phone Numbers</label>
+            <div id="phones-container">
+                </div>
+            <button type="button" class="btn-add-more" onclick="addPhoneField('')">
+                <i class="bi bi-telephone-plus-fill"></i> Add New Phone Number
+            </button>
         </div>
 
         <div class="form-group">
@@ -226,6 +224,17 @@
         container.appendChild(div);
     }
 
+    function addPhoneField(value) {
+        const container = document.getElementById('phones-container');
+        const div = document.createElement('div');
+        div.className = 'dynamic-row';
+        div.innerHTML = `
+            <input type="number" class="form-control-custom phone-input-item" placeholder="ENTER 10-DIGIT MOBILE" value="${value}" inputmode="numeric" oninput="limitDigitLength(this, 10)">
+            <button type="button" class="btn-remove" onclick="this.parentElement.remove()"><i class="bi bi-trash3-fill"></i></button>
+        `;
+        container.appendChild(div);
+    }
+
     window.onload = function() {
         const activeUserPhone = sessionStorage.getItem("activeUserPhone") || "9999999999";
 
@@ -236,8 +245,6 @@
                 if (profile) {
                     document.getElementById('biz-name').value = profile.businessName || '';
                     document.getElementById('biz-tagline').value = profile.tagline || '';
-                    document.getElementById('phone-num-1').value = profile.primaryPhone || '';
-                    document.getElementById('phone-num-2').value = profile.secondaryPhone || '';
                     document.getElementById('biz-address').value = profile.address || '';
                     document.getElementById('biz-state').value = profile.state || '';
                     document.getElementById('biz-pin').value = profile.pinCode || '';
@@ -249,11 +256,21 @@
                         profile.owners.forEach(owner => addOwnerField(owner));
                     } else { addOwnerField(''); }
                     
+                    if (profile.phoneNumbers && profile.phoneNumbers.length > 0) {
+                        profile.phoneNumbers.forEach(num => addPhoneField(num));
+                    } else if (profile.primaryPhone) {
+                        addPhoneField(profile.primaryPhone);
+                        if (profile.secondaryPhone) addPhoneField(profile.secondaryPhone);
+                    } else {
+                        addPhoneField('');
+                    }
+
                     if (profile.upiIds) {
                         profile.upiIds.forEach(upi => addUpiField(upi));
                     } else { addUpiField(''); }
                 } else {
                     addOwnerField('');
+                    addPhoneField('');
                     addUpiField('');
                 }
             });
@@ -273,12 +290,16 @@
             if(input.value.trim()) upiArray.push(input.value.trim().toLowerCase());
         });
 
+        const phonesArray = [];
+        document.querySelectorAll('.phone-input-item').forEach(input => {
+            if(input.value.trim()) phonesArray.push(input.value.trim());
+        });
+
         const updatedProfileData = {
             businessName: document.getElementById('biz-name').value.trim().toUpperCase(),
             tagline: document.getElementById('biz-tagline').value.trim(),
             owners: ownersArray,
-            primaryPhone: document.getElementById('phone-num-1').value,
-            secondaryPhone: document.getElementById('phone-num-2').value,
+            phoneNumbers: phonesArray,
             address: document.getElementById('biz-address').value.trim(),
             state: document.getElementById('biz-state').value,
             pinCode: document.getElementById('biz-pin').value,
@@ -290,8 +311,8 @@
         };
 
         // Complete input validation schema check
-        if (!updatedProfileData.businessName || !updatedProfileData.primaryPhone || !updatedProfileData.address || !updatedProfileData.state || !updatedProfileData.pinCode) {
-            alert("ERROR: Please completely fill out all basic contact details fields before saving.");
+        if (!updatedProfileData.businessName || updatedProfileData.phoneNumbers.length === 0 || !updatedProfileData.address || !updatedProfileData.state || !updatedProfileData.pinCode) {
+            alert("ERROR: Please completely fill out all basic contact details fields and include at least one phone number before saving.");
             return;
         }
 
