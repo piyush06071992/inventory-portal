@@ -14,7 +14,37 @@ const firebaseConfig = {
 if (typeof firebase !== 'undefined' && !firebase.apps.length) {
     firebase.initializeApp(firebaseConfig);
 }
+// UNIVERSAL MIDNIGHT & SUBSCRIPTION GUARD
+function verifySessionIntegrity() {
+    const activePhone = localStorage.getItem("activeUserPhone");
+    if (!activePhone) return (window.location.href = '/login.html');
 
+    firebase.database().ref('shops/' + activePhone).once('value').then((snapshot) => {
+        const data = snapshot.val();
+        if (!data) return;
+
+        const now = new Date();
+        const lockoutDate = new Date(data.lockoutEndsAt);
+
+        // 1. Midnight Logout: Clear session if date has changed since last access
+        const lastAccess = localStorage.getItem("lastAccessDate");
+        const today = now.toDateString();
+        
+        if (lastAccess && lastAccess !== today) {
+            localStorage.clear();
+            sessionStorage.clear();
+            alert("Session expired at midnight. Please login again.");
+            return (window.location.href = '/login.html');
+        }
+        localStorage.setItem("lastAccessDate", today);
+
+        // 2. Subscription Expiry Guard
+        if (data.paymentStatus !== "PAID" && now > lockoutDate) {
+            window.location.href = '/billing.html';
+        }
+    });
+}
+verifySessionIntegrity();
 // 2. The One-Device Security Logic
 function verifySingleSession() {
     const activeUser = localStorage.getItem("activeUserPhone");
