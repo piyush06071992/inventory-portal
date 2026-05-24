@@ -1,8 +1,12 @@
-// Global Session Listener and Device Gatekeeper Engine
-let globalCountdownInterval = null;
-let databaseActiveStreamRef = null;
+// ============================================================================
+// GLOBAL SESSION GATEKEEPER & DEVICE CONFLICT MANAGER
+// Runs continuously on all pages to ensure single-device authorization
+// ============================================================================
 
-// Ensure Bootstrap Icons are loaded for the warning symbols across all pages
+let globalCountdownInterval = null;
+let activeDatabaseStream = null;
+
+// Dynamically inject Bootstrap Icons for the warning modal UI if missing
 if (!document.querySelector('link[href*="bootstrap-icons"]')) {
     const iconLink = document.createElement('link');
     iconLink.rel = 'stylesheet';
@@ -10,7 +14,7 @@ if (!document.querySelector('link[href*="bootstrap-icons"]')) {
     document.head.appendChild(iconLink);
 }
 
-// Inject Dynamic CSS styles required for the multi-device gatekeeper modal safely onto any page
+// Dynamically inject the CSS styles for the Gatekeeper Modal Overlay
 const gatekeeperStyles = document.createElement('style');
 gatekeeperStyles.innerHTML = `
     .device-modal-overlay-global {
@@ -37,52 +41,59 @@ gatekeeperStyles.innerHTML = `
 `;
 document.head.appendChild(gatekeeperStyles);
 
+// Initialize the real-time global listener
 function setupGlobalDeviceListener() {
     const activeUser = sessionStorage.getItem("activeUserPhone");
     const myToken = sessionStorage.getItem("mySessionToken");
 
-    // Exit immediately if this specific page tab instance isn't authenticated yet
+    // Do not run the global listener if the user isn't logged in, or if they are on the login page itself
     if (!activeUser || !myToken) return;
+    if (window.location.pathname.endsWith("login.html") || window.location.pathname === "/") return;
 
-    // Do not instantiate interception popups if the current window tab is explicitly showing login page
-    if (window.location.pathname.endsWith("login.html")) return;
+    // Clear any duplicate streams to prevent memory leaks during page navigation
+    if (activeDatabaseStream) activeDatabaseStream.off();
 
-    // Remove any legacy open listeners to prevent stack allocation leaks
-    if (databaseActiveStreamRef) databaseActiveStreamRef.off();
-
-    databaseActiveStreamRef = firebase.database().ref('shops/' + activeUser);
-    databaseActiveStreamRef.on('value', (snapshot) => {
+    // Bind a live, continuous stream to the user's master shop profile node
+    activeDatabaseStream = firebase.database().ref('shops/' + activeUser);
+    
+    activeDatabaseStream.on('value', (snapshot) => {
         const data = snapshot.val();
         if (!data) return;
 
-        // Condition A: Another machine won the authorization token sequence challenge -> Evict this session
+        // ==============================================================================
+        // SCENARIO 1: FORCED EVICTION
+        // The active token on the server no longer matches this browser's token.
+        // This means a new device successfully logged in. Kick this device out immediately!
+        // ==============================================================================
         if (data.activeSessionId && data.activeSessionId !== myToken) {
-            databaseActiveStreamRef.off();
+            activeDatabaseStream.off();
             sessionStorage.clear();
-            alert("Session Disconnected! Access revoked because this account signed in from another device.");
+            alert("Session Revoked! Your account has successfully logged in from another device.");
             window.location.href = '/login.html';
             return;
         }
 
-        // Condition B: Incoming request from an external terminal -> Trigger alert UI modal overlay instantly
+        // ==============================================================================
+        // SCENARIO 2: INCOMING LOGIN CHALLENGE
+        // Another device is trying to log in right now and sent a challenge request.
+        // ==============================================================================
         if (data.sessionChallenge && data.sessionChallenge.status === "pending") {
+            // CRITICAL CHECK: Only show the popup if THIS device is the currently authorized master device!
             if (data.activeSessionId === myToken && !globalCountdownInterval) {
                 triggerGlobalConflictOverlay(activeUser);
             }
-        } else {
-            // Remove popup modal container elements automatically if the challenge node gets purged elsewhere
-            const existingModal = document.getElementById('global-device-conflict-modal');
-            if (existingModal && !data.sessionChallenge) {
-                clearInterval(globalCountdownInterval);
-                globalCountdownInterval = null;
-                existingModal.remove();
-            }
+        } 
+        
+        // Cleanup: If the challenge node vanishes (e.g., the other device gave up or it timed out), remove the popup UI
+        if (!data.sessionChallenge && document.getElementById('global-device-conflict-modal')) {
+            clearInterval(globalCountdownInterval);
+            globalCountdownInterval = null;
+            document.getElementById('global-device-conflict-modal').remove();
         }
-    }, (error) => {
-        console.error("Core streaming disconnect event context exception: ", error);
     });
 }
 
+// Function to construct and display the 15-second warning UI
 function triggerGlobalConflictOverlay(shopPhone) {
     if (document.getElementById('global-device-conflict-modal')) return;
 
@@ -93,8 +104,8 @@ function triggerGlobalConflictOverlay(shopPhone) {
     modalOverlay.innerHTML = `
         <div class="device-modal-card-global">
             <i class="bi bi-exclamation-triangle-fill" style="font-size: 3.5rem; color: #eab308;"></i>
-            <h3>Another Device Login Attempt</h3>
-            <p>A secondary device is trying to access your workspace. If you do not deny this request within 15 seconds, this terminal session will automatically transfer access control to them.</p>
+            <h3>New Login Attempt</h3>
+            <p>Another device is trying to log in. If you do not deny this request within 15 seconds, you will be logged out and they will be granted access.</p>
             <div class="timer-circle-global" id="global-countdown-timer">15</div>
             <div class="modal-btn-row-global">
                 <button class="modal-btn-global btn-deny-global" id="global-btn-deny">DENY ACCESS</button>
@@ -104,34 +115,35 @@ function triggerGlobalConflictOverlay(shopPhone) {
     `;
     document.body.appendChild(modalOverlay);
 
-    let totalSecondsLeft = 15;
+    let secondsLeft = 15;
     
+    // Wire up the dynamic action buttons
     document.getElementById('global-btn-deny').onclick = () => respondToGlobalConflict('deny', shopPhone);
     document.getElementById('global-btn-allow').onclick = () => respondToGlobalConflict('allow', shopPhone);
 
+    // Start the countdown timer loop
     globalCountdownInterval = setInterval(() => {
-        totalSecondsLeft--;
-        
+        secondsLeft--;
         const timerUI = document.getElementById('global-countdown-timer');
-        if (timerUI) timerUI.innerText = totalSecondsLeft;
+        if (timerUI) timerUI.innerText = secondsLeft;
 
-        if (totalSecondsLeft <= 0) {
+        // TIMEOUT EXPIRED
+        if (secondsLeft <= 0) {
             clearInterval(globalCountdownInterval);
             globalCountdownInterval = null;
             
-            if (databaseActiveStreamRef) databaseActiveStreamRef.off();
-            
-            if (document.getElementById('global-device-conflict-modal')) {
-                document.getElementById('global-device-conflict-modal').remove();
-            }
-            
-            // Session transfer action rules execute via background operations automatically inside login.html page scripts
-            sessionStorage.clear();
-            window.location.href = '/login.html';
+            // Allow the new device to take control by updating the challenge status
+            firebase.database().ref('shops/' + shopPhone + '/sessionChallenge').update({
+                status: "allowed"
+            });
+            // Note: We don't need to manually clear sessionStorage here. 
+            // Updating the status to "allowed" will trigger the new device to update the activeSessionId.
+            // Once the activeSessionId changes, SCENARIO 1 (Forced Eviction) will automatically kick this device out!
         }
     }, 1000);
 }
 
+// Function to handle the user clicking Allow or Deny
 function respondToGlobalConflict(resolution, shopPhone) {
     clearInterval(globalCountdownInterval);
     globalCountdownInterval = null;
@@ -141,28 +153,18 @@ function respondToGlobalConflict(resolution, shopPhone) {
     }
 
     if (resolution === 'allow') {
-        if (databaseActiveStreamRef) databaseActiveStreamRef.off();
-        
-        firebase.database().ref('shops/' + shopPhone + '/sessionChallenge').once('value').then((snap) => {
-            const chal = snap.val();
-            if (chal) {
-                firebase.database().ref('shops/' + shopPhone).update({
-                    activeSessionId: chal.requestingToken,
-                    sessionChallenge: null
-                }).then(() => {
-                    sessionStorage.clear();
-                    window.location.href = '/login.html';
-                });
-            }
+        // Approve the new device
+        firebase.database().ref('shops/' + shopPhone + '/sessionChallenge').update({
+            status: "allowed"
         });
     } else {
-        // Rejection strategy execution drops out the tracking entry properties straight from the db tree layout
+        // Reject the new device by deleting the pending challenge from the database
         firebase.database().ref('shops/' + shopPhone + '/sessionChallenge').remove();
     }
 }
 
-// Attach the initiation routines directly to target the global webpage element construction timeline rules
+// Mount the global listener automatically once the webpage finishes rendering
 document.addEventListener("DOMContentLoaded", () => {
-    // Small timeout ensures pages that utilize custom loading sequences clear dependency parameters prior to mapping loops
-    setTimeout(setupGlobalDeviceListener, 500);
+    // Add a slight delay to ensure Firebase initializes completely before we try to stream data
+    setTimeout(setupGlobalDeviceListener, 600);
 });
