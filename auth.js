@@ -1,7 +1,7 @@
 // Global Session Listener and Device Gatekeeper Engine
 let globalCountdownInterval = null;
 
-// Ensure Bootstrap Icons are loaded for the warning symbol styling across all pages
+// Ensure Bootstrap Icons are loaded for the warning symbols across all pages
 if (!document.querySelector('link[href*="bootstrap-icons"]')) {
     const iconLink = document.createElement('link');
     iconLink.rel = 'stylesheet';
@@ -36,37 +36,41 @@ gatekeeperStyles.innerHTML = `
 `;
 document.head.appendChild(gatekeeperStyles);
 
-// Core Initialization Engine Injection Hook Check
 function setupGlobalDeviceListener() {
     setInterval(() => {
         const activeUser = sessionStorage.getItem("activeUserPhone");
         const myToken = sessionStorage.getItem("mySessionToken");
 
-        // Only monitor if the user is actively logged into a session workspace route
-        if (activeUser && myToken && !globalCountdownInterval) {
-            firebase.database().ref('shops/' + activeUser).once('value').then((snapshot) => {
-                const data = snapshot.val();
-                if (!data) return;
+        // Skip tracking if the user isn't actively authenticated on this screen instance
+        if (!activeUser || !myToken || globalCountdownInterval) return;
 
-                // Scenario A: Another session token took authority over the node pointer
-                if (data.activeSessionId && data.activeSessionId !== myToken) {
-                    sessionStorage.clear();
-                    alert("Session Disconnected! Access revoked because this account signed in from another device.");
-                    window.location.href = '/login.html';
-                    return;
-                }
+        // Skip checking if we are currently standing on the login view itself
+        if (window.location.pathname.includes("login.html")) return;
 
-                // Scenario B: Incoming secondary device login detected -> Intercept current page workflow
-                if (data.sessionChallenge && data.sessionChallenge.status === "pending") {
+        firebase.database().ref('shops/' + activeUser).once('value').then((snapshot) => {
+            const data = snapshot.val();
+            if (!data) return;
+
+            // Scenario A: Another session token took authority over the node pointer
+            if (data.activeSessionId && data.activeSessionId !== myToken) {
+                sessionStorage.clear();
+                alert("Session Disconnected! Access revoked because this account signed in from another device.");
+                window.location.href = '/login.html';
+                return;
+            }
+
+            // Scenario B: Incoming secondary device login detected -> Intercept current session page
+            if (data.sessionChallenge && data.sessionChallenge.status === "pending") {
+                // Secure Check: Only trigger alert modal if this device is the authorized owner token
+                if (data.activeSessionId === myToken) {
                     triggerGlobalConflictOverlay(activeUser);
                 }
-            });
-        }
+            }
+        });
     }, 3000);
 }
 
 function triggerGlobalConflictOverlay(shopPhone) {
-    // Generate Interface structural layout programmatically so it functions seamlessly inside dashboards/details page frames
     if (document.getElementById('global-device-conflict-modal')) return;
 
     const modalOverlay = document.createElement('div');
@@ -89,7 +93,6 @@ function triggerGlobalConflictOverlay(shopPhone) {
 
     let durationLeft = 15;
     
-    // Wire up dynamic execution actions for injected button pointers
     document.getElementById('global-btn-deny').onclick = () => respondToGlobalConflict('deny', shopPhone);
     document.getElementById('global-btn-allow').onclick = () => respondToGlobalConflict('allow', shopPhone);
 
@@ -102,15 +105,17 @@ function triggerGlobalConflictOverlay(shopPhone) {
             clearInterval(globalCountdownInterval);
             globalCountdownInterval = null;
             
-            // Cleanup overlay frame elements
             if(document.getElementById('global-device-conflict-modal')) {
                 document.getElementById('global-device-conflict-modal').remove();
             }
             
-            // Timeout condition: First device logs out automatically, ceding workspace control to second device
+            // Timeout condition: Force current device session logout, ceding control to new device
             sessionStorage.clear();
-            alert("Session Timeout! Workspace control passed to the incoming device.");
-            window.location.href = '/login.html';
+            firebase.database().ref('shops/' + shopPhone + '/sessionChallenge').update({
+                status: "allowed"
+            }).then(() => {
+                window.location.href = '/login.html';
+            });
         }
     }, 1000);
 }
@@ -137,7 +142,7 @@ function respondToGlobalConflict(resolution, shopPhone) {
     }
 }
 
-// Automatically start monitoring once the DOM elements have loaded on the active webpage context
+// Automatically mount background runtime listener processes once page elements mount safely
 document.addEventListener("DOMContentLoaded", () => {
     setupGlobalDeviceListener();
 });
