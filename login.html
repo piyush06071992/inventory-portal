@@ -9,12 +9,13 @@
     <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-auth-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-database-compat.js"></script>
     
-    <script src="/auth.js?v=999"></script>
+    <script src="/auth.js"></script>
+    
     <link rel="stylesheet" href="/style.css">
     
     <style>
         .pin-wrapper { position: relative; width: 100%; margin-bottom: 15px; }
-        .view-btn-toggle { position: absolute; right: 18px; top: 50%; transform: translateY(-50%); color: var(--accent); cursor: pointer; font-size: 16px; user-select: none; -webkit-user-select: none; font-weight: 900; }
+        .view-btn-toggle { position: absolute; right: 18px; top: 50%; transform: translateY(-50%); color: var(--accent); cursor: pointer; font-size: 16px; user-select: none; font-weight: 900; }
         .pin-wrapper input { margin-bottom: 0; padding-right: 85px; }
         .forgot-link { text-align: right; font-size: 14px; color: var(--accent); font-weight: bold; cursor: pointer; margin-top: -5px; margin-bottom: 20px; text-decoration: underline; }
     </style>
@@ -67,8 +68,6 @@
     <script>
         let challengeListenerRef = null;
         let internalTimeoutId = null;
-
-        function generateUniqueTokenId() { return 'session_' + Math.random().toString(36).substr(2, 9) + Date.now().toString(36); }
 
         function handleToggleView(fieldId, textId) {
             const field = document.getElementById(fieldId);
@@ -142,11 +141,10 @@
                 .catch((error) => { msg.innerText = "INVALID OR EXPIRED OTP CODE!"; btn.disabled = false; });
         }
 
-       function evaluateUserSubscriptionLifecycle(shopData, userKey, loginButtonReference) {
+        function evaluateUserSubscriptionLifecycle(shopData, userKey, loginButtonReference) {
             const msg = document.getElementById('msg');
             const now = new Date();
             
-            // Keep your existing Trial/Payment checks
             if (!shopData.trialEndsAt || !shopData.lockoutEndsAt || !shopData.paymentStatus) {
                 const regDate = shopData.registeredAt ? new Date(shopData.registeredAt) : new Date();
                 const tEnd = new Date(regDate); tEnd.setDate(tEnd.getDate() + 30);
@@ -170,7 +168,7 @@
                 return;
             }
 
-            // SIMPLIFIED LOGIC: Update timestamp and go
+            // SET THE TIMESTAMP FOR DEVICE SECURITY
             const loginTime = Date.now().toString();
             firebase.database().ref('shops/' + userKey).update({
                 lastLoginTime: loginTime
@@ -182,10 +180,6 @@
                 document.getElementById('msg').innerText = "ACCESS GRANTED! REDIRECTING...";
                 setTimeout(() => { window.location.href = '/dashboard.html'; }, 1000);
             });
-        }
-
-       function routeToDashboard() {
-            // No action needed here, the login time is handled in evaluateUserSubscriptionLifecycle
         }
 
         function handlePortalLogin() {
