@@ -34,15 +34,9 @@
                 <span class="text-uppercase text-muted fw-semibold small d-block mb-1">Platform Renewal Fee</span>
                 <div class="rent-badge">₹50.00</div>
                 
-                <div class="razorpay-embed-btn" data-url="https://pages.razorpay.com/pl_Ssq5QPjhHhrkxX/view" data-text="Pay ₹50 Now" data-color="#FF0000" data-size="large">
-                    <script>
-                        (function(){
-                            var d=document; var x=!d.getElementById('razorpay-embed-btn-js')
-                            if(x){ var s=d.createElement('script'); s.defer=!0;s.id='razorpay-embed-btn-js';
-                            s.src='https://cdn.razorpay.com/static/embed_btn/bundle.js';d.body.appendChild(s);} else{var rzp=window['__rzp__'];
-                            rzp && rzp.init && rzp.init()}})();
-                    </script>
-                </div>
+                <button onclick="payNow()" class="btn-action shadow-sm" style="background: #1e3a8a; color: white; border: none; padding: 15px; width: 100%;">
+                    <i class="bi bi-credit-card-2-front-fill"></i> Pay ₹50 Now (Secure)
+                </button>
             </div>
 
             <div class="status-tracker text-start">
