@@ -1,5 +1,6 @@
 // auth.js - CENTRAL CONFIG AND SECURITY ENFORCER
 
+document.write('<style>body { display: none !important; }</style>');
 const firebaseConfig = {
     apiKey: "AIzaSyBuYDgbmycHMjHGupeoZV2lvv_Z0n7WyoY",
     authDomain: "business-saarthi.firebaseapp.com",
