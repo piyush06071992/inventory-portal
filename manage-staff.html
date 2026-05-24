@@ -300,7 +300,7 @@
                     <div class="sc-actions-grid">
                         <button class="btn-sc btn-pin" onclick="sendPinWA('${stf.name}', '${stf.phone}', '${stf.securePin}')"><i class="bi bi-whatsapp"></i> Send Login PIN to Staff</button>
                         <button class="btn-sc btn-attn" onclick="alert('Attendance Module Opening...')"><i class="bi bi-calendar-check"></i> Log Attendance</button>
-                        <button class="btn-sc btn-pay" onclick="payStaff('${stf.upiId || ''}', '${stf.name}')"><i class="bi bi-currency-rupee"></i> Pay Salary</button>
+                        <button class="btn-sc btn-pay" onclick="payStaff('${stf.upiId || ''}', '${stf.name}', '${stf.id}')"><i class="bi bi-currency-rupee"></i> Pay Salary</button>
                     </div>
                     ` : ''}
 
