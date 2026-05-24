@@ -59,3 +59,5 @@ function verifySingleSession() {
 
 // Start the check after a short delay
 setTimeout(verifySingleSession, 500);
+// Ensure the listener starts when the file loads
+verifySingleSession();
