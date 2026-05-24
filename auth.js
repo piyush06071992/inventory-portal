@@ -1,5 +1,5 @@
 // ============================================================================
-// GLOBAL SESSION GATEKEEPER - SOFT LOCK EDITION (v2)
+// GLOBAL SESSION GATEKEEPER - SOFT LOCK EDITION
 // ============================================================================
 
 const firebaseConfig = {
@@ -58,7 +58,6 @@ function setupGlobalDeviceListener() {
         if (!data) return;
 
         // SCENARIO 1: SOFT LOCK (Data Protection)
-        // Another device logged in. Freeze the screen, but DO NOT refresh or delete data.
         if (data.activeSessionId && data.activeSessionId !== myToken) {
             triggerSoftLockOverlay(activeUser);
             return;
@@ -104,8 +103,6 @@ function triggerSoftLockOverlay(shopPhone) {
 }
 
 window.reclaimSession = function(shopPhone) {
-    // Generate a fresh token, save it locally, and push it to the server. 
-    // This makes THIS device the master again, automatically triggering the Soft Lock on the other device!
     const newToken = generateUniqueTokenId();
     localStorage.setItem("mySessionToken", newToken);
     
