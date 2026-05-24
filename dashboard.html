@@ -4,231 +4,99 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Dashboard - Business Saarthi</title>
+    
+    <script src="/auth.js"></script>
+
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.1/font/bootstrap-icons.css">
     <link rel="stylesheet" href="/style.css">
 
     <style>
-        body { 
-            font-family: 'Inter', sans-serif; 
-            background-color: #f1f5f9; 
-            margin: 0; 
-            padding: 0;
-        }
-        .dashboard-layout {
-            display: flex;
-            flex-direction: column;
-            align-items: center;
-            justify-content: flex-start;
-            min-height: 100vh;
-            width: 100%;
-            padding: 20px 10px;
-            box-sizing: border-box;
-        }
-        .shop-header-card {
-            width: 100%;
-            max-width: 650px;
-            background: linear-gradient(135deg, #1e3a8a, #0f172a);
-            color: #ffffff;
-            padding: 25px 20px;
-            border-radius: 16px;
-            text-align: center;
-            box-shadow: 0 10px 25px rgba(30, 58, 138, 0.15);
-            margin-bottom: 20px;
-            box-sizing: border-box;
-        }
-        .shop-header-card h1 {
-            margin: 0;
-            font-size: 24px;
-            font-weight: 700;
-            letter-spacing: 0.5px;
-            text-transform: uppercase;
-        }
-        .shop-header-card p {
-            margin: 5px 0 0 0;
-            font-size: 14px;
-            color: #93c5fd;
-            font-weight: 500;
-        }
-        .menu-grid-container {
-            width: 100%;
-            max-width: 650px;
-            background: #ffffff;
-            border-radius: 16px;
-            padding: 24px;
-            box-shadow: 0 4px 20px rgba(0, 0, 0, 0.03);
-            box-sizing: border-box;
-        }
-        /* Massive Eye-Catching Sale Point Button Style */
-        .btn-pos-huge {
-            width: 100%;
-            background: linear-gradient(135deg, #10b981, #059669);
-            color: #ffffff;
-            border: none;
-            border-radius: 14px;
-            padding: 22px;
-            font-size: 20px;
-            font-weight: 700;
-            letter-spacing: 0.5px;
-            cursor: pointer;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            gap: 12px;
-            box-shadow: 0 8px 20px rgba(16, 185, 129, 0.3);
-            transition: all 0.2s ease;
-            margin-bottom: 20px;
-        }
-        .btn-pos-huge:hover {
-            transform: translateY(-2px);
-            box-shadow: 0 12px 24px rgba(16, 185, 129, 0.4);
-        }
-        .btn-pos-huge:active {
-            transform: translateY(0);
-        }
-        /* Secondary Grid Action Buttons Layout */
-        .grid-row {
-            display: grid;
-            grid-template-columns: repeat(2, 1fr);
-            gap: 16px;
-            margin-bottom: 24px;
-        }
-        @media (max-width: 480px) {
-            .grid-row {
-                grid-template-columns: 1fr;
-                gap: 12px;
-            }
-        }
-        .btn-dashboard-item {
-            border: none;
-            border-radius: 12px;
-            padding: 16px;
-            font-size: 15px;
-            font-weight: 600;
-            cursor: pointer;
-            display: flex;
-            flex-direction: column;
-            align-items: center;
-            justify-content: center;
-            gap: 8px;
-            color: #ffffff;
-            transition: all 0.2s ease;
-            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.05);
-        }
-        .btn-dashboard-item i {
-            font-size: 24px;
-        }
-        .btn-dashboard-item:hover {
-            transform: translateY(-2px);
-            filter: brightness(1.05);
-        }
-        /* Bright Distinct Color Profiles */
-        .color-blue   { background: linear-gradient(135deg, #3b82f6, #1d4ed8); box-shadow: 0 4px 12px rgba(59, 130, 246, 0.25); }
-        .color-indigo { background: linear-gradient(135deg, #6366f1, #4338ca); box-shadow: 0 4px 12px rgba(99, 102, 241, 0.25); }
-        .color-purple { background: linear-gradient(135deg, #a855f7, #7e22ce); box-shadow: 0 4px 12px rgba(168, 85, 247, 0.25); }
-        .color-orange { background: linear-gradient(135deg, #f97316, #c2410c); box-shadow: 0 4px 12px rgba(249, 115, 22, 0.25); }
-        
-        /* Logout System Action Row */
-        .btn-logout-panel {
-            width: 100%;
-            background-color: #f1f5f9;
-            color: #64748b;
-            border: 1px solid #e2e8f0;
-            border-radius: 10px;
-            padding: 12px;
-            font-size: 14px;
-            font-weight: 600;
-            cursor: pointer;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            gap: 8px;
-            transition: all 0.2s ease;
-        }
-        .btn-logout-panel:hover {
-            background-color: #fee2e2;
-            color: #ef4444;
-            border-color: #fca5a5;
-        }
+        body { font-family: 'Inter', sans-serif; background-color: #f1f5f9; margin: 0; padding: 0; }
+        .dashboard-layout { display: flex; flex-direction: column; align-items: center; justify-content: flex-start; min-height: 100vh; width: 100%; padding: 20px 10px; box-sizing: border-box; }
+        .shop-header-card { width: 100%; max-width: 650px; background: linear-gradient(135deg, #1e3a8a, #0f172a); color: #ffffff; padding: 25px 20px; border-radius: 16px; text-align: center; box-shadow: 0 10px 25px rgba(30, 58, 138, 0.15); margin-bottom: 20px; box-sizing: border-box; }
+        .shop-header-card h1 { margin: 0; font-size: 24px; font-weight: 700; letter-spacing: 0.5px; text-transform: uppercase; }
+        .shop-header-card p { margin: 5px 0 0 0; font-size: 14px; color: #93c5fd; font-weight: 500; }
+        .menu-grid-container { width: 100%; max-width: 650px; background: #ffffff; border-radius: 16px; padding: 24px; box-shadow: 0 4px 20px rgba(0, 0, 0, 0.03); box-sizing: border-box; }
+        .btn-pos-huge { width: 100%; background: linear-gradient(135deg, #10b981, #059669); color: #ffffff; border: none; border-radius: 14px; padding: 22px; font-size: 20px; font-weight: 700; letter-spacing: 0.5px; cursor: pointer; display: flex; align-items: center; justify-content: center; gap: 12px; box-shadow: 0 8px 20px rgba(16, 185, 129, 0.3); transition: all 0.2s ease; margin-bottom: 20px; }
+        .btn-pos-huge:hover { transform: translateY(-2px); box-shadow: 0 12px 24px rgba(16, 185, 129, 0.4); }
+        .grid-row { display: grid; grid-template-columns: repeat(2, 1fr); gap: 16px; margin-bottom: 24px; }
+        @media (max-width: 480px) { .grid-row { grid-template-columns: 1fr; gap: 12px; } }
+        .btn-dashboard-item { border: none; border-radius: 12px; padding: 16px; font-size: 15px; font-weight: 600; cursor: pointer; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 8px; color: #ffffff; transition: all 0.2s ease; box-shadow: 0 4px 12px rgba(0, 0, 0, 0.05); }
+        .btn-dashboard-item i { font-size: 24px; }
+        .btn-dashboard-item:hover { transform: translateY(-2px); filter: brightness(1.05); }
+        .color-blue { background: linear-gradient(135deg, #3b82f6, #1d4ed8); }
+        .color-indigo { background: linear-gradient(135deg, #6366f1, #4338ca); }
+        .color-purple { background: linear-gradient(135deg, #a855f7, #7e22ce); }
+        .color-orange { background: linear-gradient(135deg, #f97316, #c2410c); }
+        .btn-logout-panel { width: 100%; background-color: #f1f5f9; color: #64748b; border: 1px solid #e2e8f0; border-radius: 10px; padding: 12px; font-size: 14px; font-weight: 600; cursor: pointer; display: flex; align-items: center; justify-content: center; gap: 8px; transition: all 0.2s ease; }
+        .btn-logout-panel:hover { background-color: #fee2e2; color: #ef4444; border-color: #fca5a5; }
     </style>
 </head>
 <body>
 
 <div class="dashboard-layout">
-
     <div class="shop-header-card">
         <h1 id="display-shop-name">Loading Workspace...</h1>
         <p><i class="bi bi-patch-check-fill"></i> Business Saarthi Verified Profile</p>
     </div>
 
     <div class="menu-grid-container">
-        
         <button class="btn-pos-huge" onclick="window.location.href='/sale-point.html'">
             <i class="bi bi-cart-dash-fill"></i> SALE POINT (POS)
         </button>
 
         <div class="grid-row">
             <button class="btn-dashboard-item color-blue" onclick="window.location.href='/enter-stock.html'">
-                <i class="bi bi-box-seam-fill"></i>
-                <span>Enter Stock</span>
+                <i class="bi bi-box-seam-fill"></i><span>Enter Stock</span>
             </button>
-            
             <button class="btn-dashboard-item color-indigo" onclick="window.location.href='/manage-stock.html'">
-                <i class="bi bi-tags-fill"></i>
-                <span>Manage Stock</span>
+                <i class="bi bi-tags-fill"></i><span>Manage Stock</span>
             </button>
-            
             <button class="btn-dashboard-item color-purple" onclick="window.location.href='/suppliers.html'">
-                <i class="bi bi-truck"></i>
-                <span>Suppliers</span>
+                <i class="bi bi-truck"></i><span>Suppliers</span>
             </button>
-            
             <button class="btn-dashboard-item color-orange" onclick="window.location.href='/business-details.html'">
-                <i class="bi bi-gear-wide-connected"></i>
-                <span>Business Details</span>
+                <i class="bi bi-gear-wide-connected"></i><span>Business Details</span>
             </button>
         </div>
 
         <button class="btn-logout-panel" onclick="handleLogout()">
             <i class="bi bi-box-arrow-left"></i> Logout From Portal
         </button>
-
     </div>
-
 </div>
 
 <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-database-compat.js"></script>
 
 <script>
+    // 1. KILL CACHE: Force unregister old service workers immediately
+    if ('serviceWorker' in navigator) {
+        navigator.serviceWorker.getRegistrations().then(function(registrations) {
+            for (let registration of registrations) { registration.unregister(); }
+        });
+    }
+
+    // 2. TRIGGER SECURITY CHECK: Start the session listener
+    if (typeof verifySingleSession === 'function') {
+        verifySingleSession();
+    }
+
     const firebaseConfig = {
-        apiKey: "AIzaSyBuyDgbmychMjHGupeoZV21vv_Z0n7WyoY",
+        apiKey: "AIzaSyBuYDgbmycHMjHGupeoZV2lvv_Z0n7WyoY",
         authDomain: "business-saarthi.firebaseapp.com",
         databaseURL: "https://business-saarthi-default-rtdb.firebaseio.com",
         projectId: "business-saarthi",
         storageBucket: "business-saarthi.firebasestorage.app",
         messagingSenderId: "556256084111",
-        appId: "1:556256084111:web:b06208d94c5f5cae3170fa"
+        appId: "1:556256084111:web:14e841b0e7bfff653170fa"
     };
-    firebase.initializeApp(firebaseConfig);
-// Force unregister the old Service Worker
-    if ('serviceWorker' in navigator) {
-        navigator.serviceWorker.getRegistrations().then(function(registrations) {
-            for (let registration of registrations) {
-                registration.unregister();
-            }
-        });
-    }
-   window.onload = function() {
-        // 1. FIXED: Changed sessionStorage to localStorage to match login.html
-        const activeUserPhone = localStorage.getItem("activeUserPhone");
-        
-        // 2. FIXED: Trigger the security listener immediately
-        if (typeof verifySingleSession === 'function') {
-            verifySingleSession();
-        }
+    if (!firebase.apps.length) { firebase.initializeApp(firebaseConfig); }
 
-        // Query the dedicated master relational object node properties matching this shop's sequence
+    window.onload = function() {
+        const activeUserPhone = localStorage.getItem("activeUserPhone") || "9999999999";
+
         firebase.database().ref('shops/' + activeUserPhone).once('value')
             .then((snapshot) => {
                 const shopData = snapshot.val();
@@ -245,8 +113,11 @@
     };
 
     function handleLogout() {
-        sessionStorage.clear(); // Wipe runtime variable parameters to secure open instances
-        window.location.href = '/login.html';
+        localStorage.clear();
+        sessionStorage.clear();
+        firebase.auth().signOut().then(() => {
+            window.location.href = '/login.html';
+        });
     }
 </script>
 </body>
