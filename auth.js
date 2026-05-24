@@ -1,6 +1,8 @@
 // auth.js - CENTRAL CONFIG AND SECURITY ENFORCER
-// 0. Security Enforcer: Hide page only if NOT on login OR registration page
-const isPublicPage = window.location.pathname.includes("login.html") || window.location.pathname.includes("index.html");
+// 0. Security Enforcer: Hide page only if NOT on login, registration, OR billing page
+const isPublicPage = window.location.pathname.includes("login.html") || 
+                     window.location.pathname.includes("index.html") || 
+                     window.location.pathname.includes("billing.html");
 
 if (!isPublicPage) {
     document.write('<style>body { display: none !important; }</style>');
