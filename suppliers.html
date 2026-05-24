@@ -137,30 +137,48 @@
 </div>
 
 <script>
+    let currentEditingSupplierId = null;
+    let globalSuppliersData = {}; // Stores data for quick editing
+
     window.onload = function() {
-        // 1. Enforce One-Device Security
         if (typeof verifySingleSession === 'function') verifySingleSession();
-        
-        // 2. Load the data
         loadSuppliers();
     };
 
+    // --- FORM MANAGEMENT ---
     function toggleSupplierForm() {
         const form = document.getElementById('add-supplier-form');
-        form.style.display = form.style.display === 'block' ? 'none' : 'block';
+        if (form.style.display === 'block') {
+            form.style.display = 'none';
+            resetForm();
+        } else {
+            form.style.display = 'block';
+            document.querySelector('#add-supplier-form h2').innerText = "Register New Supplier";
+        }
     }
 
-    function addSupPhoneField() {
+    function resetForm() {
+        currentEditingSupplierId = null;
+        document.getElementById('sup-name').value = '';
+        document.getElementById('sup-owner').value = '';
+        document.getElementById('sup-gst').value = '';
+        document.getElementById('sup-upi').value = '';
+        document.getElementById('sup-address').value = '';
+        document.getElementById('sup-phones-container').innerHTML = '<div class="dynamic-row"><input type="number" class="form-control-custom phone-input" placeholder="10-Digit Mobile" inputmode="numeric"></div>';
+    }
+
+    function addSupPhoneField(val = '') {
         const container = document.getElementById('sup-phones-container');
         const div = document.createElement('div');
         div.className = 'dynamic-row';
         div.innerHTML = `
-            <input type="number" class="form-control-custom phone-input" placeholder="10-Digit Mobile" inputmode="numeric">
+            <input type="number" class="form-control-custom phone-input" placeholder="10-Digit Mobile" inputmode="numeric" value="${val}">
             <button type="button" class="btn-remove" onclick="this.parentElement.remove()"><i class="bi bi-trash3-fill"></i></button>
         `;
         container.appendChild(div);
     }
 
+    // --- DATABASE OPERATIONS ---
     function saveSupplier() {
         const activeUserPhone = localStorage.getItem("activeUserPhone");
         if (!activeUserPhone) return alert("Session expired. Please login again.");
@@ -176,40 +194,84 @@
             if(input.value.trim()) phones.push(input.value.trim());
         });
 
-        if (!name || phones.length === 0) {
-            return alert("Business Name and at least one Phone Number are required!");
-        }
+        if (!name || phones.length === 0) return alert("Business Name and at least one Phone Number are required!");
 
-        const newSupplier = {
-            id: Date.now().toString(),
+        // If editing, use existing ID. If new, create ID.
+        const supplierId = currentEditingSupplierId ? currentEditingSupplierId : Date.now().toString();
+
+        const supplierData = {
+            id: supplierId,
             businessName: name,
             ownerName: owner,
             phoneNumbers: phones,
             gstNumber: gst,
             upiId: upi,
             address: address,
-            addedAt: new Date().toISOString()
+            addedAt: currentEditingSupplierId && globalSuppliersData[supplierId] ? globalSuppliersData[supplierId].addedAt : new Date().toISOString()
         };
 
-        // Push to Firebase
-        firebase.database().ref('shops/' + activeUserPhone + '/suppliers/' + newSupplier.id).set(newSupplier, (error) => {
+        firebase.database().ref('shops/' + activeUserPhone + '/suppliers/' + supplierId).set(supplierData, (error) => {
             if (error) {
                 alert("Error saving: " + error.message);
             } else {
-                alert("Supplier Added Successfully!");
-                toggleSupplierForm();
-                
-                // Clear Form
-                document.getElementById('sup-name').value = '';
-                document.getElementById('sup-owner').value = '';
-                document.getElementById('sup-gst').value = '';
-                document.getElementById('sup-upi').value = '';
-                document.getElementById('sup-address').value = '';
-                document.getElementById('sup-phones-container').innerHTML = '<div class="dynamic-row"><input type="number" class="form-control-custom phone-input" placeholder="10-Digit Mobile" inputmode="numeric"></div>';
-                
-                loadSuppliers();
+                alert(currentEditingSupplierId ? "Supplier Updated Successfully!" : "Supplier Added Successfully!");
+                toggleSupplierForm(); // This will auto-reset the form
             }
         });
+    }
+
+    function deleteSupplier(id, name) {
+        const activeUserPhone = localStorage.getItem("activeUserPhone");
+        if(confirm(`Are you absolutely sure you want to delete ${name}?\n\nThis will remove them from your directory permanently.`)) {
+            firebase.database().ref('shops/' + activeUserPhone + '/suppliers/' + id).remove()
+                .then(() => alert("Supplier deleted."))
+                .catch(err => alert("Delete failed: " + err.message));
+        }
+    }
+
+    function editSupplier(id) {
+        const data = globalSuppliersData[id];
+        if(!data) return;
+
+        currentEditingSupplierId = id;
+        
+        // Fill basic fields
+        document.getElementById('sup-name').value = data.businessName || '';
+        document.getElementById('sup-owner').value = data.ownerName || '';
+        document.getElementById('sup-gst').value = data.gstNumber || '';
+        document.getElementById('sup-upi').value = data.upiId || '';
+        document.getElementById('sup-address').value = data.address || '';
+        
+        // Fill dynamic phones
+        const phoneContainer = document.getElementById('sup-phones-container');
+        phoneContainer.innerHTML = ''; // Clear defaults
+        if (data.phoneNumbers && data.phoneNumbers.length > 0) {
+            data.phoneNumbers.forEach((phone, index) => {
+                if(index === 0) {
+                    phoneContainer.innerHTML = `<div class="dynamic-row"><input type="number" class="form-control-custom phone-input" value="${phone}"></div>`;
+                } else {
+                    addSupPhoneField(phone);
+                }
+            });
+        }
+
+        // Show form and scroll up
+        document.getElementById('add-supplier-form').style.display = 'block';
+        document.querySelector('#add-supplier-form h2').innerText = "Edit Supplier Details";
+        window.scrollTo({ top: 0, behavior: 'smooth' });
+    }
+
+    // --- UI INTERACTIONS ---
+    function toggleAccordion(id) {
+        const body = document.getElementById('sc-body-' + id);
+        const icon = document.getElementById('sc-icon-' + id);
+        if (body.style.display === 'block') {
+            body.style.display = 'none';
+            icon.style.transform = 'rotate(0deg)';
+        } else {
+            body.style.display = 'block';
+            icon.style.transform = 'rotate(180deg)';
+        }
     }
 
     function loadSuppliers() {
@@ -220,13 +282,15 @@
 
         firebase.database().ref('shops/' + activeUserPhone + '/suppliers').on('value', (snapshot) => {
             listContainer.innerHTML = '';
+            globalSuppliersData = {}; // Reset local memory
+
             if (!snapshot.exists()) {
                 listContainer.innerHTML = '<p style="text-align: center; color: #64748b; background: #fff; padding: 20px; border-radius: 12px;">No suppliers added yet. Click "Add Supplier" to start.</p>';
                 return;
             }
 
             const data = snapshot.val();
-            // Convert to array and sort by newest
+            globalSuppliersData = data; // Save to local memory for editing
             const suppliers = Object.values(data).sort((a, b) => b.id - a.id);
 
             suppliers.forEach(sup => {
@@ -235,25 +299,34 @@
                 const card = document.createElement('div');
                 card.className = 'supplier-card';
                 card.innerHTML = `
-                    <div class="sc-header">
-                        <div>
+                    <div class="sc-header" onclick="toggleAccordion('${sup.id}')">
+                        <div class="sc-header-left">
                             <p class="sc-name">${sup.businessName}</p>
                             ${sup.ownerName ? `<p class="sc-owner">Rep: ${sup.ownerName}</p>` : ''}
                         </div>
-                        <div class="sc-badge">Active</div>
+                        <i class="bi bi-chevron-down sc-toggle-icon" id="sc-icon-${sup.id}"></i>
                     </div>
-                    <div class="sc-details">
-                        <div><i class="bi bi-telephone-fill"></i> ${sup.phoneNumbers.join(', ')}</div>
-                        ${sup.gstNumber ? `<div><i class="bi bi-receipt"></i> GST: ${sup.gstNumber}</div>` : ''}
-                        ${sup.upiId ? `<div><i class="bi bi-bank2"></i> UPI: ${sup.upiId}</div>` : ''}
-                        ${sup.address ? `<div><i class="bi bi-geo-alt-fill"></i> ${sup.address}</div>` : ''}
-                    </div>
-                    <div class="sc-actions-grid">
-                        <button class="btn-sc btn-call" onclick="window.open('tel:${primaryPhone}')"><i class="bi bi-telephone"></i> Call</button>
-                        <button class="btn-sc btn-wa" onclick="window.open('https://wa.me/91${primaryPhone}', '_blank')"><i class="bi bi-whatsapp"></i> WhatsApp</button>
-                        <button class="btn-sc btn-pay" onclick="paySupplier('${sup.upiId}', '${sup.businessName}')"><i class="bi bi-currency-rupee"></i> Pay Now</button>
-                        <button class="btn-sc btn-bills" onclick="alert('Viewing pending bills feature coming soon!')"><i class="bi bi-receipt-cutoff"></i> Pending Bills</button>
-                        <button class="btn-sc btn-print" onclick="printLedger('${sup.businessName}')"><i class="bi bi-printer-fill"></i> Print Ledger / PDF</button>
+
+                    <div class="sc-body" id="sc-body-${sup.id}">
+                        <div class="sc-details">
+                            <div><i class="bi bi-telephone-fill"></i> ${sup.phoneNumbers.join(', ')}</div>
+                            ${sup.gstNumber ? `<div><i class="bi bi-receipt"></i> GST: ${sup.gstNumber}</div>` : ''}
+                            ${sup.upiId ? `<div><i class="bi bi-bank2"></i> UPI: ${sup.upiId}</div>` : ''}
+                            ${sup.address ? `<div><i class="bi bi-geo-alt-fill"></i> ${sup.address}</div>` : ''}
+                        </div>
+                        
+                        <div class="sc-actions-grid">
+                            <button class="btn-sc btn-call" onclick="window.open('tel:${primaryPhone}')"><i class="bi bi-telephone"></i> Call</button>
+                            <button class="btn-sc btn-wa" onclick="window.open('https://wa.me/91${primaryPhone}', '_blank')"><i class="bi bi-whatsapp"></i> WhatsApp</button>
+                            <button class="btn-sc btn-pay" onclick="paySupplier('${sup.upiId || ''}', '${sup.businessName}')"><i class="bi bi-currency-rupee"></i> Pay Now</button>
+                            <button class="btn-sc btn-bills" onclick="alert('Viewing pending bills feature coming soon!')"><i class="bi bi-receipt-cutoff"></i> Pending Bills</button>
+                            <button class="btn-sc btn-print" onclick="printLedger('${sup.businessName}')"><i class="bi bi-printer-fill"></i> Print Ledger / PDF</button>
+                        </div>
+
+                        <div class="admin-actions">
+                            <button class="btn-sc btn-edit" onclick="editSupplier('${sup.id}')"><i class="bi bi-pencil-square"></i> Edit</button>
+                            <button class="btn-sc btn-delete" onclick="deleteSupplier('${sup.id}', '${sup.businessName}')"><i class="bi bi-trash-fill"></i> Delete</button>
+                        </div>
                     </div>
                 `;
                 listContainer.appendChild(card);
@@ -262,21 +335,13 @@
     }
 
     function paySupplier(upi, name) {
-        if(!upi) {
-            alert("No UPI ID saved for this supplier. You can pay in Cash.");
-            return;
-        }
-        // Triggers the phone's default UPI app selection screen
+        if(!upi) return alert("No UPI ID saved for this supplier. You can pay in Cash.");
         window.location.href = `upi://pay?pa=${upi}&pn=${encodeURIComponent(name)}&cu=INR`;
     }
 
     function printLedger(name) {
-        // In the future, this can trigger a jsPDF generation. For now, it isolates the UI for printing.
-        if(confirm(`Generate Printable Ledger PDF for ${name}?`)) {
-            window.print();
-        }
+        if(confirm(`Generate Printable Ledger PDF for ${name}?`)) window.print();
     }
 </script>
-
 </body>
 </html>
