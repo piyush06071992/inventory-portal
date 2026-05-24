@@ -168,13 +168,18 @@
         });
     }
 
-    // High-performance atomic operation to run data changes directly inside database nodes
+// High-performance atomic operation to run data changes directly inside database nodes
     window.executeManualAccountClearance = function(shopPhone) {
         if (!confirm(`Confirm offline payment received from ${shopPhone} and unlock their access?`)) return;
 
         // 1. Flip active state parameters inside user data profiles tree paths
         firebase.database().ref(`users/${shopPhone}`).update({
             portalStatus: "active"
+        }).then(() => {
+            // Update the master shop object payment status field
+            return firebase.database().ref(`shops/${shopPhone}`).update({
+                paymentStatus: "PAID"
+            });
         }).then(() => {
             // 2. Clear out request metadata tracking objects from listing views cleanly
             return firebase.database().ref(`manual_unlock_requests/${shopPhone}`).remove();
