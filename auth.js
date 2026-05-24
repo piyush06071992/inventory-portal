@@ -1,5 +1,8 @@
 // auth.js - CENTRAL CONFIG AND SECURITY ENFORCER
-
+// Add this check at the very top of auth.js
+if (!window.location.pathname.includes("login.html")) {
+    document.write('<style>body { display: none !important; }</style>');
+}
 document.write('<style>body { display: none !important; }</style>');
 const firebaseConfig = {
     apiKey: "AIzaSyBuYDgbmycHMjHGupeoZV2lvv_Z0n7WyoY",
