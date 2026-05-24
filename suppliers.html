@@ -41,13 +41,19 @@
         .btn-save { flex: 2; background: linear-gradient(135deg, #10b981, #059669); color: white; border: none; padding: 16px; border-radius: 12px; font-weight: 700; cursor: pointer; }
         .btn-cancel { flex: 1; background-color: #f1f5f9; color: #64748b; border: 1px solid #cbd5e1; padding: 16px; border-radius: 12px; font-weight: 600; cursor: pointer; }
 
-        /* Supplier Cards */
+        /* Supplier Cards with Accordion */
         .supplier-list-container { width: 100%; max-width: 700px; display: flex; flex-direction: column; gap: 16px; }
-        .supplier-card { background: #ffffff; border-radius: 16px; padding: 20px; box-shadow: 0 4px 15px rgba(0, 0, 0, 0.04); border: 1px solid #e2e8f0; }
-        .sc-header { display: flex; justify-content: space-between; border-bottom: 1px solid #f1f5f9; padding-bottom: 12px; margin-bottom: 12px; }
+        .supplier-card { background: #ffffff; border-radius: 16px; padding: 20px; box-shadow: 0 4px 15px rgba(0, 0, 0, 0.04); border: 1px solid #e2e8f0; transition: all 0.2s ease; }
+        
+        /* Clickable Header */
+        .sc-header { display: flex; justify-content: space-between; align-items: center; cursor: pointer; }
+        .sc-header-left { display: flex; flex-direction: column; }
         .sc-name { font-size: 18px; font-weight: 700; color: #1e3a8a; margin: 0; text-transform: uppercase; }
         .sc-owner { font-size: 14px; color: #64748b; margin: 4px 0 0 0; font-weight: 500;}
-        .sc-badge { background: #fef3c7; color: #d97706; padding: 4px 10px; border-radius: 50px; font-size: 12px; font-weight: 700; }
+        .sc-toggle-icon { font-size: 20px; color: #94a3b8; transition: transform 0.3s; }
+        
+        /* Hidden Body */
+        .sc-body { display: none; margin-top: 15px; padding-top: 15px; border-top: 1px solid #f1f5f9; }
         
         .sc-details { display: grid; grid-template-columns: 1fr; gap: 8px; margin-bottom: 16px; font-size: 14px; color: #334155; }
         .sc-details i { color: #3b82f6; width: 20px; text-align: center; margin-right: 6px; }
@@ -58,7 +64,12 @@
         .btn-wa { background: #25D366; }
         .btn-pay { background: #8b5cf6; }
         .btn-bills { background: #f59e0b; }
-        .btn-print { grid-column: span 2; background: #64748b; margin-top: 5px;}
+        .btn-print { grid-column: span 2; background: #64748b; margin-top: 5px; }
+        
+        /* Admin Actions */
+        .admin-actions { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-top: 10px; padding-top: 10px; border-top: 1px dashed #e2e8f0; }
+        .btn-edit { background: #f1f5f9; color: #475569; }
+        .btn-delete { background: #fee2e2; color: #ef4444; }
 
         @media (max-width: 480px) { .grid-2 { grid-template-columns: 1fr; gap: 10px; } }
     </style>
