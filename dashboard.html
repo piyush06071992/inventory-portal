@@ -212,17 +212,20 @@
     };
     firebase.initializeApp(firebaseConfig);
 
-    window.onload = function() {
-        // Recover user session reference token properties passed during login authorization mapping
-        // Fallback target placeholder string helps maintain system visual scaling balance during load states
-        const activeUserPhone = sessionStorage.getItem("activeUserPhone") || "9999999999";
+   window.onload = function() {
+        // 1. FIXED: Changed sessionStorage to localStorage to match login.html
+        const activeUserPhone = localStorage.getItem("activeUserPhone");
+        
+        // 2. FIXED: Trigger the security listener immediately
+        if (typeof verifySingleSession === 'function') {
+            verifySingleSession();
+        }
 
         // Query the dedicated master relational object node properties matching this shop's sequence
         firebase.database().ref('shops/' + activeUserPhone).once('value')
             .then((snapshot) => {
                 const shopData = snapshot.val();
                 if (shopData && shopData.businessName) {
-                    // Inject the official verified Business entity name straight into the viewport display
                     document.getElementById("display-shop-name").innerText = shopData.businessName;
                 } else {
                     document.getElementById("display-shop-name").innerText = "MY SHOP DASHBOARD";
