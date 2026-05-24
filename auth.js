@@ -35,3 +35,10 @@ function verifySingleSession() {
         }
     });
 }
+// Add this at the very bottom of auth.js instead:
+if (document.readyState === 'loading') {
+    document.addEventListener('DOMContentLoaded', verifySingleSession);
+} else {
+    verifySingleSession();
+}
+console.log("Auth System: Session Monitor Loaded");
