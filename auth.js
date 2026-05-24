@@ -25,8 +25,8 @@ gatekeeperStyles.innerHTML = `
     .device-modal-card-global h3 { color: #1e3a8a; margin: 15px 0 10px 0; font-weight: 700; font-size: 20px; }
     .device-modal-card-global p { color: #64748b; font-size: 14px; margin-bottom: 15px; line-height: 1.5; }
     .timer-circle-global {
-        width: 90px; height: 90px; border-radius: 50%; background: #f1f5f9; border: 3px solid #b91c1c;
-        display: flex; align-items: center; justify-content: center; font-size: 20px; font-weight: 700;
+        width: 70px; height: 70px; border-radius: 50%; background: #f1f5f9; border: 3px solid #b91c1c;
+        display: flex; align-items: center; justify-content: center; font-size: 24px; font-weight: 700;
         color: #b91c1c; margin: 15px auto;
     }
     .modal-btn-row-global { display: flex; gap: 10px; margin-top: 20px; }
@@ -63,7 +63,7 @@ function setupGlobalDeviceListener() {
                 }
             }
         });
-    }, 3000);
+    }, 2000); // Swapped tracking check interval pacing up to 2 seconds for aggressive responsiveness
 }
 
 function triggerGlobalConflictOverlay(shopPhone) {
@@ -77,8 +77,8 @@ function triggerGlobalConflictOverlay(shopPhone) {
         <div class="device-modal-card-global">
             <i class="bi bi-exclamation-triangle-fill" style="font-size: 3.5rem; color: #eab308;"></i>
             <h3>Another Device Login Attempt</h3>
-            <p>A secondary device is trying to access your workspace. If you do not deny this request within 15 minutes, this terminal session will automatically transfer access control to them.</p>
-            <div class="timer-circle-global" id="global-countdown-timer">15:00</div>
+            <p>A secondary device is trying to access your workspace. If you do not deny this request within 15 seconds, this terminal session will automatically transfer access control to them.</p>
+            <div class="timer-circle-global" id="global-countdown-timer">15</div>
             <div class="modal-btn-row-global">
                 <button class="modal-btn-global btn-deny-global" id="global-btn-deny">DENY ACCESS</button>
                 <button class="modal-btn-global btn-allow-global" id="global-btn-allow">ALLOW LOGIN</button>
@@ -87,7 +87,7 @@ function triggerGlobalConflictOverlay(shopPhone) {
     `;
     document.body.appendChild(modalOverlay);
 
-    let totalSecondsLeft = 900; // 15 Minutes window duration allocation value
+    let totalSecondsLeft = 15; // Set precisely back to 15 seconds
     
     document.getElementById('global-btn-deny').onclick = () => respondToGlobalConflict('deny', shopPhone);
     document.getElementById('global-btn-allow').onclick = () => respondToGlobalConflict('allow', shopPhone);
@@ -95,13 +95,8 @@ function triggerGlobalConflictOverlay(shopPhone) {
     globalCountdownInterval = setInterval(() => {
         totalSecondsLeft--;
         
-        // Calculate format conversion for minute tracking readouts
-        let mins = Math.floor(totalSecondsLeft / 60);
-        let secs = totalSecondsLeft % 60;
-        let displayTime = `${mins}:${secs < 10 ? '0' : ''}${secs}`;
-        
         const timerUI = document.getElementById('global-countdown-timer');
-        if (timerUI) timerUI.innerText = displayTime;
+        if (timerUI) timerUI.innerText = totalSecondsLeft;
 
         if (totalSecondsLeft <= 0) {
             clearInterval(globalCountdownInterval);
@@ -111,7 +106,7 @@ function triggerGlobalConflictOverlay(shopPhone) {
                 document.getElementById('global-device-conflict-modal').remove();
             }
             
-            // 15-Minute Timeout: Automatically allow incoming request to claim access rights
+            // 15-Second Timeout: Automatically allow incoming request to claim access rights
             firebase.database().ref('shops/' + shopPhone + '/sessionChallenge').once('value').then((snap) => {
                 const chal = snap.val();
                 if (chal && chal.status === "pending") {
