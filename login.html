@@ -191,7 +191,7 @@
 
             if (shopData.activeSessionId) {
                 msg.style.color = "orange";
-                msg.innerText = "ACCOUNT BUSY! WAITING FOR 15-MIN TIMEOUT OR ACCESS FROM RUNNING WORKSPACE...";
+                msg.innerText = "ACCOUNT BUSY! WAITING FOR 15-SEC TIMEOUT OR ACCESS FROM RUNNING WORKSPACE...";
 
                 firebase.database().ref('shops/' + userKey + '/sessionChallenge').set({
                     requestingToken: currentSessionToken, status: "pending"
@@ -203,7 +203,6 @@
                 challengeListenerRef.on('value', (shopSnapshot) => {
                     const latestData = shopSnapshot.val();
                     
-                    // If the active token matches this machine, the challenge was either approved manually or timed out
                     if (latestData && latestData.activeSessionId === currentSessionToken) {
                         challengeListenerRef.off();
                         sessionStorage.setItem("mySessionToken", currentSessionToken);
@@ -212,8 +211,8 @@
                         return;
                     }
 
-                    // Handles an explicit denial from the primary active device context
                     if (latestData && !latestData.sessionChallenge && latestData.activeSessionId !== currentSessionToken) {
+                        challengeListenerRef.off();
                         msg.style.color = "var(--accent)";
                         msg.innerText = "LOGIN REQUEST DENIED BY ACTIVE WORKING DASHBOARD.";
                         loginButtonReference.innerText = "LOGIN TO PORTAL";
@@ -231,36 +230,6 @@
             document.getElementById('msg').style.color = "green";
             document.getElementById('msg').innerText = "ACCESS GRANTED! REDIRECTING...";
             setTimeout(() => { window.location.href = '/dashboard.html'; }, 1000);
-        }
-
-        function handlePortalLogin() {
-            const identifier = document.getElementById('login-identifier').value.trim();
-            const pin = document.getElementById('login-pin').value;
-            const msg = document.getElementById('msg');
-            const loginBtn = document.getElementById('login-submit-btn');
-            msg.innerText = "";
-
-            if (!identifier || !pin) { msg.innerText = "BOTH FIELDS ARE MANDATORY!"; return; }
-            if (pin.length !== 6) { msg.innerText = "PIN MUST BE EXACTLY 6 DIGITS!"; return; }
-
-            loginBtn.innerText = "AUTHENTICATING..."; loginBtn.disabled = true;
-
-            if (/^\d{10}$/.test(identifier)) {
-                firebase.database().ref('shops/' + identifier).once('value').then((snapshot) => {
-                    const shopData = snapshot.val();
-                    if (shopData && shopData.securePin === pin) { evaluateUserSubscriptionLifecycle(shopData, identifier, loginBtn); } 
-                    else { msg.innerText = "INVALID SECURE PIN!"; loginBtn.innerText = "LOGIN TO PORTAL"; loginBtn.disabled = false; }
-                }).catch(err => { msg.innerText = "SERVER ERROR: " + err.message; loginBtn.disabled = false; });
-            } else {
-                firebase.database().ref('shops').orderByChild('emailId').equalTo(identifier).once('value').then((snapshot) => {
-                    if (snapshot.exists()) {
-                        let matchedKey = "", matchedData = null;
-                        snapshot.forEach((child) => { if (child.val().securePin === pin) { matchedKey = child.key; matchedData = child.val(); } });
-                        if (matchedData) { evaluateUserSubscriptionLifecycle(matchedData, matchedKey, loginBtn); } 
-                        else { msg.innerText = "INVALID SECURE PIN!"; loginBtn.innerText = "LOGIN TO PORTAL"; loginBtn.disabled = false; }
-                    } else { msg.innerText = "NO ACCOUNT FOUND WITH THIS EMAIL ID!"; loginBtn.innerText = "LOGIN TO PORTAL"; loginBtn.disabled = false; }
-                }).catch(err => { msg.innerText = "SERVER ERROR: " + err.message; loginBtn.disabled = false; });
-            }
         }
     </script>
 </body>
