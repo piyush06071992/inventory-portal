@@ -1,10 +1,6 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-    <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
-    <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-database-compat.js"></script>
-    <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-auth-compat.js"></script>
-    <script src="/auth.js"></script>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <title>Business Details - Business Saarthi</title>
@@ -21,7 +17,6 @@
         
         /* Professional Serial Number Badges */
         .card-serial { position: absolute; top: -15px; left: 20px; background: linear-gradient(135deg, #1e3a8a, #3b82f6); color: #ffffff; width: 32px; height: 32px; border-radius: 50px; display: flex; align-items: center; justify-content: center; font-weight: 700; font-size: 14px; box-shadow: 0 4px 10px rgba(30, 58, 138, 0.3); }
-        
         .card-title { font-size: 16px; font-weight: 700; color: #0f172a; margin-top: 5px; margin-bottom: 20px; text-transform: uppercase; letter-spacing: 0.5px; border-bottom: 2px solid #f1f5f9; padding-bottom: 10px; display: flex; align-items: center; gap: 8px; }
         
         .form-group { margin-bottom: 18px; }
@@ -68,8 +63,7 @@
 
         <div class="form-group">
             <label>Registered Owner Names</label>
-            <div id="owners-container">
-                </div>
+            <div id="owners-container"></div>
             <button type="button" class="btn-add-more" onclick="addOwnerField('')">
                 <i class="bi bi-plus-circle-fill"></i> Add New Owner Name
             </button>
@@ -82,8 +76,7 @@
         
         <div class="form-group">
             <label>Registered Phone Numbers</label>
-            <div id="phones-container">
-                </div>
+            <div id="phones-container"></div>
             <button type="button" class="btn-add-more" onclick="addPhoneField('')">
                 <i class="bi bi-telephone-plus-fill"></i> Add New Phone Number
             </button>
@@ -161,8 +154,7 @@
 
         <div class="form-group">
             <label>Registered Billing UPI IDs</label>
-            <div id="upi-container">
-                </div>
+            <div id="upi-container"></div>
             <button type="button" class="btn-add-more" onclick="addUpiField('')">
                 <i class="bi bi-qr-code"></i> Link Another UPI ID
             </button>
@@ -184,11 +176,11 @@
 </div>
 
 <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-auth-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-database-compat.js"></script>
+<script src="/auth.js"></script>
 
 <script>
-  
-
     // Strict numerical input limits watcher logic
     function limitDigitLength(element, maxDigits) {
         if (element.value.length > maxDigits) {
@@ -231,7 +223,12 @@
     }
 
     window.onload = function() {
-        const activeUserPhone = sessionStorage.getItem("activeUserPhone") || "9999999999";
+        // Trigger Security Check
+        if (typeof verifySingleSession === 'function') verifySingleSession();
+
+        // FIXED: Switched from sessionStorage to localStorage
+        const activeUserPhone = localStorage.getItem("activeUserPhone");
+        if (!activeUserPhone) return;
 
         // Query existing layout fields from database profile path node to pre-fill layout values
         firebase.database().ref('business_profiles/' + activeUserPhone).once('value')
@@ -272,7 +269,12 @@
     };
 
     function handleSaveBusinessDetails() {
-        const activeUserPhone = sessionStorage.getItem("activeUserPhone") || "9999999999";
+        // FIXED: Switched from sessionStorage to localStorage
+        const activeUserPhone = localStorage.getItem("activeUserPhone");
+        if (!activeUserPhone) {
+            alert("Error: Active user not found. Please log in again.");
+            return;
+        }
 
         // Aggregate Dynamic Values into Array Frameworks
         const ownersArray = [];
