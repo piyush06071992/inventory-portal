@@ -11,7 +11,6 @@
     
     <script src="/auth.js"></script>
     <link rel="stylesheet" href="/style.css">
-    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.1/font/bootstrap-icons.css">
     
     <style>
         .pin-wrapper {
@@ -45,31 +44,6 @@
             margin-bottom: 20px;
             text-decoration: underline;
         }
-        /* Device Conflict Interactive Overlay Layout UI */
-        .device-modal-overlay {
-            position: fixed;
-            top: 0; left: 0; width: 100%; height: 100%;
-            background: rgba(15, 23, 42, 0.85);
-            display: flex; align-items: center; justify-content: center;
-            z-index: 9999; padding: 15px; box-sizing: border-box;
-        }
-        .device-modal-card {
-            background: #ffffff; width: 100%; max-width: 400px;
-            border-radius: 20px; padding: 25px; text-align: center;
-            box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.1);
-            box-sizing: border-box; border: 4px solid var(--navy-blue);
-        }
-        .device-modal-card h3 { color: var(--navy-blue); margin-top: 10px; font-weight: 700; }
-        .timer-circle {
-            width: 60px; height: 60px; border-radius: 50%;
-            background: #f1f5f9; border: 3px solid var(--accent);
-            display: flex; align-items: center; justify-content: center;
-            font-size: 22px; font-weight: 700; color: var(--accent); margin: 15px auto;
-        }
-        .modal-btn-row { display: flex; gap: 10px; margin-top: 20px; }
-        .modal-btn { padding: 12px; border: none; border-radius: 10px; font-size: 15px; font-weight: 700; width: 100%; cursor: pointer; }
-        .btn-allow { background-color: #10b981; color: white; }
-        .btn-deny { background-color: #ef4444; color: white; }
     </style>
 </head>
 <body>
@@ -136,23 +110,8 @@
 
     </div>
 
-    <div id="device-conflict-modal" class="device-modal-overlay" style="display: none;">
-        <div class="device-modal-card">
-            <i class="bi bi-exclamation-triangle-fill text-warning" style="font-size: 3rem;"></i>
-            <h3>Another Device Login Attempt</h3>
-            <p class="text-muted small">A secondary device is attempting to establish a concurrent session with your account credentials. Grant authorization?</p>
-            <div class="timer-circle" id="modal-countdown-timer">15</div>
-            <div class="modal-btn-row">
-                <button class="modal-btn btn-deny" onclick="respondToConflict('deny')">DENY ACCESS</button>
-                <button class="modal-btn btn-allow" onclick="respondToConflict('allow')">ALLOW</button>
-            </div>
-        </div>
-    </div>
-
     <script>
-        // NOTE: Configuration variable declarations have been dropped to reuse configurations declared inside /auth.js cleanly!
-        let activeListenerRef = null;
-        let countdownIntervalId = null;
+        let secondaryListenerRef = null;
 
         function generateUniqueTokenId() {
             return 'session_' + Math.random().toString(36).substr(2, 9) + Date.now().toString(36);
@@ -327,30 +286,31 @@
             sessionStorage.setItem("mySessionToken", currentSessionToken);
             sessionStorage.setItem("activeUserPhone", userKey);
 
+            // Gatekeeper Strategy for incoming secondary device connections
             if (shopData.activeSessionId) {
                 msg.style.color = "orange";
-                msg.innerText = "ACCOUNT BUSY! ASKING PERMISSION FROM PREVIOUS DEVICE...";
+                msg.innerText = "ACCOUNT ACTIVE ELSEWHERE! REQUESTING ACCESS FROM RUNNING WORKSPACE...";
 
                 firebase.database().ref('shops/' + userKey + '/sessionChallenge').set({
                     requestingToken: currentSessionToken,
                     status: "pending"
                 });
 
-                if(activeListenerRef) activeListenerRef.off();
-                activeListenerRef = firebase.database().ref('shops/' + userKey + '/sessionChallenge');
-                activeListenerRef.on('value', (challengeSnapshot) => {
+                if(secondaryListenerRef) secondaryListenerRef.off();
+                secondaryListenerRef = firebase.database().ref('shops/' + userKey + '/sessionChallenge');
+                secondaryListenerRef.on('value', (challengeSnapshot) => {
                     const challenge = challengeSnapshot.val();
                     if (!challenge) return;
 
                     if (challenge.status === "allowed" && challenge.requestingToken === currentSessionToken) {
-                        activeListenerRef.off();
+                        secondaryListenerRef.off();
                         firebase.database().ref('shops/' + userKey).update({
                             activeSessionId: currentSessionToken,
                             sessionChallenge: null
                         }).then(() => { routeToDashboard(); });
                     } 
                     else if (challenge.status === "denied" && challenge.requestingToken === currentSessionToken) {
-                        activeListenerRef.off();
+                        secondaryListenerRef.off();
                         firebase.database().ref('shops/' + userKey + '/sessionChallenge').remove();
                         msg.style.color = "var(--accent)";
                         msg.innerText = "LOGIN REJECTED BY CURRENT ACTIVE WORKING DEVICE CONSOLE!";
@@ -445,72 +405,6 @@
                         msg.innerText = "SERVER ERROR: " + err.message;
                         loginBtn.disabled = false;
                     });
-            }
-        }
-
-        // BACKGROUND LISTENER PREVENTATIVE SYSTEM FOR CONCURRENT SESSION LOGINS
-        setInterval(() => {
-            const activeUser = sessionStorage.getItem("activeUserPhone");
-            const myToken = sessionStorage.getItem("mySessionToken");
-
-            if (activeUser && myToken && !countdownIntervalId) {
-                firebase.database().ref('shops/' + activeUser).once('value').then((snapshot) => {
-                    const data = snapshot.val();
-                    if (!data) return;
-
-                    if (data.activeSessionId && data.activeSessionId !== myToken) {
-                        sessionStorage.clear();
-                        alert("Session Disconnected! Signed in from another device console framework.");
-                        window.location.href = '/login.html';
-                        return;
-                    }
-
-                    if (data.sessionChallenge && data.sessionChallenge.status === "pending") {
-                        triggerLocalConflictOverlayTimer(activeUser);
-                    }
-                });
-            }
-        }, 3000);
-
-        function triggerLocalConflictOverlayTimer(shopPhone) {
-            document.getElementById('device-conflict-modal').style.display = 'flex';
-            let durationLeft = 15;
-            document.getElementById('modal-countdown-timer').innerText = durationLeft;
-
-            countdownIntervalId = setInterval(() => {
-                durationLeft--;
-                document.getElementById('modal-countdown-timer').innerText = durationLeft;
-
-                if (durationLeft <= 0) {
-                    clearInterval(countdownIntervalId);
-                    countdownIntervalId = null;
-                    document.getElementById('device-conflict-modal').style.display = 'none';
-                    
-                    sessionStorage.clear();
-                    alert("Session Timeout! Relinquished terminal workspace token context access rights to incoming device target.");
-                    window.location.href = '/login.html';
-                }
-            }, 1000);
-        }
-
-        function respondToConflict(resolutionString) {
-            clearInterval(countdownIntervalId);
-            countdownIntervalId = null;
-            document.getElementById('device-conflict-modal').style.display = 'none';
-
-            const activeUser = sessionStorage.getItem("activeUserPhone");
-            
-            if (resolutionString === 'allow') {
-                firebase.database().ref('shops/' + activeUser + '/sessionChallenge').update({
-                    status: "allowed"
-                }).then(() => {
-                    sessionStorage.clear();
-                    window.location.href = '/login.html';
-                });
-            } else {
-                firebase.database().ref('shops/' + activeUser + '/sessionChallenge').update({
-                    status: "denied"
-                });
             }
         }
     </script>
