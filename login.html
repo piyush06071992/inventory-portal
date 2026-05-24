@@ -71,15 +71,15 @@
     </div>
 
     <script>
-        // Restored fully active project production credentials configuration structure mapping
+        // Verified Production Application Credentials
         const firebaseConfig = {
-            apiKey: "AIzaSyBuyDgbmychMjHGupeoZV21vv_Z0n7WyoY",
+            apiKey: "AIzaSyBuYDgbmycHMjHGupeoZV2lvv_Z0n7WyoY",
             authDomain: "business-saarthi.firebaseapp.com",
             databaseURL: "https://business-saarthi-default-rtdb.firebaseio.com",
             projectId: "business-saarthi",
             storageBucket: "business-saarthi.firebasestorage.app",
             messagingSenderId: "556256084111",
-            appId: "1:556256084111:web:b06208d94c5f5cae3170fa"
+            appId: "1:556256084111:web:14e841b0e7bfff653170fa"
         };
         
         if (!firebase.apps.length) { firebase.initializeApp(firebaseConfig); }
@@ -201,20 +201,18 @@
                 msg.style.color = "orange";
                 msg.innerText = "ACCOUNT BUSY! WAITING 15 SECONDS FOR CURRENT DEVICE RESPONSE...";
 
-                // Broadcast challenge payload properties parameters straight to node
+                // Broadcast challenge request to the live database
                 firebase.database().ref('shops/' + userKey + '/sessionChallenge').set({
                     requestingToken: currentSessionToken, status: "pending"
                 });
 
-                // Clear any existing listeners or timers safely before starting new ones
                 if(challengeListenerRef) challengeListenerRef.off();
                 if(internalTimeoutId) clearTimeout(internalTimeoutId);
 
-                // Start the 15-second local fallback countdown trigger timer loop
+                // Start local 15-second override countdown
                 internalTimeoutId = setTimeout(() => {
                     if (challengeListenerRef) challengeListenerRef.off();
                     
-                    // Force deployment authentication override after 15 seconds have passed
                     firebase.database().ref('shops/' + userKey).update({
                         activeSessionId: currentSessionToken,
                         sessionChallenge: null
@@ -230,7 +228,7 @@
                     const latestData = shopSnapshot.val();
                     if (!latestData) return;
 
-                    // Gained authorization early via manual allowance click from active user device
+                    // Remote client approved the handshake
                     if (latestData.activeSessionId === currentSessionToken) {
                         if(internalTimeoutId) clearTimeout(internalTimeoutId);
                         challengeListenerRef.off();
@@ -240,7 +238,7 @@
                         return;
                     }
 
-                    // Explicit denial response returned from running counter device dashboard setting
+                    // Remote client denied the handshake
                     if (!latestData.sessionChallenge && latestData.activeSessionId !== currentSessionToken) {
                         if(internalTimeoutId) clearTimeout(internalTimeoutId);
                         challengeListenerRef.off();
