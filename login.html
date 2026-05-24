@@ -3,6 +3,9 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
+    <meta http-equiv="Pragma" content="no-cache">
+    <meta http-equiv="Expires" content="0">
     <title>Shop Login - Business Saarthi</title>
     
     <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
@@ -32,19 +35,13 @@
                 
                 <div id="login-fields-block">
                     <input type="text" id="login-identifier" placeholder="ENTER EMAIL OR PHONE NUMBER">
-                    
                     <div class="pin-wrapper">
                         <input type="password" id="login-pin" placeholder="ENTER 6-DIGIT SECURE PIN" inputmode="numeric" maxlength="6">
                         <span id="toggle-txt-1" class="view-btn-toggle" onclick="handleToggleView('login-pin', 'toggle-txt-1')">SHOW</span>
                     </div>
-
                     <div class="forgot-link" onclick="switchToForgotMode()">FORGOT PIN?</div>
-
                     <button onclick="handlePortalLogin()" id="login-submit-btn">LOGIN TO PORTAL</button>
-                    
-                    <div class="toggle-link" onclick="window.location.href='/index.html'">
-                        NEW SHOP? CREATE ACCOUNT
-                    </div>
+                    <div class="toggle-link" onclick="window.location.href='/index.html'">NEW SHOP? CREATE ACCOUNT</div>
                 </div>
 
                 <div id="forgot-phone-block" style="display: none;">
@@ -182,7 +179,7 @@
 
             if (shopData.paymentStatus !== "PAID" && now > new Date(shopData.trialEndsAt)) {
                 msg.innerText = "ACCOUNT LOCKED! PLEASE PAY RENT TO RESTORE ACCESS.";
-                sessionStorage.setItem("lockedUserPhone", userKey);
+                localStorage.setItem("lockedUserPhone", userKey);
                 setTimeout(() => { window.location.href = '/billing.html'; }, 2500);
                 return;
             }
@@ -193,7 +190,6 @@
                 msg.style.color = "orange";
                 msg.innerText = "ACCOUNT BUSY! WAITING 15 SECONDS FOR CURRENT DEVICE RESPONSE...";
 
-                // Knock on the door
                 firebase.database().ref('shops/' + userKey + '/sessionChallenge').set({
                     requestingToken: currentSessionToken, status: "pending"
                 });
@@ -201,28 +197,25 @@
                 if(challengeListenerRef) challengeListenerRef.off();
                 if(internalTimeoutId) clearTimeout(internalTimeoutId);
 
-                // Start safety local takeover fallback (in case other device is totally offline)
                 internalTimeoutId = setTimeout(() => {
                     if (challengeListenerRef) challengeListenerRef.off();
                     firebase.database().ref('shops/' + userKey).update({ activeSessionId: currentSessionToken, sessionChallenge: null }).then(() => {
-                        sessionStorage.setItem("mySessionToken", currentSessionToken); sessionStorage.setItem("activeUserPhone", userKey); routeToDashboard();
+                        localStorage.setItem("mySessionToken", currentSessionToken); localStorage.setItem("activeUserPhone", userKey); routeToDashboard();
                     });
-                }, 16000); // 16 seconds to give the active device's 15-second timer priority
+                }, 16000); 
 
                 challengeListenerRef = firebase.database().ref('shops/' + userKey);
                 challengeListenerRef.on('value', (shopSnapshot) => {
                     const latestData = shopSnapshot.val();
                     if (!latestData) return;
 
-                    // The active device allowed us in (or their timer ran out)
                     if (latestData.activeSessionId === currentSessionToken) {
                         if(internalTimeoutId) clearTimeout(internalTimeoutId);
                         challengeListenerRef.off();
-                        sessionStorage.setItem("mySessionToken", currentSessionToken); sessionStorage.setItem("activeUserPhone", userKey); routeToDashboard();
+                        localStorage.setItem("mySessionToken", currentSessionToken); localStorage.setItem("activeUserPhone", userKey); routeToDashboard();
                         return;
                     }
 
-                    // The active device clicked Deny
                     if (!latestData.sessionChallenge && latestData.activeSessionId !== currentSessionToken) {
                         if(internalTimeoutId) clearTimeout(internalTimeoutId);
                         challengeListenerRef.off();
@@ -231,8 +224,8 @@
                     }
                 });
             } else {
-                sessionStorage.setItem("mySessionToken", currentSessionToken);
-                sessionStorage.setItem("activeUserPhone", userKey);
+                localStorage.setItem("mySessionToken", currentSessionToken);
+                localStorage.setItem("activeUserPhone", userKey);
                 firebase.database().ref('shops/' + userKey).update({ activeSessionId: currentSessionToken }).then(() => { routeToDashboard(); });
             }
         }
