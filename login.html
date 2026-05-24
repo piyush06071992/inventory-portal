@@ -111,6 +111,21 @@
     </div>
 
     <script>
+        // Safe, conditional multi-instance initialization check pattern
+        const firebaseConfig = {
+            apiKey: "AIzaSyBuyDgbmychMjHGupeoZV21vv_Z0n7WyoY",
+            authDomain: "business-saarthi.firebaseapp.com",
+            databaseURL: "https://business-saarthi-default-rtdb.firebaseio.com",
+            projectId: "business-saarthi",
+            storageBucket: "business-saarthi.firebasestorage.app",
+            messagingSenderId: "556256084111",
+            appId: "1:556256084111:web:b06208d94c5f5cae3170fa"
+        };
+        
+        if (!firebase.apps.length) {
+            firebase.initializeApp(firebaseConfig);
+        }
+
         let secondaryListenerRef = null;
 
         function generateUniqueTokenId() {
@@ -145,10 +160,12 @@
         }
 
         window.onload = function() {
-            window.recaptchaVerifier = new firebase.auth.RecaptchaVerifier('recaptcha-container', {
-                'size': 'invisible',
-                'callback': (response) => {}
-            });
+            if (!window.recaptchaVerifier) {
+                window.recaptchaVerifier = new firebase.auth.RecaptchaVerifier('recaptcha-container', {
+                    'size': 'invisible',
+                    'callback': (response) => {}
+                });
+            }
         };
 
         let resetConfirmationResult = null;
@@ -286,7 +303,6 @@
             sessionStorage.setItem("mySessionToken", currentSessionToken);
             sessionStorage.setItem("activeUserPhone", userKey);
 
-            // Gatekeeper Strategy for incoming secondary device connections
             if (shopData.activeSessionId) {
                 msg.style.color = "orange";
                 msg.innerText = "ACCOUNT ACTIVE ELSEWHERE! REQUESTING ACCESS FROM RUNNING WORKSPACE...";
