@@ -5,6 +5,12 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Dashboard - Business Saarthi</title>
     
+    <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-database-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-auth-compat.js"></script>
+
+    <script src="/auth.js"></script>
+
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.1/font/bootstrap-icons.css">
     <link rel="stylesheet" href="/style.css">
@@ -65,42 +71,15 @@
     </div>
 </div>
 
-<script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
-<script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-database-compat.js"></script>
-<script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-auth-compat.js"></script>
-
-<script src="/auth.js"></script>
-
 <script>
-    // A. Force Cleanup of Old PWA Cache
+    // Force Cleanup of Old PWA Cache
     if ('serviceWorker' in navigator) {
         navigator.serviceWorker.getRegistrations().then(function(registrations) {
             for (let registration of registrations) { registration.unregister(); }
         });
     }
 
-    // B. Initialize Firebase
-    const firebaseConfig = {
-        apiKey: "AIzaSyBuYDgbmycHMjHGupeoZV2lvv_Z0n7WyoY",
-        authDomain: "business-saarthi.firebaseapp.com",
-        databaseURL: "https://business-saarthi-default-rtdb.firebaseio.com",
-        projectId: "business-saarthi",
-        storageBucket: "business-saarthi.firebasestorage.app",
-        messagingSenderId: "556256084111",
-        appId: "1:556256084111:web:14e841b0e7bfff653170fa"
-    };
-    if (!firebase.apps.length) { 
-        firebase.initializeApp(firebaseConfig); 
-    }
-
-    // C. Trigger the One-Device Security Check
-    if (typeof verifySingleSession === 'function') {
-        verifySingleSession();
-    } else {
-        console.error("Auth Logic Missing: verifySingleSession is not defined.");
-    }
-
-    // D. Load the Shop Name
+    // Load the Shop Name
     window.onload = function() {
         const activeUserPhone = localStorage.getItem("activeUserPhone");
         if (activeUserPhone) {
@@ -121,7 +100,7 @@
         }
     };
 
-    // E. Handle Logout Button
+    // Handle Logout Button
     function handleLogout() {
         localStorage.clear();
         sessionStorage.clear();
