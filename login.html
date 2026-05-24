@@ -71,7 +71,6 @@
     </div>
 
     <script>
-        // Verified Production Application Credentials
         const firebaseConfig = {
             apiKey: "AIzaSyBuYDgbmycHMjHGupeoZV2lvv_Z0n7WyoY",
             authDomain: "business-saarthi.firebaseapp.com",
@@ -87,9 +86,7 @@
         let challengeListenerRef = null;
         let internalTimeoutId = null;
 
-        function generateUniqueTokenId() {
-            return 'session_' + Math.random().toString(36).substr(2, 9) + Date.now().toString(36);
-        }
+        function generateUniqueTokenId() { return 'session_' + Math.random().toString(36).substr(2, 9) + Date.now().toString(36); }
 
         function handleToggleView(fieldId, textId) {
             const field = document.getElementById(fieldId);
@@ -139,11 +136,7 @@
                     document.getElementById('forgot-otp-block').style.display = 'block';
                     msg.style.color = "green"; msg.innerText = "RESET OTP SENT SUCCESSFULLY!";
                 })
-                .catch((error) => { 
-                    console.error(error);
-                    msg.style.color = "var(--accent)"; 
-                    msg.innerText = "ERROR: " + error.message; 
-                })
+                .catch((error) => { msg.style.color = "var(--accent)"; msg.innerText = "ERROR: " + error.message; })
                 .finally(() => { btn.innerText = "SEND VERIFICATION OTP"; btn.disabled = false; });
         }
 
@@ -175,7 +168,6 @@
                 const regDate = shopData.registeredAt ? new Date(shopData.registeredAt) : new Date();
                 const tEnd = new Date(regDate); tEnd.setDate(tEnd.getDate() + 30);
                 const lEnd = new Date(regDate); lEnd.setDate(lEnd.getDate() + 60);
-                
                 firebase.database().ref('shops/' + userKey).update({
                     trialEndsAt: tEnd.toISOString(), lockoutEndsAt: lEnd.toISOString(), paymentStatus: shopData.paymentStatus || "TRIAL"
                 });
@@ -201,7 +193,7 @@
                 msg.style.color = "orange";
                 msg.innerText = "ACCOUNT BUSY! WAITING 15 SECONDS FOR CURRENT DEVICE RESPONSE...";
 
-                // Broadcast challenge request to the live database
+                // Knock on the door
                 firebase.database().ref('shops/' + userKey + '/sessionChallenge').set({
                     requestingToken: currentSessionToken, status: "pending"
                 });
@@ -209,43 +201,33 @@
                 if(challengeListenerRef) challengeListenerRef.off();
                 if(internalTimeoutId) clearTimeout(internalTimeoutId);
 
-                // Start local 15-second override countdown
+                // Start safety local takeover fallback (in case other device is totally offline)
                 internalTimeoutId = setTimeout(() => {
                     if (challengeListenerRef) challengeListenerRef.off();
-                    
-                    firebase.database().ref('shops/' + userKey).update({
-                        activeSessionId: currentSessionToken,
-                        sessionChallenge: null
-                    }).then(() => {
-                        sessionStorage.setItem("mySessionToken", currentSessionToken);
-                        sessionStorage.setItem("activeUserPhone", userKey);
-                        routeToDashboard();
+                    firebase.database().ref('shops/' + userKey).update({ activeSessionId: currentSessionToken, sessionChallenge: null }).then(() => {
+                        sessionStorage.setItem("mySessionToken", currentSessionToken); sessionStorage.setItem("activeUserPhone", userKey); routeToDashboard();
                     });
-                }, 15000);
+                }, 16000); // 16 seconds to give the active device's 15-second timer priority
 
                 challengeListenerRef = firebase.database().ref('shops/' + userKey);
                 challengeListenerRef.on('value', (shopSnapshot) => {
                     const latestData = shopSnapshot.val();
                     if (!latestData) return;
 
-                    // Remote client approved the handshake
+                    // The active device allowed us in (or their timer ran out)
                     if (latestData.activeSessionId === currentSessionToken) {
                         if(internalTimeoutId) clearTimeout(internalTimeoutId);
                         challengeListenerRef.off();
-                        sessionStorage.setItem("mySessionToken", currentSessionToken);
-                        sessionStorage.setItem("activeUserPhone", userKey);
-                        routeToDashboard();
+                        sessionStorage.setItem("mySessionToken", currentSessionToken); sessionStorage.setItem("activeUserPhone", userKey); routeToDashboard();
                         return;
                     }
 
-                    // Remote client denied the handshake
+                    // The active device clicked Deny
                     if (!latestData.sessionChallenge && latestData.activeSessionId !== currentSessionToken) {
                         if(internalTimeoutId) clearTimeout(internalTimeoutId);
                         challengeListenerRef.off();
-                        msg.style.color = "var(--accent)";
-                        msg.innerText = "LOGIN REQUEST REJECTED BY RUNNING WORKSPACE.";
-                        loginButtonReference.innerText = "LOGIN TO PORTAL";
-                        loginButtonReference.disabled = false;
+                        msg.style.color = "var(--accent)"; msg.innerText = "LOGIN REQUEST REJECTED BY RUNNING WORKSPACE.";
+                        loginButtonReference.innerText = "LOGIN TO PORTAL"; loginButtonReference.disabled = false;
                     }
                 });
             } else {
@@ -256,8 +238,7 @@
         }
 
         function routeToDashboard() {
-            document.getElementById('msg').style.color = "green";
-            document.getElementById('msg').innerText = "ACCESS GRANTED! REDIRECTING...";
+            document.getElementById('msg').style.color = "green"; document.getElementById('msg').innerText = "ACCESS GRANTED! REDIRECTING...";
             setTimeout(() => { window.location.href = '/dashboard.html'; }, 1000);
         }
 
@@ -275,8 +256,7 @@
 
             if (/^\d{10}$/.test(identifier)) {
                 firebase.database().ref('shops/' + identifier).once('value').then((snapshot) => {
-                    const shopData = snapshot.val();
-                    if (shopData && shopData.securePin === pin) { evaluateUserSubscriptionLifecycle(shopData, identifier, loginBtn); } 
+                    if (snapshot.val() && snapshot.val().securePin === pin) { evaluateUserSubscriptionLifecycle(snapshot.val(), identifier, loginBtn); } 
                     else { msg.innerText = "INVALID SECURE PIN!"; loginBtn.innerText = "LOGIN TO PORTAL"; loginBtn.disabled = false; }
                 }).catch(err => { msg.innerText = "SERVER ERROR: " + err.message; loginBtn.disabled = false; });
             } else {
