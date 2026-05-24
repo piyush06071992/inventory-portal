@@ -1,7 +1,23 @@
 // ============================================================================
-// GLOBAL SESSION GATEKEEPER & DEVICE CONFLICT MANAGER (LOCALSTORAGE VERSION)
+// GLOBAL SESSION GATEKEEPER & FIREBASE INITIALIZATION
 // ============================================================================
 
+// 1. INITIALIZE FIREBASE GLOBALLY FIRST
+const firebaseConfig = {
+    apiKey: "AIzaSyBuYDgbmycHMjHGupeoZV2lvv_Z0n7WyoY",
+    authDomain: "business-saarthi.firebaseapp.com",
+    databaseURL: "https://business-saarthi-default-rtdb.firebaseio.com",
+    projectId: "business-saarthi",
+    storageBucket: "business-saarthi.firebasestorage.app",
+    messagingSenderId: "556256084111",
+    appId: "1:556256084111:web:14e841b0e7bfff653170fa"
+};
+
+if (typeof firebase !== 'undefined' && !firebase.apps.length) {
+    firebase.initializeApp(firebaseConfig);
+}
+
+// 2. GATEKEEPER LOGIC
 let globalCountdownInterval = null;
 let activeDatabaseStream = null;
 
@@ -30,15 +46,6 @@ function setupGlobalDeviceListener() {
     const activeUser = localStorage.getItem("activeUserPhone");
     const myToken = localStorage.getItem("mySessionToken");
 
-    // CRITICAL FIX: Ghost Token Check. If logged in via Firebase but missing our secure token -> Force Logout
-    if (activeUser && !myToken && !window.location.pathname.endsWith("login.html") && window.location.pathname !== "/") {
-        firebase.auth().signOut().then(() => {
-            localStorage.clear();
-            window.location.href = '/login.html';
-        });
-        return;
-    }
-
     if (!activeUser || !myToken) return;
     if (window.location.pathname.endsWith("login.html") || window.location.pathname === "/") return;
 
@@ -49,25 +56,22 @@ function setupGlobalDeviceListener() {
         const data = snapshot.val();
         if (!data) return;
 
-        // SCENARIO 1: We lost the token battle. Evict this device immediately and kill Firebase Auth.
+        // SCENARIO 1: Eviction
         if (data.activeSessionId && data.activeSessionId !== myToken) {
             activeDatabaseStream.off();
-            firebase.auth().signOut().then(() => {
-                localStorage.clear();
-                alert("Session Revoked! Your account successfully logged in from a new device.");
-                window.location.href = '/login.html';
-            });
+            localStorage.clear();
+            alert("Session Revoked! Your account successfully logged in from a new device.");
+            window.location.href = '/login.html';
             return;
         }
 
-        // SCENARIO 2: Someone is knocking at the door. Show the challenge popup.
+        // SCENARIO 2: Challenge Popup
         if (data.sessionChallenge && data.sessionChallenge.status === "pending") {
             if (data.activeSessionId === myToken && !globalCountdownInterval) {
                 triggerGlobalConflictOverlay(activeUser, data.sessionChallenge.requestingToken);
             }
         } 
         
-        // Cleanup if the challenge is dropped
         if (!data.sessionChallenge && document.getElementById('global-device-conflict-modal')) {
             clearInterval(globalCountdownInterval);
             globalCountdownInterval = null;
@@ -107,7 +111,6 @@ function triggerGlobalConflictOverlay(shopPhone, requestingToken) {
         const timerUI = document.getElementById('global-countdown-timer');
         if (timerUI) timerUI.innerText = secondsLeft;
 
-        // TIMEOUT EXPIRED: The active device missed the window. Hand over the keys!
         if (secondsLeft <= 0) {
             clearInterval(globalCountdownInterval);
             globalCountdownInterval = null;
@@ -116,7 +119,6 @@ function triggerGlobalConflictOverlay(shopPhone, requestingToken) {
                 activeSessionId: requestingToken,
                 sessionChallenge: null
             });
-            // (Scenario 1 listener will catch this change and force the Firebase signOut automatically)
         }
     }, 1000);
 }
