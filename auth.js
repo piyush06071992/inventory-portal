@@ -1,9 +1,9 @@
 // auth.js - CENTRAL CONFIG AND SECURITY ENFORCER
-// Add this check at the very top of auth.js
+// 0. Security Enforcer: Hide page only if NOT on login page
 if (!window.location.pathname.includes("login.html")) {
     document.write('<style>body { display: none !important; }</style>');
 }
-document.write('<style>body { display: none !important; }</style>');
+
 const firebaseConfig = {
     apiKey: "AIzaSyBuYDgbmycHMjHGupeoZV2lvv_Z0n7WyoY",
     authDomain: "business-saarthi.firebaseapp.com",
