@@ -1,1 +1,168 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Admin Control Panel - Business Saarthi</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.1/font/bootstrap-icons.css">
+    
+    <style>
+        body { font-family: 'Inter', sans-serif; background-color: #f0f2f5; color: #333333; }
+        .admin-box { max-width: 600px; margin: 50px auto; }
+        .card-custom { border: none; border-radius: 14px; box-shadow: 0 4px 16px rgba(0,0,0,0.06); background: #ffffff; }
+        .counter-badge { font-size: 1.1rem; padding: 6px 14px; border-radius: 50px; font-weight: 700; }
+        .request-item { background: #f8fafc; border: 1px solid #e2e8f0; border-radius: 10px; margin-bottom: 12px; padding: 14px; display: flex; justify-content: space-between; align-items: center; }
+    </style>
+</head>
+<body>
 
+<div class="container admin-box px-3">
+    
+    <div id="auth-panel" class="card card-custom p-4 p-md-5">
+        <div class="text-center mb-4">
+            <i class="bi bi-shield-lock text-primary" style="font-size: 3rem;"></i>
+            <h3 class="fw-bold mt-2">Admin Terminal Gateway</h3>
+            <p class="text-muted small">Please identify your administrative access key rights to review outstanding locks.</p>
+        </div>
+        
+        <div class="mb-3">
+            <label class="form-label small fw-bold text-secondary">Admin Email ID</label>
+            <input type="email" id="admin-email" class="form-control form-control-lg" placeholder="Enter Admin Email">
+        </div>
+        <div class="mb-4">
+            <label class="form-label small fw-bold text-secondary">Security Password</label>
+            <input type="password" id="admin-pass" class="form-control form-control-lg" placeholder="Enter System Password">
+        </div>
+        <button id="login-btn" class="btn btn-primary btn-lg w-100 fw-semibold">Authorize Console Access</button>
+    </div>
+
+    <div id="dashboard-panel" class="card card-custom p-4 d-none">
+        <div class="d-flex justify-content-between align-items-center border-bottom pb-3 mb-4">
+            <div>
+                <h4 class="fw-bold text-dark m-0"><i class="bi bi-cpu-fill text-primary"></i> Saarthi Revenue Core</h4>
+                <small class="text-muted">Real-time cross-device workspace validation tracker</small>
+            </div>
+            <span class="badge bg-danger counter-badge" id="queue-count">0 Requests</span>
+        </div>
+
+        <h6 class="fw-bold text-secondary mb-3 text-uppercase tracking-wider small">Pending Portal Clearance Requests</h6>
+        
+        <div id="requests-queue-container">
+            <div class="text-center py-5 text-muted small">
+                <i class="bi bi-patch-check text-success d-block mb-2" style="font-size: 2rem;"></i>
+                No outstanding verification queues detected. Everything is clear!
+            </div>
+        </div>
+    </div>
+
+</div>
+
+<script src="https://www.gstatic.com/firebasejs/9.6.1/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/9.6.1/firebase-database-compat.js"></script>
+
+<script>
+    const firebaseConfig = {
+        apiKey: "AIzaSyBuyDgbmychMjHGupeoZV21vv_Z0n7WyoY",
+        authDomain: "business-saarthi.firebaseapp.com",
+        databaseURL: "https://business-saarthi-default-rtdb.firebaseio.com",
+        projectId: "business-saarthi",
+        storageBucket: "business-saarthi.firebasestorage.app",
+        messagingSenderId: "556256084111",
+        appId: "1:556256084111:web:b06208d94c5f5cae3170fa"
+    };
+    firebase.initializeApp(firebaseConfig);
+
+    // Static Administrative Verification Key Profiles
+    const targetEmail = "rana.rpiyush.piyush826@gmail.com";
+    const targetPass = "9817138521Ps$";
+
+    document.getElementById("login-btn").addEventListener("click", function() {
+        const emailInput = document.getElementById("admin-email").value.trim();
+        const passInput = document.getElementById("admin-pass").value;
+
+        if (emailInput === targetEmail && passInput === targetPass) {
+            // Authentication successful: Transition UI structures
+            document.getElementById("auth-panel").classList.add("d-none");
+            document.getElementById("dashboard-panel").classList.remove("d-none");
+            initializeLiveDashboardEngine();
+        } else {
+            alert("Access Denied! Invalid Administrative credentials profile properties matched.");
+        }
+    });
+
+    function initializeLiveDashboardEngine() {
+        // Bind real-time background query path listener targeting the active transaction queue
+        firebase.database().ref("manual_unlock_requests").on('value', (snapshot) => {
+            const dataContainer = snapshot.val();
+            const containerNode = document.getElementById("requests-queue-container");
+            const badgeCountNode = document.getElementById("queue-count");
+            
+            if (!dataContainer || Object.keys(dataContainer).length === 0) {
+                badgeCountNode.innerText = "0 Requests";
+                badgeCountNode.classList.replace("bg-danger", "bg-success");
+                containerNode.innerHTML = `
+                    <div class="text-center py-5 text-muted small">
+                        <i class="bi bi-patch-check text-success d-block mb-2" style="font-size: 2.5rem;"></i>
+                        No outstanding requests found. All shops active!
+                    </div>`;
+                return;
+            }
+
+            // Loop and render data rows dynamically
+            let totalRequests = 0;
+            let listHtmlBuffer = "";
+
+            Object.keys(dataContainer).forEach(key => {
+                const item = dataContainer[key];
+                if (item.status === "pending") {
+                    totalRequests++;
+                    listHtmlBuffer += `
+                        <div class="request-item shadow-sm animate__animated animate__fadeIn">
+                            <div>
+                                <strong class="text-dark d-block"><i class="bi bi-shop text-secondary"></i> Shop: +91 ${item.phone}</strong>
+                                <small class="text-muted text-monospace">Type: Manual Check Verification Queue</small>
+                            </div>
+                            <button class="btn btn-dark btn-sm fw-semibold px-3" onclick="executeManualAccountClearance('${item.phone}')">
+                                <i class="bi bi-unlock-fill text-warning"></i> Approve & Unlock
+                            </button>
+                        </div>`;
+                }
+            });
+
+            badgeCountNode.innerText = `${totalRequests} Pending`;
+            if(totalRequests > 0) {
+                badgeCountNode.classList.replace("bg-success", "bg-danger");
+                containerNode.innerHTML = listHtmlBuffer;
+            } else {
+                badgeCountNode.innerText = "0 Requests";
+                badgeCountNode.classList.replace("bg-danger", "bg-success");
+                containerNode.innerHTML = `
+                    <div class="text-center py-5 text-muted small">
+                        <i class="bi bi-patch-check text-success d-block mb-2" style="font-size: 2.5rem;"></i>
+                        No outstanding requests found. All shops active!
+                    </div>`;
+            }
+        });
+    }
+
+    // High-performance atomic operation to run data changes directly inside database nodes
+    window.executeManualAccountClearance = function(shopPhone) {
+        if (!confirm(`Confirm offline payment received from ${shopPhone} and unlock their access?`)) return;
+
+        // 1. Flip active state parameters inside user data profiles tree paths
+        firebase.database().ref(`users/${shopPhone}`).update({
+            portalStatus: "active"
+        }).then(() => {
+            // 2. Clear out request metadata tracking objects from listing views cleanly
+            return firebase.database().ref(`manual_unlock_requests/${shopPhone}`).remove();
+        }).then(() => {
+            alert(`Shop Profile ${shopPhone} successfully unlocked in live database runtime state!`);
+        }).catch(err => {
+            alert("Execution Reference Exception: " + err.message);
+        });
+    }
+</script>
+</body>
+</html>
