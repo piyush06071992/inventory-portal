@@ -97,12 +97,10 @@
             </div>
             <div class="form-group">
                 <label>Assigned Role *</label>
-                <select id="stf-role" class="form-control-custom">
-                    <option value="Cashier">Cashier</option>
-                    <option value="Inventory Manager">Inventory Manager</option>
-                    <option value="Sales Executive">Sales Executive</option>
-                    <option value="Shop Helper">Shop Helper</option>
-                </select>
+                <div style="display:flex; gap:5px;">
+                    <select id="stf-role" class="form-control-custom"></select>
+                    <button type="button" class="btn-remove" onclick="addNewRole()"><i class="bi bi-plus-lg"></i></button>
+                </div>
             </div>
         </div>
 
