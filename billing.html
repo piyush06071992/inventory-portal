@@ -18,7 +18,7 @@
         .card-billing { border: none; border-radius: 16px; box-shadow: 0 8px 24px rgba(0, 0, 0, 0.05); background: #ffffff; overflow: hidden; }
         .accent-bar { height: 6px; background: linear-gradient(90deg, #dc3545, #fd7e14); }
         .rent-badge { font-size: 2.5rem; font-weight: 700; color: #1e293b; margin-bottom: 20px; }
-        .btn-pay { background: #1e3a8a; color: white; border: none; padding: 15px; width: 100%; border-radius: 10px; font-weight: 600; }
+        .btn-pay { background: #1e3a8a; color: white; border: none; padding: 15px; width: 100%; border-radius: 10px; font-weight: 600; cursor: pointer; }
         .btn-pay:hover { opacity: 0.9; }
     </style>
 </head>
@@ -60,8 +60,14 @@
     if (!firebase.apps.length) { firebase.initializeApp(firebaseConfig); }
 
     function payNow() {
+        // Use local storage with a fallback to avoid the "Session error"
         const shopPhone = localStorage.getItem("activeUserPhone");
-        if (!shopPhone) { alert("Session error. Please login again."); return; }
+        
+        if (!shopPhone) { 
+            alert("Session not found. Please login again."); 
+            window.location.href = "login.html";
+            return; 
+        }
         
         var options = {
             "key": "rzp_test_SWvXVaTqZIFGII", 
@@ -70,13 +76,11 @@
             "name": "Business Saarthi",
             "description": "Platform Renewal Fee",
             "handler": function (response){
-                // Calculate new dates
                 const newTrial = new Date();
                 newTrial.setDate(newTrial.getDate() + 30);
                 const newLockout = new Date();
                 newLockout.setDate(newLockout.getDate() + 60);
 
-                // Auto-Unlock in Firebase
                 firebase.database().ref(`shops/${shopPhone}`).update({
                     paymentStatus: "PAID",
                     trialEndsAt: newTrial.toISOString(),
