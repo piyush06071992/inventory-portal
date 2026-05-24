@@ -24,8 +24,10 @@ if (typeof firebase !== 'undefined' && !firebase.apps.length) {
 }
 // UNIVERSAL MIDNIGHT & SUBSCRIPTION GUARD
 function verifySessionIntegrity() {
-    // 1. If we are on public pages, stop the guard
-    if (window.location.pathname.includes("login.html") || window.location.pathname.includes("index.html")) return;
+   // 1. If we are on public pages, stop the guard
+    if (window.location.pathname.includes("login.html") || 
+        window.location.pathname.includes("index.html") || 
+        window.location.pathname.includes("billing.html")) return;
 
     const activePhone = localStorage.getItem("activeUserPhone");
     if (!activePhone) return (window.location.href = '/login.html');
