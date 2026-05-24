@@ -17,6 +17,9 @@ if (typeof firebase !== 'undefined' && !firebase.apps.length) {
 }
 // UNIVERSAL MIDNIGHT & SUBSCRIPTION GUARD
 function verifySessionIntegrity() {
+    // 1. If we are already on the login page, stop the guard immediately to prevent a loop
+    if (window.location.pathname.includes("login.html")) return;
+
     const activePhone = localStorage.getItem("activeUserPhone");
     if (!activePhone) return (window.location.href = '/login.html');
 
