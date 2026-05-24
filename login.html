@@ -13,43 +13,15 @@
     <link rel="stylesheet" href="/style.css">
     
     <style>
-        .pin-wrapper {
-            position: relative;
-            width: 100%;
-            margin-bottom: 15px;
-        }
-        .view-btn-toggle {
-            position: absolute;
-            right: 18px;
-            top: 50%;
-            transform: translateY(-50%);
-            color: var(--accent);
-            cursor: pointer;
-            font-size: 16px;
-            user-select: none;
-            -webkit-user-select: none;
-            font-weight: 900;
-        }
-        .pin-wrapper input {
-            margin-bottom: 0;
-            padding-right: 85px;
-        }
-        .forgot-link {
-            text-align: right;
-            font-size: 14px;
-            color: var(--accent);
-            font-weight: bold;
-            cursor: pointer;
-            margin-top: -5px;
-            margin-bottom: 20px;
-            text-decoration: underline;
-        }
+        .pin-wrapper { position: relative; width: 100%; margin-bottom: 15px; }
+        .view-btn-toggle { position: absolute; right: 18px; top: 50%; transform: translateY(-50%); color: var(--accent); cursor: pointer; font-size: 16px; user-select: none; -webkit-user-select: none; font-weight: 900; }
+        .pin-wrapper input { margin-bottom: 0; padding-right: 85px; }
+        .forgot-link { text-align: right; font-size: 14px; color: var(--accent); font-weight: bold; cursor: pointer; margin-top: -5px; margin-bottom: 20px; text-decoration: underline; }
     </style>
 </head>
 <body>
 
     <div style="display: flex; flex-direction: column; align-items: center; justify-content: center; min-height: 100vh; width: 100%;">
-
         <div class="main-container">
             <div class="header-frame">
                 <h1>BUSINESS SAARTHI</h1>
@@ -76,42 +48,29 @@
                 </div>
 
                 <div id="forgot-phone-block" style="display: none;">
-                    <p style="text-align: center; color: var(--navy-blue); font-size: 15px; margin-bottom: 15px;">
-                        ENTER REGISTERED PHONE NUMBER TO RESET PIN
-                    </p>
+                    <p style="text-align: center; color: var(--navy-blue); font-size: 15px; margin-bottom: 15px;">ENTER REGISTERED PHONE NUMBER TO RESET PIN</p>
                     <input type="text" id="forgot-phone" placeholder="ENTER PHONE NUMBER" inputmode="numeric" maxlength="10">
-                    
                     <button onclick="sendResetOtp()" id="send-otp-btn">SEND VERIFICATION OTP</button>
-                    
-                    <div class="toggle-link" onclick="switchToLoginMode()" style="margin-top: 20px;">
-                        ← BACK TO LOGIN
-                    </div>
+                    <div class="toggle-link" onclick="switchToLoginMode()" style="margin-top: 20px;">← BACK TO LOGIN</div>
                 </div>
 
                 <div id="forgot-otp-block" style="display: none;">
-                    <p style="text-align: center; color: var(--navy-blue); font-size: 15px; margin-bottom: 15px;">
-                        ENTER OTP SENT TO YOUR MOBILE & CREATE NEW PIN
-                    </p>
+                    <p style="text-align: center; color: var(--navy-blue); font-size: 15px; margin-bottom: 15px;">ENTER OTP SENT TO YOUR MOBILE & CREATE NEW PIN</p>
                     <input type="text" id="reset-otp-code" placeholder="ENTER 6-DIGIT OTP" inputmode="numeric" maxlength="6">
-                    
                     <div class="pin-wrapper">
                         <input type="password" id="new-pin" placeholder="CREATE NEW 6-DIGIT PIN" inputmode="numeric" maxlength="6">
                         <span id="toggle-txt-2" class="view-btn-toggle" onclick="handleToggleView('new-pin', 'toggle-txt-2')">SHOW</span>
                     </div>
-                    
                     <button onclick="verifyAndResetPin()" id="reset-confirm-btn" style="background-color: #10B981;">UPDATE PIN & LOG IN</button>
                 </div>
                 
                 <div id="recaptcha-container"></div>
-                
                 <div id="msg" class="message" style="color: var(--accent); margin-top: 15px;"></div>
             </div>
         </div>
-
     </div>
 
     <script>
-        // Safe, conditional multi-instance initialization check pattern
         const firebaseConfig = {
             apiKey: "AIzaSyBuyDgbmychMjHGupeoZV21vv_Z0n7WyoY",
             authDomain: "business-saarthi.firebaseapp.com",
@@ -122,11 +81,9 @@
             appId: "1:556256084111:web:b06208d94c5f5cae3170fa"
         };
         
-        if (!firebase.apps.length) {
-            firebase.initializeApp(firebaseConfig);
-        }
+        if (!firebase.apps.length) { firebase.initializeApp(firebaseConfig); }
 
-        let secondaryListenerRef = null;
+        let challengeListenerRef = null;
 
         function generateUniqueTokenId() {
             return 'session_' + Math.random().toString(36).substr(2, 9) + Date.now().toString(36);
@@ -135,13 +92,8 @@
         function handleToggleView(fieldId, textId) {
             const field = document.getElementById(fieldId);
             const txt = document.getElementById(textId);
-            if (field.type === 'password') {
-                field.type = 'text';
-                txt.innerText = 'HIDE';
-            } else {
-                field.type = 'password';
-                txt.innerText = 'SHOW';
-            }
+            field.type = (field.type === 'password') ? 'text' : 'password';
+            txt.innerText = (field.type === 'password') ? 'SHOW' : 'HIDE';
         }
 
         function switchToForgotMode() {
@@ -162,8 +114,7 @@
         window.onload = function() {
             if (!window.recaptchaVerifier) {
                 window.recaptchaVerifier = new firebase.auth.RecaptchaVerifier('recaptcha-container', {
-                    'size': 'invisible',
-                    'callback': (response) => {}
+                    'size': 'invisible', 'callback': (response) => {}
                 });
             }
         };
@@ -174,37 +125,18 @@
             const phone = document.getElementById('forgot-phone').value.trim();
             const msg = document.getElementById('msg');
             const btn = document.getElementById('send-otp-btn');
-            msg.innerText = "";
+            if (phone.length !== 10) { msg.innerText = "ENTER A VALID 10-DIGIT PHONE NUMBER!"; return; }
 
-            if (phone.length !== 10) {
-                msg.style.color = "var(--accent)";
-                msg.innerText = "ENTER A VALID 10-DIGIT PHONE NUMBER!";
-                return;
-            }
-
-            btn.innerText = "SENDING OTP...";
-            btn.disabled = true;
-
-            const formattedPhone = "+91" + phone;
-            const appVerifier = window.recaptchaVerifier;
-
-            firebase.auth().signInWithPhoneNumber(formattedPhone, appVerifier)
+            btn.innerText = "SENDING OTP..."; btn.disabled = true;
+            firebase.auth().signInWithPhoneNumber("+91" + phone, window.recaptchaVerifier)
                 .then((confirmationResult) => {
                     resetConfirmationResult = confirmationResult;
                     document.getElementById('forgot-phone-block').style.display = 'none';
                     document.getElementById('forgot-otp-block').style.display = 'block';
-                    msg.style.color = "green";
-                    msg.innerText = "RESET OTP SENT SUCCESSFULLY!";
+                    msg.style.color = "green"; msg.innerText = "RESET OTP SENT SUCCESSFULLY!";
                 })
-                .catch((error) => {
-                    console.error(error);
-                    msg.style.color = "var(--accent)";
-                    msg.innerText = "ERROR: " + error.message;
-                })
-                .finally(() => {
-                    btn.innerText = "SEND VERIFICATION OTP";
-                    btn.disabled = false;
-                });
+                .catch((error) => { msg.style.color = "var(--accent)"; msg.innerText = "ERROR: " + error.message; })
+                .finally(() => { btn.innerText = "SEND VERIFICATION OTP"; btn.disabled = false; });
         }
 
         function verifyAndResetPin() {
@@ -213,42 +145,18 @@
             const newPin = document.getElementById('new-pin').value;
             const msg = document.getElementById('msg');
             const btn = document.getElementById('reset-confirm-btn');
-            msg.innerText = "";
 
-            if (code.length !== 6 || newPin.length !== 6) {
-                msg.style.color = "var(--accent)";
-                msg.innerText = "OTP AND NEW PIN MUST BE 6 DIGITS!";
-                return;
-            }
-
-            btn.innerText = "UPDATING PIN...";
-            btn.disabled = true;
+            if (code.length !== 6 || newPin.length !== 6) { msg.innerText = "OTP AND NEW PIN MUST BE 6 DIGITS!"; return; }
+            btn.innerText = "UPDATING PIN..."; btn.disabled = true;
 
             resetConfirmationResult.confirm(code)
-                .then((result) => {
-                    firebase.database().ref('shops/' + phone).update({
-                        securePin: newPin
-                    }, (error) => {
-                        if (error) {
-                            msg.style.color = "var(--accent)";
-                            msg.innerText = "DATABASE UPDATE FAILED: " + error.message;
-                            btn.innerText = "UPDATE PIN & LOG IN";
-                            btn.disabled = false;
-                        } else {
-                            msg.style.color = "green";
-                            msg.innerText = "PIN UPDATED! LOGGING IN...";
-                            alert("PIN Updated Successfully!");
-                            window.location.href = '/dashboard.html';
-                        }
+                .then(() => {
+                    firebase.database().ref('shops/' + phone).update({ securePin: newPin }, (error) => {
+                        if (error) { msg.innerText = "DATABASE UPDATE FAILED: " + error.message; btn.disabled = false; } 
+                        else { alert("PIN Updated Successfully!"); window.location.href = '/dashboard.html'; }
                     });
                 })
-                .catch((error) => {
-                    console.error(error);
-                    msg.style.color = "var(--accent)";
-                    msg.innerText = "INVALID OR EXPIRED OTP CODE!";
-                    btn.innerText = "UPDATE PIN & LOG IN";
-                    btn.disabled = false;
-                });
+                .catch((error) => { msg.innerText = "INVALID OR EXPIRED OTP CODE!"; btn.disabled = false; });
         }
 
         function evaluateUserSubscriptionLifecycle(shopData, userKey, loginButtonReference) {
@@ -256,43 +164,23 @@
             const now = new Date();
             
             if (!shopData.trialEndsAt || !shopData.lockoutEndsAt || !shopData.paymentStatus) {
-                const registrationDate = shopData.registeredAt ? new Date(shopData.registeredAt) : new Date();
-                const calculatedTrialEnd = new Date(registrationDate);
-                calculatedTrialEnd.setDate(calculatedTrialEnd.getDate() + 30);
-                const calculatedLockoutEnd = new Date(registrationDate);
-                calculatedLockoutEnd.setDate(calculatedLockoutEnd.getDate() + 60);
+                const regDate = shopData.registeredAt ? new Date(shopData.registeredAt) : new Date();
+                const tEnd = new Date(regDate); tEnd.setDate(tEnd.getDate() + 30);
+                const lEnd = new Date(regDate); lEnd.setDate(lEnd.getDate() + 60);
                 
                 firebase.database().ref('shops/' + userKey).update({
-                    trialEndsAt: calculatedTrialEnd.toISOString(),
-                    lockoutEndsAt: calculatedLockoutEnd.toISOString(),
-                    paymentStatus: shopData.paymentStatus || "TRIAL"
+                    trialEndsAt: tEnd.toISOString(), lockoutEndsAt: lEnd.toISOString(), paymentStatus: shopData.paymentStatus || "TRIAL"
                 });
-
-                shopData.trialEndsAt = calculatedTrialEnd.toISOString();
-                shopData.lockoutEndsAt = calculatedLockoutEnd.toISOString();
-                shopData.paymentStatus = shopData.paymentStatus || "TRIAL";
+                shopData.trialEndsAt = tEnd.toISOString(); shopData.lockoutEndsAt = lEnd.toISOString(); shopData.paymentStatus = "TRIAL";
             }
 
-            const trialEnd = new Date(shopData.trialEndsAt);
-            const lockoutEnd = new Date(shopData.lockoutEndsAt);
-            const status = shopData.paymentStatus;
-
-            if (status !== "PAID" && now > lockoutEnd) {
-                firebase.database().ref('shops/' + userKey).remove()
-                    .then(() => {
-                        msg.style.color = "var(--accent)";
-                        msg.innerText = "ACCOUNT EXPIRED AND ALL DATA PERMANENTLY PURGED DUE TO NON-PAYMENT!";
-                    })
-                    .catch((err) => { msg.innerText = "PURGE ACTION FAILED: " + err.message; })
-                    .finally(() => {
-                        loginButtonReference.innerText = "LOGIN TO PORTAL";
-                        loginButtonReference.disabled = false;
-                    });
+            if (shopData.paymentStatus !== "PAID" && now > new Date(shopData.lockoutEndsAt)) {
+                firebase.database().ref('shops/' + userKey).remove().then(() => { msg.innerText = "ACCOUNT EXPIRED AND DATA PURGED!"; })
+                .finally(() => { loginButtonReference.innerText = "LOGIN TO PORTAL"; loginButtonReference.disabled = false; });
                 return;
             }
 
-            if (status !== "PAID" && now > trialEnd) {
-                msg.style.color = "var(--accent)";
+            if (shopData.paymentStatus !== "PAID" && now > new Date(shopData.trialEndsAt)) {
                 msg.innerText = "ACCOUNT LOCKED! PLEASE PAY RENT TO RESTORE ACCESS.";
                 sessionStorage.setItem("lockedUserPhone", userKey);
                 setTimeout(() => { window.location.href = '/billing.html'; }, 2500);
@@ -303,48 +191,42 @@
             sessionStorage.setItem("mySessionToken", currentSessionToken);
             sessionStorage.setItem("activeUserPhone", userKey);
 
+            // Intercept Verification Trigger
             if (shopData.activeSessionId) {
                 msg.style.color = "orange";
-                msg.innerText = "ACCOUNT ACTIVE ELSEWHERE! REQUESTING ACCESS FROM RUNNING WORKSPACE...";
+                msg.innerText = "ACCOUNT BUSY! REQUESTING PERMISSION FROM RUNNING WORKSPACE...";
 
                 firebase.database().ref('shops/' + userKey + '/sessionChallenge').set({
-                    requestingToken: currentSessionToken,
-                    status: "pending"
+                    requestingToken: currentSessionToken, status: "pending"
                 });
 
-                if(secondaryListenerRef) secondaryListenerRef.off();
-                secondaryListenerRef = firebase.database().ref('shops/' + userKey + '/sessionChallenge');
-                secondaryListenerRef.on('value', (challengeSnapshot) => {
+                if(challengeListenerRef) challengeListenerRef.off();
+                challengeListenerRef = firebase.database().ref('shops/' + userKey + '/sessionChallenge');
+                challengeListenerRef.on('value', (challengeSnapshot) => {
                     const challenge = challengeSnapshot.val();
                     if (!challenge) return;
 
                     if (challenge.status === "allowed" && challenge.requestingToken === currentSessionToken) {
-                        secondaryListenerRef.off();
+                        challengeListenerRef.off();
                         firebase.database().ref('shops/' + userKey).update({
-                            activeSessionId: currentSessionToken,
-                            sessionChallenge: null
+                            activeSessionId: currentSessionToken, sessionChallenge: null
                         }).then(() => { routeToDashboard(); });
                     } 
                     else if (challenge.status === "denied" && challenge.requestingToken === currentSessionToken) {
-                        secondaryListenerRef.off();
+                        challengeListenerRef.off();
                         firebase.database().ref('shops/' + userKey + '/sessionChallenge').remove();
-                        msg.style.color = "var(--accent)";
-                        msg.innerText = "LOGIN REJECTED BY CURRENT ACTIVE WORKING DEVICE CONSOLE!";
-                        loginButtonReference.innerText = "LOGIN TO PORTAL";
-                        loginButtonReference.disabled = false;
+                        msg.style.color = "var(--accent)"; msg.innerText = "LOGIN REJECTED BY RUNNING WORKSPACE CONSOLE!";
+                        loginButtonReference.innerText = "LOGIN TO PORTAL"; loginButtonReference.disabled = false;
                     }
                 });
             } else {
-                firebase.database().ref('shops/' + userKey).update({
-                    activeSessionId: currentSessionToken
-                }).then(() => { routeToDashboard(); });
+                firebase.database().ref('shops/' + userKey).update({ activeSessionId: currentSessionToken }).then(() => { routeToDashboard(); });
             }
         }
 
         function routeToDashboard() {
-            const msg = document.getElementById('msg');
-            msg.style.color = "green";
-            msg.innerText = "ACCESS GRANTED! REDIRECTING...";
+            document.getElementById('msg').style.color = "green";
+            document.getElementById('msg').innerText = "ACCESS GRANTED! REDIRECTING...";
             setTimeout(() => { window.location.href = '/dashboard.html'; }, 1000);
         }
 
@@ -353,74 +235,28 @@
             const pin = document.getElementById('login-pin').value;
             const msg = document.getElementById('msg');
             const loginBtn = document.getElementById('login-submit-btn');
-            
             msg.innerText = "";
 
-            if (!identifier || !pin) {
-                msg.style.color = "var(--accent)";
-                msg.innerText = "BOTH FIELDS ARE MANDATORY!";
-                return;
-            }
-            if (pin.length !== 6) {
-                msg.style.color = "var(--accent)";
-                msg.innerText = "PIN MUST BE EXACTLY 6 DIGITS!";
-                return;
-            }
+            if (!identifier || !pin) { msg.innerText = "BOTH FIELDS ARE MANDATORY!"; return; }
+            if (pin.length !== 6) { msg.innerText = "PIN MUST BE EXACTLY 6 DIGITS!"; return; }
 
-            loginBtn.innerText = "AUTHENTICATING...";
-            loginBtn.disabled = true;
+            loginBtn.innerText = "AUTHENTICATING..."; loginBtn.disabled = true;
 
             if (/^\d{10}$/.test(identifier)) {
-                firebase.database().ref('shops/' + identifier).once('value')
-                    .then((snapshot) => {
-                        const shopData = snapshot.val();
-                        if (shopData && shopData.securePin === pin) {
-                            evaluateUserSubscriptionLifecycle(shopData, identifier, loginBtn);
-                        } else {
-                            msg.style.color = "var(--accent)";
-                            msg.innerText = "INVALID PHONE NUMBER OR SECURE PIN!";
-                            loginBtn.innerText = "LOGIN TO PORTAL";
-                            loginBtn.disabled = false;
-                        }
-                    }).catch(err => {
-                        msg.innerText = "SERVER ERROR: " + err.message;
-                        loginBtn.disabled = false;
-                    });
+                firebase.database().ref('shops/' + identifier).once('value').then((snapshot) => {
+                    const shopData = snapshot.val();
+                    if (shopData && shopData.securePin === pin) { evaluateUserSubscriptionLifecycle(shopData, identifier, loginBtn); } 
+                    else { msg.innerText = "INVALID SECURE PIN!"; loginBtn.innerText = "LOGIN TO PORTAL"; loginBtn.disabled = false; }
+                }).catch(err => { msg.innerText = "SERVER ERROR: " + err.message; loginBtn.disabled = false; });
             } else {
-                firebase.database().ref('shops').orderByChild('emailId').equalTo(identifier).once('value')
-                    .then((snapshot) => {
-                        if (snapshot.exists()) {
-                            let matchFound = false;
-                            let matchedKey = "";
-                            let matchedData = null;
-
-                            snapshot.forEach((childSnapshot) => {
-                                const data = childSnapshot.val();
-                                if (data.securePin === pin) {
-                                    matchFound = true;
-                                    matchedKey = childSnapshot.key;
-                                    matchedData = data;
-                                }
-                            });
-
-                            if (matchFound) {
-                                evaluateUserSubscriptionLifecycle(matchedData, matchedKey, loginBtn);
-                            } else {
-                                msg.style.color = "var(--accent)";
-                                msg.innerText = "INVALID SECURE PIN!";
-                                loginBtn.innerText = "LOGIN TO PORTAL";
-                                loginBtn.disabled = false;
-                            }
-                        } else {
-                            msg.style.color = "var(--accent)";
-                            msg.innerText = "NO ACCOUNT FOUND WITH THIS EMAIL ID!";
-                            loginBtn.innerText = "LOGIN TO PORTAL";
-                            loginBtn.disabled = false;
-                        }
-                    }).catch(err => {
-                        msg.innerText = "SERVER ERROR: " + err.message;
-                        loginBtn.disabled = false;
-                    });
+                firebase.database().ref('shops').orderByChild('emailId').equalTo(identifier).once('value').then((snapshot) => {
+                    if (snapshot.exists()) {
+                        let matchedKey = "", matchedData = null;
+                        snapshot.forEach((child) => { if (child.val().securePin === pin) { matchedKey = child.key; matchedData = child.val(); } });
+                        if (matchedData) { evaluateUserSubscriptionLifecycle(matchedData, matchedKey, loginBtn); } 
+                        else { msg.innerText = "INVALID SECURE PIN!"; loginBtn.innerText = "LOGIN TO PORTAL"; loginBtn.disabled = false; }
+                    } else { msg.innerText = "NO ACCOUNT FOUND WITH THIS EMAIL ID!"; loginBtn.innerText = "LOGIN TO PORTAL"; loginBtn.disabled = false; }
+                }).catch(err => { msg.innerText = "SERVER ERROR: " + err.message; loginBtn.disabled = false; });
             }
         }
     </script>
