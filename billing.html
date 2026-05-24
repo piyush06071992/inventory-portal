@@ -16,7 +16,7 @@
         }
         .billing-container {
             max-width: 550px;
-            margin: 40px auto;
+            margin: 60px auto;
         }
         .card-billing {
             border: none;
@@ -34,12 +34,24 @@
             font-weight: 700;
             color: #1e293b;
         }
-        .qr-box {
-            background: #ffffff;
-            padding: 15px;
-            border: 2px dashed #cbd5e1;
-            border-radius: 12px;
-            display: inline-block;
+        .btn-upi {
+            background-color: #0d6efd;
+            color: #ffffff;
+            font-weight: 600;
+            padding: 12px 24px;
+            border-radius: 8px;
+            transition: all 0.2s ease;
+            text-decoration: none;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            gap: 10px;
+            width: 100%;
+        }
+        .btn-upi:hover {
+            background-color: #0b5ed7;
+            color: #ffffff;
+            transform: translateY(-1px);
         }
         .verification-zone {
             background-color: #f8fafc;
@@ -60,31 +72,31 @@
 <div class="container billing-container px-3">
     <div class="card card-billing">
         <div class="accent-bar"></div>
-        <div class="card-body p-4 text-center">
+        <div class="card-body p-4 p-md-5 text-center">
             
-            <div class="mb-3">
-                <i class="bi bi-exclamation-triangle-fill text-danger" style="font-size: 3rem;"></i>
+            <div class="mb-4">
+                <i class="bi bi-exclamation-triangle-fill text-danger" style="font-size: 3.5rem;"></i>
                 <h2 class="fw-bold mt-2">Access Restricted</h2>
-                <p class="text-muted small">Your workspace is locked due to pending monthly platform rent.</p>
+                <p class="text-muted">Your Business Saarthi workspace is currently locked due to pending monthly platform rent.</p>
             </div>
 
-            <div class="bg-light rounded-3 p-2 mb-3">
-                <span class="text-uppercase text-muted fw-semibold small d-block mb-1">Outstanding Amount</span>
-                <div class="rent-badge">₹<span id="display-rent">50.00</span></div>
+            <div class="bg-light rounded-3 p-3 mb-4">
+                <span class="text-uppercase text-muted fw-semibold small d-block mb-1">Total Outstanding Amount</span>
+                <div class="rent-badge">₹<span id="display-rent">0.00</span></div>
             </div>
 
-            <div class="mb-3">
-                <div class="qr-box shadow-sm">
-                    <img id="upi-qr-image" src="" alt="Scan to Pay" style="width: 200px; height: 200px;">
-                </div>
-                <small class="text-muted d-block mt-2 fw-medium">
-                    <i class="bi bi-qr-code-scan"></i> Scan this QR using GPay, PhonePe, or Paytm
+            <div class="mb-4">
+                <a id="upi-intent-link" href="#" class="btn-upi shadow-sm">
+                    <i class="bi bi-wallet2"></i> Pay Rent via Any UPI App
+                </a>
+                <small class="text-muted d-block mt-2">
+                    <i class="bi bi-phone"></i> Best used on mobile/tablet. Tapping auto-launches GPay, PhonePe, or Paytm.
                 </small>
             </div>
 
             <div class="verification-zone text-start">
-                <h5 class="fw-bold mb-1 text-dark"><i class="bi bi-shield-check text-primary"></i> Instant Verification</h5>
-                <p class="text-muted small mb-3">After scanning and completing the transaction, enter your 12-digit UPI Ref / UTR code here to unlock access.</p>
+                <h5 class="fw-bold mb-2 text-dark"><i class="bi bi-shield-check text-primary"></i> Instant Verification</h5>
+                <p class="text-muted small mb-3">Once the payment settles inside your banking application, please paste your 12-digit UPI Ref / UTR reference code below to request account clearance.</p>
                 
                 <div class="mb-3">
                     <input type="text" id="utr-input" class="form-control form-control-lg form-control-utr" placeholder="ENTER 12-DIGIT UTR" maxlength="12">
@@ -103,7 +115,7 @@
 <script src="https://www.gstatic.com/firebasejs/9.6.1/firebase-database-compat.js"></script>
 
 <script>
-    // Configured live using your active project variables from image_11deea.jpg
+    // Production Firebase configuration credentials
     const firebaseConfig = {
         apiKey: "AIzaSyBuyDgbmychMjHGupeoZV21vv_Z0n7WyoY",
         authDomain: "business-saarthi.firebaseapp.com",
@@ -116,35 +128,41 @@
     firebase.initializeApp(firebaseConfig);
 
     window.onload = function() {
+        // Extract dynamically assigned session storage metrics
         const shopPhone = sessionStorage.getItem("lockedUserPhone") || "9999999999";
         
-        // TESTING MODE: 50 Rupees
+        // TESTING MODE: Forcing the amount to 50 as requested
         const variableRent = "50"; 
+        
+        // Push the formatted testing value to the UI ledger
         document.getElementById("display-rent").innerText = parseFloat(variableRent).toFixed(2);
 
-        // Core Target Details
-        const personalUPI = "rana.rpiyush.piyush826@okhdfcbank.com"; 
+        // Updated Configuration Details
+        const personalUPI = "piyush0607@ybl"; 
         const merchantName = "Piyush Rana"; 
         const txnRefNote = encodeURIComponent(`Saarthi Rent ${shopPhone}`);
 
-        // Build standard NPCI string
-        const upiRawUrl = `upi://pay?pa=${personalUPI}&pn=${encodeURIComponent(merchantName)}&am=${variableRent}&tn=${txnRefNote}&cu=INR`;
+        // Assemble standard NPCI unified deep link string
+        const upiUrl = `upi://pay?pa=${personalUPI}&pn=${encodeURIComponent(merchantName)}&am=${variableRent}&tn=${txnRefNote}&cu=INR`;
 
-        // Generate dynamic QR image source via open API
-        const qrApiUrl = `https://api.qrserver.com/v1/create-qr-code/?size=200x200&data=${encodeURIComponent(upiRawUrl)}`;
-        document.getElementById("upi-qr-image").setAttribute("src", qrApiUrl);
+        // Direct binding to DOM anchor node
+        const upiBtn = document.getElementById("upi-intent-link");
+        upiBtn.setAttribute("href", upiUrl);
     };
 
+    // Form confirmation processing logic string
     document.getElementById("verify-utr-btn").addEventListener("click", function() {
         const utrValue = document.getElementById("utr-input").value.trim();
         const shopPhone = sessionStorage.getItem("lockedUserPhone") || "unknown";
         const variableRent = "50"; 
 
+        // Validate Indian Interbank settlement token length
         if (utrValue.length !== 12 || isNaN(utrValue)) {
             alert("Invalid Format! Please provide a clean 12-digit numerical UPI UTR Number found on your payment receipt.");
             return;
         }
 
+        // Write verification payload into primary queue node paths
         firebase.database().ref(`payment_verifications/${utrValue}`).set({
             phone: shopPhone,
             amountPaid: variableRent,
@@ -152,11 +170,13 @@
             timestamp: firebase.database.ServerValue.TIMESTAMP,
             status: "pending"
         }).then(() => {
+            // Update master record tracker profile flags 
             return firebase.database().ref(`users/${shopPhone}`).update({
                 portalStatus: "pending_verification",
                 lastSubmittedUtr: utrValue
             });
         }).then(() => {
+            // Forward safely along to the landing checkpoint page
             window.location.href = "payment-success.html";
         }).catch((err) => {
             alert("Database Error: " + err.message);
