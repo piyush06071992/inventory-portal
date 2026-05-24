@@ -39,10 +39,14 @@ function verifySessionIntegrity() {
         }
         localStorage.setItem("lastAccessDate", today);
 
-        // 2. Subscription Expiry Guard
+      // 2. Subscription Expiry Guard
         if (data.paymentStatus !== "PAID" && now > lockoutDate) {
-            window.location.href = '/billing.html';
+            return (window.location.href = '/billing.html');
         }
+
+        // IF ALL CHECKS PASS: Show the page
+        document.querySelector('style').remove(); 
+        document.body.style.display = 'block';
     });
 }
 verifySessionIntegrity();
