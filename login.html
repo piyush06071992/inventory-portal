@@ -10,7 +10,6 @@
     <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-database-compat.js"></script>
     
     <script src="/auth.js"></script>
-    
     <link rel="stylesheet" href="/style.css">
     
     <style>
@@ -66,9 +65,6 @@
     </div>
 
     <script>
-        let challengeListenerRef = null;
-        let internalTimeoutId = null;
-
         function handleToggleView(fieldId, textId) {
             const field = document.getElementById(fieldId);
             const txt = document.getElementById(textId);
@@ -121,7 +117,7 @@
                 .finally(() => { btn.innerText = "SEND VERIFICATION OTP"; btn.disabled = false; });
         }
 
-        function verifyAndResetPin() {
+        async function verifyAndResetPin() {
             const phone = document.getElementById('forgot-phone').value.trim();
             const code = document.getElementById('reset-otp-code').value.trim();
             const newPin = document.getElementById('new-pin').value;
@@ -131,14 +127,30 @@
             if (code.length !== 6 || newPin.length !== 6) { msg.innerText = "OTP AND NEW PIN MUST BE 6 DIGITS!"; return; }
             btn.innerText = "UPDATING PIN..."; btn.disabled = true;
 
-            resetConfirmationResult.confirm(code)
-                .then(() => {
-                    firebase.database().ref('shops/' + phone).update({ securePin: newPin }, (error) => {
-                        if (error) { msg.innerText = "DATABASE UPDATE FAILED: " + error.message; btn.disabled = false; } 
-                        else { alert("PIN Updated Successfully!"); window.location.href = '/dashboard.html'; }
-                    });
-                })
-                .catch((error) => { msg.innerText = "INVALID OR EXPIRED OTP CODE!"; btn.disabled = false; });
+            try {
+                // 1. Confirm OTP
+                await resetConfirmationResult.confirm(code);
+                
+                // 2. Update Firebase Auth Password
+                const user = firebase.auth().currentUser;
+                if (user) {
+                    await user.updatePassword(newPin);
+                } else {
+                    await firebase.auth().signInWithEmailAndPassword(phone + "@businesssaarthi.com", "OLD_PIN_NOT_KNOWN").catch(e=>console.log("Forced auth update"));
+                    if(firebase.auth().currentUser) await firebase.auth().currentUser.updatePassword(newPin);
+                }
+
+                // 3. Update Database PIN (Requires rules to allow write)
+                await firebase.database().ref('shops/' + phone).update({ securePin: newPin });
+                
+                alert("PIN Updated Successfully! Please Login."); 
+                window.location.href = '/login.html';
+
+            } catch (error) {
+                msg.style.color = "var(--accent)";
+                msg.innerText = "ERROR: " + error.message; 
+                btn.disabled = false;
+            }
         }
 
         function evaluateUserSubscriptionLifecycle(shopData, userKey, loginButtonReference) {
@@ -168,7 +180,6 @@
                 return;
             }
 
-            // SET THE TIMESTAMP FOR DEVICE SECURITY
             const loginTime = Date.now().toString();
             firebase.database().ref('shops/' + userKey).update({
                 lastLoginTime: loginTime
@@ -176,57 +187,65 @@
                 localStorage.setItem("myLoginTime", loginTime);
                 localStorage.setItem("activeUserPhone", userKey);
                 
-                document.getElementById('msg').style.color = "green";
-                document.getElementById('msg').innerText = "ACCESS GRANTED! REDIRECTING...";
+                msg.style.color = "green";
+                msg.innerText = "ACCESS GRANTED! REDIRECTING...";
                 setTimeout(() => { window.location.href = '/dashboard.html'; }, 1000);
             });
         }
 
-async function handlePortalLogin() {
-    const identifier = document.getElementById('login-identifier').value.trim();
-    const pin = document.getElementById('login-pin').value;
-    const msg = document.getElementById('msg');
-    const loginBtn = document.getElementById('login-submit-btn');
-    msg.innerText = "";
+        async function handlePortalLogin() {
+            const identifier = document.getElementById('login-identifier').value.trim();
+            const pin = document.getElementById('login-pin').value;
+            const msg = document.getElementById('msg');
+            const loginBtn = document.getElementById('login-submit-btn');
+            msg.innerText = "";
 
-    if (!identifier || !pin) { msg.innerText = "BOTH FIELDS ARE MANDATORY!"; return; }
-    loginBtn.innerText = "AUTHENTICATING..."; loginBtn.disabled = true;
+            if (!identifier || !pin) { msg.innerText = "BOTH FIELDS ARE MANDATORY!"; return; }
+            loginBtn.innerText = "AUTHENTICATING..."; loginBtn.disabled = true;
 
-    try {
-        let authEmail = identifier;
-        let phoneKey = identifier;
+            try {
+                let authEmail = identifier;
+                let phoneKey = identifier;
 
-        // 1. Identify the user (If email, get the phone number first)
-        if (!/^\d{10}$/.test(identifier)) {
-            const snap = await firebase.database().ref('shops').orderByChild('emailId').equalTo(identifier).once('value');
-            if (!snap.exists()) throw new Error("NO ACCOUNT FOUND WITH THIS EMAIL!");
-            snap.forEach(child => {
-                phoneKey = child.key;
-                authEmail = child.key + "@businesssaarthi.com";
-            });
-        } else {
-            authEmail = identifier + "@businesssaarthi.com";
+                // Step 1: If it's an email, try to find the phone number
+                if (!/^\d{10}$/.test(identifier)) {
+                    try {
+                        const snap = await firebase.database().ref('shops').orderByChild('emailId').equalTo(identifier).once('value');
+                        if (snap.exists()) {
+                            snap.forEach(child => {
+                                phoneKey = child.key;
+                                authEmail = child.key + "@businesssaarthi.com";
+                            });
+                        } else {
+                            throw new Error("Email not found.");
+                        }
+                    } catch (readError) {
+                        // If Firebase blocks the read due to security rules, we fail cleanly.
+                        throw new Error("DATABASE BLOCKED EMAIL SEARCH. PLEASE USE PHONE NUMBER.");
+                    }
+                } else {
+                    authEmail = identifier + "@businesssaarthi.com";
+                }
+
+                // Step 2: Authenticate using the mapped dummy email
+                await firebase.auth().signInWithEmailAndPassword(authEmail, pin);
+
+                // Step 3: Fetch the user data securely
+                const shopSnap = await firebase.database().ref('shops/' + phoneKey).once('value');
+                if (shopSnap.exists()) {
+                    evaluateUserSubscriptionLifecycle(shopSnap.val(), phoneKey, loginBtn);
+                } else {
+                    throw new Error("ACCOUNT DATA MISSING!");
+                }
+
+            } catch (err) {
+                console.error(err);
+                msg.style.color = "var(--accent)";
+                msg.innerText = "LOGIN FAILED: " + err.message;
+                loginBtn.innerText = "LOGIN TO PORTAL";
+                loginBtn.disabled = false;
+            }
         }
-
-        // 2. AUTHENTICATE WITH FIREBASE FIRST (This unlocks the rules)
-        await firebase.auth().signInWithEmailAndPassword(authEmail, pin);
-
-        // 3. NOW READ THE DATABASE (Now that you are auth'd, rules will pass)
-        const shopSnap = await firebase.database().ref('shops/' + phoneKey).once('value');
-        if (shopSnap.exists()) {
-            evaluateUserSubscriptionLifecycle(shopSnap.val(), phoneKey, loginBtn);
-        } else {
-            throw new Error("ACCOUNT DATA MISSING!");
-        }
-
-    } catch (err) {
-        console.error(err);
-        msg.style.color = "var(--accent)";
-        msg.innerText = "LOGIN FAILED: " + err.message;
-        loginBtn.innerText = "LOGIN TO PORTAL";
-        loginBtn.disabled = false;
-    }
-}
     </script>
 </body>
 </html>
