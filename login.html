@@ -182,55 +182,51 @@
             });
         }
 
-  async function handlePortalLogin() {
-            const identifier = document.getElementById('login-identifier').value.trim();
-            const pin = document.getElementById('login-pin').value;
-            const msg = document.getElementById('msg');
-            const loginBtn = document.getElementById('login-submit-btn');
-            msg.innerText = "";
+async function handlePortalLogin() {
+    const identifier = document.getElementById('login-identifier').value.trim();
+    const pin = document.getElementById('login-pin').value;
+    const msg = document.getElementById('msg');
+    const loginBtn = document.getElementById('login-submit-btn');
+    msg.innerText = "";
 
-            if (!identifier || !pin) { msg.innerText = "BOTH FIELDS ARE MANDATORY!"; return; }
-            if (pin.length !== 6) { msg.innerText = "PIN MUST BE EXACTLY 6 DIGITS!"; return; }
+    if (!identifier || !pin) { msg.innerText = "BOTH FIELDS ARE MANDATORY!"; return; }
+    loginBtn.innerText = "AUTHENTICATING..."; loginBtn.disabled = true;
 
-            loginBtn.innerText = "AUTHENTICATING..."; loginBtn.disabled = true;
+    try {
+        let authEmail = identifier;
+        let phoneKey = identifier;
 
-            try {
-                // 1. Determine the 'dummy email' for authentication
-                let authEmail = identifier;
-                let shopId = identifier;
-
-                if (!/^\d{10}$/.test(identifier)) {
-                    // It's an email, find the associated shopId (phone) first
-                    const snap = await firebase.database().ref('shops').orderByChild('emailId').equalTo(identifier).once('value');
-                    if (!snap.exists()) throw new Error("NO ACCOUNT FOUND WITH THIS EMAIL!");
-                    
-                    snap.forEach(child => {
-                        shopId = child.key;
-                        authEmail = child.key + "@businesssaarthi.com";
-                    });
-                } else {
-                    authEmail = identifier + "@businesssaarthi.com";
-                }
-
-                // 2. Official Firebase Auth (This unlocks the security rules)
-                await firebase.auth().signInWithEmailAndPassword(authEmail, pin);
-
-                // 3. Now that we are authenticated, the database rules will allow us to read
-                const shopSnap = await firebase.database().ref('shops/' + shopId).once('value');
-                if (shopSnap.exists()) {
-                    evaluateUserSubscriptionLifecycle(shopSnap.val(), shopId, loginBtn);
-                } else {
-                    throw new Error("SHOP DATA MISSING!");
-                }
-
-            } catch (err) {
-                console.error(err);
-                msg.style.color = "var(--accent)";
-                msg.innerText = "LOGIN FAILED: " + err.message;
-                loginBtn.innerText = "LOGIN TO PORTAL";
-                loginBtn.disabled = false;
-            }
+        // 1. Identify the user (If email, get the phone number first)
+        if (!/^\d{10}$/.test(identifier)) {
+            const snap = await firebase.database().ref('shops').orderByChild('emailId').equalTo(identifier).once('value');
+            if (!snap.exists()) throw new Error("NO ACCOUNT FOUND WITH THIS EMAIL!");
+            snap.forEach(child => {
+                phoneKey = child.key;
+                authEmail = child.key + "@businesssaarthi.com";
+            });
+        } else {
+            authEmail = identifier + "@businesssaarthi.com";
         }
+
+        // 2. AUTHENTICATE WITH FIREBASE FIRST (This unlocks the rules)
+        await firebase.auth().signInWithEmailAndPassword(authEmail, pin);
+
+        // 3. NOW READ THE DATABASE (Now that you are auth'd, rules will pass)
+        const shopSnap = await firebase.database().ref('shops/' + phoneKey).once('value');
+        if (shopSnap.exists()) {
+            evaluateUserSubscriptionLifecycle(shopSnap.val(), phoneKey, loginBtn);
+        } else {
+            throw new Error("ACCOUNT DATA MISSING!");
+        }
+
+    } catch (err) {
+        console.error(err);
+        msg.style.color = "var(--accent)";
+        msg.innerText = "LOGIN FAILED: " + err.message;
+        loginBtn.innerText = "LOGIN TO PORTAL";
+        loginBtn.disabled = false;
+    }
+}
     </script>
 </body>
 </html>
