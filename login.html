@@ -64,7 +64,7 @@
         </div>
     </div>
 
-    <script>
+<script>
         function handleToggleView(fieldId, textId) {
             const field = document.getElementById(fieldId);
             const txt = document.getElementById(textId);
@@ -128,22 +128,16 @@
             btn.innerText = "UPDATING PIN..."; btn.disabled = true;
 
             try {
-                // 1. Confirm OTP
+                // 1. Confirm OTP (This logs you in as the Phone User, satisfying the new database rule)
                 await resetConfirmationResult.confirm(code);
                 
-                // 2. Update Firebase Auth Password
-                const user = firebase.auth().currentUser;
-                if (user) {
-                    await user.updatePassword(newPin);
-                } else {
-                    await firebase.auth().signInWithEmailAndPassword(phone + "@businesssaarthi.com", "OLD_PIN_NOT_KNOWN").catch(e=>console.log("Forced auth update"));
-                    if(firebase.auth().currentUser) await firebase.auth().currentUser.updatePassword(newPin);
-                }
-
-                // 3. Update Database PIN (Requires rules to allow write)
+                // 2. Just update the database PIN directly!
                 await firebase.database().ref('shops/' + phone).update({ securePin: newPin });
                 
-                alert("PIN Updated Successfully! Please Login."); 
+                // 3. Sign out of the Phone Auth session to clear the way for standard login
+                await firebase.auth().signOut();
+                
+                alert("PIN Updated Successfully! Please Login with your New PIN."); 
                 window.location.href = '/login.html';
 
             } catch (error) {
@@ -207,33 +201,35 @@
                 let authEmail = identifier;
                 let phoneKey = identifier;
 
-                // Step 1: If it's an email, try to find the phone number
                 if (!/^\d{10}$/.test(identifier)) {
                     try {
                         const snap = await firebase.database().ref('shops').orderByChild('emailId').equalTo(identifier).once('value');
                         if (snap.exists()) {
-                            snap.forEach(child => {
-                                phoneKey = child.key;
-                                authEmail = child.key + "@businesssaarthi.com";
-                            });
+                            snap.forEach(child => { phoneKey = child.key; authEmail = child.key + "@businesssaarthi.com"; });
                         } else {
                             throw new Error("Email not found.");
                         }
                     } catch (readError) {
-                        // If Firebase blocks the read due to security rules, we fail cleanly.
-                        throw new Error("DATABASE BLOCKED EMAIL SEARCH. PLEASE USE PHONE NUMBER.");
+                        throw new Error("DATABASE ERROR. PLEASE USE PHONE NUMBER.");
                     }
                 } else {
                     authEmail = identifier + "@businesssaarthi.com";
                 }
 
-                // Step 2: Authenticate using the mapped dummy email
-                await firebase.auth().signInWithEmailAndPassword(authEmail, pin);
+                // 1. Authenticate with the background Master Key
+                const masterKey = phoneKey + "@SAARTHI";
+                await firebase.auth().signInWithEmailAndPassword(authEmail, masterKey);
 
-                // Step 3: Fetch the user data securely
+                // 2. Fetch data and check the REAL PIN from the database
                 const shopSnap = await firebase.database().ref('shops/' + phoneKey).once('value');
                 if (shopSnap.exists()) {
-                    evaluateUserSubscriptionLifecycle(shopSnap.val(), phoneKey, loginBtn);
+                    const shopData = shopSnap.val();
+                    if (shopData.securePin === pin) {
+                        evaluateUserSubscriptionLifecycle(shopData, phoneKey, loginBtn);
+                    } else {
+                        await firebase.auth().signOut();
+                        throw new Error("INVALID SECURE PIN!");
+                    }
                 } else {
                     throw new Error("ACCOUNT DATA MISSING!");
                 }
@@ -241,7 +237,7 @@
             } catch (err) {
                 console.error(err);
                 msg.style.color = "var(--accent)";
-                msg.innerText = "LOGIN FAILED: " + err.message;
+                msg.innerText = (err.message.includes("auth/")) ? "LOGIN FAILED. PLEASE RE-REGISTER." : err.message;
                 loginBtn.innerText = "LOGIN TO PORTAL";
                 loginBtn.disabled = false;
             }
