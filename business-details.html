@@ -1,11 +1,16 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-    <script src="/auth.js"></script>
-
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <title>Business Details - Business Saarthi</title>
+    
+    <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-auth-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-database-compat.js"></script>
+
+    <script src="/auth.js"></script>
+
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.1/font/bootstrap-icons.css">
     <link rel="stylesheet" href="/style.css">
@@ -55,12 +60,12 @@
         
         <div class="form-group">
             <label>Registered Business Name</label>
-            <input type="text" id="biz-name" class="form-control-custom" placeholder="e.g., MINERVA STUDY CIRCLE">
+            <input type="text" id="biz-name" class="form-control-custom" placeholder="e.g., SARANDIPITY">
         </div>
         
         <div class="form-group">
             <label>Invoice Tagline / Sub-Heading</label>
-            <input type="text" id="biz-tagline" class="form-control-custom" placeholder="e.g., Deals in Fancy Stationery & Personalized Gifts">
+            <input type="text" id="biz-tagline" class="form-control-custom" placeholder="e.g., Deals in Fancy Stationery & Personalized Gifts by Yamuna">
         </div>
 
         <div class="form-group">
@@ -177,10 +182,6 @@
 
 </div>
 
-<script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
-<script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-auth-compat.js"></script>
-<script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-database-compat.js"></script>
-
 <script>
     // Strict numerical input limits watcher logic
     function limitDigitLength(element, maxDigits) {
@@ -223,15 +224,46 @@
         container.appendChild(div);
     }
 
-    window.onload = function() {
-        // Trigger Security Check
-        if (typeof verifySingleSession === 'function') verifySingleSession();
+    // Secure Logout Function (Fired by Auth State failures or DB conflicts)
+    function handleLogout(customMessage = null) {
+        if(customMessage) {
+            alert(customMessage);
+        }
+        localStorage.clear();
+        sessionStorage.clear();
+        firebase.auth().signOut().then(() => {
+            window.location.replace('/login.html');
+        }).catch(() => {
+            window.location.replace('/login.html');
+        });
+    }
 
-        // FIXED: Switched from sessionStorage to localStorage
+    // MASTER SECURITY & INITIALIZATION LISTENER
+    firebase.auth().onAuthStateChanged((user) => {
+        // LAYER 1: DIRECT URL BYPASS PROTECTION
+        if (!user) {
+            window.location.replace('/login.html');
+            return;
+        }
+
         const activeUserPhone = localStorage.getItem("activeUserPhone");
-        if (!activeUserPhone) return;
+        const myLoginTime = localStorage.getItem("myLoginTime");
 
-        // Query existing layout fields from database profile path node to pre-fill layout values
+        // Failsafe if local storage was cleared manually
+        if (!activeUserPhone || !myLoginTime) {
+            handleLogout();
+            return;
+        }
+
+        // LAYER 2: MULTI-DEVICE CONCURRENT LOGIN PROTECTION
+        firebase.database().ref('shops/' + activeUserPhone + '/lastLoginTime').on('value', (snapshot) => {
+            const currentDbLoginTime = snapshot.val();
+            if (currentDbLoginTime && currentDbLoginTime !== myLoginTime) {
+                handleLogout("SECURITY ALERT: Your account was just logged in from another device. For your security, this active session is being closed.");
+            }
+        });
+
+        // 3. Load the Data securely ONLY AFTER auth is confirmed
         firebase.database().ref('business_profiles/' + activeUserPhone).once('value')
             .then((snapshot) => {
                 const profile = snapshot.val();
@@ -266,14 +298,16 @@
                     addPhoneField('');
                     addUpiField('');
                 }
+            }).catch(err => {
+                console.error("Failed to load business profile:", err);
             });
-    };
+    });
 
     function handleSaveBusinessDetails() {
-        // FIXED: Switched from sessionStorage to localStorage
         const activeUserPhone = localStorage.getItem("activeUserPhone");
         if (!activeUserPhone) {
             alert("Error: Active user not found. Please log in again.");
+            handleLogout();
             return;
         }
 
