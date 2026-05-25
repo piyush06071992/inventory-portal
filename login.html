@@ -182,7 +182,7 @@
             });
         }
 
-       async function handlePortalLogin() {
+  async function handlePortalLogin() {
             const identifier = document.getElementById('login-identifier').value.trim();
             const pin = document.getElementById('login-pin').value;
             const msg = document.getElementById('msg');
@@ -195,31 +195,39 @@
             loginBtn.innerText = "AUTHENTICATING..."; loginBtn.disabled = true;
 
             try {
-                // 1. Format credentials for Firebase Auth
+                // 1. Determine the 'dummy email' for authentication
                 let authEmail = identifier;
-                let phoneKey = identifier;
-                if (/^\d{10}$/.test(identifier)) {
-                    authEmail = identifier + "@businesssaarthi.com"; // Dummy email for phone users
+                let shopId = identifier;
+
+                if (!/^\d{10}$/.test(identifier)) {
+                    // It's an email, find the associated shopId (phone) first
+                    const snap = await firebase.database().ref('shops').orderByChild('emailId').equalTo(identifier).once('value');
+                    if (!snap.exists()) throw new Error("NO ACCOUNT FOUND WITH THIS EMAIL!");
+                    
+                    snap.forEach(child => {
+                        shopId = child.key;
+                        authEmail = child.key + "@businesssaarthi.com";
+                    });
+                } else {
+                    authEmail = identifier + "@businesssaarthi.com";
                 }
 
-                // 2. Authenticate officially with Firebase (This bypasses the Permission Denied error)
+                // 2. Official Firebase Auth (This unlocks the security rules)
                 await firebase.auth().signInWithEmailAndPassword(authEmail, pin);
 
-                // 3. Now that Firebase knows who we are, it will allow us to read the database
-                // (We will add the logic to find by Email in the next step if needed, keeping it simple for Phone first)
-                const snapshot = await firebase.database().ref('shops/' + phoneKey).once('value');
-                
-                if (snapshot.exists()) {
-                    // Call your exact existing function - we didn't break it!
-                    evaluateUserSubscriptionLifecycle(snapshot.val(), phoneKey, loginBtn);
+                // 3. Now that we are authenticated, the database rules will allow us to read
+                const shopSnap = await firebase.database().ref('shops/' + shopId).once('value');
+                if (shopSnap.exists()) {
+                    evaluateUserSubscriptionLifecycle(shopSnap.val(), shopId, loginBtn);
                 } else {
-                    throw new Error("ACCOUNT DATA NOT FOUND IN DATABASE!");
+                    throw new Error("SHOP DATA MISSING!");
                 }
 
             } catch (err) {
                 console.error(err);
-                msg.innerText = "LOGIN FAILED: INVALID CREDENTIALS OR UNREGISTERED ACCOUNT"; 
-                loginBtn.innerText = "LOGIN TO PORTAL"; 
+                msg.style.color = "var(--accent)";
+                msg.innerText = "LOGIN FAILED: " + err.message;
+                loginBtn.innerText = "LOGIN TO PORTAL";
                 loginBtn.disabled = false;
             }
         }
