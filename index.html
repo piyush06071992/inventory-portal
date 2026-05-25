@@ -238,7 +238,7 @@
                 });
         }
 
-        function verifyOtpCode() {
+      async function verifyOtpCode() {
             const bizName = document.getElementById('biz-name').value.trim();
             const email = document.getElementById('email-id').value.trim();
             const phone = document.getElementById('phone-num').value.trim();
@@ -258,51 +258,50 @@
             otpBtn.innerText = "VERIFYING OTP...";
             otpBtn.disabled = true;
 
-            confirmationResultObj.confirm(code)
-                .then((result) => {
-                    msg.style.color = "green";
-                    msg.innerText = "PHONE VERIFIED! SAVING PORTAL ACCOUNT...";
-                    
-                    // Subscription Lifecycle Dates Calculations
-                    const now = new Date();
-                    const trialEnd = new Date();
-                    trialEnd.setDate(now.getDate() + 30); // 30 Days Free Trial
-                    
-                    const lockoutEnd = new Date();
-                    lockoutEnd.setDate(now.getDate() + 60); // 30 Days Locked State Grace Period Before Data Purge
+            try {
+                // 1. Verify Phone OTP first
+                await confirmationResultObj.confirm(code);
+                msg.style.color = "green";
+                msg.innerText = "PHONE VERIFIED! CREATING SECURE LOGIN...";
 
-                    // Save structured shop record to Realtime Database
-                    firebase.database().ref('shops/' + phone).set({
-                        businessName: bizName,
-                        emailId: email,
-                        phoneNumber: phone,
-                        securePin: pin,
-                        registeredAt: now.toISOString(),
-                        trialEndsAt: trialEnd.toISOString(),
-                        lockoutEndsAt: lockoutEnd.toISOString(),
-                        paymentStatus: "TRIAL"
-                    }, (error) => {
-                        if (error) {
-                            msg.style.color = "var(--accent)";
-                            msg.innerText = "DATABASE ERROR: " + error.message;
-                            otpBtn.innerText = "VERIFY & CONFIRM";
-                            otpBtn.disabled = false;
-                        } else {
-                            msg.innerText = "REGISTRATION SUCCESSFUL! REDIRECTING...";
-                            alert("Account Registered Successfully! Enjoy your 1-Month Free Trial.");
-                            window.location.href = '/dashboard.html';
-                        }
-                    });
-                })
-                .catch((error) => {
-                    console.error("Invalid OTP Verification Token:", error);
-                    msg.style.color = "var(--accent)";
-                    msg.innerText = "INVALID OR EXPIRED OTP CODE!";
-                    otpBtn.innerText = "VERIFY & CONFIRM";
-                    otpBtn.disabled = false;
+                // 2. Create the proper Firebase Auth credential for future logins
+                const authEmail = phone + "@businesssaarthi.com";
+                await firebase.auth().createUserWithEmailAndPassword(authEmail, pin);
+
+                // 3. Save structured shop record to Realtime Database
+                const now = new Date();
+                const trialEnd = new Date();
+                trialEnd.setDate(now.getDate() + 30); // 30 Days Free Trial
+                const lockoutEnd = new Date();
+                lockoutEnd.setDate(now.getDate() + 60); // 60 Days lock
+                
+                await firebase.database().ref('shops/' + phone).set({
+                    businessName: bizName,
+                    emailId: email,
+                    phoneNumber: phone,
+                    securePin: pin,
+                    registeredAt: now.toISOString(),
+                    trialEndsAt: trialEnd.toISOString(),
+                    lockoutEndsAt: lockoutEnd.toISOString(),
+                    paymentStatus: "TRIAL"
                 });
-        }
 
+                msg.innerText = "REGISTRATION SUCCESSFUL! REDIRECTING...";
+                alert("Account Registered Successfully! Enjoy your 1-Month Free Trial.");
+                window.location.href = '/dashboard.html';
+
+            } catch (error) {
+                console.error(error);
+                msg.style.color = "var(--accent)";
+                if (error.code === 'auth/email-already-in-use') {
+                    msg.innerText = "THIS PHONE NUMBER IS ALREADY REGISTERED. PLEASE LOGIN.";
+                } else {
+                    msg.innerText = "ERROR: " + error.message;
+                }
+                otpBtn.innerText = "VERIFY & CONFIRM";
+                otpBtn.disabled = false;
+            }
+        }
         function cancelOtpView() {
             document.getElementById('otp-fields').style.display = 'none';
             document.getElementById('registration-fields').style.display = 'block';
