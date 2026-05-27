@@ -7,7 +7,11 @@ const isPublicPage = window.location.pathname.includes("login.html") ||
                      window.location.pathname === "/";
 
 if (!isPublicPage) {
-    document.write('<style>body { display: none !important; }</style>');
+    // FIXED: Safely injects the hiding style without wiping the document
+    const style = document.createElement('style');
+    style.id = 'security-style-tag';
+    style.innerHTML = 'body { display: none !important; }';
+    document.head.appendChild(style);
 }
 
 const firebaseConfig = {
@@ -73,8 +77,8 @@ function initializeSecurityMonitor() {
             return;
         }
 
-        // D. IF ALL CHECKS PASS: Reveal the page
-        const styleTag = document.querySelector('style');
+        // D. IF ALL CHECKS PASS: Reveal the page safely
+        const styleTag = document.getElementById('security-style-tag');
         if (styleTag) styleTag.remove(); 
         document.body.style.display = 'block';
 
