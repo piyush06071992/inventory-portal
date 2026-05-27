@@ -11,68 +11,18 @@
     
     <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-auth-compat.js"></script>
-    <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-database-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-firestore-compat.js"></script>
     
-    <script src="/auth.js"></script>
     <link rel="stylesheet" href="/style.css">
     
     <style>
-        /* Modernized Responsive Install Banner Overlay */
-        .install-card-overlay {
-            background: #FFFFFF;
-            border: 5px solid var(--navy-blue);
-            box-shadow: 6px 6px 0px var(--accent);
-            border-radius: 20px;
-            padding: 20px;
-            margin: 15px auto;
-            width: 95%;
-            max-width: 420px;
-            box-sizing: border-box;
-            text-align: center;
-            display: none;
-            animation: slideDown 0.4s ease-out;
-        }
-
-        .install-card-overlay p {
-            color: var(--navy-blue);
-            margin: 0 0 15px 0;
-            font-size: 16px;
-            letter-spacing: 0.5px;
-        }
-
-        .install-card-overlay button {
-            margin-top: 0;
-            padding: 14px;
-            font-size: 16px;
-            width: 100%;
-        }
-
-        /* View PIN Input Wrapper layout */
-        .pin-wrapper {
-            position: relative;
-            width: 100%;
-            margin-bottom: 15px;
-        }
-        .view-btn-toggle {
-            position: absolute;
-            right: 18px;
-            top: 50%;
-            transform: translateY(-50%);
-            color: var(--accent);
-            cursor: pointer;
-            font-size: 16px;
-            user-select: none;
-            -webkit-user-select: none;
-        }
-        .pin-wrapper input {
-            margin-bottom: 0;
-            padding-right: 85px;
-        }
-
-        @keyframes slideDown {
-            from { transform: translateY(-20px); opacity: 0; }
-            to { transform: translateY(0); opacity: 1; }
-        }
+        .install-card-overlay { background: #FFFFFF; border: 5px solid var(--navy-blue); box-shadow: 6px 6px 0px var(--accent); border-radius: 20px; padding: 20px; margin: 15px auto; width: 95%; max-width: 420px; box-sizing: border-box; text-align: center; display: none; animation: slideDown 0.4s ease-out; }
+        .install-card-overlay p { color: var(--navy-blue); margin: 0 0 15px 0; font-size: 16px; letter-spacing: 0.5px; }
+        .install-card-overlay button { margin-top: 0; padding: 14px; font-size: 16px; width: 100%; }
+        .pin-wrapper { position: relative; width: 100%; margin-bottom: 15px; }
+        .view-btn-toggle { position: absolute; right: 18px; top: 50%; transform: translateY(-50%); color: var(--accent); cursor: pointer; font-size: 16px; user-select: none; -webkit-user-select: none; }
+        .pin-wrapper input { margin-bottom: 0; padding-right: 85px; }
+        @keyframes slideDown { from { transform: translateY(-20px); opacity: 0; } to { transform: translateY(0); opacity: 1; } }
     </style>
 </head>
 <body>
@@ -133,9 +83,10 @@
                 <div id="msg" class="message" style="color: var(--accent); margin-top: 15px;"></div>
             </div>
         </div>
-
     </div>
 
+    <script src="/auth.js"></script>
+    
     <script>
         // PWA Service Worker Loader
         if ('serviceWorker' in navigator) {
@@ -195,19 +146,13 @@
             msg.innerText = "";
 
             if (!bizName || !email || !phone || !pin) {
-                msg.style.color = "var(--accent)";
-                msg.innerText = "ALL FIELDS ARE MANDATORY!";
-                return;
+                msg.style.color = "var(--accent)"; msg.innerText = "ALL FIELDS ARE MANDATORY!"; return;
             }
             if (phone.length !== 10) {
-                msg.style.color = "var(--accent)";
-                msg.innerText = "PHONE NUMBER MUST BE 10 DIGITS!";
-                return;
+                msg.style.color = "var(--accent)"; msg.innerText = "PHONE NUMBER MUST BE 10 DIGITS!"; return;
             }
             if (pin.length !== 6) {
-                msg.style.color = "var(--accent)";
-                msg.innerText = "PIN MUST BE EXACTLY 6 DIGITS!";
-                return;
+                msg.style.color = "var(--accent)"; msg.innerText = "PIN MUST BE EXACTLY 6 DIGITS!"; return;
             }
 
             regBtn.innerText = "SENDING OTP SMS...";
@@ -219,11 +164,9 @@
             firebase.auth().signInWithPhoneNumber(formattedPhoneNumber, appVerifier)
                 .then((confirmationResult) => {
                     confirmationResultObj = confirmationResult;
-                    
                     document.getElementById('registration-fields').style.display = 'none';
                     document.getElementById('otp-fields').style.display = 'block';
                     document.getElementById('form-title').innerText = "VERIFY OTP";
-                    
                     msg.style.color = "green";
                     msg.innerText = "OTP SMS DISPATCHED SUCCESSFULLY!";
                 })
@@ -238,7 +181,7 @@
                 });
         }
 
-      async function verifyOtpCode() {
+        async function verifyOtpCode() {
             const bizName = document.getElementById('biz-name').value.trim();
             const email = document.getElementById('email-id').value.trim();
             const phone = document.getElementById('phone-num').value.trim();
@@ -250,9 +193,7 @@
             msg.innerText = "";
 
             if (code.length !== 6) {
-                msg.style.color = "var(--accent)";
-                msg.innerText = "PLEASE ENTER VALID 6-DIGIT CODE!";
-                return;
+                msg.style.color = "var(--accent)"; msg.innerText = "PLEASE ENTER VALID 6-DIGIT CODE!"; return;
             }
 
             otpBtn.innerText = "VERIFYING OTP...";
@@ -262,24 +203,28 @@
                 // 1. Verify Phone OTP first
                 await confirmationResultObj.confirm(code);
                 msg.style.color = "green";
-                msg.innerText = "PHONE VERIFIED! CREATING SECURE LOGIN...";
+                msg.innerText = "PHONE VERIFIED! CREATING ERP WORKSPACE...";
 
-               // 2. Create the proper Firebase Auth credential using the Master Key
+                // 2. Create the proper Firebase Auth credential using the Master Key
                 const authEmail = phone + "@businesssaarthi.com";
                 const masterKey = phone + "@SAARTHI";
                 await firebase.auth().createUserWithEmailAndPassword(authEmail, masterKey);
 
-                // 3. Save structured shop record to Realtime Database
+                // 3. Subscription Dates
                 const now = new Date();
                 const trialEnd = new Date();
-                trialEnd.setDate(now.getDate() + 30); // 30 Days Free Trial
+                trialEnd.setDate(now.getDate() + 30);
                 const lockoutEnd = new Date();
-                lockoutEnd.setDate(now.getDate() + 60); // 60 Days lock
+                lockoutEnd.setDate(now.getDate() + 60); 
                 
-                await firebase.database().ref('shops/' + phone).set({
+                // 4. NEW FIRESTORE ERP DATA STRUCTURE
+                const db = firebase.firestore();
+                
+                // Create the Company Profile
+                await db.collection('companies').doc(phone).set({
                     businessName: bizName,
                     emailId: email,
-                    phoneNumber: phone,
+                    ownerPhone: phone,
                     securePin: pin,
                     registeredAt: now.toISOString(),
                     trialEndsAt: trialEnd.toISOString(),
@@ -287,8 +232,16 @@
                     paymentStatus: "TRIAL"
                 });
 
-                msg.innerText = "REGISTRATION SUCCESSFUL! REDIRECTING...";
-                alert("Account Registered Successfully! Enjoy your 1-Month Free Trial.");
+                // Create the default First Branch inside the Company
+                await db.collection('companies').doc(phone).collection('branches').doc('branch_01').set({
+                    branchName: "Main Branch",
+                    branchId: "branch_01",
+                    createdAt: now.toISOString(),
+                    status: "active"
+                });
+
+                msg.innerText = "WORKSPACE CREATED! REDIRECTING...";
+                alert("ERP Workspace Registered Successfully! Enjoy your 1-Month Free Trial.");
                 window.location.href = '/dashboard.html';
 
             } catch (error) {
@@ -303,6 +256,7 @@
                 otpBtn.disabled = false;
             }
         }
+
         function cancelOtpView() {
             document.getElementById('otp-fields').style.display = 'none';
             document.getElementById('registration-fields').style.display = 'block';
