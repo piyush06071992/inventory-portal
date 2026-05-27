@@ -1,0 +1,172 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>Manage Branches - Business Saarthi</title>
+    
+    <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-auth-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-firestore-compat.js"></script>
+
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.1/font/bootstrap-icons.css">
+    <link rel="stylesheet" href="/style.css">
+
+    <style>
+        body { font-family: 'Inter', sans-serif; background-color: #f1f5f9; margin: 0; padding: 0; }
+        .wrapper { display: flex; flex-direction: column; align-items: center; min-height: 100vh; width: 100%; padding: 20px 12px; box-sizing: border-box; }
+        .header-section { width: 100%; max-width: 700px; display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px; }
+        .header-section h1 { font-size: 22px; font-weight: 700; color: #1e3a8a; margin: 0; }
+        
+        .form-card { width: 100%; max-width: 700px; background: #ffffff; border-radius: 16px; padding: 24px; box-shadow: 0 4px 20px rgba(0, 0, 0, 0.02); box-sizing: border-box; margin-bottom: 20px; border: 1px solid #e2e8f0; }
+        .card-title { font-size: 16px; font-weight: 700; color: #0f172a; margin-bottom: 20px; text-transform: uppercase; letter-spacing: 0.5px; border-bottom: 2px solid #f1f5f9; padding-bottom: 10px; display: flex; align-items: center; gap: 8px; }
+        
+        .form-group { margin-bottom: 18px; }
+        .form-group label { display: block; font-size: 13px; font-weight: 600; color: #475569; margin-bottom: 6px; text-transform: uppercase; }
+        .form-control-custom { width: 100%; padding: 12px 14px; font-size: 15px; border: 2px solid #cbd5e1; border-radius: 10px; box-sizing: border-box; transition: all 0.2s ease; background-color: #fff; color: #0f172a; font-weight: 500; }
+        .form-control-custom:focus { outline: none; border-color: #3b82f6; box-shadow: 0 0 0 4px rgba(59, 130, 246, 0.1); }
+        
+        .btn-add { width: 100%; background: linear-gradient(135deg, #10b981, #059669); color: white; border: none; padding: 16px; border-radius: 12px; font-size: 16px; font-weight: 700; cursor: pointer; box-shadow: 0 6px 18px rgba(16, 185, 129, 0.2); display: flex; align-items: center; justify-content: center; gap: 8px; }
+        .btn-back { display: block; width: 100%; max-width: 700px; background-color: #ffffff; color: #475569; border: 2px solid #cbd5e1; padding: 16px; border-radius: 12px; font-size: 16px; font-weight: 600; cursor: pointer; text-align: center; text-decoration: none; margin-top: 10px; box-sizing: border-box;}
+        
+        /* Branch List Styling */
+        .branch-item { display: flex; justify-content: space-between; align-items: center; background: #f8fafc; border: 1px solid #e2e8f0; padding: 15px; border-radius: 12px; margin-bottom: 12px; }
+        .branch-info h3 { margin: 0 0 4px 0; font-size: 16px; color: #1e3a8a; }
+        .branch-info p { margin: 0; font-size: 12px; color: #64748b; }
+        .status-badge { background: #d1fae5; color: #059669; padding: 4px 8px; border-radius: 6px; font-size: 11px; font-weight: 700; text-transform: uppercase; }
+    </style>
+</head>
+<body>
+
+<div class="wrapper">
+    <div class="header-section">
+        <h1><i class="bi bi-diagram-3-fill text-primary"></i> MANAGE BRANCHES</h1>
+    </div>
+
+    <div class="form-card">
+        <div class="card-title"><i class="bi bi-shop-window text-primary"></i> Current Active Branches</div>
+        <div id="branch-list-container">
+            <p style="text-align: center; color: #64748b; font-size: 14px;">Loading your branches...</p>
+        </div>
+    </div>
+
+    <div class="form-card">
+        <div class="card-title"><i class="bi bi-plus-circle-fill text-success"></i> Add New Branch</div>
+        
+        <div class="form-group">
+            <label>Branch Name</label>
+            <input type="text" id="new-branch-name" class="form-control-custom" placeholder="e.g., Mall Road Branch">
+        </div>
+
+        <div class="form-group">
+            <label>Branch Location / City</label>
+            <input type="text" id="new-branch-location" class="form-control-custom" placeholder="e.g., Shimla">
+        </div>
+
+        <button class="btn-add" onclick="createNewBranch()" id="btn-create">
+            <i class="bi bi-building-add"></i> Create Branch
+        </button>
+    </div>
+
+    <a href="/dashboard.html" class="btn-back">← Back to Dashboard</a>
+</div>
+
+<script src="/auth.js"></script>
+
+<script>
+    const activeUserPhone = localStorage.getItem("activeUserPhone");
+
+    document.addEventListener('DOMContentLoaded', () => {
+        firebase.auth().onAuthStateChanged((user) => {
+            if (user && activeUserPhone) {
+                loadBranchesRealtime();
+            }
+        });
+    });
+
+    // 1. Real-time Listener for Branches
+    function loadBranchesRealtime() {
+        const db = firebase.firestore();
+        const container = document.getElementById('branch-list-container');
+
+        // This instantly updates the screen if a branch is added or removed
+        db.collection('companies').doc(activeUserPhone).collection('branches')
+          .orderBy('createdAt', 'asc')
+          .onSnapshot((querySnapshot) => {
+            container.innerHTML = ""; // Clear loading text
+            
+            if (querySnapshot.empty) {
+                container.innerHTML = `<p style="text-align: center; color: #ef4444; font-size: 14px;">No branches found.</p>`;
+                return;
+            }
+
+            querySnapshot.forEach((doc) => {
+                const branch = doc.data();
+                const branchHTML = `
+                    <div class="branch-item">
+                        <div class="branch-info">
+                            <h3>${branch.branchName}</h3>
+                            <p>ID: ${branch.branchId} | Loc: ${branch.location || 'Main HQ'}</p>
+                        </div>
+                        <div class="status-badge">${branch.status}</div>
+                    </div>
+                `;
+                container.innerHTML += branchHTML;
+            });
+        }, (error) => {
+            console.error("Error loading branches: ", error);
+            container.innerHTML = `<p style="text-align: center; color: #ef4444;">Failed to load branches.</p>`;
+        });
+    }
+
+    // 2. Add New Branch to Firestore
+    async function createNewBranch() {
+        if (!activeUserPhone) return;
+        
+        const branchName = document.getElementById('new-branch-name').value.trim();
+        const branchLocation = document.getElementById('new-branch-location').value.trim();
+        const btn = document.getElementById('btn-create');
+
+        if (!branchName) {
+            alert("Please enter a Branch Name.");
+            return;
+        }
+
+        btn.innerText = "Creating...";
+        btn.disabled = true;
+
+        try {
+            const db = firebase.firestore();
+            
+            // Generate a unique ID for the new branch using a timestamp
+            const uniqueTimestamp = Date.now();
+            const newBranchId = 'branch_' + uniqueTimestamp;
+
+            const newBranchData = {
+                branchName: branchName,
+                location: branchLocation,
+                branchId: newBranchId,
+                createdAt: new Date().toISOString(),
+                status: "active"
+            };
+
+            // Save to the branches sub-collection
+            await db.collection('companies').doc(activeUserPhone).collection('branches').doc(newBranchId).set(newBranchData);
+
+            // Clear the form
+            document.getElementById('new-branch-name').value = "";
+            document.getElementById('new-branch-location').value = "";
+            alert("Branch created successfully!");
+
+        } catch (error) {
+            console.error("Error creating branch:", error);
+            alert("Database Error: Could not create branch.");
+        } finally {
+            btn.innerHTML = `<i class="bi bi-building-add"></i> Create Branch`;
+            btn.disabled = false;
+        }
+    }
+</script>
+</body>
+</html>
