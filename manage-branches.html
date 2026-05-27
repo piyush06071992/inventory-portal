@@ -20,7 +20,10 @@
         .header-section h1 { font-size: 22px; font-weight: 700; color: #1e3a8a; margin: 0; }
         
         .form-card { width: 100%; max-width: 700px; background: #ffffff; border-radius: 16px; padding: 24px; box-shadow: 0 4px 20px rgba(0, 0, 0, 0.02); box-sizing: border-box; margin-bottom: 20px; border: 1px solid #e2e8f0; }
-        .card-title { font-size: 16px; font-weight: 700; color: #0f172a; margin-bottom: 20px; text-transform: uppercase; letter-spacing: 0.5px; border-bottom: 2px solid #f1f5f9; padding-bottom: 10px; display: flex; align-items: center; gap: 8px; }
+        
+        /* Updated Card Title for Flex Layout */
+        .card-title { font-size: 16px; font-weight: 700; color: #0f172a; margin-bottom: 20px; text-transform: uppercase; letter-spacing: 0.5px; border-bottom: 2px solid #f1f5f9; padding-bottom: 10px; display: flex; align-items: center; justify-content: space-between; }
+        .title-left { display: flex; align-items: center; gap: 8px; }
         
         .form-group { margin-bottom: 18px; }
         .form-group label { display: block; font-size: 13px; font-weight: 600; color: #475569; margin-bottom: 6px; text-transform: uppercase; }
@@ -30,11 +33,30 @@
         .btn-add { width: 100%; background: linear-gradient(135deg, #10b981, #059669); color: white; border: none; padding: 16px; border-radius: 12px; font-size: 16px; font-weight: 700; cursor: pointer; box-shadow: 0 6px 18px rgba(16, 185, 129, 0.2); display: flex; align-items: center; justify-content: center; gap: 8px; }
         .btn-back { display: block; width: 100%; max-width: 700px; background-color: #ffffff; color: #475569; border: 2px solid #cbd5e1; padding: 16px; border-radius: 12px; font-size: 16px; font-weight: 600; cursor: pointer; text-align: center; text-decoration: none; margin-top: 10px; box-sizing: border-box;}
         
+        /* Toggle Link Styling */
+        .toggle-inactive-btn { font-size: 12px; font-weight: 600; color: #3b82f6; cursor: pointer; text-decoration: underline; background: none; border: none; padding: 0; }
+        .toggle-inactive-btn:hover { color: #1e3a8a; }
+
         /* Branch List Styling */
-        .branch-item { display: flex; justify-content: space-between; align-items: center; background: #f8fafc; border: 1px solid #e2e8f0; padding: 15px; border-radius: 12px; margin-bottom: 12px; }
+        .branch-item { display: flex; flex-direction: column; background: #f8fafc; border: 1px solid #e2e8f0; padding: 15px; border-radius: 12px; margin-bottom: 12px; gap: 10px;}
+        .branch-item.inactive-item { background: #f1f5f9; border-color: #cbd5e1; opacity: 0.8; }
+        .branch-top-row { display: flex; justify-content: space-between; align-items: flex-start; }
+        
         .branch-info h3 { margin: 0 0 4px 0; font-size: 16px; color: #1e3a8a; }
+        .inactive-item .branch-info h3 { color: #475569; text-decoration: line-through; }
         .branch-info p { margin: 0; font-size: 12px; color: #64748b; }
-        .status-badge { background: #d1fae5; color: #059669; padding: 4px 8px; border-radius: 6px; font-size: 11px; font-weight: 700; text-transform: uppercase; }
+        
+        .status-badge { padding: 4px 8px; border-radius: 6px; font-size: 11px; font-weight: 700; text-transform: uppercase; }
+        .badge-active { background: #d1fae5; color: #059669; }
+        .badge-inactive { background: #e2e8f0; color: #475569; }
+
+        /* Action Buttons */
+        .branch-actions { display: flex; justify-content: flex-end; border-top: 1px dashed #cbd5e1; padding-top: 10px; }
+        .action-btn { background: none; border: 1px solid; padding: 6px 12px; border-radius: 6px; font-size: 12px; font-weight: 600; cursor: pointer; transition: all 0.2s; }
+        .btn-deactivate { color: #ef4444; border-color: #fca5a5; background: #fef2f2; }
+        .btn-deactivate:hover { background: #fee2e2; }
+        .btn-activate { color: #10b981; border-color: #6ee7b7; background: #ecfdf5; }
+        .btn-activate:hover { background: #d1fae5; }
     </style>
 </head>
 <body>
@@ -45,7 +67,11 @@
     </div>
 
     <div class="form-card">
-        <div class="card-title"><i class="bi bi-shop-window text-primary"></i> Current Active Branches</div>
+        <div class="card-title">
+            <div class="title-left"><i class="bi bi-shop-window text-primary"></i> Current Branches</div>
+            <button class="toggle-inactive-btn" onclick="toggleInactiveView()" id="toggle-view-btn">Show Inactive</button>
+        </div>
+        
         <div id="branch-list-container">
             <p style="text-align: center; color: #64748b; font-size: 14px;">Loading your branches...</p>
         </div>
@@ -76,6 +102,10 @@
 
 <script>
     const activeUserPhone = localStorage.getItem("activeUserPhone");
+    
+    // State Management for the UI
+    let allBranches = [];
+    let showingInactive = false;
 
     document.addEventListener('DOMContentLoaded', () => {
         firebase.auth().onAuthStateChanged((user) => {
@@ -85,42 +115,106 @@
         });
     });
 
+    // Toggle View State
+    function toggleInactiveView() {
+        showingInactive = !showingInactive;
+        document.getElementById('toggle-view-btn').innerText = showingInactive ? "Hide Inactive" : "Show Inactive";
+        renderBranchesToScreen(); // Re-render the array without re-fetching from the database
+    }
+
     // 1. Real-time Listener for Branches
     function loadBranchesRealtime() {
         const db = firebase.firestore();
-        const container = document.getElementById('branch-list-container');
 
-        // This instantly updates the screen if a branch is added or removed
         db.collection('companies').doc(activeUserPhone).collection('branches')
           .orderBy('createdAt', 'asc')
           .onSnapshot((querySnapshot) => {
-            container.innerHTML = ""; // Clear loading text
             
-            if (querySnapshot.empty) {
-                container.innerHTML = `<p style="text-align: center; color: #ef4444; font-size: 14px;">No branches found.</p>`;
-                return;
-            }
-
+            // Empty the local array and repopulate it with fresh data
+            allBranches = [];
             querySnapshot.forEach((doc) => {
-                const branch = doc.data();
-                const branchHTML = `
-                    <div class="branch-item">
-                        <div class="branch-info">
-                            <h3>${branch.branchName}</h3>
-                            <p>ID: ${branch.branchId} | Loc: ${branch.location || 'Main HQ'}</p>
-                        </div>
-                        <div class="status-badge">${branch.status}</div>
-                    </div>
-                `;
-                container.innerHTML += branchHTML;
+                allBranches.push(doc.data());
             });
+
+            // Draw to screen
+            renderBranchesToScreen();
+            
         }, (error) => {
             console.error("Error loading branches: ", error);
-            container.innerHTML = `<p style="text-align: center; color: #ef4444;">Failed to load branches.</p>`;
+            document.getElementById('branch-list-container').innerHTML = `<p style="text-align: center; color: #ef4444;">Failed to load branches.</p>`;
         });
     }
 
-    // 2. Add New Branch to Firestore
+    // 2. Client-Side Rendering Logic
+    function renderBranchesToScreen() {
+        const container = document.getElementById('branch-list-container');
+        container.innerHTML = ""; 
+
+        let visibleCount = 0;
+
+        allBranches.forEach((branch) => {
+            // Filter out inactive branches if the toggle is off
+            if (branch.status === 'inactive' && !showingInactive) return;
+
+            visibleCount++;
+            const isInactive = branch.status === 'inactive';
+            const badgeClass = isInactive ? 'badge-inactive' : 'badge-active';
+            
+            // Main Branch Safety Check (Disable deactivate for branch_01)
+            let actionHtml = "";
+            if (branch.branchId === "branch_01") {
+                actionHtml = `<span style="font-size: 11px; color: #94a3b8;"><i class="bi bi-shield-lock-fill"></i> Main HQ (Cannot be deactivated)</span>`;
+            } else if (isInactive) {
+                actionHtml = `<button class="action-btn btn-activate" onclick="updateBranchStatus('${branch.branchId}', 'active')"><i class="bi bi-check-circle"></i> Reactivate Branch</button>`;
+            } else {
+                actionHtml = `<button class="action-btn btn-deactivate" onclick="updateBranchStatus('${branch.branchId}', 'inactive')"><i class="bi bi-x-circle"></i> Deactivate Branch</button>`;
+            }
+
+            const branchHTML = `
+                <div class="branch-item ${isInactive ? 'inactive-item' : ''}">
+                    <div class="branch-top-row">
+                        <div class="branch-info">
+                            <h3>${branch.branchName}</h3>
+                            <p>ID: ${branch.branchId} | Loc: ${branch.location || 'HQ'}</p>
+                        </div>
+                        <div class="status-badge ${badgeClass}">${branch.status}</div>
+                    </div>
+                    <div class="branch-actions">
+                        ${actionHtml}
+                    </div>
+                </div>
+            `;
+            container.innerHTML += branchHTML;
+        });
+
+        if (visibleCount === 0) {
+            container.innerHTML = `<p style="text-align: center; color: #64748b; font-size: 14px; padding: 10px 0;">No branches to show in this view.</p>`;
+        }
+    }
+
+    // 3. Status Update Function (Deactivate / Reactivate)
+    async function updateBranchStatus(branchId, newStatus) {
+        if (!activeUserPhone) return;
+        
+        // Confirm action before deactivating
+        if (newStatus === 'inactive') {
+            const confirmDeactivate = confirm("Are you sure you want to deactivate this branch? It will be hidden from the POS screen.");
+            if (!confirmDeactivate) return;
+        }
+
+        try {
+            const db = firebase.firestore();
+            await db.collection('companies').doc(activeUserPhone).collection('branches').doc(branchId).update({
+                status: newStatus
+            });
+            // The onSnapshot listener will automatically detect this change and redraw the screen instantly!
+        } catch (error) {
+            console.error("Error updating status:", error);
+            alert("Database Error: Could not change branch status.");
+        }
+    }
+
+    // 4. Add New Branch to Firestore
     async function createNewBranch() {
         if (!activeUserPhone) return;
         
@@ -139,7 +233,7 @@
         try {
             const db = firebase.firestore();
             
-            // Generate a unique ID for the new branch using a timestamp
+            // Generate a unique ID
             const uniqueTimestamp = Date.now();
             const newBranchId = 'branch_' + uniqueTimestamp;
 
@@ -151,13 +245,15 @@
                 status: "active"
             };
 
-            // Save to the branches sub-collection
             await db.collection('companies').doc(activeUserPhone).collection('branches').doc(newBranchId).set(newBranchData);
 
-            // Clear the form
             document.getElementById('new-branch-name').value = "";
             document.getElementById('new-branch-location').value = "";
-            alert("Branch created successfully!");
+            
+            // Briefly show inactive branches if they just added a new one to make sure they see everything
+            if(showingInactive === false && allBranches.some(b => b.status === 'inactive')) {
+                toggleInactiveView();
+            }
 
         } catch (error) {
             console.error("Error creating branch:", error);
