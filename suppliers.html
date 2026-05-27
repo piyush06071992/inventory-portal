@@ -6,8 +6,9 @@
     <title>Manage Suppliers - Business Saarthi</title>
     
     <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
-    <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-database-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-auth-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-firestore-compat.js"></script>
+    
     <script src="/auth.js"></script>
 
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
@@ -138,12 +139,16 @@
 
 <script>
     let currentEditingSupplierId = null;
-    let globalSuppliersData = {}; // Stores data for quick editing
+    let globalSuppliersData = {}; 
 
-    window.onload = function() {
-        if (typeof verifySingleSession === 'function') verifySingleSession();
-        loadSuppliers();
-    };
+    // Fetch existing data when the page loads securely
+    document.addEventListener('DOMContentLoaded', () => {
+        firebase.auth().onAuthStateChanged((user) => {
+            if (user) {
+                loadSuppliersRealtime();
+            }
+        });
+    });
 
     // --- FORM MANAGEMENT ---
     function toggleSupplierForm() {
@@ -178,8 +183,8 @@
         container.appendChild(div);
     }
 
-    // --- DATABASE OPERATIONS ---
-    function saveSupplier() {
+    // --- DATABASE OPERATIONS (FIRESTORE) ---
+    async function saveSupplier() {
         const activeUserPhone = localStorage.getItem("activeUserPhone");
         if (!activeUserPhone) return alert("Session expired. Please login again.");
 
@@ -196,36 +201,52 @@
 
         if (!name || phones.length === 0) return alert("Business Name and at least one Phone Number are required!");
 
-        // If editing, use existing ID. If new, create ID.
-        const supplierId = currentEditingSupplierId ? currentEditingSupplierId : Date.now().toString();
+        const btn = document.querySelector('.btn-save');
+        btn.innerText = "Saving...";
+        btn.disabled = true;
 
-        const supplierData = {
-            id: supplierId,
-            businessName: name,
-            ownerName: owner,
-            phoneNumbers: phones,
-            gstNumber: gst,
-            upiId: upi,
-            address: address,
-            addedAt: currentEditingSupplierId && globalSuppliersData[supplierId] ? globalSuppliersData[supplierId].addedAt : new Date().toISOString()
-        };
+        try {
+            const db = firebase.firestore();
+            const supplierId = currentEditingSupplierId ? currentEditingSupplierId : 'sup_' + Date.now();
 
-        firebase.database().ref('shops/' + activeUserPhone + '/suppliers/' + supplierId).set(supplierData, (error) => {
-            if (error) {
-                alert("Error saving: " + error.message);
-            } else {
-                alert(currentEditingSupplierId ? "Supplier Updated Successfully!" : "Supplier Added Successfully!");
-                toggleSupplierForm(); // This will auto-reset the form
-            }
-        });
+            const supplierData = {
+                id: supplierId,
+                businessName: name,
+                ownerName: owner,
+                phoneNumbers: phones,
+                gstNumber: gst,
+                upiId: upi,
+                address: address,
+                addedAt: currentEditingSupplierId && globalSuppliersData[supplierId] ? globalSuppliersData[supplierId].addedAt : new Date().toISOString()
+            };
+
+            await db.collection('companies').doc(activeUserPhone).collection('suppliers').doc(supplierId).set(supplierData);
+            
+            alert(currentEditingSupplierId ? "Supplier Updated Successfully!" : "Supplier Added Successfully!");
+            toggleSupplierForm(); 
+
+        } catch (error) {
+            console.error("Error saving supplier:", error);
+            alert("Error saving: " + error.message);
+        } finally {
+            btn.innerHTML = `<i class="bi bi-cloud-arrow-up-fill"></i> Save Supplier`;
+            btn.disabled = false;
+        }
     }
 
-    function deleteSupplier(id, name) {
+    async function deleteSupplier(id, name) {
         const activeUserPhone = localStorage.getItem("activeUserPhone");
+        if (!activeUserPhone) return;
+
         if(confirm(`Are you absolutely sure you want to delete ${name}?\n\nThis will remove them from your directory permanently.`)) {
-            firebase.database().ref('shops/' + activeUserPhone + '/suppliers/' + id).remove()
-                .then(() => alert("Supplier deleted."))
-                .catch(err => alert("Delete failed: " + err.message));
+            try {
+                const db = firebase.firestore();
+                await db.collection('companies').doc(activeUserPhone).collection('suppliers').doc(id).delete();
+                alert("Supplier deleted.");
+            } catch (err) {
+                console.error("Delete failed:", err);
+                alert("Delete failed: " + err.message);
+            }
         }
     }
 
@@ -235,16 +256,14 @@
 
         currentEditingSupplierId = id;
         
-        // Fill basic fields
         document.getElementById('sup-name').value = data.businessName || '';
         document.getElementById('sup-owner').value = data.ownerName || '';
         document.getElementById('sup-gst').value = data.gstNumber || '';
         document.getElementById('sup-upi').value = data.upiId || '';
         document.getElementById('sup-address').value = data.address || '';
         
-        // Fill dynamic phones
         const phoneContainer = document.getElementById('sup-phones-container');
-        phoneContainer.innerHTML = ''; // Clear defaults
+        phoneContainer.innerHTML = ''; 
         if (data.phoneNumbers && data.phoneNumbers.length > 0) {
             data.phoneNumbers.forEach((phone, index) => {
                 if(index === 0) {
@@ -255,7 +274,6 @@
             });
         }
 
-        // Show form and scroll up
         document.getElementById('add-supplier-form').style.display = 'block';
         document.querySelector('#add-supplier-form h2').innerText = "Edit Supplier Details";
         window.scrollTo({ top: 0, behavior: 'smooth' });
@@ -274,27 +292,30 @@
         }
     }
 
-    function loadSuppliers() {
+    function loadSuppliersRealtime() {
         const activeUserPhone = localStorage.getItem("activeUserPhone");
         if (!activeUserPhone) return;
 
         const listContainer = document.getElementById('supplier-list');
+        const db = firebase.firestore();
 
-        firebase.database().ref('shops/' + activeUserPhone + '/suppliers').on('value', (snapshot) => {
+        db.collection('companies').doc(activeUserPhone).collection('suppliers')
+          .orderBy('addedAt', 'desc')
+          .onSnapshot((querySnapshot) => {
+            
             listContainer.innerHTML = '';
-            globalSuppliersData = {}; // Reset local memory
+            globalSuppliersData = {}; 
 
-            if (!snapshot.exists()) {
+            if (querySnapshot.empty) {
                 listContainer.innerHTML = '<p style="text-align: center; color: #64748b; background: #fff; padding: 20px; border-radius: 12px;">No suppliers added yet. Click "Add Supplier" to start.</p>';
                 return;
             }
 
-            const data = snapshot.val();
-            globalSuppliersData = data; // Save to local memory for editing
-            const suppliers = Object.values(data).sort((a, b) => b.id - a.id);
-
-            suppliers.forEach(sup => {
-                const primaryPhone = sup.phoneNumbers[0];
+            querySnapshot.forEach((doc) => {
+                const sup = doc.data();
+                globalSuppliersData[sup.id] = sup; // Save for editing
+                
+                const primaryPhone = sup.phoneNumbers && sup.phoneNumbers.length > 0 ? sup.phoneNumbers[0] : '';
                 
                 const card = document.createElement('div');
                 card.className = 'supplier-card';
@@ -309,7 +330,7 @@
 
                     <div class="sc-body" id="sc-body-${sup.id}">
                         <div class="sc-details">
-                            <div><i class="bi bi-telephone-fill"></i> ${sup.phoneNumbers.join(', ')}</div>
+                            <div><i class="bi bi-telephone-fill"></i> ${sup.phoneNumbers ? sup.phoneNumbers.join(', ') : 'N/A'}</div>
                             ${sup.gstNumber ? `<div><i class="bi bi-receipt"></i> GST: ${sup.gstNumber}</div>` : ''}
                             ${sup.upiId ? `<div><i class="bi bi-bank2"></i> UPI: ${sup.upiId}</div>` : ''}
                             ${sup.address ? `<div><i class="bi bi-geo-alt-fill"></i> ${sup.address}</div>` : ''}
@@ -331,6 +352,9 @@
                 `;
                 listContainer.appendChild(card);
             });
+        }, (error) => {
+            console.error("Error loading suppliers: ", error);
+            listContainer.innerHTML = '<p style="text-align: center; color: #ef4444;">Failed to load suppliers.</p>';
         });
     }
 
