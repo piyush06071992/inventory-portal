@@ -7,9 +7,8 @@
     
     <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-auth-compat.js"></script>
-    <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-database-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-firestore-compat.js"></script>
     
-    <script src="/auth.js"></script>
     <link rel="stylesheet" href="/style.css">
     
     <style>
@@ -64,7 +63,9 @@
         </div>
     </div>
 
-<script>
+    <script src="/auth.js"></script>
+
+    <script>
         function handleToggleView(fieldId, textId) {
             const field = document.getElementById(fieldId);
             const txt = document.getElementById(textId);
@@ -128,13 +129,14 @@
             btn.innerText = "UPDATING PIN..."; btn.disabled = true;
 
             try {
-                // 1. Confirm OTP (This logs you in as the Phone User, satisfying the new database rule)
+                // 1. Confirm OTP (This logs you in as the Phone User)
                 await resetConfirmationResult.confirm(code);
                 
-                // 2. Just update the database PIN directly!
-                await firebase.database().ref('shops/' + phone).update({ securePin: newPin });
+                // 2. Update the database PIN directly via Firestore
+                const db = firebase.firestore();
+                await db.collection('companies').doc(phone).update({ securePin: newPin });
                 
-                // 3. Sign out of the Phone Auth session to clear the way for standard login
+                // 3. Sign out of the Phone Auth session
                 await firebase.auth().signOut();
                 
                 alert("PIN Updated Successfully! Please Login with your New PIN."); 
@@ -147,23 +149,26 @@
             }
         }
 
-        function evaluateUserSubscriptionLifecycle(shopData, userKey, loginButtonReference) {
+        async function evaluateUserSubscriptionLifecycle(shopData, userKey, loginButtonReference) {
             const msg = document.getElementById('msg');
             const now = new Date();
+            const db = firebase.firestore();
             
             if (!shopData.trialEndsAt || !shopData.lockoutEndsAt || !shopData.paymentStatus) {
                 const regDate = shopData.registeredAt ? new Date(shopData.registeredAt) : new Date();
                 const tEnd = new Date(regDate); tEnd.setDate(tEnd.getDate() + 30);
                 const lEnd = new Date(regDate); lEnd.setDate(lEnd.getDate() + 60);
-                firebase.database().ref('shops/' + userKey).update({
+                
+                await db.collection('companies').doc(userKey).update({
                     trialEndsAt: tEnd.toISOString(), lockoutEndsAt: lEnd.toISOString(), paymentStatus: shopData.paymentStatus || "TRIAL"
                 });
                 shopData.trialEndsAt = tEnd.toISOString(); shopData.lockoutEndsAt = lEnd.toISOString(); shopData.paymentStatus = "TRIAL";
             }
 
             if (shopData.paymentStatus !== "PAID" && now > new Date(shopData.lockoutEndsAt)) {
-                firebase.database().ref('shops/' + userKey).remove().then(() => { msg.innerText = "ACCOUNT EXPIRED AND DATA PURGED!"; })
-                .finally(() => { loginButtonReference.innerText = "LOGIN TO PORTAL"; loginButtonReference.disabled = false; });
+                await db.collection('companies').doc(userKey).delete();
+                msg.innerText = "ACCOUNT EXPIRED AND DATA PURGED!";
+                loginButtonReference.innerText = "LOGIN TO PORTAL"; loginButtonReference.disabled = false;
                 return;
             }
 
@@ -175,16 +180,16 @@
             }
 
             const loginTime = Date.now().toString();
-            firebase.database().ref('shops/' + userKey).update({
+            await db.collection('companies').doc(userKey).update({
                 lastLoginTime: loginTime
-            }).then(() => {
-                localStorage.setItem("myLoginTime", loginTime);
-                localStorage.setItem("activeUserPhone", userKey);
-                
-                msg.style.color = "green";
-                msg.innerText = "ACCESS GRANTED! REDIRECTING...";
-                setTimeout(() => { window.location.href = '/dashboard.html'; }, 1000);
             });
+
+            localStorage.setItem("myLoginTime", loginTime);
+            localStorage.setItem("activeUserPhone", userKey);
+            
+            msg.style.color = "green";
+            msg.innerText = "ACCESS GRANTED! REDIRECTING...";
+            setTimeout(() => { window.location.href = '/dashboard.html'; }, 1000);
         }
 
         async function handlePortalLogin() {
@@ -200,32 +205,37 @@
             try {
                 let authEmail = identifier;
                 let phoneKey = identifier;
+                const db = firebase.firestore();
 
+                // Step 1: If it's an email, try to find the phone number using Firestore queries
                 if (!/^\d{10}$/.test(identifier)) {
                     try {
-                        const snap = await firebase.database().ref('shops').orderByChild('emailId').equalTo(identifier).once('value');
-                        if (snap.exists()) {
-                            snap.forEach(child => { phoneKey = child.key; authEmail = child.key + "@businesssaarthi.com"; });
+                        const snap = await db.collection('companies').where('emailId', '==', identifier).get();
+                        if (!snap.empty) {
+                            snap.forEach(doc => { 
+                                phoneKey = doc.id; 
+                                authEmail = doc.id + "@businesssaarthi.com"; 
+                            });
                         } else {
                             throw new Error("Email not found.");
                         }
                     } catch (readError) {
-                        throw new Error("DATABASE ERROR. PLEASE USE PHONE NUMBER.");
+                        throw new Error("DATABASE BLOCKED EMAIL SEARCH. PLEASE USE PHONE NUMBER.");
                     }
                 } else {
                     authEmail = identifier + "@businesssaarthi.com";
                 }
 
-                // 1. Authenticate with the background Master Key
+                // Step 2: Authenticate with the Master Key
                 const masterKey = phoneKey + "@SAARTHI";
                 await firebase.auth().signInWithEmailAndPassword(authEmail, masterKey);
 
-                // 2. Fetch data and check the REAL PIN from the database
-                const shopSnap = await firebase.database().ref('shops/' + phoneKey).once('value');
-                if (shopSnap.exists()) {
-                    const shopData = shopSnap.val();
+                // Step 3: Fetch data and check the REAL PIN from Firestore
+                const shopSnap = await db.collection('companies').doc(phoneKey).get();
+                if (shopSnap.exists) {
+                    const shopData = shopSnap.data();
                     if (shopData.securePin === pin) {
-                        evaluateUserSubscriptionLifecycle(shopData, phoneKey, loginBtn);
+                        await evaluateUserSubscriptionLifecycle(shopData, phoneKey, loginBtn);
                     } else {
                         await firebase.auth().signOut();
                         throw new Error("INVALID SECURE PIN!");
