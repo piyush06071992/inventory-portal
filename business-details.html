@@ -7,9 +7,7 @@
     
     <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-auth-compat.js"></script>
-    <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-database-compat.js"></script>
-
-    <script src="/auth.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-firestore-compat.js"></script>
 
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.1/font/bootstrap-icons.css">
@@ -182,6 +180,8 @@
 
 </div>
 
+<script src="/auth.js"></script>
+
 <script>
     // Strict numerical input limits watcher logic
     function limitDigitLength(element, maxDigits) {
@@ -224,90 +224,57 @@
         container.appendChild(div);
     }
 
-    // Secure Logout Function (Fired by Auth State failures or DB conflicts)
-    function handleLogout(customMessage = null) {
-        if(customMessage) {
-            alert(customMessage);
-        }
-        localStorage.clear();
-        sessionStorage.clear();
-        firebase.auth().signOut().then(() => {
-            window.location.replace('/login.html');
-        }).catch(() => {
-            window.location.replace('/login.html');
-        });
-    }
+    // Fetch existing data when the page loads securely
+    document.addEventListener('DOMContentLoaded', () => {
+        // Wait for Firebase to initialize
+        firebase.auth().onAuthStateChanged((user) => {
+            if (user) {
+                const activeUserPhone = localStorage.getItem("activeUserPhone");
+                if (activeUserPhone) {
+                    const db = firebase.firestore();
+                    db.collection('companies').doc(activeUserPhone).get()
+                        .then((doc) => {
+                            if (doc.exists) {
+                                const profile = doc.data();
+                                document.getElementById('biz-name').value = profile.businessName || '';
+                                document.getElementById('biz-tagline').value = profile.tagline || '';
+                                document.getElementById('biz-address').value = profile.address || '';
+                                document.getElementById('biz-state').value = profile.state || '';
+                                document.getElementById('biz-pin').value = profile.pinCode || '';
+                                document.getElementById('tax-gst').value = profile.gstNumber || '';
+                                document.getElementById('tax-tan').value = profile.tanNumber || '';
+                                document.getElementById('invoice-terms').value = profile.invoiceTerms || '';
+                                
+                                if (profile.owners && profile.owners.length > 0) {
+                                    profile.owners.forEach(owner => addOwnerField(owner));
+                                } else { addOwnerField(''); }
+                                
+                                if (profile.phoneNumbers && profile.phoneNumbers.length > 0) {
+                                    profile.phoneNumbers.forEach(num => addPhoneField(num));
+                                } else if (profile.ownerPhone) {
+                                    addPhoneField(profile.ownerPhone);
+                                } else { addPhoneField(''); }
 
-    // MASTER SECURITY & INITIALIZATION LISTENER
-    firebase.auth().onAuthStateChanged((user) => {
-        // LAYER 1: DIRECT URL BYPASS PROTECTION
-        if (!user) {
-            window.location.replace('/login.html');
-            return;
-        }
-
-        const activeUserPhone = localStorage.getItem("activeUserPhone");
-        const myLoginTime = localStorage.getItem("myLoginTime");
-
-        // Failsafe if local storage was cleared manually
-        if (!activeUserPhone || !myLoginTime) {
-            handleLogout();
-            return;
-        }
-
-        // LAYER 2: MULTI-DEVICE CONCURRENT LOGIN PROTECTION
-        firebase.database().ref('shops/' + activeUserPhone + '/lastLoginTime').on('value', (snapshot) => {
-            const currentDbLoginTime = snapshot.val();
-            if (currentDbLoginTime && currentDbLoginTime !== myLoginTime) {
-                handleLogout("SECURITY ALERT: Your account was just logged in from another device. For your security, this active session is being closed.");
+                                if (profile.upiIds && profile.upiIds.length > 0) {
+                                    profile.upiIds.forEach(upi => addUpiField(upi));
+                                } else { addUpiField(''); }
+                            } else {
+                                addOwnerField('');
+                                addPhoneField('');
+                                addUpiField('');
+                            }
+                        }).catch(err => {
+                            console.error("Failed to load business profile:", err);
+                        });
+                }
             }
         });
-
-        // 3. Load the Data securely ONLY AFTER auth is confirmed
-        firebase.database().ref('business_profiles/' + activeUserPhone).once('value')
-            .then((snapshot) => {
-                const profile = snapshot.val();
-                if (profile) {
-                    document.getElementById('biz-name').value = profile.businessName || '';
-                    document.getElementById('biz-tagline').value = profile.tagline || '';
-                    document.getElementById('biz-address').value = profile.address || '';
-                    document.getElementById('biz-state').value = profile.state || '';
-                    document.getElementById('biz-pin').value = profile.pinCode || '';
-                    document.getElementById('tax-gst').value = profile.gstNumber || '';
-                    document.getElementById('tax-tan').value = profile.tanNumber || '';
-                    document.getElementById('invoice-terms').value = profile.invoiceTerms || '';
-                    
-                    if (profile.owners) {
-                        profile.owners.forEach(owner => addOwnerField(owner));
-                    } else { addOwnerField(''); }
-                    
-                    if (profile.phoneNumbers && profile.phoneNumbers.length > 0) {
-                        profile.phoneNumbers.forEach(num => addPhoneField(num));
-                    } else if (profile.primaryPhone) {
-                        addPhoneField(profile.primaryPhone);
-                        if (profile.secondaryPhone) addPhoneField(profile.secondaryPhone);
-                    } else {
-                        addPhoneField('');
-                    }
-
-                    if (profile.upiIds) {
-                        profile.upiIds.forEach(upi => addUpiField(upi));
-                    } else { addUpiField(''); }
-                } else {
-                    addOwnerField('');
-                    addPhoneField('');
-                    addUpiField('');
-                }
-            }).catch(err => {
-                console.error("Failed to load business profile:", err);
-            });
     });
 
-    function handleSaveBusinessDetails() {
+    async function handleSaveBusinessDetails() {
         const activeUserPhone = localStorage.getItem("activeUserPhone");
         if (!activeUserPhone) {
             alert("Error: Active user not found. Please log in again.");
-            handleLogout();
             return;
         }
 
@@ -348,15 +315,16 @@
             return;
         }
 
-        // Save straight up to custom path storage nodes in Firebase
-        firebase.database().ref('business_profiles/' + activeUserPhone).set(updatedProfileData, (error) => {
-            if (error) {
-                alert("Database Synchronization Error: " + error.message);
-            } else {
-                alert("SUCCESS! Business details saved successfully. Your invoices will look amazing.");
-                window.location.href = '/dashboard.html';
-            }
-        });
+        // Save data to Firestore (merging ensures we don't overwrite securePin or lockout dates)
+        try {
+            const db = firebase.firestore();
+            await db.collection('companies').doc(activeUserPhone).set(updatedProfileData, { merge: true });
+            
+            alert("SUCCESS! Business details saved successfully.");
+            window.location.href = '/dashboard.html';
+        } catch (error) {
+            alert("Database Error: " + error.message);
+        }
     }
 </script>
 </body>
