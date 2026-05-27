@@ -1,8 +1,10 @@
 // auth.js - CENTRAL CONFIG AND SECURITY ENFORCER
+
 // 0. Security Enforcer: Hide page only if NOT on login, registration, OR billing page
 const isPublicPage = window.location.pathname.includes("login.html") || 
                      window.location.pathname.includes("index.html") || 
-                     window.location.pathname.includes("billing.html");
+                     window.location.pathname.includes("billing.html") ||
+                     window.location.pathname === "/";
 
 if (!isPublicPage) {
     document.write('<style>body { display: none !important; }</style>');
@@ -22,72 +24,87 @@ const firebaseConfig = {
 if (typeof firebase !== 'undefined' && !firebase.apps.length) {
     firebase.initializeApp(firebaseConfig);
 }
-// UNIVERSAL MIDNIGHT & SUBSCRIPTION GUARD
-function verifySessionIntegrity() {
-   // 1. If we are on public pages, stop the guard
-    if (window.location.pathname.includes("login.html") || 
-        window.location.pathname.includes("index.html") || 
-        window.location.pathname.includes("billing.html")) return;
+
+// 2. UNIVERSAL SECURITY & SUBSCRIPTION MONITOR (FIRESTORE)
+function initializeSecurityMonitor() {
+    if (isPublicPage) return;
 
     const activePhone = localStorage.getItem("activeUserPhone");
-    if (!activePhone) return (window.location.href = '/login.html');
+    const myLoginTime = localStorage.getItem("myLoginTime");
 
-    firebase.database().ref('shops/' + activePhone).once('value').then((snapshot) => {
-        const data = snapshot.val();
-        if (!data) return;
+    if (!activePhone || !myLoginTime) {
+        window.location.replace('/login.html');
+        return;
+    }
 
+    const db = firebase.firestore();
+
+    // One powerful real-time listener for the company document
+    db.collection('companies').doc(activePhone).onSnapshot((doc) => {
+        if (!doc.exists) {
+            // Account deleted or doesn't exist
+            forceLogout("Account not found. Please log in again.");
+            return;
+        }
+
+        const data = doc.data();
         const now = new Date();
-        const lockoutDate = new Date(data.lockoutEndsAt);
 
-        // 1. Midnight Logout: Clear session if date has changed since last access
+        // A. Midnight Check
         const lastAccess = localStorage.getItem("lastAccessDate");
         const today = now.toDateString();
         
         if (lastAccess && lastAccess !== today) {
-            localStorage.clear();
-            sessionStorage.clear();
-            alert("Session expired at midnight. Please login again.");
-            return (window.location.href = '/login.html');
+            forceLogout("Session expired at midnight. Please login again.");
+            return;
         }
         localStorage.setItem("lastAccessDate", today);
 
-      // 2. Subscription Expiry Guard
+        // B. Subscription Expiry Guard
+        const lockoutDate = new Date(data.lockoutEndsAt);
         if (data.paymentStatus !== "PAID" && now > lockoutDate) {
-            return (window.location.href = '/billing.html');
+            window.location.replace('/billing.html');
+            return;
         }
 
-        // IF ALL CHECKS PASS: Show the page
-        document.querySelector('style').remove(); 
+        // C. Multi-Device Single Session Check
+        if (data.lastLoginTime && data.lastLoginTime !== myLoginTime) {
+            forceLogout("SECURITY ALERT: You are logged in on another device.");
+            return;
+        }
+
+        // D. IF ALL CHECKS PASS: Reveal the page
+        const styleTag = document.querySelector('style');
+        if (styleTag) styleTag.remove(); 
         document.body.style.display = 'block';
+
+    }, (error) => {
+        console.error("Security Monitor Error: ", error);
+        // Fallback: If permissions fail, send back to login
+        window.location.replace('/login.html');
     });
 }
-verifySessionIntegrity();
-// 2. The One-Device Security Logic
-function verifySingleSession() {
-    const activeUser = localStorage.getItem("activeUserPhone");
-    const myLoginTime = localStorage.getItem("myLoginTime");
 
-    if (!activeUser || !myLoginTime) return;
-    
-    // Do not run the logout check on the login page itself
-    if (window.location.pathname.includes("login.html")) return;
-
-    firebase.database().ref('shops/' + activeUser + '/lastLoginTime').on('value', (snapshot) => {
-        const serverTime = snapshot.val();
-        
-        if (serverTime && serverTime != myLoginTime) {
-            localStorage.clear();
-            firebase.auth().signOut().then(() => {
-                alert("Logged out: You are logged in on another device.");
-                window.location.href = '/login.html';
-            });
-        }
-    });
+// Helper function to handle clean logouts
+function forceLogout(message) {
+    localStorage.clear();
+    sessionStorage.clear();
+    if (typeof firebase !== 'undefined' && firebase.auth) {
+        firebase.auth().signOut().then(() => {
+            alert(message);
+            window.location.replace('/login.html');
+        }).catch(() => {
+            window.location.replace('/login.html');
+        });
+    } else {
+        alert(message);
+        window.location.replace('/login.html');
+    }
 }
 
 // 3. Start the monitor automatically when the page loads
 if (document.readyState === 'loading') {
-    document.addEventListener('DOMContentLoaded', verifySingleSession);
+    document.addEventListener('DOMContentLoaded', initializeSecurityMonitor);
 } else {
-    verifySingleSession();
+    initializeSecurityMonitor();
 }
