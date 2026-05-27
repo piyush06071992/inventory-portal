@@ -6,10 +6,8 @@
     <title>Dashboard - Business Saarthi</title>
     
     <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
-    <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-database-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-auth-compat.js"></script>
-
-    <script src="/auth.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-firestore-compat.js"></script>
 
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.1/font/bootstrap-icons.css">
@@ -87,6 +85,8 @@
     </div>
 </div>
 
+<script src="/auth.js"></script>
+
 <script>
     // Force Cleanup of Old PWA Cache
     if ('serviceWorker' in navigator) {
@@ -103,7 +103,6 @@
         localStorage.clear();
         sessionStorage.clear();
         firebase.auth().signOut().then(() => {
-            // Use replace so they can't hit the back button
             window.location.replace('/login.html'); 
         }).catch(() => {
             window.location.replace('/login.html');
@@ -127,29 +126,33 @@
             return;
         }
 
-        // 1. Fetch the Shop Name securely
-        firebase.database().ref('shops/' + activeUserPhone).once('value')
-            .then((snapshot) => {
-                const shopData = snapshot.val();
-                if (shopData && shopData.businessName) {
-                    document.getElementById("display-shop-name").innerText = shopData.businessName;
+        const db = firebase.firestore();
+
+        // 1. Fetch the Company Name securely using Firestore
+        db.collection('companies').doc(activeUserPhone).get()
+            .then((doc) => {
+                if (doc.exists && doc.data().businessName) {
+                    document.getElementById("display-shop-name").innerText = doc.data().businessName;
                 } else {
                     document.getElementById("display-shop-name").innerText = "MY SHOP DASHBOARD";
                 }
             })
             .catch((err) => {
                 document.getElementById("display-shop-name").innerText = "MY SHOP DASHBOARD";
+                console.error("Error fetching name:", err);
             });
 
-        // 2. LAYER 2: MULTI-DEVICE CONCURRENT LOGIN PROTECTION
-        // The .on() function continuously listens to the database in real-time
-        firebase.database().ref('shops/' + activeUserPhone + '/lastLoginTime').on('value', (snapshot) => {
-            const currentDbLoginTime = snapshot.val();
-            
-            // If the time in the database exists and doesn't match the time saved in this browser...
-            if (currentDbLoginTime && currentDbLoginTime !== myLoginTime) {
-                // It means another device just triggered the login script. Kick this session out.
-                handleLogout("SECURITY ALERT: Your account was just logged in from another device. For your security, this active session is being closed.");
+        // 2. LAYER 2: MULTI-DEVICE CONCURRENT LOGIN PROTECTION (Firestore Snapshot)
+        // The .onSnapshot() function continuously listens to the document in real-time
+        db.collection('companies').doc(activeUserPhone).onSnapshot((doc) => {
+            if (doc.exists) {
+                const currentDbLoginTime = doc.data().lastLoginTime;
+                
+                // If the time in the database exists and doesn't match the time saved in this browser...
+                if (currentDbLoginTime && currentDbLoginTime !== myLoginTime) {
+                    // It means another device just triggered the login script. Kick this session out.
+                    handleLogout("SECURITY ALERT: Your account was just logged in from another device. For your security, this active session is being closed.");
+                }
             }
         });
     });
