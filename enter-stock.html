@@ -242,12 +242,12 @@
     }
 
     // --- 2. DYNAMIC PARAMETERS ---
-    function addParam() {
+  function addParam(key = "", val = "") {
         const div = document.createElement('div');
         div.className = 'param-row';
         div.innerHTML = `
-            <input type="text" placeholder="Name (e.g. Size)" class="param-name" style="margin-bottom:0;">
-            <input type="text" placeholder="Value (e.g. XL)" class="param-val" style="margin-bottom:0;">
+            <input type="text" placeholder="Name (e.g. Size)" class="param-name" value="${key}" style="margin-bottom:0;">
+            <input type="text" placeholder="Value (e.g. XL)" class="param-val" value="${val}" style="margin-bottom:0;">
             <button onclick="this.parentElement.remove()" style="background:#fee2e2; color:#ef4444; border:none; padding:12px; border-radius:10px; cursor:pointer;"><i class="bi bi-trash"></i></button>
         `;
         document.getElementById('dynamic-params').appendChild(div);
@@ -282,7 +282,7 @@
         }
     }
 
-    async function lookupProduct() {
+async function lookupProduct() {
         const barcode = document.getElementById('barcode').value.trim();
         if (!barcode) return;
         try {
@@ -290,6 +290,8 @@
             if (doc.exists) {
                 const data = doc.data();
                 document.getElementById('item-name').value = data.name || "";
+                
+                // Set Category/Unit
                 ['category', 'unit'].forEach(id => {
                     const el = document.getElementById(id);
                     if(data[id] && !Array.from(el.options).some(opt => opt.value === data[id])) {
@@ -297,8 +299,17 @@
                     }
                     el.value = data[id] || "";
                 });
+
+                // RESTORE PERSONAL PARAMETERS
+                if (data.customParams) {
+                    const container = document.getElementById('dynamic-params');
+                    container.innerHTML = ""; // Clear current
+                    for (const [key, val] of Object.entries(data.customParams)) {
+                        addParam(key, val); // Pass the saved key/val
+                    }
+                }
             }
-        } catch (e) { console.error("Lookup failed"); }
+        } catch (e) { console.error("Lookup failed", e); }
     }
 
     // --- 4. CALCULATORS & GST TOGGLE ---
