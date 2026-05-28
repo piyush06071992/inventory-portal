@@ -66,7 +66,14 @@
         .btn-pay { background: #8b5cf6; }
         .btn-bills { background: #f59e0b; }
         .btn-print { grid-column: span 2; background: #64748b; margin-top: 5px; }
-        
+        /* Ledger UI */
+        .ledger-container { display: none; margin-top: 15px; border-top: 2px dashed #cbd5e1; padding-top: 15px; }
+        .ledger-item { background: #f8fafc; border: 1px solid #e2e8f0; padding: 12px; border-radius: 10px; margin-bottom: 8px; display: flex; justify-content: space-between; align-items: center; }
+        .ledger-item-left p { margin: 0 0 4px 0; font-size: 13px; color: #64748b; }
+        .ledger-item-left h4 { margin: 0; font-size: 14px; color: #0f172a; text-transform: uppercase; }
+        .ledger-amt { font-size: 15px; font-weight: 700; color: #059669; margin-bottom: 4px; }
+        .btn-view-bill { background: #e0e7ff; color: #4f46e5; border: none; padding: 6px 10px; border-radius: 6px; font-size: 12px; font-weight: 600; cursor: pointer; text-decoration: none; display: inline-block;}
+
         /* Admin Actions */
         .admin-actions { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-top: 10px; padding-top: 10px; border-top: 1px dashed #e2e8f0; }
         .btn-edit { background: #f1f5f9; color: #475569; }
@@ -340,14 +347,17 @@
                             <button class="btn-sc btn-call" onclick="window.open('tel:${primaryPhone}')"><i class="bi bi-telephone"></i> Call</button>
                             <button class="btn-sc btn-wa" onclick="window.open('https://wa.me/91${primaryPhone}', '_blank')"><i class="bi bi-whatsapp"></i> WhatsApp</button>
                             <button class="btn-sc btn-pay" onclick="paySupplier('${sup.upiId || ''}', '${sup.businessName}')"><i class="bi bi-currency-rupee"></i> Pay Now</button>
-                            <button class="btn-sc btn-bills" onclick="alert('Viewing pending bills feature coming soon!')"><i class="bi bi-receipt-cutoff"></i> Pending Bills</button>
+                            <button class="btn-sc btn-bills" onclick="toggleLedger('${sup.id}')"><i class="bi bi-receipt-cutoff"></i> View Bills</button>
                             <button class="btn-sc btn-print" onclick="printLedger('${sup.businessName}')"><i class="bi bi-printer-fill"></i> Print Ledger / PDF</button>
                         </div>
 
-                        <div class="admin-actions">
+          <div class="admin-actions">
                             <button class="btn-sc btn-edit" onclick="editSupplier('${sup.id}')"><i class="bi bi-pencil-square"></i> Edit</button>
                             <button class="btn-sc btn-delete" onclick="deleteSupplier('${sup.id}', '${sup.businessName}')"><i class="bi bi-trash-fill"></i> Delete</button>
                         </div>
+
+                        <!-- Bill Ledger Container -->
+                        <div class="ledger-container" id="ledger-${sup.id}"></div>
                     </div>
                 `;
                 listContainer.appendChild(card);
@@ -356,6 +366,65 @@
             console.error("Error loading suppliers: ", error);
             listContainer.innerHTML = '<p style="text-align: center; color: #ef4444;">Failed to load suppliers.</p>';
         });
+    }
+
+   async function toggleLedger(supplierId) {
+        const ledgerDiv = document.getElementById('ledger-' + supplierId);
+        
+        // If it's already open, close it
+        if (ledgerDiv.style.display === 'block') {
+            ledgerDiv.style.display = 'none';
+            return;
+        }
+        
+        // Show loading state
+        ledgerDiv.style.display = 'block';
+        ledgerDiv.innerHTML = '<p style="text-align:center; font-size:13px; color:#64748b;"><i class="bi bi-hourglass-split"></i> Loading bills...</p>';
+        
+        const activeUserPhone = localStorage.getItem("activeUserPhone");
+        const db = firebase.firestore();
+        
+        try {
+            // Fetch transactions sorted by newest first
+            const snap = await db.collection('companies').doc(activeUserPhone)
+                                 .collection('suppliers').doc(supplierId)
+                                 .collection('transactions')
+                                 .orderBy('date', 'desc')
+                                 .get();
+                                 
+            if (snap.empty) {
+                ledgerDiv.innerHTML = '<p style="text-align:center; font-size:13px; color:#64748b;">No bills found for this supplier yet.</p>';
+                return;
+            }
+            
+            let html = '<h4 style="margin:0 0 10px 0; color:#1e3a8a; font-size:14px;"><i class="bi bi-clock-history"></i> Recent Bills</h4>';
+            
+            snap.forEach(doc => {
+                const data = doc.data();
+                const dateObj = new Date(data.date);
+                const dateStr = dateObj.toLocaleDateString('en-IN', { day: '2-digit', month: 'short', year: 'numeric' });
+                const amt = parseFloat(data.amount) || 0;
+                
+                html += `
+                    <div class="ledger-item">
+                        <div class="ledger-item-left">
+                            <p><i class="bi bi-calendar3"></i> ${dateStr}</p>
+                            <h4>Bill #${data.billNum}</h4>
+                        </div>
+                        <div style="text-align: right;">
+                            <div class="ledger-amt">₹${amt.toFixed(2)}</div>
+                            ${data.billImageUrl 
+                                ? `<a href="${data.billImageUrl}" target="_blank" class="btn-view-bill"><i class="bi bi-image"></i> View Photo</a>` 
+                                : '<span style="font-size:11px; color:#94a3b8;"><i class="bi bi-image-alt"></i> No Photo</span>'}
+                        </div>
+                    </div>
+                `;
+            });
+            ledgerDiv.innerHTML = html;
+        } catch (error) {
+            console.error("Error fetching ledger:", error);
+            ledgerDiv.innerHTML = '<p style="text-align:center; color:#ef4444; font-size:13px;">Error loading bills. Check your database index.</p>';
+        }
     }
 
     function paySupplier(upi, name) {
