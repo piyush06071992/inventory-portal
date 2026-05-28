@@ -388,10 +388,28 @@
                     
                     ${!isTerminated ? `
                     <div class="sc-actions-grid">
-                        <button class="btn-sc btn-pin" onclick="sendPinWA('${stf.name}', '${stf.phone}', '${stf.securePin}')"><i class="bi bi-whatsapp"></i> Send Login PIN to Staff</button>
-                        <button class="btn-sc btn-attn" onclick="alert('Attendance Module Opening...')"><i class="bi bi-calendar-check"></i> Log Attendance</button>
-                        <button class="btn-sc btn-pay" onclick="payStaff('${stf.upiId || ''}', '${stf.name}', '${stf.id}')"><i class="bi bi-currency-rupee"></i> Pay Salary</button>
-                    </div>
+    
+    <button class="btn-sc btn-wa" onclick="window.open('https://wa.me/91${stf.phone}', '_blank')">
+        <i class="bi bi-whatsapp"></i> WhatsApp
+    </button>
+
+    <button class="btn-sc" style="background:#10b981;" onclick="window.location.href='tel:${stf.phone}'">
+        <i class="bi bi-telephone-fill"></i> Direct Call
+    </button>
+
+    <button class="btn-sc btn-pin" onclick="sendPinWA('${stf.name}', '${stf.phone}', '${stf.securePin}')">
+        <i class="bi bi-key-fill"></i> Send Login PIN
+    </button>
+
+    <button class="btn-sc btn-attn" onclick="alert('Attendance Module Opening...')">
+        <i class="bi bi-calendar-check"></i> Attendance
+    </button>
+
+    <button class="btn-sc btn-pay" onclick="payStaff('${stf.upiId || ''}', '${stf.name}', '${stf.id}')">
+        <i class="bi bi-currency-rupee"></i> Pay Salary
+    </button>
+
+</div>
                     ` : ''}
 
                     <div class="admin-actions">
