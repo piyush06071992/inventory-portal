@@ -124,15 +124,14 @@
             }
         });
 
-        // 2. LAYER 2: MULTI-DEVICE & PERMISSION PROTECTION (Real-time Snapshot)
+  // 2. LAYER 2: MULTI-DEVICE & PERMISSION PROTECTION (Real-time Snapshot)
         db.collection('companies').doc(activeUserPhone).collection('staff').doc(activeStaffId)
         .onSnapshot((doc) => {
             if (doc.exists) {
                 const data = doc.data();
 
-               // Multi-Device Protection: Compare database login time to this browser's login time
-                // Using ">" ensures we only kick out if the database has a NEWER login time.
-                // This prevents Firebase's local cache from accidentally kicking us out with an OLD time during page load!
+                // Multi-Device Protection: IGNORING STALE CACHE BY USING ">" instead of "!=="
+                // This stops Firebase from kicking you out with old cached timestamps!
                 if (data.lastLoginTime && data.lastLoginTime > myLoginTime) {
                     handleLogout("SECURITY ALERT: Your account was just logged in from another device. This active session is being closed.");
                     return;
@@ -147,12 +146,12 @@
                 // Update UI details
                 document.getElementById('display-staff-name').innerHTML = `<i class="bi bi-person-badge-fill"></i> Welcome, ${data.name}`;
 
-         // LIVE PERMISSION CHECK
+                // LIVE PERMISSION CHECK
                 hasEnterStockPermission = (data.permissions && data.permissions.canEnterStock === true);
                 
-                // If the stock menu is currently open, dynamically update the lock icon if permissions change in real-time
+                // Real-time UI unlock! If they are looking at the menu, unlock it instantly.
                 if (document.getElementById('stock-menu-modal').style.display === 'flex') {
-                    openStockMenu();
+                    openStockMenu(); 
                 }
 
             } else {
