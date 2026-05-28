@@ -99,14 +99,24 @@
                             throw new Error("Your account has been deactivated. Please contact the owner.");
                         }
                         
-                        // 4. Success! Save context and redirect
+                // 4. Success! Synchronize Login Time
+                        const exactLoginTime = new Date().toISOString();
+                        
                         localStorage.setItem("activeUserPhone", shopPhone); // Keeps the database paths working
                         localStorage.setItem("activeStaffId", staff.id);
                         localStorage.setItem("activeStaffName", staff.name);
-                        localStorage.setItem("assignedBranch", staff.assignedBranch || "");
                         
-                        // Set standard login parameters so auth.js doesn't kick them out
-                        localStorage.setItem("myLoginTime", Date.now().toString()); 
+                        // If assignedBranch is an array (multi-branch), store it as a JSON string
+                        const branchData = typeof staff.assignedBranch === 'object' ? JSON.stringify(staff.assignedBranch) : (staff.assignedBranch || "");
+                        localStorage.setItem("assignedBranch", branchData);
+                        
+                        // Set standard login parameters
+                        localStorage.setItem("myLoginTime", exactLoginTime); 
+                        
+                        // 5. Update Firebase with the EXACT SAME time before redirecting
+                        await db.collection('companies').doc(shopPhone).collection('staff').doc(staff.id).update({
+                            lastLoginTime: exactLoginTime
+                        });
                         
                         alert("Welcome back, " + staff.name + "!");
                         window.location.href = '/staff-dashboard.html';
