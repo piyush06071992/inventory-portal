@@ -273,22 +273,40 @@
         }
     }
 
-    function loadBranchDropdown() {
-        const activeUserPhone = localStorage.getItem("activeUserPhone");
-        const db = firebase.firestore();
+ function loadBranchDropdown() {
+    const activeUserPhone = localStorage.getItem("activeUserPhone");
+    const db = firebase.firestore();
+    
+    db.collection('companies').doc(activeUserPhone).collection('branches').get().then(snap => {
+
+        const select = document.getElementById('stf-branch');
+        select.innerHTML = '';
+
+        const branchFilter = document.getElementById('branch-filter');
+        branchFilter.innerHTML = `<option value="">All Branches</option>`;
+
+        globalBranchesData = {};
         
-        db.collection('companies').doc(activeUserPhone).collection('branches').get().then(snap => {
-            const select = document.getElementById('stf-branch');
-            select.innerHTML = '';
-            globalBranchesData = {};
-            
-            snap.forEach(doc => {
-                const branch = doc.data();
-                globalBranchesData[branch.branchId] = branch.branchName;
-                select.innerHTML += `<option value="${branch.branchId}">${branch.branchName}</option>`;
-            });
+        snap.forEach(doc => {
+
+            const branch = doc.data();
+
+            globalBranchesData[branch.branchId] = branch.branchName;
+
+            select.innerHTML += `
+                <option value="${branch.branchId}">
+                    ${branch.branchName}
+                </option>
+            `;
+
+            branchFilter.innerHTML += `
+                <option value="${branch.branchId}">
+                    ${branch.branchName}
+                </option>
+            `;
         });
-    }
+    });
+}
 
     // --- UI NAVIGATION ---
     function switchTab(tab) {
