@@ -77,7 +77,7 @@
             <span id="lock-icon" style="margin-left:auto; display:none; color:#ef4444;"><i class="bi bi-lock-fill"></i></span>
         </button>
         
-     <button class="submenu-btn" onclick="alert('View Stock module coming soon!')">
+        <button class="submenu-btn" onclick="alert('View Stock module coming soon!')">
             <i class="bi bi-eye-fill"></i> View Stock
         </button>
     </div>
@@ -85,6 +85,7 @@
 
 <script>
     let hasEnterStockPermission = false;
+
     // Secure Logout Function
     function handleLogout(customMessage = null) {
         if(customMessage) alert(customMessage);
@@ -124,7 +125,7 @@
             }
         });
 
-  // 2. LAYER 2: MULTI-DEVICE & PERMISSION PROTECTION (Real-time Snapshot)
+        // 2. LAYER 2: MULTI-DEVICE & PERMISSION PROTECTION (Real-time Snapshot)
         db.collection('companies').doc(activeUserPhone).collection('staff').doc(activeStaffId)
         .onSnapshot((doc) => {
             if (doc.exists) {
