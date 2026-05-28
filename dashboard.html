@@ -38,14 +38,15 @@
         .btn-logout-panel { width: 100%; background-color: #f1f5f9; color: #64748b; border: 1px solid #e2e8f0; border-radius: 10px; padding: 12px; font-size: 14px; font-weight: 600; cursor: pointer; display: flex; align-items: center; justify-content: center; gap: 8px; transition: all 0.2s ease; }
        .btn-logout-panel:hover { background-color: #fee2e2; color: #ef4444; border-color: #fca5a5; }
         
-        /* Sub-menu Modal Styles */
-        .modal-overlay { display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.6); z-index: 1000; justify-content: center; align-items: flex-end; padding: 10px; box-sizing: border-box; backdrop-filter: blur(4px);}
-        .modal-card { background: white; width: 100%; max-width: 450px; border-radius: 20px 20px 20px 20px; padding: 25px 20px; position: relative; animation: slideUp 0.3s ease-out; margin-bottom: 20px;}
-        @keyframes slideUp { from { transform: translateY(100%); opacity: 0; } to { transform: translateY(0); opacity: 1; } }
-        .modal-close { position: absolute; top: 15px; right: 15px; background: #f1f5f9; border: none; border-radius: 50%; width: 32px; height: 32px; font-size: 16px; cursor: pointer; color: #475569;}
-        .submenu-btn { width: 100%; background: #f8fafc; border: 2px solid #e2e8f0; color: #0f172a; padding: 16px; border-radius: 12px; font-size: 16px; font-weight: 600; text-align: left; margin-bottom: 12px; cursor: pointer; display: flex; align-items: center; gap: 12px; transition: all 0.2s; }
-        .submenu-btn:hover { border-color: #3b82f6; background: #eff6ff; color: #1d4ed8; }
-        .submenu-btn i { font-size: 20px; color: #3b82f6; }
+      /* Sub-menu Modal Styles */
+        .modal-overlay { display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(15, 23, 42, 0.7); z-index: 1000; justify-content: center; align-items: center; padding: 20px; box-sizing: border-box; backdrop-filter: blur(6px);}
+        .modal-card { background: white; width: 100%; max-width: 380px; border-radius: 24px; padding: 30px 24px; position: relative; animation: popIn 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275); box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.25);}
+        @keyframes popIn { from { transform: scale(0.9); opacity: 0; } to { transform: scale(1); opacity: 1; } }
+        .modal-close { position: absolute; top: 16px; right: 16px; background: #f1f5f9; border: none; border-radius: 50%; width: 36px; height: 36px; font-size: 18px; cursor: pointer; color: #64748b; transition: background 0.2s; display: flex; align-items: center; justify-content: center;}
+        .modal-close:hover { background: #e2e8f0; color: #0f172a; }
+        .submenu-btn { width: 100%; background: #ffffff; border: 2px solid #e2e8f0; color: #1e293b; padding: 18px; border-radius: 16px; font-size: 16px; font-weight: 700; text-align: left; margin-bottom: 12px; cursor: pointer; display: flex; align-items: center; gap: 15px; transition: all 0.2s; box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.05);}
+        .submenu-btn:hover { border-color: #3b82f6; background: #f8fafc; transform: translateY(-2px); box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1); }
+        .submenu-btn i { font-size: 24px; color: #3b82f6; }
     </style>
 </head>
 <body>
