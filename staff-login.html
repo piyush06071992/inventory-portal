@@ -2,44 +2,88 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <title>Staff Portal - Business Saarthi</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>Staff Login - Business Saarthi</title>
+    
     <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-auth-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-firestore-compat.js"></script>
+    
     <link rel="stylesheet" href="/style.css">
+    
+    <style>
+        .wrapper { display: flex; flex-direction: column; align-items: center; justify-content: center; min-height: 100vh; padding: 20px; }
+        .pin-wrapper { position: relative; width: 100%; margin-bottom: 15px; }
+        .view-btn-toggle { position: absolute; right: 18px; top: 50%; transform: translateY(-50%); color: var(--accent); cursor: pointer; font-size: 16px; font-weight: 900; }
+        input { width: 100%; padding: 12px; margin-bottom: 10px; border: 2px solid #cbd5e1; border-radius: 10px; }
+        button { width: 100%; padding: 14px; background: #1e3a8a; color: white; border: none; border-radius: 10px; font-weight: 700; cursor: pointer; }
+    </style>
 </head>
 <body>
     <div class="wrapper">
         <h2>STAFF LOGIN</h2>
-        <input type="text" id="stf-phone" placeholder="Mobile Number" maxlength="10">
-        <input type="password" id="stf-pin" placeholder="6-Digit PIN" maxlength="6">
-        <button onclick="handleStaffLogin()">LOGIN</button>
+        <input type="text" id="stf-phone" placeholder="Mobile Number" maxlength="10" inputmode="numeric">
+        
+        <div class="pin-wrapper">
+            <input type="password" id="stf-pin" placeholder="6-Digit PIN" maxlength="6" inputmode="numeric">
+            <span id="toggle-txt" class="view-btn-toggle" onclick="togglePin()">SHOW</span>
+        </div>
+        
+        <button onclick="handleStaffLogin()" id="login-btn">LOGIN</button>
     </div>
 
+    <script src="/auth.js"></script>
+
     <script>
+        function togglePin() {
+            const field = document.getElementById('stf-pin');
+            const txt = document.getElementById('toggle-txt');
+            field.type = (field.type === 'password') ? 'text' : 'password';
+            txt.innerText = (field.type === 'password') ? 'SHOW' : 'HIDE';
+        }
+
         async function handleStaffLogin() {
-            const phone = document.getElementById('stf-phone').value;
-            const pin = document.getElementById('stf-pin').value;
-            const db = firebase.firestore();
-
-            // We search through the company's staff subcollection
-            // Since we know the active company phone, we can find the staff record
-            const companyPhone = localStorage.getItem("activeUserPhone"); 
+            const phone = document.getElementById('stf-phone').value.trim();
+            const pin = document.getElementById('stf-pin').value.trim();
+            const btn = document.getElementById('login-btn');
             
-            const snap = await db.collection('companies').doc(companyPhone)
-                                 .collection('staff').where('phone', '==', phone).get();
+            if (!phone || !pin) return alert("Enter Mobile and PIN");
+            
+            btn.disabled = true;
+            btn.innerText = "VERIFYING...";
 
-            if (!snap.empty) {
-                const staff = snap.docs[0].data();
-                if (staff.securePin === pin && staff.status === 'Active') {
-                    localStorage.setItem("activeStaffId", staff.id);
-                    localStorage.setItem("activeStaffName", staff.name);
-                    window.location.href = '/staff-dashboard.html';
-                } else {
-                    alert("Invalid PIN or Terminated Status");
+            try {
+                // We use the master shop phone from local storage to find the staff member
+                const shopPhone = localStorage.getItem("activeUserPhone");
+                if(!shopPhone) {
+                    alert("Please ask your Shop Owner to log in once first!");
+                    return;
                 }
-            } else {
-                alert("Staff not found!");
+
+                const db = firebase.firestore();
+                const snap = await db.collection('companies').doc(shopPhone)
+                                     .collection('staff').where('phone', '==', phone).get();
+
+                if (!snap.empty) {
+                    const staff = snap.docs[0].data();
+                    if (staff.securePin === pin && staff.status === 'Active') {
+                        localStorage.setItem("activeStaffId", staff.id);
+                        localStorage.setItem("activeStaffName", staff.name);
+                        localStorage.setItem("assignedBranch", staff.assignedBranch);
+                        alert("Welcome, " + staff.name + "!");
+                        window.location.href = '/staff-dashboard.html';
+                    } else {
+                        alert("Invalid PIN or Terminated Status");
+                    }
+                } else {
+                    alert("Staff member not found!");
+                }
+            } catch (err) {
+                console.error(err);
+                alert("Login Error: " + err.message);
+            } finally {
+                btn.disabled = false;
+                btn.innerText = "LOGIN";
             }
         }
     </script>
