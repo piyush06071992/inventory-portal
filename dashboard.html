@@ -36,7 +36,16 @@
         .color-emerald { background: linear-gradient(135deg, #10b981, #047857); }
         .color-slate { background: linear-gradient(135deg, #64748b, #334155); }
         .btn-logout-panel { width: 100%; background-color: #f1f5f9; color: #64748b; border: 1px solid #e2e8f0; border-radius: 10px; padding: 12px; font-size: 14px; font-weight: 600; cursor: pointer; display: flex; align-items: center; justify-content: center; gap: 8px; transition: all 0.2s ease; }
-        .btn-logout-panel:hover { background-color: #fee2e2; color: #ef4444; border-color: #fca5a5; }
+       .btn-logout-panel:hover { background-color: #fee2e2; color: #ef4444; border-color: #fca5a5; }
+        
+        /* Sub-menu Modal Styles */
+        .modal-overlay { display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.6); z-index: 1000; justify-content: center; align-items: flex-end; padding: 10px; box-sizing: border-box; backdrop-filter: blur(4px);}
+        .modal-card { background: white; width: 100%; max-width: 450px; border-radius: 20px 20px 20px 20px; padding: 25px 20px; position: relative; animation: slideUp 0.3s ease-out; margin-bottom: 20px;}
+        @keyframes slideUp { from { transform: translateY(100%); opacity: 0; } to { transform: translateY(0); opacity: 1; } }
+        .modal-close { position: absolute; top: 15px; right: 15px; background: #f1f5f9; border: none; border-radius: 50%; width: 32px; height: 32px; font-size: 16px; cursor: pointer; color: #475569;}
+        .submenu-btn { width: 100%; background: #f8fafc; border: 2px solid #e2e8f0; color: #0f172a; padding: 16px; border-radius: 12px; font-size: 16px; font-weight: 600; text-align: left; margin-bottom: 12px; cursor: pointer; display: flex; align-items: center; gap: 12px; transition: all 0.2s; }
+        .submenu-btn:hover { border-color: #3b82f6; background: #eff6ff; color: #1d4ed8; }
+        .submenu-btn i { font-size: 20px; color: #3b82f6; }
     </style>
 </head>
 <body>
@@ -52,12 +61,9 @@
             <i class="bi bi-cart-dash-fill"></i> SALE POINT (POS)
         </button>
 
-       <div class="grid-row">
-            <button class="btn-dashboard-item color-blue" onclick="window.location.href='/enter-stock.html'">
-                <i class="bi bi-box-seam-fill"></i><span>Enter Stock</span>
-            </button>
-            <button class="btn-dashboard-item color-indigo" onclick="window.location.href='/manage-stock.html'">
-                <i class="bi bi-tags-fill"></i><span>Manage Stock</span>
+      <div class="grid-row">
+            <button class="btn-dashboard-item color-indigo" onclick="openStockMenu()">
+                <i class="bi bi-box-seam-fill"></i><span>Manage Stock</span>
             </button>
             <button class="btn-dashboard-item color-purple" onclick="window.location.href='/suppliers.html'">
                 <i class="bi bi-truck"></i><span>Suppliers</span>
@@ -82,8 +88,24 @@
             </button>
         </div>
 
-        <button class="btn-logout-panel" onclick="handleLogout()">
+   <button class="btn-logout-panel" onclick="handleLogout()">
             <i class="bi bi-box-arrow-left"></i> Logout From Portal
+        </button>
+    </div>
+</div>
+
+<!-- Stock Management Sub-Menu Modal -->
+<div class="modal-overlay" id="stock-menu-modal">
+    <div class="modal-card">
+        <button class="modal-close" onclick="closeStockMenu()"><i class="bi bi-x-lg"></i></button>
+        <h2 style="margin-top:0; color:#1e3a8a; font-size:20px; margin-bottom: 20px;"><i class="bi bi-box-seam-fill"></i> Manage Stock</h2>
+        
+        <button class="submenu-btn" onclick="window.location.href='/enter-stock.html'">
+            <i class="bi bi-plus-circle-fill"></i> Enter New Stock
+        </button>
+        
+        <button class="submenu-btn" onclick="alert('View Stock module coming soon!')">
+            <i class="bi bi-eye-fill"></i> View Stock
         </button>
     </div>
 </div>
@@ -91,6 +113,15 @@
 <script src="/auth.js"></script>
 
 <script>
+    // Modal Functions
+    function openStockMenu() {
+        document.getElementById('stock-menu-modal').style.display = 'flex';
+    }
+    
+    function closeStockMenu() {
+        document.getElementById('stock-menu-modal').style.display = 'none';
+    }
+
     // Force Cleanup of Old PWA Cache
     if ('serviceWorker' in navigator) {
         navigator.serviceWorker.getRegistrations().then(function(registrations) {
