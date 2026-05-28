@@ -419,7 +419,13 @@
             return;
         }
 
-        const staffArray = Object.values(globalStaffData);
+     const staffArray = Object.values(globalStaffData);
+
+const searchText = document.getElementById('staff-search')?.value.toLowerCase() || '';
+
+const selectedRole = document.getElementById('role-filter')?.value || '';
+
+const selectedBranch = document.getElementById('branch-filter')?.value || '';
         let displayCount = 0;
 
         staffArray.forEach(stf => {
