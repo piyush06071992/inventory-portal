@@ -12,24 +12,42 @@
     <link rel="stylesheet" href="/style.css">
     
     <style>
-        .wrapper { display: flex; flex-direction: column; align-items: center; justify-content: center; min-height: 100vh; padding: 20px; }
-        .pin-wrapper { position: relative; width: 100%; margin-bottom: 15px; }
-        .view-btn-toggle { position: absolute; right: 18px; top: 50%; transform: translateY(-50%); color: var(--accent); cursor: pointer; font-size: 16px; font-weight: 900; }
-        input { width: 100%; padding: 12px; margin-bottom: 10px; border: 2px solid #cbd5e1; border-radius: 10px; }
-        button { width: 100%; padding: 14px; background: #1e3a8a; color: white; border: none; border-radius: 10px; font-weight: 700; cursor: pointer; }
+        .wrapper { display: flex; flex-direction: column; align-items: center; justify-content: center; min-height: 100vh; padding: 20px; box-sizing: border-box; background-color: #f1f5f9; }
+        .login-card { background: white; padding: 30px 20px; border-radius: 16px; box-shadow: 0 10px 25px rgba(0,0,0,0.05); width: 100%; max-width: 400px; text-align: center; }
+        .login-card h2 { color: #1e3a8a; margin-top: 0; margin-bottom: 25px; font-weight: 800; font-family: 'Inter', sans-serif; }
+        .pin-wrapper { position: relative; width: 100%; margin-bottom: 20px; }
+        .view-btn-toggle { position: absolute; right: 15px; top: 50%; transform: translateY(-50%); color: #3b82f6; cursor: pointer; font-size: 14px; font-weight: 800; }
+        input { width: 100%; padding: 14px 15px; margin-bottom: 15px; border: 2px solid #cbd5e1; border-radius: 10px; font-size: 15px; box-sizing: border-box; font-weight: 600; color: #0f172a; }
+        input:focus { outline: none; border-color: #3b82f6; }
+        .pin-wrapper input { margin-bottom: 0; padding-right: 70px; }
+        .btn-login { width: 100%; padding: 16px; background: linear-gradient(135deg, #1e3a8a, #3b82f6); color: white; border: none; border-radius: 12px; font-weight: 800; font-size: 16px; cursor: pointer; transition: all 0.2s; box-shadow: 0 6px 15px rgba(59, 130, 246, 0.3); }
+        .btn-login:disabled { background: #94a3b8; cursor: not-allowed; box-shadow: none; }
+        .label-text { display: block; text-align: left; font-size: 12px; font-weight: 700; color: #64748b; margin-bottom: 6px; text-transform: uppercase; }
     </style>
 </head>
 <body>
     <div class="wrapper">
-        <h2>STAFF LOGIN</h2>
-        <input type="text" id="stf-phone" placeholder="Mobile Number" maxlength="10" inputmode="numeric">
-        
-        <div class="pin-wrapper">
-            <input type="password" id="stf-pin" placeholder="6-Digit PIN" maxlength="6" inputmode="numeric">
-            <span id="toggle-txt" class="view-btn-toggle" onclick="togglePin()">SHOW</span>
+        <div class="login-card">
+            <h2>STAFF PORTAL</h2>
+            
+            <label class="label-text">Shop Registered Mobile</label>
+            <input type="text" id="shop-phone" placeholder="10-Digit Shop Number" maxlength="10" inputmode="numeric">
+            
+            <label class="label-text">Your Staff Mobile</label>
+            <input type="text" id="stf-phone" placeholder="10-Digit Your Number" maxlength="10" inputmode="numeric">
+            
+            <label class="label-text">Your 6-Digit PIN</label>
+            <div class="pin-wrapper">
+                <input type="password" id="stf-pin" placeholder="******" maxlength="6" inputmode="numeric">
+                <span id="toggle-txt" class="view-btn-toggle" onclick="togglePin()">SHOW</span>
+            </div>
+            
+            <button onclick="handleStaffLogin()" id="login-btn" class="btn-login">LOGIN TO DASHBOARD</button>
+            
+            <div style="margin-top: 20px; font-size: 13px; color: #64748b;">
+                <a href="/login.html" style="color: #3b82f6; text-decoration: none; font-weight: 600;">← Back to Owner Login</a>
+            </div>
         </div>
-        
-        <button onclick="handleStaffLogin()" id="login-btn">LOGIN</button>
     </div>
 
     <script src="/auth.js"></script>
@@ -43,47 +61,70 @@
         }
 
         async function handleStaffLogin() {
-            const phone = document.getElementById('stf-phone').value.trim();
+            const shopPhone = document.getElementById('shop-phone').value.trim();
+            const staffPhone = document.getElementById('stf-phone').value.trim();
             const pin = document.getElementById('stf-pin').value.trim();
             const btn = document.getElementById('login-btn');
             
-            if (!phone || !pin) return alert("Enter Mobile and PIN");
+            if (shopPhone.length !== 10 || staffPhone.length !== 10 || pin.length !== 6) {
+                return alert("Please enter valid 10-digit mobile numbers and a 6-digit PIN.");
+            }
             
             btn.disabled = true;
-            btn.innerText = "VERIFYING...";
+            btn.innerText = "VERIFYING CREDENTIALS...";
 
             try {
-                // We use the master shop phone from local storage to find the staff member
-                const shopPhone = localStorage.getItem("activeUserPhone");
-                if(!shopPhone) {
-                    alert("Please ask your Shop Owner to log in once first!");
-                    return;
+                // 1. Authenticate behind the scenes to satisfy Firestore Security Rules
+                const authEmail = shopPhone + "@businesssaarthi.com";
+                const masterKey = shopPhone + "@SAARTHI";
+                
+                try {
+                    await firebase.auth().signInWithEmailAndPassword(authEmail, masterKey);
+                } catch (authErr) {
+                    throw new Error("Invalid Shop Registered Mobile Number. Workspace not found.");
                 }
 
+                // 2. Now that we are authorized, query the database for the specific staff member
                 const db = firebase.firestore();
                 const snap = await db.collection('companies').doc(shopPhone)
-                                     .collection('staff').where('phone', '==', phone).get();
+                                     .collection('staff').where('phone', '==', staffPhone).get();
 
                 if (!snap.empty) {
                     const staff = snap.docs[0].data();
-                    if (staff.securePin === pin && staff.status === 'Active') {
+                    
+                    // 3. Verify the PIN and Status
+                    if (staff.securePin === pin) {
+                        if (staff.status !== 'Active') {
+                            await firebase.auth().signOut();
+                            throw new Error("Your account has been deactivated. Please contact the owner.");
+                        }
+                        
+                        // 4. Success! Save context and redirect
+                        localStorage.setItem("activeUserPhone", shopPhone); // Keeps the database paths working
                         localStorage.setItem("activeStaffId", staff.id);
                         localStorage.setItem("activeStaffName", staff.name);
-                        localStorage.setItem("assignedBranch", staff.assignedBranch);
-                        alert("Welcome, " + staff.name + "!");
+                        localStorage.setItem("assignedBranch", staff.assignedBranch || "");
+                        
+                        // Set standard login parameters so auth.js doesn't kick them out
+                        localStorage.setItem("myLoginTime", Date.now().toString()); 
+                        
+                        alert("Welcome back, " + staff.name + "!");
                         window.location.href = '/staff-dashboard.html';
+                        
                     } else {
-                        alert("Invalid PIN or Terminated Status");
+                        await firebase.auth().signOut();
+                        throw new Error("Incorrect PIN. Please try again.");
                     }
                 } else {
-                    alert("Staff member not found!");
+                    await firebase.auth().signOut();
+                    throw new Error("Staff mobile number not found in this shop's records.");
                 }
             } catch (err) {
                 console.error(err);
-                alert("Login Error: " + err.message);
+                alert("Login Failed: " + err.message);
             } finally {
                 btn.disabled = false;
-                btn.innerText = "LOGIN";
+                btn.innerText = "LOGIN TO DASHBOARD";
             }
         }
     </script>
