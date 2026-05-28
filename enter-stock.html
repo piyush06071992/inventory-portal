@@ -333,6 +333,7 @@ async function lookupProduct() {
         const barcode = document.getElementById('barcode').value.trim();
         if (!barcode) return;
         
+        // Auto-clear UI for new scan
         document.getElementById('item-name').value = "";
         document.getElementById('category').selectedIndex = 0;
         document.getElementById('unit').selectedIndex = 0;
@@ -345,7 +346,7 @@ async function lookupProduct() {
         
         try {
             const doc = await firebase.firestore().collection('companies').doc(activeUserPhone).collection('products_master').doc(barcode).get();
-            let productParams = null;
+            let productParams = {};
             
             if (doc.exists) {
                 const data = doc.data();
@@ -357,18 +358,20 @@ async function lookupProduct() {
                     }
                     el.value = data[id] || "";
                 });
-                if (data.customParams) productParams = { ...data.customParams };
+                
+                // Learn parameters from this product instantly
+                if (data.customParams) {
+                    productParams = data.customParams;
+                    for (const [k, v] of Object.entries(productParams)) {
+                        if (!savedShopParams[k]) savedShopParams[k] = [];
+                        if (v && !savedShopParams[k].includes(v)) savedShopParams[k].push(v);
+                    }
+                }
             }
 
-            // 1. Auto-load all global shop parameters (leave value blank for new items)
+            // Draw ALL globally known parameters on the screen automatically
             for (const key of Object.keys(savedShopParams)) {
-                addParam(key, productParams ? (productParams[key] || "") : "");
-                if (productParams) delete productParams[key]; // Mark as added
-            }
-            
-            // 2. Load any extra parameters specific to this item (if they somehow aren't global yet)
-            if (productParams) {
-                for (const [key, val] of Object.entries(productParams)) { addParam(key, val); }
+                addParam(key, productParams[key] || "");
             }
         } catch (e) { console.error(e); }
     }
@@ -426,18 +429,20 @@ async function lookupProduct() {
     }
 
     // --- 5. CART & FIREBASE SAVING ---
-    function addItemToBill() {
-        // Collect Dynamic Parameters
-     let customData = {};
+ function addItemToBill() {
+        // Collect Dynamic Parameters & Train Global Memory Instantly
+        let customData = {};
         document.querySelectorAll('.param-row').forEach(row => {
             let key = row.querySelector('.param-name').value.trim();
             let val = row.querySelector('.param-val').value.trim();
-            if(key && val) {
-                customData[key] = val;
-                // Add key to dropdown memory if it doesn't exist yet
-                const datalist = document.getElementById('saved-param-keys');
-                if (!datalist.querySelector(`option[value="${key}"]`)) {
-                    datalist.innerHTML += `<option value="${key}">`;
+            
+            // Only save if a valid key is selected, ignore blanks or "ADD_NEW"
+            if(key && key !== "ADD_NEW") {
+                if(val && val !== "ADD_NEW") {
+                    customData[key] = val;
+                    // Teach the system memory immediately
+                    if(!savedShopParams[key]) savedShopParams[key] = [];
+                    if(!savedShopParams[key].includes(val)) savedShopParams[key].push(val);
                 }
             }
         });
@@ -498,10 +503,10 @@ async function lookupProduct() {
     
 function clearItemForm() {
         ['barcode', 'item-name', 'qty', 'cost-per', 'total-cost', 'profit-pct', 'msp'].forEach(id => document.getElementById(id).value = "");
-        document.getElementById('dynamic-params').innerHTML = "";
+        document.getElementById('dynamic-params').innerHTML = ""; 
         document.getElementById('tax-split').style.display = 'none';
         
-        // Auto-load global parameters for the next item (Values blank by default)
+        // Auto-draw all globally known parameters so they are ready for the next item
         for (const key of Object.keys(savedShopParams)) {
             addParam(key, "");
         }
