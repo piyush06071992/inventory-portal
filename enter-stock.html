@@ -290,8 +290,6 @@ async function lookupProduct() {
             if (doc.exists) {
                 const data = doc.data();
                 document.getElementById('item-name').value = data.name || "";
-                
-                // Set Category/Unit
                 ['category', 'unit'].forEach(id => {
                     const el = document.getElementById(id);
                     if(data[id] && !Array.from(el.options).some(opt => opt.value === data[id])) {
@@ -299,17 +297,12 @@ async function lookupProduct() {
                     }
                     el.value = data[id] || "";
                 });
-
-                // RESTORE PERSONAL PARAMETERS
                 if (data.customParams) {
-                    const container = document.getElementById('dynamic-params');
-                    container.innerHTML = ""; // Clear current
-                    for (const [key, val] of Object.entries(data.customParams)) {
-                        addParam(key, val); // Pass the saved key/val
-                    }
+                    document.getElementById('dynamic-params').innerHTML = "";
+                    for (const [key, val] of Object.entries(data.customParams)) { addParam(key, val); }
                 }
             }
-        } catch (e) { console.error("Lookup failed", e); }
+        } catch (e) { console.error(e); }
     }
 
     // --- 4. CALCULATORS & GST TOGGLE ---
@@ -389,7 +382,7 @@ async function lookupProduct() {
             customParams: customData
         };
 
-        if(!item.name || item.qty <= 0 || item.totalCost <= 0) {
+        if(!item.name || item.qty <= 0 || item.totalCost <= 0) {     return alert("Product Name, valid Qty, and Total Cost are mandatory!"); }
             return alert("Product Name, valid Qty, and Total Cost are mandatory!");
         }
 
@@ -435,8 +428,8 @@ async function lookupProduct() {
         document.getElementById('barcode').focus();
     }
 
-    async function saveWholeBill() {
-        if (currentBillItems.length === 0) return alert("Please add at least one item to the bill first.");
+   async function saveWholeBill() {
+        if (currentBillItems.length === 0) return alert("Add items to the bill first.");
         const branchId = document.getElementById('branch-select').value;
         const supplierId = document.getElementById('supplier-select').value;
         const billNum = document.getElementById('bill-num').value.trim();
@@ -444,52 +437,33 @@ async function lookupProduct() {
         if (!branchId || !supplierId || !billNum) return alert("Branch, Supplier, and Bill Number are mandatory!");
 
         const btn = document.getElementById('save-bill-btn'); 
-        btn.innerHTML = "UPLOADING & SAVING..."; btn.disabled = true;
+        btn.innerHTML = "SAVING..."; btn.disabled = true;
 
         try {
-            const db = firebase.firestore(); let imageUrl = "";
-            const fileInput = document.getElementById('bill-image').files[0];
-            
-            if (fileInput) {
-                const storageRef = firebase.storage().ref(`bills/${activeUserPhone}/${Date.now()}_${fileInput.name}`);
-                await storageRef.put(fileInput); imageUrl = await storageRef.getDownloadURL();
-            }
-
-            const grandTotal = currentBillItems.reduce((sum, item) => sum + item.totalCost, 0);
-            
-            await db.collection('companies').doc(activeUserPhone).collection('suppliers').doc(supplierId).collection('transactions').add({
-                billNum: billNum, amount: grandTotal, type: 'Purchase', billImageUrl: imageUrl, date: new Date().toISOString()
-            });
-
+            const db = firebase.firestore();
             const batch = db.batch();
+            
+            // Save Inventory to Branch
             for (const item of currentBillItems) {
                 const invRef = db.collection('companies').doc(activeUserPhone).collection('branches').doc(branchId).collection('inventory').doc();
-                batch.set(invRef, { ...item, supplierId: supplierId, billNum: billNum, timestamp: new Date().toISOString() });
+                batch.set(invRef, { ...item, supplierId, billNum, timestamp: new Date().toISOString() });
                 
+                // Save/Merge Master Product Data
                 if (item.barcode && item.barcode !== "") {
                     const masterRef = db.collection('companies').doc(activeUserPhone).collection('products_master').doc(item.barcode);
-               if (item.barcode && item.barcode !== "") {
-                    const masterRef = db.collection('companies').doc(activeUserPhone).collection('products_master').doc(item.barcode);
                     batch.set(masterRef, { 
-                        name: item.name, 
-                        category: item.category, 
-                        unit: item.unit, 
-                        lastCostPrice: item.costPer, 
-                        currentMsp: item.msp, 
-                        customParams: item.customParams, // THIS SAVES THE PARAMETERS TO MEMORY
-                        lastUpdated: new Date().toISOString() 
+                        name: item.name, category: item.category, unit: item.unit, 
+                        lastCostPrice: item.costPer, currentMsp: item.msp, 
+                        customParams: item.customParams, lastUpdated: new Date().toISOString() 
                     }, { merge: true });
                 }
             }
             await batch.commit();
-            
-            alert("Success! Bill Saved & Inventory Updated.");
-            document.getElementById('bill-num').value = ""; document.getElementById('bill-image').value = ""; currentBillItems = []; renderCart();
-            
+            alert("Success! Bill Saved.");
+            window.location.reload();
         } catch (e) { 
             console.error(e); alert("Database Error: " + e.message); 
-        } finally { 
-            btn.innerHTML = `<i class="bi bi-cloud-arrow-up-fill"></i> SAVE WHOLE BILL`; btn.disabled = false; 
+            btn.innerHTML = "SAVE WHOLE BILL"; btn.disabled = false;
         }
     }
 </script>
