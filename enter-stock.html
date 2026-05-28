@@ -7,8 +7,9 @@
     
     <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-firestore-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-storage-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-auth-compat.js"></script>
-    <script src="/auth.js"></script>
+    <script src="https://unpkg.com/html5-qrcode"></script> <script src="/auth.js"></script>
     
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.1/font/bootstrap-icons.css">
@@ -19,47 +20,92 @@
         .wrapper { padding: 16px; max-width: 700px; margin: auto; padding-bottom: 50px; }
         
         .card { background: white; padding: 18px; border-radius: 16px; margin-bottom: 16px; border: 1px solid #e2e8f0; }
-        h2 { font-size: 18px; margin: 0 0 15px 0; color: var(--navy); }
+        h2 { font-size: 18px; margin: 0 0 15px 0; color: var(--navy); display: flex; align-items: center; gap: 8px;}
         
         label { display: block; font-size: 12px; font-weight: 700; color: #64748b; margin-bottom: 4px; text-transform: uppercase; }
-        input, select { width: 100%; padding: 14px; margin-bottom: 12px; border: 2px solid #e2e8f0; border-radius: 10px; font-size: 16px; box-sizing: border-box; }
-        input:focus { border-color: var(--navy); outline: none; }
+        input, select { width: 100%; padding: 14px; margin-bottom: 12px; border: 2px solid #e2e8f0; border-radius: 10px; font-size: 15px; box-sizing: border-box; background: white; color: var(--text); font-weight: 500;}
+        input:focus, select:focus { border-color: var(--navy); outline: none; }
+        input[disabled], select[disabled] { background-color: #f1f5f9; color: #94a3b8; }
         
         .grid-2 { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
         
-        .btn-main { width: 100%; padding: 16px; border: none; border-radius: 12px; font-size: 16px; font-weight: 700; cursor: pointer; color: white; margin-bottom: 10px; }
+        .btn-main { width: 100%; padding: 16px; border: none; border-radius: 12px; font-size: 16px; font-weight: 700; cursor: pointer; color: white; margin-bottom: 10px; display: flex; align-items: center; justify-content: center; gap: 8px;}
         .btn-emerald { background: var(--emerald); }
         .btn-navy { background: var(--navy); }
+        .btn-outline { background: white; color: var(--navy); border: 2px solid var(--navy); }
         
-        .param-row { display: flex; gap: 8px; margin-bottom: 8px; }
-        .scanner-modal { display: none; position: fixed; top:0; left:0; width: 100%; height: 100%; background: #000; z-index: 9999; }
+        /* Scanner UI */
+        #reader { width: 100%; display: none; margin-bottom: 15px; border-radius: 10px; overflow: hidden; }
+        
+        /* Added Items Table */
+        .item-list { margin-top: 15px; border-top: 2px dashed #e2e8f0; padding-top: 15px; }
+        .cart-item { background: #f8fafc; border: 1px solid #e2e8f0; padding: 12px; border-radius: 10px; margin-bottom: 10px; display: flex; justify-content: space-between; align-items: center;}
+        .cart-item-details h4 { margin: 0 0 4px 0; font-size: 15px; color: var(--navy); }
+        .cart-item-details p { margin: 0; font-size: 12px; color: #64748b; }
+        .btn-remove { background: #fee2e2; color: #ef4444; border: none; padding: 8px 12px; border-radius: 8px; font-weight: bold; cursor: pointer; }
     </style>
 </head>
 <body>
 
 <div class="wrapper">
     <div class="card">
-        <h2><i class="bi bi-shop"></i> STOCK ENTRY</h2>
+        <h2><i class="bi bi-receipt"></i> 1. Bill Details</h2>
         
-        <!-- BRANCH SELECTOR (Visible only if Admin) -->
         <label>Select Branch</label>
-        <select id="branch-select"></select>
+        <select id="branch-select"><option value="">Loading branches...</option></select>
         
-        <label>Bill Number</label>
-        <input type="text" id="bill-num" placeholder="Enter Bill #">
+        <label>Supplier</label>
+        <select id="supplier-select"><option value="">Loading suppliers...</option></select>
         
-        <label>Select Supplier</label>
-        <select id="supplier-select"></select>
+        <div class="grid-2">
+            <div>
+                <label>Bill Number</label>
+                <input type="text" id="bill-num" placeholder="Enter Bill #">
+            </div>
+            <div>
+                <label>Upload Bill Photo</label>
+                <input type="file" id="bill-image" accept="image/*" style="padding: 10px;">
+            </div>
+        </div>
     </div>
 
     <div class="card">
-        <button class="btn-main btn-navy" onclick="openScanner()">
+        <h2><i class="bi bi-box-seam"></i> 2. Add Products</h2>
+        
+        <div id="reader"></div>
+        <button class="btn-main btn-navy" id="scan-btn" onclick="toggleScanner()">
             <i class="bi bi-qr-code-scan"></i> SCAN BARCODE
         </button>
+        
+        <label>Barcode / Product Code (Manual)</label>
+        <input type="text" id="barcode" placeholder="Enter or Scan Barcode" onchange="lookupProduct()">
         
         <label>Product Name</label>
         <input type="text" id="item-name" placeholder="Item Name">
         
+        <div class="grid-2">
+            <div>
+                <label>Category</label>
+                <select id="category" onchange="handleDropdownAdd('category')">
+                    <option value="">Select Category</option>
+                    <option value="Grocery">Grocery</option>
+                    <option value="Stationery">Stationery</option>
+                    <option value="ADD_NEW">+ Add New Category</option>
+                </select>
+            </div>
+            <div>
+                <label>Unit (UoM)</label>
+                <select id="unit" onchange="handleDropdownAdd('unit')">
+                    <option value="">Select Unit</option>
+                    <option value="Pieces">Pieces</option>
+                    <option value="Kg">Kg</option>
+                    <option value="Litres">Litres</option>
+                    <option value="Box">Box</option>
+                    <option value="ADD_NEW">+ Add New Unit</option>
+                </select>
+            </div>
+        </div>
+
         <div class="grid-2">
             <div><label>Qty</label><input type="number" id="qty" placeholder="0"></div>
             <div><label>Cost/Unit</label><input type="number" id="cost-per" placeholder="₹ 0.00"></div>
@@ -67,49 +113,155 @@
         
         <div class="grid-2">
             <div><label>Total Cost</label><input type="number" id="total-cost" placeholder="₹ 0.00"></div>
-            <div><label>GST %</label><input type="number" id="gst-rate" placeholder="0%"></div>
+            <div><label>GST %</label><input type="number" id="gst-rate" placeholder="0" value="0"></div>
         </div>
 
-        <div id="dynamic-params"></div>
-        <button class="btn-main" style="background:#e2e8f0; color:#475569;" onclick="addParam()">
-            + Add Custom Parameter
+        <button class="btn-main btn-outline" onclick="addItemToBill()">
+            <i class="bi bi-plus-circle-fill"></i> ADD ITEM TO BILL
         </button>
     </div>
 
-    <button class="btn-main btn-emerald" onclick="commitStock()">SAVE WHOLE BILL</button>
+    <div class="card">
+        <h2><i class="bi bi-cart-check"></i> 3. Bill Summary</h2>
+        <div id="item-list" class="item-list">
+            <p style="text-align: center; color: #94a3b8; font-size: 14px;">No items added yet.</p>
+        </div>
+        <h3 id="grand-total" style="text-align: right; color: var(--navy);">Total: ₹0.00</h3>
+        
+        <button class="btn-main btn-emerald" onclick="saveWholeBill()" id="save-bill-btn" style="margin-top: 15px;">
+            <i class="bi bi-cloud-arrow-up-fill"></i> SAVE WHOLE BILL
+        </button>
+    </div>
 </div>
 
 <script>
-    const db = firebase.firestore();
     const activeUserPhone = localStorage.getItem("activeUserPhone");
+    const assignedBranch = localStorage.getItem("assignedBranch"); // Used for Staff
+    
+    let html5QrcodeScanner = null;
+    let isScanning = false;
+    let currentBillItems = []; // The Cart Array
 
-    // 1. Initialize Page
+    // 1. Initialize Page Securely AFTER Auth confirms
     document.addEventListener('DOMContentLoaded', () => {
-        loadBranches();
-        loadSuppliers();
-        setupMathListeners();
+        firebase.auth().onAuthStateChanged((user) => {
+            if (user && activeUserPhone) {
+                loadBranches();
+                loadSuppliers();
+                setupMathListeners();
+            }
+        });
     });
 
-    // 2. Load Branches & Suppliers
+    // 2. Load Data from Firestore
     async function loadBranches() {
-        const snap = await db.collection('companies').doc(activeUserPhone).collection('branches').get();
+        const db = firebase.firestore();
         const select = document.getElementById('branch-select');
+        select.innerHTML = '<option value="">Select Branch</option>';
+        
+        const snap = await db.collection('companies').doc(activeUserPhone).collection('branches').get();
         snap.forEach(doc => {
             const b = doc.data();
             select.innerHTML += `<option value="${b.branchId}">${b.branchName}</option>`;
         });
+
+        // Staff Lock Logic
+        if (assignedBranch && assignedBranch !== "admin" && assignedBranch !== "") {
+            select.value = assignedBranch;
+            select.disabled = true; // Lock it so staff can't change it
+        }
     }
 
     async function loadSuppliers() {
-        const snap = await db.collection('companies').doc(activeUserPhone).collection('suppliers').get();
+        const db = firebase.firestore();
         const select = document.getElementById('supplier-select');
+        select.innerHTML = '<option value="">Select Supplier</option>';
+        
+        const snap = await db.collection('companies').doc(activeUserPhone).collection('suppliers').get();
         snap.forEach(doc => {
             const s = doc.data();
             select.innerHTML += `<option value="${s.id}">${s.businessName}</option>`;
         });
     }
 
-    // 3. Bi-Directional Math Logic
+    // 3. Dynamic Dropdowns (Add New Logic)
+    function handleDropdownAdd(elemId) {
+        const el = document.getElementById(elemId);
+        if(el.value === 'ADD_NEW') {
+            const newVal = prompt(`Enter new ${elemId}:`);
+            if(newVal && newVal.trim() !== "") {
+                const opt = document.createElement('option');
+                opt.value = newVal; opt.text = newVal;
+                el.add(opt, el.options[1]); // Insert at top
+                el.value = newVal;
+            } else {
+                el.selectedIndex = 0; // Reset
+            }
+        }
+    }
+
+    // 4. Scanner Logic (HTML5-QRCode)
+    function toggleScanner() {
+        const readerDiv = document.getElementById('reader');
+        const btn = document.getElementById('scan-btn');
+        
+        if (!isScanning) {
+            readerDiv.style.display = 'block';
+            html5QrcodeScanner = new Html5Qrcode("reader");
+            
+            // Prefer back camera for mobile
+            html5QrcodeScanner.start({ facingMode: "environment" }, { fps: 10, qrbox: {width: 250, height: 250} },
+                (decodedText) => {
+                    document.getElementById('barcode').value = decodedText;
+                    toggleScanner(); // Stop scanning on success
+                    lookupProduct(); // Trigger memory lookup
+                },
+                (errorMessage) => { /* ignore background scan errors */ }
+            ).catch(err => alert("Camera error: " + err));
+            
+            btn.innerHTML = `<i class="bi bi-x-circle"></i> STOP SCANNER`;
+            btn.classList.replace('btn-navy', 'btn-outline');
+            isScanning = true;
+        } else {
+            html5QrcodeScanner.stop().then(() => {
+                readerDiv.style.display = 'none';
+                btn.innerHTML = `<i class="bi bi-qr-code-scan"></i> SCAN BARCODE`;
+                btn.classList.replace('btn-outline', 'btn-navy');
+                isScanning = false;
+            });
+        }
+    }
+
+    // 5. Master Product Memory Lookup
+    async function lookupProduct() {
+        const barcode = document.getElementById('barcode').value.trim();
+        if (!barcode) return;
+
+        const db = firebase.firestore();
+        try {
+            const doc = await db.collection('companies').doc(activeUserPhone).collection('products_master').doc(barcode).get();
+            if (doc.exists) {
+                const data = doc.data();
+                document.getElementById('item-name').value = data.name || "";
+                
+                // Set or Add Category
+                const catEl = document.getElementById('category');
+                if(!Array.from(catEl.options).some(opt => opt.value === data.category)) {
+                    catEl.add(new Option(data.category, data.category), catEl.options[1]);
+                }
+                catEl.value = data.category || "";
+
+                // Set or Add Unit
+                const unitEl = document.getElementById('unit');
+                if(!Array.from(unitEl.options).some(opt => opt.value === data.unit)) {
+                    unitEl.add(new Option(data.unit, data.unit), unitEl.options[1]);
+                }
+                unitEl.value = data.unit || "";
+            }
+        } catch (e) { console.error("Lookup failed", e); }
+    }
+
+    // 6. Math Auto-Calculators
     function setupMathListeners() {
         const qty = document.getElementById('qty');
         const costPer = document.getElementById('cost-per');
@@ -124,53 +276,150 @@
         });
     }
 
-    // 4. Dynamic Parameters
-    function addParam() {
-        const div = document.createElement('div');
-        div.className = 'param-row';
-        div.innerHTML = `
-            <input type="text" placeholder="Parameter (e.g. Size)">
-            <input type="text" placeholder="Value">
-            <button onclick="this.parentElement.remove()" style="border:none; background:none;"><i class="bi bi-trash"></i></button>
-        `;
-        document.getElementById('dynamic-params').appendChild(div);
-    }
-
-    // 5. Final Commit
-    async function commitStock() {
-        const branchId = document.getElementById('branch-select').value;
-        const supplierId = document.getElementById('supplier-select').value;
-        const billNum = document.getElementById('bill-num').value;
-        
-        const stockItem = {
-            itemName: document.getElementById('item-name').value,
+    // 7. Add Item to Cart
+    function addItemToBill() {
+        const item = {
+            barcode: document.getElementById('barcode').value.trim(),
+            name: document.getElementById('item-name').value.trim(),
+            category: document.getElementById('category').value,
+            unit: document.getElementById('unit').value,
             qty: parseFloat(document.getElementById('qty').value),
-            costPerUnit: parseFloat(document.getElementById('cost-per').value),
+            costPer: parseFloat(document.getElementById('cost-per').value),
             totalCost: parseFloat(document.getElementById('total-cost').value),
-            gst: parseFloat(document.getElementById('gst-rate').value),
-            timestamp: new Date().toISOString()
+            gst: parseFloat(document.getElementById('gst-rate').value) || 0,
+            id: Date.now().toString()
         };
 
-        try {
-            // Save to Branch Inventory
-            await db.collection('companies').doc(activeUserPhone)
-                    .collection('branches').doc(branchId)
-                    .collection('inventory').add(stockItem);
-            
-            // Log to Supplier History
-            await db.collection('companies').doc(activeUserPhone)
-                    .collection('suppliers').doc(supplierId)
-                    .collection('transactions').add({
-                        billNum: billNum,
-                        amount: stockItem.totalCost,
-                        type: 'Purchase',
-                        date: new Date().toISOString()
-                    });
+        if(!item.name || !item.qty || !item.totalCost) {
+            return alert("Name, Qty, and Total Cost are required!");
+        }
 
-            alert("Bill Saved Successfully!");
-            // Optional: reset fields here, but keep BillNum/Supplier as requested
+        currentBillItems.push(item);
+        renderCart();
+        clearItemForm();
+    }
+
+    function renderCart() {
+        const list = document.getElementById('item-list');
+        list.innerHTML = "";
+        let grandTotal = 0;
+
+        currentBillItems.forEach(item => {
+            grandTotal += item.totalCost;
+            list.innerHTML += `
+                <div class="cart-item">
+                    <div class="cart-item-details">
+                        <h4>${item.name}</h4>
+                        <p>Qty: ${item.qty} ${item.unit} | Cost: ₹${item.costPer}/unit | GST: ${item.gst}%</p>
+                    </div>
+                    <div>
+                        <span style="font-weight: 700; color: var(--navy); margin-right: 15px;">₹${item.totalCost.toFixed(2)}</span>
+                        <button class="btn-remove" onclick="removeItem('${item.id}')"><i class="bi bi-trash"></i></button>
+                    </div>
+                </div>
+            `;
+        });
+
+        document.getElementById('grand-total').innerText = `Total: ₹${grandTotal.toFixed(2)}`;
+        if (currentBillItems.length === 0) {
+            list.innerHTML = '<p style="text-align: center; color: #94a3b8; font-size: 14px;">No items added yet.</p>';
+        }
+    }
+
+    function removeItem(id) {
+        currentBillItems = currentBillItems.filter(item => item.id !== id);
+        renderCart();
+    }
+
+    function clearItemForm() {
+        document.getElementById('barcode').value = "";
+        document.getElementById('item-name').value = "";
+        document.getElementById('qty').value = "";
+        document.getElementById('cost-per').value = "";
+        document.getElementById('total-cost').value = "";
+        document.getElementById('barcode').focus(); // Ready for next scan
+    }
+
+    // 8. Save Whole Bill (Storage + Firestore)
+    async function saveWholeBill() {
+        if (currentBillItems.length === 0) return alert("Please add at least one item to the bill.");
+        
+        const branchId = document.getElementById('branch-select').value;
+        const supplierId = document.getElementById('supplier-select').value;
+        const billNum = document.getElementById('bill-num').value.trim();
+        const fileInput = document.getElementById('bill-image').files[0];
+
+        if (!branchId || !supplierId || !billNum) return alert("Branch, Supplier, and Bill Number are required!");
+
+        const btn = document.getElementById('save-bill-btn');
+        btn.innerHTML = "UPLOADING & SAVING...";
+        btn.disabled = true;
+
+        try {
+            const db = firebase.firestore();
+            let imageUrl = "";
+
+            // Step A: Upload Image if exists
+            if (fileInput) {
+                const storageRef = firebase.storage().ref(`bills/${activeUserPhone}/${Date.now()}_${fileInput.name}`);
+                await storageRef.put(fileInput);
+                imageUrl = await storageRef.getDownloadURL();
+            }
+
+            // Step B: Calculate Grand Total
+            const grandTotal = currentBillItems.reduce((sum, item) => sum + item.totalCost, 0);
+
+            // Step C: Save to Supplier Ledger (with Image)
+            await db.collection('companies').doc(activeUserPhone).collection('suppliers').doc(supplierId).collection('transactions').add({
+                billNum: billNum,
+                amount: grandTotal,
+                type: 'Purchase',
+                billImageUrl: imageUrl,
+                date: new Date().toISOString()
+            });
+
+            // Step D: Iterate through items (Save to Inventory AND Update Master Product Memory)
+            const batch = db.batch();
+            
+            for (const item of currentBillItems) {
+                // 1. Add to branch inventory history
+                const invRef = db.collection('companies').doc(activeUserPhone).collection('branches').doc(branchId).collection('inventory').doc();
+                batch.set(invRef, {
+                    ...item,
+                    supplierId: supplierId,
+                    billNum: billNum,
+                    timestamp: new Date().toISOString()
+                });
+
+                // 2. Update Master Product Memory (so it remembers barcode next time)
+                if (item.barcode) {
+                    const masterRef = db.collection('companies').doc(activeUserPhone).collection('products_master').doc(item.barcode);
+                    batch.set(masterRef, {
+                        name: item.name,
+                        category: item.category,
+                        unit: item.unit,
+                        lastCostPrice: item.costPer,
+                        lastUpdated: new Date().toISOString()
+                    }, { merge: true });
+                }
+            }
+
+            await batch.commit();
+
+            alert("Bill Saved Successfully! Inventory Updated.");
+            
+            // Keep Branch & Supplier, but reset Bill Number and Cart for the next entry
+            document.getElementById('bill-num').value = "";
+            document.getElementById('bill-image').value = "";
+            currentBillItems = [];
+            renderCart();
+
         } catch (e) {
-            alert("Error: " + e.message);
+            console.error(e);
+            alert("Database Error: " + e.message);
+        } finally {
+            btn.innerHTML = `<i class="bi bi-cloud-arrow-up-fill"></i> SAVE WHOLE BILL`;
+            btn.disabled = false;
         }
     }
 </script>
