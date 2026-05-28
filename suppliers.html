@@ -66,13 +66,24 @@
         .btn-pay { background: #8b5cf6; }
         .btn-bills { background: #f59e0b; }
         .btn-print { grid-column: span 2; background: #64748b; margin-top: 5px; }
-        /* Ledger UI */
+       /* Ledger UI & Balances */
         .ledger-container { display: none; margin-top: 15px; border-top: 2px dashed #cbd5e1; padding-top: 15px; }
+        .ledger-balance-badge { background: #fee2e2; color: #ef4444; padding: 12px; border-radius: 10px; font-weight: 700; text-align: center; margin-bottom: 15px; font-size: 16px; border: 1px solid #fca5a5;}
         .ledger-item { background: #f8fafc; border: 1px solid #e2e8f0; padding: 12px; border-radius: 10px; margin-bottom: 8px; display: flex; justify-content: space-between; align-items: center; }
+        .ledger-item.payment { border-left: 5px solid #10b981; }
+        .ledger-item.purchase { border-left: 5px solid #ef4444; }
         .ledger-item-left p { margin: 0 0 4px 0; font-size: 13px; color: #64748b; }
         .ledger-item-left h4 { margin: 0; font-size: 14px; color: #0f172a; text-transform: uppercase; }
-        .ledger-amt { font-size: 15px; font-weight: 700; color: #059669; margin-bottom: 4px; }
-        .btn-view-bill { background: #e0e7ff; color: #4f46e5; border: none; padding: 6px 10px; border-radius: 6px; font-size: 12px; font-weight: 600; cursor: pointer; text-decoration: none; display: inline-block;}
+        .ledger-amt { font-size: 15px; font-weight: 700; margin-bottom: 4px; }
+        .amt-pay { color: #10b981; }
+        .amt-pur { color: #ef4444; }
+        .btn-view-bill { background: #e0e7ff; color: #4f46e5; border: none; padding: 6px 10px; border-radius: 6px; font-size: 12px; font-weight: 600; cursor: pointer; display: inline-block;}
+
+        /* Modals */
+        .modal-overlay { display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.6); z-index: 1000; justify-content: center; align-items: center; padding: 20px; box-sizing: border-box; backdrop-filter: blur(4px);}
+        .modal-card { background: white; width: 100%; max-width: 450px; border-radius: 16px; padding: 24px; position: relative; max-height: 90vh; overflow-y: auto;}
+        .modal-close { position: absolute; top: 15px; right: 15px; background: #f1f5f9; border: none; border-radius: 50%; width: 32px; height: 32px; font-size: 16px; cursor: pointer; color: #475569;}
+        #img-modal-content { max-width: 100%; max-height: 80vh; border-radius: 8px; display: block; margin: auto; }
 
         /* Admin Actions */
         .admin-actions { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-top: 10px; padding-top: 10px; border-top: 1px dashed #e2e8f0; }
@@ -138,10 +149,56 @@
         </div>
     </div>
 
-    <div class="supplier-list-container" id="supplier-list">
+ <div class="supplier-list-container" id="supplier-list">
         <p style="text-align: center; color: #64748b; width: 100%;">Loading suppliers...</p>
     </div>
 
+    <div class="modal-overlay" id="img-modal">
+        <div class="modal-card" style="background: transparent; box-shadow: none; text-align: center; padding: 0;">
+            <button class="modal-close" style="top: -15px; right: 0; background: white; z-index: 10;" onclick="closeModal('img-modal')"><i class="bi bi-x-lg"></i></button>
+            <img id="img-modal-content" src="" alt="Bill Image">
+        </div>
+    </div>
+
+    <div class="modal-overlay" id="pay-modal">
+        <div class="modal-card">
+            <button class="modal-close" onclick="closeModal('pay-modal')"><i class="bi bi-x-lg"></i></button>
+            <h2 style="margin-top:0; color:var(--navy); font-size:18px;"><i class="bi bi-wallet2"></i> Record Payment</h2>
+            <h4 id="pay-sup-name" style="color:#64748b; margin-bottom:15px; margin-top:5px;"></h4>
+            
+            <div class="ledger-balance-badge" id="pay-current-balance">Total Pending: ₹0.00</div>
+            
+            <div class="form-group">
+                <label>Payment Date</label>
+                <input type="date" id="pay-date" class="form-control-custom">
+            </div>
+            
+            <div class="form-group">
+                <label>Amount Paid (₹)</label>
+                <input type="number" id="pay-amt" class="form-control-custom" placeholder="0.00" oninput="calcRemaining()">
+            </div>
+            
+            <div class="ledger-balance-badge" id="pay-remaining-balance" style="background:#e0f2fe; color:#0369a1; border-color:#7dd3fc; display:none; padding:8px; font-size:14px;">Remaining Balance: ₹0.00</div>
+            
+            <div class="form-group">
+                <label>Mode of Payment</label>
+                <select id="pay-mode" class="form-control-custom" onchange="toggleRefField()">
+                    <option value="Cash">Cash</option>
+                    <option value="UPI / Bank Transfer">UPI / Bank Transfer</option>
+                    <option value="Cheque">Cheque</option>
+                </select>
+            </div>
+            
+            <div class="form-group" id="pay-ref-group" style="display:none;">
+                <label>Transaction ID / Cheque No.</label>
+                <input type="text" id="pay-ref" class="form-control-custom" placeholder="Enter Ref ID">
+            </div>
+            
+            <button class="btn-main btn-emerald" onclick="submitPayment()" id="btn-submit-pay">
+                <i class="bi bi-check-circle"></i> Save Payment & Notify
+            </button>
+        </div>
+    </div>
 </div>
 
 <script>
@@ -346,7 +403,7 @@
                         <div class="sc-actions-grid">
                             <button class="btn-sc btn-call" onclick="window.open('tel:${primaryPhone}')"><i class="bi bi-telephone"></i> Call</button>
                             <button class="btn-sc btn-wa" onclick="window.open('https://wa.me/91${primaryPhone}', '_blank')"><i class="bi bi-whatsapp"></i> WhatsApp</button>
-                            <button class="btn-sc btn-pay" onclick="paySupplier('${sup.upiId || ''}', '${sup.businessName}')"><i class="bi bi-currency-rupee"></i> Pay Now</button>
+                            <button class="btn-sc btn-pay" onclick="openPaymentModal('${sup.id}', '${sup.businessName.replace(/'/g, "\'")}', '${primaryPhone}')"><i class="bi bi-currency-rupee"></i> Record Payment</button>
                             <button class="btn-sc btn-bills" onclick="toggleLedger('${sup.id}')"><i class="bi bi-receipt-cutoff"></i> View Bills</button>
                             <button class="btn-sc btn-print" onclick="printLedger('${sup.businessName}')"><i class="bi bi-printer-fill"></i> Print Ledger / PDF</button>
                         </div>
@@ -368,68 +425,161 @@
         });
     }
 
-   async function toggleLedger(supplierId) {
+  async function toggleLedger(supplierId) {
         const ledgerDiv = document.getElementById('ledger-' + supplierId);
+        if (ledgerDiv.style.display === 'block') { ledgerDiv.style.display = 'none'; return; }
         
-        // If it's already open, close it
-        if (ledgerDiv.style.display === 'block') {
-            ledgerDiv.style.display = 'none';
-            return;
-        }
-        
-        // Show loading state
         ledgerDiv.style.display = 'block';
-        ledgerDiv.innerHTML = '<p style="text-align:center; font-size:13px; color:#64748b;"><i class="bi bi-hourglass-split"></i> Loading bills...</p>';
+        ledgerDiv.innerHTML = '<p style="text-align:center; font-size:13px; color:#64748b;"><i class="bi bi-hourglass-split"></i> Loading ledger...</p>';
         
         const activeUserPhone = localStorage.getItem("activeUserPhone");
         const db = firebase.firestore();
         
         try {
-            // Fetch transactions sorted by newest first
-            const snap = await db.collection('companies').doc(activeUserPhone)
-                                 .collection('suppliers').doc(supplierId)
-                                 .collection('transactions')
-                                 .orderBy('date', 'desc')
-                                 .get();
+            const snap = await db.collection('companies').doc(activeUserPhone).collection('suppliers').doc(supplierId).collection('transactions').orderBy('date', 'desc').get();
                                  
-            if (snap.empty) {
-                ledgerDiv.innerHTML = '<p style="text-align:center; font-size:13px; color:#64748b;">No bills found for this supplier yet.</p>';
-                return;
-            }
+            if (snap.empty) { ledgerDiv.innerHTML = '<p style="text-align:center; font-size:13px; color:#64748b;">No transactions found.</p>'; return; }
             
-            let html = '<h4 style="margin:0 0 10px 0; color:#1e3a8a; font-size:14px;"><i class="bi bi-clock-history"></i> Recent Bills</h4>';
+            let html = ''; let totalPurchases = 0; let totalPayments = 0; let listHtml = '';
             
             snap.forEach(doc => {
                 const data = doc.data();
-                const dateObj = new Date(data.date);
-                const dateStr = dateObj.toLocaleDateString('en-IN', { day: '2-digit', month: 'short', year: 'numeric' });
                 const amt = parseFloat(data.amount) || 0;
+                const isPayment = data.type === 'Payment';
                 
-                html += `
-                    <div class="ledger-item">
+                if (isPayment) totalPayments += amt; else totalPurchases += amt;
+                
+                const dateStr = new Date(data.date).toLocaleDateString('en-IN', { day: '2-digit', month: 'short', year: 'numeric' });
+                
+                listHtml += `
+                    <div class="ledger-item ${isPayment ? 'payment' : 'purchase'}">
                         <div class="ledger-item-left">
-                            <p><i class="bi bi-calendar3"></i> ${dateStr}</p>
-                            <h4>Bill #${data.billNum}</h4>
+                            <p><i class="bi bi-calendar3"></i> ${dateStr} | ${isPayment ? data.mode : 'Bill'}</p>
+                            <h4>${isPayment ? 'Payment Sent' : 'Bill #' + data.billNum}</h4>
+                            ${data.refId ? `<p style="font-size:11px; margin-top:2px;">Ref: ${data.refId}</p>` : ''}
                         </div>
                         <div style="text-align: right;">
-                            <div class="ledger-amt">₹${amt.toFixed(2)}</div>
-                            ${data.billImageUrl 
-                                ? `<a href="${data.billImageUrl}" target="_blank" class="btn-view-bill"><i class="bi bi-image"></i> View Photo</a>` 
-                                : '<span style="font-size:11px; color:#94a3b8;"><i class="bi bi-image-alt"></i> No Photo</span>'}
+                            <div class="ledger-amt ${isPayment ? 'amt-pay' : 'amt-pur'}">${isPayment ? '-' : '+'} ₹${amt.toFixed(2)}</div>
+                            ${data.billImageUrl ? `<button class="btn-view-bill" onclick="openImageModal('${data.billImageUrl}')"><i class="bi bi-image"></i> View</button>` : ''}
                         </div>
                     </div>
                 `;
             });
-            ledgerDiv.innerHTML = html;
-        } catch (error) {
-            console.error("Error fetching ledger:", error);
-            ledgerDiv.innerHTML = '<p style="text-align:center; color:#ef4444; font-size:13px;">Error loading bills. Check your database index.</p>';
-        }
+            
+            const pending = totalPurchases - totalPayments;
+            html = `<div class="ledger-balance-badge" style="background:${pending <= 0 ? '#dcfce7' : '#fee2e2'}; color:${pending <= 0 ? '#166534' : '#ef4444'}; border-color:${pending <= 0 ? '#bbf7d0' : '#fca5a5'};">
+                        Net Balance Pending: ₹${Math.max(0, pending).toFixed(2)}
+                    </div>`;
+            ledgerDiv.innerHTML = html + listHtml;
+            
+        } catch (error) { ledgerDiv.innerHTML = '<p style="text-align:center; color:#ef4444; font-size:13px;">Error loading ledger. Index required.</p>'; }
     }
 
-    function paySupplier(upi, name) {
-        if(!upi) return alert("No UPI ID saved for this supplier. You can pay in Cash.");
-        window.location.href = `upi://pay?pa=${upi}&pn=${encodeURIComponent(name)}&cu=INR`;
+ // --- MODALS & PAYMENTS ---
+    function openImageModal(url) {
+        document.getElementById('img-modal-content').src = url;
+        document.getElementById('img-modal').style.display = 'flex';
+    }
+    
+    function closeModal(modalId) {
+        document.getElementById(modalId).style.display = 'none';
+    }
+
+    let currentPaySupplier = {};
+    let currentPendingBalance = 0;
+
+    async function openPaymentModal(supplierId, name, phone) {
+        currentPaySupplier = { id: supplierId, name: name, phone: phone };
+        document.getElementById('pay-sup-name').innerText = name;
+        document.getElementById('pay-date').valueAsDate = new Date(); // Default to today
+        document.getElementById('pay-amt').value = '';
+        document.getElementById('pay-mode').value = 'Cash';
+        document.getElementById('pay-ref').value = '';
+        toggleRefField();
+        
+        document.getElementById('pay-current-balance').innerText = "Calculating...";
+        document.getElementById('pay-remaining-balance').style.display = 'none';
+        document.getElementById('pay-modal').style.display = 'flex';
+
+        // Calculate current balance
+        const db = firebase.firestore();
+        const activeUserPhone = localStorage.getItem("activeUserPhone");
+        const snap = await db.collection('companies').doc(activeUserPhone).collection('suppliers').doc(supplierId).collection('transactions').get();
+        let pur = 0; let pay = 0;
+        snap.forEach(doc => {
+            if(doc.data().type === 'Purchase') pur += parseFloat(doc.data().amount);
+            if(doc.data().type === 'Payment') pay += parseFloat(doc.data().amount);
+        });
+        currentPendingBalance = pur - pay;
+        document.getElementById('pay-current-balance').innerText = `Total Pending: ₹${Math.max(0, currentPendingBalance).toFixed(2)}`;
+    }
+
+    function toggleRefField() {
+        const mode = document.getElementById('pay-mode').value;
+        document.getElementById('pay-ref-group').style.display = (mode !== 'Cash') ? 'block' : 'none';
+    }
+
+    function calcRemaining() {
+        const paying = parseFloat(document.getElementById('pay-amt').value) || 0;
+        const remDiv = document.getElementById('pay-remaining-balance');
+        if (paying > 0) {
+            const rem = currentPendingBalance - paying;
+            remDiv.innerText = `Remaining Balance: ₹${Math.max(0, rem).toFixed(2)}`;
+            remDiv.style.display = 'block';
+        } else { remDiv.style.display = 'none'; }
+    }
+
+    async function submitPayment() {
+        const amt = parseFloat(document.getElementById('pay-amt').value);
+        const date = document.getElementById('pay-date').value;
+        const mode = document.getElementById('pay-mode').value;
+        const ref = document.getElementById('pay-ref').value;
+
+        if (!amt || amt <= 0 || !date) return alert("Please enter a valid amount and date.");
+        if (mode !== 'Cash' && !ref.trim()) return alert("Please enter the Transaction ID / Cheque Number.");
+
+        const btn = document.getElementById('btn-submit-pay');
+        btn.disabled = true; btn.innerText = "Processing...";
+
+        try {
+            const db = firebase.firestore();
+            const activeUserPhone = localStorage.getItem("activeUserPhone");
+            
+            // Save Payment
+            await db.collection('companies').doc(activeUserPhone).collection('suppliers').doc(currentPaySupplier.id).collection('transactions').add({
+                type: 'Payment',
+                amount: amt,
+                date: new Date(date).toISOString(),
+                mode: mode,
+                refId: ref,
+                timestamp: new Date().toISOString()
+            });
+
+            const rem = Math.max(0, currentPendingBalance - amt);
+            
+            // Generate WhatsApp Msg
+            let msg = `*Payment Confirmation*\n\nHello ${currentPaySupplier.name},\nWe have processed a payment of *₹${amt.toFixed(2)}* on ${new Date(date).toLocaleDateString('en-IN')}.\n\n*Mode:* ${mode}`;
+            if(mode !== 'Cash') msg += `\n*Ref/Cheque No:* ${ref}`;
+            msg += `\n*Updated Pending Balance:* ₹${rem.toFixed(2)}\n\nThank you!`;
+
+            alert("Payment Recorded Successfully!");
+            closeModal('pay-modal');
+            
+            // Trigger WhatsApp if phone exists
+            if (currentPaySupplier.phone) {
+                window.open(`https://wa.me/91${currentPaySupplier.phone}?text=${encodeURIComponent(msg)}`, '_blank');
+            }
+            
+            // Refresh ledger if open
+            if(document.getElementById('ledger-' + currentPaySupplier.id).style.display === 'block') {
+                toggleLedger(currentPaySupplier.id); toggleLedger(currentPaySupplier.id); // Close and reopen to refresh
+            }
+
+        } catch (e) {
+            console.error(e); alert("Error saving payment.");
+        } finally {
+            btn.disabled = false; btn.innerHTML = `<i class="bi bi-check-circle"></i> Save Payment & Notify`;
+        }
     }
 
     function printLedger(name) {
