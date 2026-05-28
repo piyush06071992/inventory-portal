@@ -36,8 +36,14 @@
                         <span id="toggle-txt-1" class="view-btn-toggle" onclick="handleToggleView('login-pin', 'toggle-txt-1')">SHOW</span>
                     </div>
                     <div class="forgot-link" onclick="switchToForgotMode()">FORGOT PIN?</div>
-                    <button onclick="handlePortalLogin()" id="login-submit-btn">LOGIN TO PORTAL</button>
-                    <div class="toggle-link" onclick="window.location.href='/index.html'">NEW SHOP? CREATE ACCOUNT</div>
+<button onclick="handlePortalLogin()" id="login-submit-btn">LOGIN TO PORTAL</button>
+
+<button onclick="window.location.href='/staff-login.html'" 
+        style="width: 100%; margin-top: 10px; background: none; border: 1px solid var(--accent); color: var(--accent); padding: 12px; border-radius: 10px; font-weight: 600; cursor: pointer;">
+    STAFF MEMBER? LOGIN HERE
+</button>
+
+<div class="toggle-link" onclick="window.location.href='/index.html'">NEW SHOP? CREATE ACCOUNT</div>
                 </div>
 
                 <div id="forgot-phone-block" style="display: none;">
