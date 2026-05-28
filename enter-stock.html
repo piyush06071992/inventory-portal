@@ -178,10 +178,12 @@
         } catch (e) { console.error("Error loading params", e); }
     }
 
-    document.addEventListener('DOMContentLoaded', () => {
-    firebase.auth().onAuthStateChanged((user) => {
+document.addEventListener('DOMContentLoaded', () => {
+        firebase.auth().onAuthStateChanged(async (user) => {
             if (user && activeUserPhone) {
-                loadShopSettings(); loadBranches(); loadSuppliers(); setupCalculators();
+                await loadShopSettings(); 
+                clearItemForm(); // This instantly draws the parameter boxes on page load
+                loadBranches(); loadSuppliers(); setupCalculators();
             }
         });
     });
@@ -331,7 +333,6 @@ async function lookupProduct() {
         const barcode = document.getElementById('barcode').value.trim();
         if (!barcode) return;
         
-        // Auto-clear UI for new scan
         document.getElementById('item-name').value = "";
         document.getElementById('category').selectedIndex = 0;
         document.getElementById('unit').selectedIndex = 0;
@@ -344,6 +345,8 @@ async function lookupProduct() {
         
         try {
             const doc = await firebase.firestore().collection('companies').doc(activeUserPhone).collection('products_master').doc(barcode).get();
+            let productParams = null;
+            
             if (doc.exists) {
                 const data = doc.data();
                 document.getElementById('item-name').value = data.name || "";
@@ -354,10 +357,18 @@ async function lookupProduct() {
                     }
                     el.value = data[id] || "";
                 });
-                if (data.customParams) {
-                    document.getElementById('dynamic-params').innerHTML = "";
-                    for (const [key, val] of Object.entries(data.customParams)) { addParam(key, val); }
-                }
+                if (data.customParams) productParams = { ...data.customParams };
+            }
+
+            // 1. Auto-load all global shop parameters (leave value blank for new items)
+            for (const key of Object.keys(savedShopParams)) {
+                addParam(key, productParams ? (productParams[key] || "") : "");
+                if (productParams) delete productParams[key]; // Mark as added
+            }
+            
+            // 2. Load any extra parameters specific to this item (if they somehow aren't global yet)
+            if (productParams) {
+                for (const [key, val] of Object.entries(productParams)) { addParam(key, val); }
             }
         } catch (e) { console.error(e); }
     }
@@ -485,13 +496,18 @@ async function lookupProduct() {
 
     function removeItem(id) { currentBillItems = currentBillItems.filter(i => i.id !== id); renderCart(); }
     
-    function clearItemForm() {
+function clearItemForm() {
         ['barcode', 'item-name', 'qty', 'cost-per', 'total-cost', 'profit-pct', 'msp'].forEach(id => document.getElementById(id).value = "");
-        document.getElementById('dynamic-params').innerHTML = ""; // Clear parameters
+        document.getElementById('dynamic-params').innerHTML = "";
         document.getElementById('tax-split').style.display = 'none';
+        
+        // Auto-load global parameters for the next item (Values blank by default)
+        for (const key of Object.keys(savedShopParams)) {
+            addParam(key, "");
+        }
+        
         document.getElementById('barcode').focus();
     }
-
     async function saveWholeBill() {
         if (currentBillItems.length === 0) return alert("Add items to the bill first.");
         const branchId = document.getElementById('branch-select').value;
