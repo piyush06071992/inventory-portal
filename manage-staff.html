@@ -118,11 +118,11 @@
             </div>
         </div>
         
-        <div class="form-group">
-            <label>Assigned Branch *</label>
-            <select id="stf-branch" class="form-control-custom">
-                <option value="">Loading branches...</option>
-            </select>
+      <div class="form-group">
+            <label>Assigned Branch(es) *</label>
+            <div id="stf-branch-container" class="form-control-custom" style="height: auto; max-height: 140px; overflow-y: auto; display: flex; flex-direction: column; gap: 10px; padding: 12px; background: #f8fafc;">
+                <span style="color: #94a3b8; font-size: 14px;">Loading branches...</span>
+            </div>
         </div>
 
         <div class="grid-2">
@@ -273,14 +273,13 @@
         }
     }
 
- function loadBranchDropdown() {
+function loadBranchDropdown() {
     const activeUserPhone = localStorage.getItem("activeUserPhone");
     const db = firebase.firestore();
     
     db.collection('companies').doc(activeUserPhone).collection('branches').get().then(snap => {
-
-        const select = document.getElementById('stf-branch');
-        select.innerHTML = '';
+        const container = document.getElementById('stf-branch-container');
+        container.innerHTML = '';
 
         const branchFilter = document.getElementById('branch-filter');
         branchFilter.innerHTML = `<option value="">All Branches</option>`;
@@ -288,26 +287,27 @@
         globalBranchesData = {};
         
         snap.forEach(doc => {
-
             const branch = doc.data();
-
             globalBranchesData[branch.branchId] = branch.branchName;
 
-            select.innerHTML += `
-                <option value="${branch.branchId}">
+            // Generate Checkboxes for Form
+            container.innerHTML += `
+                <label style="display: flex; align-items: center; gap: 10px; font-weight: 600; font-size: 14px; text-transform: none; color: #0f172a; margin: 0; cursor: pointer;">
+                    <input type="checkbox" class="branch-checkbox" value="${branch.branchId}" style="width: 18px; height: 18px; margin: 0; cursor: pointer; accent-color: #0d9488;">
                     ${branch.branchName}
-                </option>
+                </label>
             `;
 
+            // Keep Dropdown for the Search Filter
             branchFilter.innerHTML += `
                 <option value="${branch.branchId}">
                     ${branch.branchName}
                 </option>
             `;
         });
+        if(snap.empty) container.innerHTML = '<span style="color: #ef4444; font-size: 14px;">No branches found. Please add a branch first.</span>';
     });
 }
-
     // --- UI NAVIGATION ---
     function switchTab(tab) {
         currentFilter = tab;
@@ -327,7 +327,7 @@
         }
     }
 
-    function resetForm() {
+ function resetForm() {
         currentEditingStaffId = null;
         document.getElementById('stf-name').value = '';
         document.getElementById('stf-phone').value = '';
@@ -335,6 +335,7 @@
         document.getElementById('stf-salary').value = '';
         document.getElementById('stf-upi').value = '';
         document.getElementById('stf-address').value = '';
+        document.querySelectorAll('.branch-checkbox').forEach(cb => cb.checked = false);
     }
 
     function generateSecurePin() {
@@ -349,14 +350,18 @@
         const name = document.getElementById('stf-name').value.trim();
         const phone = document.getElementById('stf-phone').value.trim();
         const role = document.getElementById('stf-role').value;
-        const branchId = document.getElementById('stf-branch').value;
+        
+        // Get all checked branches
+        const selectedBranches = [];
+        document.querySelectorAll('.branch-checkbox:checked').forEach(cb => selectedBranches.push(cb.value));
+
         const aadhar = document.getElementById('stf-aadhar').value.trim();
         const salary = document.getElementById('stf-salary').value.trim();
         const upi = document.getElementById('stf-upi').value.trim();
         const address = document.getElementById('stf-address').value.trim();
 
         if (!name || phone.length !== 10) return alert("Full Name and a valid 10-digit Mobile Number are required!");
-        if (!branchId) return alert("Please assign a Branch to this staff member.");
+        if (selectedBranches.length === 0) return alert("Please assign at least one Branch to this staff member.");
 
         const btn = document.querySelector('.btn-save');
         btn.innerText = "Saving...";
@@ -372,7 +377,7 @@
                 name: name,
                 phone: phone,
                 role: role,
-                assignedBranch: branchId, // New ERP Field
+                assignedBranch: selectedBranches, // Array of branch IDs
                 aadhar: aadhar,
                 baseSalary: salary,
                 upiId: upi,
@@ -443,14 +448,20 @@ if (
     stf.role !== selectedRole
 ) return;
 
-if (
-    selectedBranch &&
-    stf.assignedBranch !== selectedBranch
-) return;
+if (selectedBranch) {
+    const stfBranches = Array.isArray(stf.assignedBranch) ? stf.assignedBranch : [stf.assignedBranch];
+    if (!stfBranches.includes(selectedBranch)) return;
+}
             
             displayCount++;
             const isTerminated = stf.status === 'Terminated';
-            const branchName = globalBranchesData[stf.assignedBranch] || "Unknown Branch";
+            
+            // Format Multiple Branch Names
+            let branchName = "Unknown Branch";
+            if (stf.assignedBranch) {
+                const bArray = Array.isArray(stf.assignedBranch) ? stf.assignedBranch : [stf.assignedBranch];
+                branchName = bArray.map(bId => globalBranchesData[bId] || "Unknown").join(', ');
+            }
             
             const card = document.createElement('div');
             card.className = `staff-card ${isTerminated ? 'terminated' : ''}`;
@@ -531,7 +542,7 @@ if (
         }
     }
 
-    function editStaff(id) {
+   function editStaff(id) {
         const data = globalStaffData[id];
         if(!data) return;
 
@@ -539,7 +550,17 @@ if (
         document.getElementById('stf-name').value = data.name || '';
         document.getElementById('stf-phone').value = data.phone || '';
         document.getElementById('stf-role').value = data.role || 'Cashier';
-        document.getElementById('stf-branch').value = data.assignedBranch || '';
+        
+        // Handle Multi-Branch Checks (Includes backward compatibility for old string data)
+        document.querySelectorAll('.branch-checkbox').forEach(cb => cb.checked = false);
+        if (data.assignedBranch) {
+            const branches = Array.isArray(data.assignedBranch) ? data.assignedBranch : [data.assignedBranch];
+            branches.forEach(bId => {
+                const cb = document.querySelector(`.branch-checkbox[value="${bId}"]`);
+                if(cb) cb.checked = true;
+            });
+        }
+
         document.getElementById('stf-aadhar').value = data.aadhar || '';
         document.getElementById('stf-salary').value = data.baseSalary || '';
         document.getElementById('stf-upi').value = data.upiId || '';
