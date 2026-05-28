@@ -152,12 +152,45 @@
         </div>
     </div>
 
-    <div class="tab-container">
-        <button class="tab-btn active" id="tab-active" onclick="switchTab('active')">Active Team</button>
-        <button class="tab-btn" id="tab-past" onclick="switchTab('past')">Past Staff</button>
+  <div class="tab-container">
+    <button class="tab-btn active" id="tab-active" onclick="switchTab('active')">Active Team</button>
+    <button class="tab-btn" id="tab-past" onclick="switchTab('past')">Past Staff</button>
+</div>
+
+<div style="width:100%; max-width:700px; background:#ffffff; padding:14px; border-radius:16px; margin-bottom:15px; border:1px solid #e2e8f0; box-sizing:border-box;">
+
+    <input 
+        type="text" 
+        id="staff-search" 
+        class="form-control-custom" 
+        placeholder="Search by Name or Mobile Number"
+        oninput="renderStaffList()"
+        style="margin-bottom:12px;"
+    >
+
+    <div class="grid-2">
+
+        <select 
+            id="role-filter" 
+            class="form-control-custom"
+            onchange="renderStaffList()"
+        >
+            <option value="">All Roles</option>
+        </select>
+
+        <select 
+            id="branch-filter" 
+            class="form-control-custom"
+            onchange="renderStaffList()"
+        >
+            <option value="">All Branches</option>
+        </select>
+
     </div>
 
-  <div class="staff-list-container" id="staff-list">
+</div>
+
+<div class="staff-list-container" id="staff-list">
         <p style="text-align: center; color: #64748b; width: 100%;">Loading staff records...</p>
     </div>
 </div>
