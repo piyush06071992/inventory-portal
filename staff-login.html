@@ -1,0 +1,47 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Staff Portal - Business Saarthi</title>
+    <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-auth-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-firestore-compat.js"></script>
+    <link rel="stylesheet" href="/style.css">
+</head>
+<body>
+    <div class="wrapper">
+        <h2>STAFF LOGIN</h2>
+        <input type="text" id="stf-phone" placeholder="Mobile Number" maxlength="10">
+        <input type="password" id="stf-pin" placeholder="6-Digit PIN" maxlength="6">
+        <button onclick="handleStaffLogin()">LOGIN</button>
+    </div>
+
+    <script>
+        async function handleStaffLogin() {
+            const phone = document.getElementById('stf-phone').value;
+            const pin = document.getElementById('stf-pin').value;
+            const db = firebase.firestore();
+
+            // We search through the company's staff subcollection
+            // Since we know the active company phone, we can find the staff record
+            const companyPhone = localStorage.getItem("activeUserPhone"); 
+            
+            const snap = await db.collection('companies').doc(companyPhone)
+                                 .collection('staff').where('phone', '==', phone).get();
+
+            if (!snap.empty) {
+                const staff = snap.docs[0].data();
+                if (staff.securePin === pin && staff.status === 'Active') {
+                    localStorage.setItem("activeStaffId", staff.id);
+                    localStorage.setItem("activeStaffName", staff.name);
+                    window.location.href = '/staff-dashboard.html';
+                } else {
+                    alert("Invalid PIN or Terminated Status");
+                }
+            } else {
+                alert("Staff not found!");
+            }
+        }
+    </script>
+</body>
+</html>
