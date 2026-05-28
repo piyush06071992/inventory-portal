@@ -468,7 +468,17 @@ async function lookupProduct() {
                 
                 if (item.barcode && item.barcode !== "") {
                     const masterRef = db.collection('companies').doc(activeUserPhone).collection('products_master').doc(item.barcode);
-                    batch.set(masterRef, { name: item.name, category: item.category, unit: item.unit, lastCostPrice: item.costPer, currentMsp: item.msp, lastUpdated: new Date().toISOString() }, { merge: true });
+               if (item.barcode && item.barcode !== "") {
+                    const masterRef = db.collection('companies').doc(activeUserPhone).collection('products_master').doc(item.barcode);
+                    batch.set(masterRef, { 
+                        name: item.name, 
+                        category: item.category, 
+                        unit: item.unit, 
+                        lastCostPrice: item.costPer, 
+                        currentMsp: item.msp, 
+                        customParams: item.customParams, // THIS SAVES THE PARAMETERS TO MEMORY
+                        lastUpdated: new Date().toISOString() 
+                    }, { merge: true });
                 }
             }
             await batch.commit();
