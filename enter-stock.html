@@ -166,14 +166,22 @@
     const assignedBranch = localStorage.getItem("assignedBranch");
     let currentBillItems = [];
     
-    let html5QrCode;
-    let currentFacingMode = "environment"; // Defaults to Back (Mobile)
-    let isRetryingScanner = false; // Prevents endless loops if camera fails
+ let html5QrCode;
+    let currentFacingMode = "environment"; 
+    let isRetryingScanner = false; 
+    let savedShopParams = {}; // Master memory for custom parameters
+
+    async function loadShopSettings() {
+        try {
+            const doc = await firebase.firestore().collection('companies').doc(activeUserPhone).collection('settings').doc('params').get();
+            if (doc.exists && doc.data().customParams) savedShopParams = doc.data().customParams;
+        } catch (e) { console.error("Error loading params", e); }
+    }
 
     document.addEventListener('DOMContentLoaded', () => {
-        firebase.auth().onAuthStateChanged((user) => {
+    firebase.auth().onAuthStateChanged((user) => {
             if (user && activeUserPhone) {
-                loadBranches(); loadSuppliers(); setupCalculators();
+                loadShopSettings(); loadBranches(); loadSuppliers(); setupCalculators();
             }
         });
     });
@@ -235,15 +243,59 @@
     }
 
     // --- 2. DYNAMIC PARAMETERS ---
+  // --- 2. DYNAMIC PARAMETERS (UPGRADED TO SMART DROPDOWNS) ---
     function addParam(key = "", val = "") {
         const div = document.createElement('div');
         div.className = 'param-row';
+        
+        let keyOptions = `<option value="">Select Parameter...</option>`;
+        for(let k in savedShopParams) { keyOptions += `<option value="${k}" ${k===key ? 'selected':''}>${k}</option>`; }
+        if(key && !savedShopParams[key]) keyOptions += `<option value="${key}" selected>${key}</option>`;
+        keyOptions += `<option value="ADD_NEW">+ Add New Parameter</option>`;
+
+        let valOptions = `<option value="">Select Value...</option>`;
+        if(key && savedShopParams[key]) {
+            savedShopParams[key].forEach(v => { valOptions += `<option value="${v}" ${v===val ? 'selected':''}>${v}</option>`; });
+        }
+        if(val && (!savedShopParams[key] || !savedShopParams[key].includes(val))) valOptions += `<option value="${val}" selected>${val}</option>`;
+        valOptions += `<option value="ADD_NEW">+ Add New Value</option>`;
+
         div.innerHTML = `
-            <input type="text" placeholder="Name (e.g. Size)" class="param-name" value="${key}" list="saved-param-keys" style="margin-bottom:0;">
-            <input type="text" placeholder="Value (e.g. XL)" class="param-val" value="${val}" style="margin-bottom:0;">
+            <select class="param-name" onchange="handleParamNameChange(this)" style="margin-bottom:0; flex:1; padding:12px; font-size:14px;">${keyOptions}</select>
+            <select class="param-val" onchange="handleParamValChange(this)" style="margin-bottom:0; flex:1; padding:12px; font-size:14px;">${valOptions}</select>
             <button onclick="this.parentElement.remove()" style="background:#fee2e2; color:#ef4444; border:none; padding:12px; border-radius:10px; cursor:pointer;"><i class="bi bi-trash"></i></button>
         `;
         document.getElementById('dynamic-params').appendChild(div);
+    }
+
+    function handleParamNameChange(selectElem) {
+        if(selectElem.value === 'ADD_NEW') {
+            const newVal = prompt("Enter new parameter name (e.g., Company, Size):");
+            if(newVal && newVal.trim() !== "") {
+                selectElem.add(new Option(newVal, newVal), selectElem.options.length - 1);
+                selectElem.value = newVal;
+                if(!savedShopParams[newVal]) savedShopParams[newVal] = [];
+            } else { selectElem.selectedIndex = 0; }
+        }
+        const valSelect = selectElem.parentElement.querySelector('.param-val');
+        valSelect.innerHTML = '<option value="">Select Value...</option>';
+        const selectedKey = selectElem.value;
+        if(savedShopParams[selectedKey]) {
+            savedShopParams[selectedKey].forEach(v => valSelect.add(new Option(v, v)));
+        }
+        valSelect.add(new Option("+ Add New Value", "ADD_NEW"));
+    }
+
+    function handleParamValChange(selectElem) {
+        if(selectElem.value === 'ADD_NEW') {
+            const newVal = prompt("Enter new value:");
+            if(newVal && newVal.trim() !== "") {
+                selectElem.add(new Option(newVal, newVal), selectElem.options.length - 1);
+                selectElem.value = newVal;
+                const key = selectElem.parentElement.querySelector('.param-name').value;
+                if(key && savedShopParams[key] && !savedShopParams[key].includes(newVal)) savedShopParams[key].push(newVal);
+            } else { selectElem.selectedIndex = 0; }
+        }
     }
 
     // --- 3. LOADERS & MEMORY ---
@@ -275,17 +327,20 @@
         }
     }
 
-   async function lookupProduct() {
+async function lookupProduct() {
         const barcode = document.getElementById('barcode').value.trim();
         if (!barcode) return;
         
-        // Clear previous item data from the screen before looking up the new one
+        // Auto-clear UI for new scan
         document.getElementById('item-name').value = "";
         document.getElementById('category').selectedIndex = 0;
         document.getElementById('unit').selectedIndex = 0;
+        document.getElementById('qty').value = "";
         document.getElementById('cost-per').value = "";
+        document.getElementById('total-cost').value = "";
         document.getElementById('msp').value = "";
         document.getElementById('dynamic-params').innerHTML = "";
+        document.getElementById('tax-split').style.display = 'none';
         
         try {
             const doc = await firebase.firestore().collection('companies').doc(activeUserPhone).collection('products_master').doc(barcode).get();
@@ -471,7 +526,11 @@
                 billNum: billNum, amount: grandTotal, type: 'Purchase', billImageUrl: imageUrl, date: new Date().toISOString()
             });
 
-            const batch = db.batch();
+           const batch = db.batch();
+            
+            // Save newly learned custom parameters to shop settings
+            const settingsRef = db.collection('companies').doc(activeUserPhone).collection('settings').doc('params');
+            batch.set(settingsRef, { customParams: savedShopParams }, { merge: true });
             
             // Save Inventory to Branch
             for (const item of currentBillItems) {
