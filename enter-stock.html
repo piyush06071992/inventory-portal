@@ -19,30 +19,33 @@
         body { font-family: 'Inter', sans-serif; background-color: #f1f5f9; margin: 0; padding: 0; color: var(--text); }
         .wrapper { padding: 16px; max-width: 700px; margin: auto; padding-bottom: 50px; }
         
-        .card { background: white; padding: 18px; border-radius: 16px; margin-bottom: 16px; border: 1px solid #e2e8f0; }
+        .card { background: white; padding: 18px; border-radius: 16px; margin-bottom: 16px; border: 1px solid #e2e8f0; box-shadow: 0 4px 10px rgba(0,0,0,0.02);}
         h2 { font-size: 18px; margin: 0 0 15px 0; color: var(--navy); display: flex; align-items: center; gap: 8px;}
         
         label { display: block; font-size: 12px; font-weight: 700; color: #64748b; margin-bottom: 4px; text-transform: uppercase; }
         input, select { width: 100%; padding: 14px; margin-bottom: 12px; border: 2px solid #e2e8f0; border-radius: 10px; font-size: 15px; box-sizing: border-box; background: white; font-weight: 600;}
         input:focus, select:focus { border-color: var(--navy); outline: none; }
+        input[disabled], select[disabled] { background-color: #f1f5f9; color: #94a3b8; cursor: not-allowed; }
         
         .grid-2 { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
         
-        .btn-main { width: 100%; padding: 16px; border: none; border-radius: 12px; font-size: 16px; font-weight: 700; cursor: pointer; color: white; margin-bottom: 10px; display: flex; align-items: center; justify-content: center; gap: 8px;}
+        .btn-main { width: 100%; padding: 16px; border: none; border-radius: 12px; font-size: 15px; font-weight: 700; cursor: pointer; color: white; margin-bottom: 10px; display: flex; align-items: center; justify-content: center; gap: 8px;}
         .btn-emerald { background: var(--emerald); }
+        .btn-navy { background: var(--navy); }
         .btn-outline { background: white; color: var(--navy); border: 2px solid var(--navy); }
         
-        /* Scanner UI */
-        #reader { width: 100%; margin-bottom: 15px; border-radius: 10px; overflow: hidden; border: none !important;}
-        #reader button { background: var(--navy); color: white; border: none; padding: 10px 15px; border-radius: 8px; cursor: pointer; margin: 5px; font-family: 'Inter'; font-weight: bold;}
-        #reader select { padding: 8px; border-radius: 8px; font-family: 'Inter'; margin-bottom: 10px;}
+        /* Custom Scanner UI */
+        #scanner-container { display: none; margin-bottom: 15px; }
+        #reader { width: 100%; border-radius: 12px; overflow: hidden; border: 3px solid var(--navy); }
         
+        /* Cart UI */
         .item-list { margin-top: 15px; border-top: 2px dashed #e2e8f0; padding-top: 15px; }
         .cart-item { background: #f8fafc; border: 1px solid #e2e8f0; padding: 12px; border-radius: 10px; margin-bottom: 10px; display: flex; justify-content: space-between; align-items: center;}
         .cart-item h4 { margin: 0 0 4px 0; font-size: 15px; color: var(--navy); }
         .cart-item p { margin: 0; font-size: 12px; color: #64748b; }
-        .btn-remove { background: #fee2e2; color: #ef4444; border: none; padding: 8px 12px; border-radius: 8px; font-weight: bold; cursor: pointer; }
+        .btn-remove { background: #fee2e2; color: #ef4444; border: none; padding: 10px 14px; border-radius: 8px; font-weight: bold; cursor: pointer; }
         
+        /* Tax Box */
         .tax-split-box { background: #e0f2fe; border: 1px dashed #7dd3fc; padding: 10px; border-radius: 8px; font-size: 12px; font-weight: 600; color: #0369a1; text-align: center; margin-bottom: 12px; display: none;}
     </style>
 </head>
@@ -51,8 +54,12 @@
 <div class="wrapper">
     <div class="card">
         <h2><i class="bi bi-receipt"></i> 1. Bill Details</h2>
-        <label>Select Branch</label><select id="branch-select"></select>
-        <label>Supplier</label><select id="supplier-select"></select>
+        <label>Select Branch</label>
+        <select id="branch-select"><option value="">Loading branches...</option></select>
+        
+        <label>Supplier</label>
+        <select id="supplier-select"><option value="">Loading suppliers...</option></select>
+        
         <div class="grid-2">
             <div><label>Bill Number</label><input type="text" id="bill-num" placeholder="Enter Bill #"></div>
             <div><label>Upload Bill Photo</label><input type="file" id="bill-image" accept="image/*" style="padding: 10px;"></div>
@@ -62,7 +69,21 @@
     <div class="card">
         <h2><i class="bi bi-box-seam"></i> 2. Add Products</h2>
         
-        <div id="reader"></div>
+        <div id="scanner-container">
+            <div id="reader"></div>
+            <div class="grid-2" style="margin-top: 10px;">
+                <button class="btn-main btn-outline" onclick="switchCamera()">
+                    <i class="bi bi-camera-reverse"></i> SWITCH CAMERA
+                </button>
+                <button class="btn-main btn-outline" style="color: #ef4444; border-color: #fca5a5;" onclick="stopScanner()">
+                    <i class="bi bi-x-circle"></i> STOP SCANNER
+                </button>
+            </div>
+        </div>
+        
+        <button class="btn-main btn-navy" id="start-scan-btn" onclick="startScanner()">
+            <i class="bi bi-qr-code-scan"></i> SCAN BARCODE
+        </button>
         
         <label>Barcode / Product Code (Manual)</label>
         <input type="text" id="barcode" placeholder="Enter or Scan Barcode" onchange="lookupProduct()">
@@ -74,13 +95,20 @@
             <div>
                 <label>Category</label>
                 <select id="category" onchange="handleDropdownAdd('category')">
-                    <option value="">Select...</option><option value="Grocery">Grocery</option><option value="ADD_NEW">+ Add New</option>
+                    <option value="">Select...</option>
+                    <option value="Grocery">Grocery</option>
+                    <option value="Stationery">Stationery</option>
+                    <option value="ADD_NEW">+ Add New</option>
                 </select>
             </div>
             <div>
                 <label>Unit</label>
                 <select id="unit" onchange="handleDropdownAdd('unit')">
-                    <option value="">Select...</option><option value="Pieces">Pieces</option><option value="Litres">Litres</option><option value="Box">Box</option><option value="ADD_NEW">+ Add New</option>
+                    <option value="">Select...</option>
+                    <option value="Pieces">Pieces</option>
+                    <option value="Litres">Litres</option>
+                    <option value="Box">Box</option>
+                    <option value="ADD_NEW">+ Add New</option>
                 </select>
             </div>
         </div>
@@ -97,8 +125,8 @@
         
         <div id="tax-split" class="tax-split-box"></div>
 
-        <div class="grid-2" style="background: #f8fafc; padding: 10px; border-radius: 10px; border: 1px solid #cbd5e1; margin-bottom: 12px;">
-            <div><label style="color:var(--emerald);">Target Profit %</label><input type="number" id="profit-pct" placeholder="20%"></div>
+        <div class="grid-2" style="background: #f8fafc; padding: 12px; border-radius: 10px; border: 1px solid #cbd5e1; margin-bottom: 15px;">
+            <div><label style="color:var(--emerald);">Target Profit %</label><input type="number" id="profit-pct" placeholder="e.g. 20"></div>
             <div><label style="color:var(--emerald);">Min Sale Price (₹)</label><input type="number" id="msp" placeholder="0.00"></div>
         </div>
 
@@ -109,7 +137,9 @@
 
     <div class="card">
         <h2><i class="bi bi-cart-check"></i> 3. Bill Summary</h2>
-        <div id="item-list" class="item-list"><p style="text-align: center; color: #94a3b8; font-size: 14px;">No items added yet.</p></div>
+        <div id="item-list" class="item-list">
+            <p style="text-align: center; color: #94a3b8; font-size: 14px;">No items added yet.</p>
+        </div>
         <h3 id="grand-total" style="text-align: right; color: var(--navy);">Total: ₹0.00</h3>
         
         <button class="btn-main btn-emerald" onclick="saveWholeBill()" id="save-bill-btn" style="margin-top: 15px;">
@@ -122,51 +152,88 @@
     const activeUserPhone = localStorage.getItem("activeUserPhone");
     const assignedBranch = localStorage.getItem("assignedBranch");
     let currentBillItems = [];
-    let html5QrcodeScanner;
+    
+    // Scanner Variables
+    let html5QrCode;
+    let currentFacingMode = "environment"; // Defaults to Back Camera
 
     document.addEventListener('DOMContentLoaded', () => {
         firebase.auth().onAuthStateChanged((user) => {
             if (user && activeUserPhone) {
-                loadBranches(); loadSuppliers(); setupCalculators(); initScanner();
+                loadBranches(); 
+                loadSuppliers(); 
+                setupCalculators();
             }
         });
     });
 
-    // --- 1. SCANNER INITIALIZATION ---
- // --- 1. SCANNER INITIALIZATION ---
-    function initScanner() {
-        // Optimized for 1D Product Barcodes (Rectangular box, higher FPS)
-        html5QrcodeScanner = new Html5QrcodeScanner(
-            "reader", 
-            { 
-                fps: 15, // Faster scanning rate
-                qrbox: { width: 300, height: 120 }, // Wide rectangular box for product barcodes
-                rememberLastUsedCamera: true
-            }, 
-            false // Hides verbose console logs
-        );
-        html5QrcodeScanner.render(onScanSuccess);
+    // --- 1. CUSTOM RESPONSIVE SCANNER ---
+    function startScanner() {
+        document.getElementById('start-scan-btn').style.display = 'none';
+        document.getElementById('scanner-container').style.display = 'block';
+        
+        if (!html5QrCode) html5QrCode = new Html5Qrcode("reader");
+
+        // Make it responsive: Wide for laptop, narrower for mobile
+        const isMobile = window.innerWidth < 600;
+        const boxWidth = isMobile ? 250 : 350;
+        const boxHeight = isMobile ? 120 : 150;
+
+        html5QrCode.start(
+            { facingMode: currentFacingMode },
+            { fps: 15, qrbox: { width: boxWidth, height: boxHeight } },
+            (decodedText) => {
+                document.getElementById('barcode').value = decodedText;
+                stopScanner(); 
+                lookupProduct(); 
+            },
+            (errorMessage) => { /* Ignore background scan errors */ }
+        ).catch(err => {
+            alert("Camera Access Error: Please ensure you have granted camera permissions.");
+            stopScanner();
+        });
     }
-    
-    function onScanSuccess(decodedText) {
-        document.getElementById('barcode').value = decodedText;
-        lookupProduct();
-        // Optional: you can clear the scanner here if you want it to stop after one scan
-        // html5QrcodeScanner.clear();
+
+    function stopScanner() {
+        if (html5QrCode && html5QrCode.isScanning) {
+            html5QrCode.stop().then(() => {
+                document.getElementById('scanner-container').style.display = 'none';
+                document.getElementById('start-scan-btn').style.display = 'flex';
+            });
+        } else {
+            document.getElementById('scanner-container').style.display = 'none';
+            document.getElementById('start-scan-btn').style.display = 'flex';
+        }
+    }
+
+    function switchCamera() {
+        if (html5QrCode && html5QrCode.isScanning) {
+            html5QrCode.stop().then(() => {
+                currentFacingMode = (currentFacingMode === "environment") ? "user" : "environment";
+                startScanner();
+            });
+        }
     }
 
     // --- 2. LOADERS & DROPDOWNS ---
     async function loadBranches() {
         const db = firebase.firestore();
         const select = document.getElementById('branch-select');
+        select.innerHTML = '<option value="">Select Branch</option>';
         const snap = await db.collection('companies').doc(activeUserPhone).collection('branches').get();
         snap.forEach(doc => select.innerHTML += `<option value="${doc.data().branchId}">${doc.data().branchName}</option>`);
-        if (assignedBranch && assignedBranch !== "admin") { select.value = assignedBranch; select.disabled = true; }
+        
+        // Staff Branch Lock
+        if (assignedBranch && assignedBranch !== "admin") { 
+            select.value = assignedBranch; 
+            select.disabled = true; 
+        }
     }
 
     async function loadSuppliers() {
         const db = firebase.firestore();
         const select = document.getElementById('supplier-select');
+        select.innerHTML = '<option value="">Select Supplier</option>';
         const snap = await db.collection('companies').doc(activeUserPhone).collection('suppliers').get();
         snap.forEach(doc => select.innerHTML += `<option value="${doc.data().id}">${doc.data().businessName}</option>`);
     }
@@ -212,7 +279,7 @@
         const updateTaxSplit = () => {
             const t = parseFloat(total.value) || 0; const g = parseFloat(gst.value) || 0;
             if(t > 0 && g > 0) {
-                // Assuming Total Cost INCLUDES GST. Base = Total / (1 + GST%)
+                // Total Cost INCLUDES GST. Base = Total / (1 + GST%)
                 const base = t / (1 + (g/100));
                 const taxAmt = t - base;
                 taxSplit.style.display = 'block';
@@ -229,7 +296,10 @@
             if(qty.value && qty.value > 0) { costPer.value = (parseFloat(total.value) / parseFloat(qty.value)).toFixed(2); updateTaxSplit(); }
             triggerMspCalc();
         });
-        qty.addEventListener('input', () => { if(costPer.value) { total.value = (parseFloat(qty.value) * parseFloat(costPer.value)).toFixed(2); } updateTaxSplit(); triggerMspCalc();});
+        qty.addEventListener('input', () => { 
+            if(costPer.value) { total.value = (parseFloat(qty.value) * parseFloat(costPer.value)).toFixed(2); } 
+            updateTaxSplit(); triggerMspCalc();
+        });
         gst.addEventListener('input', updateTaxSplit);
 
         // Profit vs MSP
@@ -250,18 +320,28 @@
     // --- 4. CART & SAVING ---
     function addItemToBill() {
         const item = {
-            id: Date.now().toString(), barcode: document.getElementById('barcode').value.trim(),
-            name: document.getElementById('item-name').value.trim(), category: document.getElementById('category').value,
-            unit: document.getElementById('unit').value, qty: parseFloat(document.getElementById('qty').value),
-            costPer: parseFloat(document.getElementById('cost-per').value), totalCost: parseFloat(document.getElementById('total-cost').value),
-            gst: parseFloat(document.getElementById('gst-rate').value) || 0, msp: parseFloat(document.getElementById('msp').value) || 0
+            id: Date.now().toString(), 
+            barcode: document.getElementById('barcode').value.trim(),
+            name: document.getElementById('item-name').value.trim(), 
+            category: document.getElementById('category').value,
+            unit: document.getElementById('unit').value, 
+            qty: parseFloat(document.getElementById('qty').value),
+            costPer: parseFloat(document.getElementById('cost-per').value), 
+            totalCost: parseFloat(document.getElementById('total-cost').value),
+            gst: parseFloat(document.getElementById('gst-rate').value) || 0, 
+            msp: parseFloat(document.getElementById('msp').value) || 0
         };
-        if(!item.name || !item.qty || !item.totalCost) return alert("Name, Qty, and Total Cost are required!");
-        currentBillItems.push(item); renderCart(); clearItemForm();
+        if(!item.name || !item.qty || !item.totalCost) return alert("Product Name, Qty, and Total Cost are required!");
+        currentBillItems.push(item); 
+        renderCart(); 
+        clearItemForm();
     }
 
     function renderCart() {
-        const list = document.getElementById('item-list'); list.innerHTML = ""; let grandTotal = 0;
+        const list = document.getElementById('item-list'); 
+        list.innerHTML = ""; 
+        let grandTotal = 0;
+        
         currentBillItems.forEach(item => {
             grandTotal += item.totalCost;
             list.innerHTML += `
@@ -271,15 +351,22 @@
                         <p>Qty: ${item.qty} ${item.unit} | Cost: ₹${item.costPer}/unit | MSP: ₹${item.msp}</p>
                     </div>
                     <div style="text-align:right;">
-                        <span style="font-weight: 700; color: var(--navy); display:block; margin-bottom:5px;">₹${item.totalCost.toFixed(2)}</span>
+                        <span style="font-weight: 700; color: var(--navy); display:block; margin-bottom:8px;">₹${item.totalCost.toFixed(2)}</span>
                         <button class="btn-remove" onclick="removeItem('${item.id}')"><i class="bi bi-trash"></i></button>
                     </div>
                 </div>`;
         });
         document.getElementById('grand-total').innerText = `Total: ₹${grandTotal.toFixed(2)}`;
+        
+        if(currentBillItems.length === 0) {
+            list.innerHTML = '<p style="text-align: center; color: #94a3b8; font-size: 14px;">No items added yet.</p>';
+        }
     }
 
-    function removeItem(id) { currentBillItems = currentBillItems.filter(i => i.id !== id); renderCart(); }
+    function removeItem(id) { 
+        currentBillItems = currentBillItems.filter(i => i.id !== id); 
+        renderCart(); 
+    }
     
     function clearItemForm() {
         ['barcode', 'item-name', 'qty', 'cost-per', 'total-cost', 'profit-pct', 'msp'].forEach(id => document.getElementById(id).value = "");
@@ -288,42 +375,74 @@
     }
 
     async function saveWholeBill() {
-        if (currentBillItems.length === 0) return alert("Add items to the bill first.");
-        const branchId = document.getElementById('branch-select').value, supplierId = document.getElementById('supplier-select').value, billNum = document.getElementById('bill-num').value.trim();
-        if (!branchId || !supplierId || !billNum) return alert("Branch, Supplier, and Bill Number are required!");
+        if (currentBillItems.length === 0) return alert("Please add at least one item to the bill first.");
+        const branchId = document.getElementById('branch-select').value;
+        const supplierId = document.getElementById('supplier-select').value;
+        const billNum = document.getElementById('bill-num').value.trim();
+        
+        if (!branchId || !supplierId || !billNum) return alert("Branch, Supplier, and Bill Number are mandatory!");
 
-        const btn = document.getElementById('save-bill-btn'); btn.innerHTML = "UPLOADING & SAVING..."; btn.disabled = true;
+        const btn = document.getElementById('save-bill-btn'); 
+        btn.innerHTML = "UPLOADING & SAVING..."; 
+        btn.disabled = true;
 
         try {
-            const db = firebase.firestore(); let imageUrl = "";
+            const db = firebase.firestore(); 
+            let imageUrl = "";
             const fileInput = document.getElementById('bill-image').files[0];
+            
             if (fileInput) {
                 const storageRef = firebase.storage().ref(`bills/${activeUserPhone}/${Date.now()}_${fileInput.name}`);
-                await storageRef.put(fileInput); imageUrl = await storageRef.getDownloadURL();
+                await storageRef.put(fileInput); 
+                imageUrl = await storageRef.getDownloadURL();
             }
 
             const grandTotal = currentBillItems.reduce((sum, item) => sum + item.totalCost, 0);
             
-            // Save to Supplier
+            // 1. Save to Supplier Transactions Ledger
             await db.collection('companies').doc(activeUserPhone).collection('suppliers').doc(supplierId).collection('transactions').add({
-                billNum, amount: grandTotal, type: 'Purchase', billImageUrl: imageUrl, date: new Date().toISOString()
+                billNum: billNum, 
+                amount: grandTotal, 
+                type: 'Purchase', 
+                billImageUrl: imageUrl, 
+                date: new Date().toISOString()
             });
 
-            // Save Inventory & Master
+            // 2. Batch Save Inventory & Master Memory
             const batch = db.batch();
             for (const item of currentBillItems) {
                 const invRef = db.collection('companies').doc(activeUserPhone).collection('branches').doc(branchId).collection('inventory').doc();
-                batch.set(invRef, { ...item, supplierId, billNum, timestamp: new Date().toISOString() });
+                batch.set(invRef, { ...item, supplierId: supplierId, billNum: billNum, timestamp: new Date().toISOString() });
+                
                 if (item.barcode) {
                     const masterRef = db.collection('companies').doc(activeUserPhone).collection('products_master').doc(item.barcode);
-                    batch.set(masterRef, { name: item.name, category: item.category, unit: item.unit, lastCostPrice: item.costPer, currentMsp: item.msp, lastUpdated: new Date().toISOString() }, { merge: true });
+                    batch.set(masterRef, { 
+                        name: item.name, 
+                        category: item.category, 
+                        unit: item.unit, 
+                        lastCostPrice: item.costPer, 
+                        currentMsp: item.msp, 
+                        lastUpdated: new Date().toISOString() 
+                    }, { merge: true });
                 }
             }
             await batch.commit();
-            alert("Bill Saved Successfully!");
-            document.getElementById('bill-num').value = ""; document.getElementById('bill-image').value = ""; currentBillItems = []; renderCart();
-        } catch (e) { alert("Database Error: " + e.message); } 
-        finally { btn.innerHTML = `<i class="bi bi-cloud-arrow-up-fill"></i> SAVE WHOLE BILL`; btn.disabled = false; }
+            
+            alert("Success! Bill Saved & Inventory Updated.");
+            
+            // Reset for next bill
+            document.getElementById('bill-num').value = ""; 
+            document.getElementById('bill-image').value = ""; 
+            currentBillItems = []; 
+            renderCart();
+            
+        } catch (e) { 
+            console.error(e);
+            alert("Database Error: " + e.message); 
+        } finally { 
+            btn.innerHTML = `<i class="bi bi-cloud-arrow-up-fill"></i> SAVE WHOLE BILL`; 
+            btn.disabled = false; 
+        }
     }
 </script>
 </body>
