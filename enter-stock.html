@@ -2,57 +2,177 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <title>Enter Stock - Business Saarthi</title>
+    
     <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-firestore-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-auth-compat.js"></script>
     <script src="/auth.js"></script>
+    
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.1/font/bootstrap-icons.css">
+
     <style>
-        /* [CSS focused on clean card layouts and scanner modal] */
-        .wrapper { padding: 20px; max-width: 700px; margin: auto; }
-        .card { background: white; padding: 20px; border-radius: 16px; margin-bottom: 20px; border: 1px solid #e2e8f0; }
-        .scanner-modal { display: none; position: fixed; top:0; left:0; width: 100%; height: 100%; background: black; z-index: 9999; }
-        .input-row { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-bottom: 10px; }
-        .btn-action { width: 100%; padding: 15px; border: none; border-radius: 10px; font-weight: 700; cursor: pointer; }
+        :root { --navy: #1e3a8a; --emerald: #059669; --slate: #f8fafc; --text: #0f172a; }
+        body { font-family: 'Inter', sans-serif; background-color: #f1f5f9; margin: 0; padding: 0; color: var(--text); }
+        .wrapper { padding: 16px; max-width: 700px; margin: auto; padding-bottom: 50px; }
+        
+        .card { background: white; padding: 18px; border-radius: 16px; margin-bottom: 16px; border: 1px solid #e2e8f0; }
+        h2 { font-size: 18px; margin: 0 0 15px 0; color: var(--navy); }
+        
+        label { display: block; font-size: 12px; font-weight: 700; color: #64748b; margin-bottom: 4px; text-transform: uppercase; }
+        input, select { width: 100%; padding: 14px; margin-bottom: 12px; border: 2px solid #e2e8f0; border-radius: 10px; font-size: 16px; box-sizing: border-box; }
+        input:focus { border-color: var(--navy); outline: none; }
+        
+        .grid-2 { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
+        
+        .btn-main { width: 100%; padding: 16px; border: none; border-radius: 12px; font-size: 16px; font-weight: 700; cursor: pointer; color: white; margin-bottom: 10px; }
+        .btn-emerald { background: var(--emerald); }
+        .btn-navy { background: var(--navy); }
+        
+        .param-row { display: flex; gap: 8px; margin-bottom: 8px; }
+        .scanner-modal { display: none; position: fixed; top:0; left:0; width: 100%; height: 100%; background: #000; z-index: 9999; }
     </style>
 </head>
 <body>
+
 <div class="wrapper">
     <div class="card">
-        <h3 id="branch-display">Branch: Loading...</h3>
-        <input type="text" id="bill-num" placeholder="Bill Number">
+        <h2><i class="bi bi-shop"></i> STOCK ENTRY</h2>
+        
+        <!-- BRANCH SELECTOR (Visible only if Admin) -->
+        <label>Select Branch</label>
+        <select id="branch-select"></select>
+        
+        <label>Bill Number</label>
+        <input type="text" id="bill-num" placeholder="Enter Bill #">
+        
+        <label>Select Supplier</label>
         <select id="supplier-select"></select>
     </div>
 
     <div class="card">
-        <button class="btn-action" onclick="openScanner()"><i class="bi bi-qr-code-scan"></i> Scan Barcode</button>
-        <input type="text" id="item-name" placeholder="Product Name">
-        <div class="input-row">
-            <input type="number" id="qty" placeholder="Qty">
-            <input type="number" id="cost-price" placeholder="Cost Price (Per Unit)">
+        <button class="btn-main btn-navy" onclick="openScanner()">
+            <i class="bi bi-qr-code-scan"></i> SCAN BARCODE
+        </button>
+        
+        <label>Product Name</label>
+        <input type="text" id="item-name" placeholder="Item Name">
+        
+        <div class="grid-2">
+            <div><label>Qty</label><input type="number" id="qty" placeholder="0"></div>
+            <div><label>Cost/Unit</label><input type="number" id="cost-per" placeholder="₹ 0.00"></div>
         </div>
-        <div class="input-row">
-            <input type="number" id="total-price" placeholder="Total Cost">
-            <input type="number" id="gst-rate" placeholder="GST %">
+        
+        <div class="grid-2">
+            <div><label>Total Cost</label><input type="number" id="total-cost" placeholder="₹ 0.00"></div>
+            <div><label>GST %</label><input type="number" id="gst-rate" placeholder="0%"></div>
         </div>
+
         <div id="dynamic-params"></div>
-        <button class="btn-action" onclick="addParam()">+ Add Custom Parameter</button>
+        <button class="btn-main" style="background:#e2e8f0; color:#475569;" onclick="addParam()">
+            + Add Custom Parameter
+        </button>
     </div>
 
-    <button class="btn-action" style="background: #10B981; color: white;" onclick="commitStock()">SAVE WHOLE BILL</button>
-</div>
-
-<div id="scanner-modal" class="scanner-modal">
-    <button onclick="document.getElementById('scanner-modal').style.display='none'">CLOSE</button>
-    <div id="reader"></div>
+    <button class="btn-main btn-emerald" onclick="commitStock()">SAVE WHOLE BILL</button>
 </div>
 
 <script>
-    function openScanner() { /* Camera toggle logic will go here */ }
-    function addParam() { /* Dynamic field logic */ }
-    // ... etc
+    const db = firebase.firestore();
+    const activeUserPhone = localStorage.getItem("activeUserPhone");
+
+    // 1. Initialize Page
+    document.addEventListener('DOMContentLoaded', () => {
+        loadBranches();
+        loadSuppliers();
+        setupMathListeners();
+    });
+
+    // 2. Load Branches & Suppliers
+    async function loadBranches() {
+        const snap = await db.collection('companies').doc(activeUserPhone).collection('branches').get();
+        const select = document.getElementById('branch-select');
+        snap.forEach(doc => {
+            const b = doc.data();
+            select.innerHTML += `<option value="${b.branchId}">${b.branchName}</option>`;
+        });
+    }
+
+    async function loadSuppliers() {
+        const snap = await db.collection('companies').doc(activeUserPhone).collection('suppliers').get();
+        const select = document.getElementById('supplier-select');
+        snap.forEach(doc => {
+            const s = doc.data();
+            select.innerHTML += `<option value="${s.id}">${s.businessName}</option>`;
+        });
+    }
+
+    // 3. Bi-Directional Math Logic
+    function setupMathListeners() {
+        const qty = document.getElementById('qty');
+        const costPer = document.getElementById('cost-per');
+        const total = document.getElementById('total-cost');
+
+        costPer.addEventListener('input', () => {
+            if(qty.value) total.value = (parseFloat(qty.value) * parseFloat(costPer.value)).toFixed(2);
+        });
+
+        total.addEventListener('input', () => {
+            if(qty.value && qty.value > 0) costPer.value = (parseFloat(total.value) / parseFloat(qty.value)).toFixed(2);
+        });
+    }
+
+    // 4. Dynamic Parameters
+    function addParam() {
+        const div = document.createElement('div');
+        div.className = 'param-row';
+        div.innerHTML = `
+            <input type="text" placeholder="Parameter (e.g. Size)">
+            <input type="text" placeholder="Value">
+            <button onclick="this.parentElement.remove()" style="border:none; background:none;"><i class="bi bi-trash"></i></button>
+        `;
+        document.getElementById('dynamic-params').appendChild(div);
+    }
+
+    // 5. Final Commit
+    async function commitStock() {
+        const branchId = document.getElementById('branch-select').value;
+        const supplierId = document.getElementById('supplier-select').value;
+        const billNum = document.getElementById('bill-num').value;
+        
+        const stockItem = {
+            itemName: document.getElementById('item-name').value,
+            qty: parseFloat(document.getElementById('qty').value),
+            costPerUnit: parseFloat(document.getElementById('cost-per').value),
+            totalCost: parseFloat(document.getElementById('total-cost').value),
+            gst: parseFloat(document.getElementById('gst-rate').value),
+            timestamp: new Date().toISOString()
+        };
+
+        try {
+            // Save to Branch Inventory
+            await db.collection('companies').doc(activeUserPhone)
+                    .collection('branches').doc(branchId)
+                    .collection('inventory').add(stockItem);
+            
+            // Log to Supplier History
+            await db.collection('companies').doc(activeUserPhone)
+                    .collection('suppliers').doc(supplierId)
+                    .collection('transactions').add({
+                        billNum: billNum,
+                        amount: stockItem.totalCost,
+                        type: 'Purchase',
+                        date: new Date().toISOString()
+                    });
+
+            alert("Bill Saved Successfully!");
+            // Optional: reset fields here, but keep BillNum/Supplier as requested
+        } catch (e) {
+            alert("Error: " + e.message);
+        }
+    }
 </script>
 </body>
 </html>
