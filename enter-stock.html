@@ -1,0 +1,58 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Enter Stock - Business Saarthi</title>
+    <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-firestore-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-auth-compat.js"></script>
+    <script src="/auth.js"></script>
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.1/font/bootstrap-icons.css">
+    <style>
+        /* [CSS focused on clean card layouts and scanner modal] */
+        .wrapper { padding: 20px; max-width: 700px; margin: auto; }
+        .card { background: white; padding: 20px; border-radius: 16px; margin-bottom: 20px; border: 1px solid #e2e8f0; }
+        .scanner-modal { display: none; position: fixed; top:0; left:0; width: 100%; height: 100%; background: black; z-index: 9999; }
+        .input-row { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-bottom: 10px; }
+        .btn-action { width: 100%; padding: 15px; border: none; border-radius: 10px; font-weight: 700; cursor: pointer; }
+    </style>
+</head>
+<body>
+<div class="wrapper">
+    <div class="card">
+        <h3 id="branch-display">Branch: Loading...</h3>
+        <input type="text" id="bill-num" placeholder="Bill Number">
+        <select id="supplier-select"></select>
+    </div>
+
+    <div class="card">
+        <button class="btn-action" onclick="openScanner()"><i class="bi bi-qr-code-scan"></i> Scan Barcode</button>
+        <input type="text" id="item-name" placeholder="Product Name">
+        <div class="input-row">
+            <input type="number" id="qty" placeholder="Qty">
+            <input type="number" id="cost-price" placeholder="Cost Price (Per Unit)">
+        </div>
+        <div class="input-row">
+            <input type="number" id="total-price" placeholder="Total Cost">
+            <input type="number" id="gst-rate" placeholder="GST %">
+        </div>
+        <div id="dynamic-params"></div>
+        <button class="btn-action" onclick="addParam()">+ Add Custom Parameter</button>
+    </div>
+
+    <button class="btn-action" style="background: #10B981; color: white;" onclick="commitStock()">SAVE WHOLE BILL</button>
+</div>
+
+<div id="scanner-modal" class="scanner-modal">
+    <button onclick="document.getElementById('scanner-modal').style.display='none'">CLOSE</button>
+    <div id="reader"></div>
+</div>
+
+<script>
+    function openScanner() { /* Camera toggle logic will go here */ }
+    function addParam() { /* Dynamic field logic */ }
+    // ... etc
+</script>
+</body>
+</html>
