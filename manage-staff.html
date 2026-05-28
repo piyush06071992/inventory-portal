@@ -228,20 +228,29 @@
     });
 
     // --- ERP DATA FETCHING ---
-    async function loadRoles() {
-        const activeUserPhone = localStorage.getItem("activeUserPhone");
-        const db = firebase.firestore();
-        
-        try {
-            const doc = await db.collection('companies').doc(activeUserPhone).get();
-            const roles = doc.data().roles || ['Cashier', 'Inventory Manager', 'Sales Executive'];
-            const select = document.getElementById('stf-role');
-            select.innerHTML = '';
-            roles.forEach(r => select.innerHTML += `<option value="${r}">${r}</option>`);
-        } catch (error) {
-            console.error("Error loading roles:", error);
-        }
+ async function loadRoles() {
+    const activeUserPhone = localStorage.getItem("activeUserPhone");
+    const db = firebase.firestore();
+    
+    try {
+        const doc = await db.collection('companies').doc(activeUserPhone).get();
+        const roles = doc.data().roles || ['Cashier', 'Inventory Manager', 'Sales Executive'];
+
+        const select = document.getElementById('stf-role');
+        select.innerHTML = '';
+
+        const roleFilter = document.getElementById('role-filter');
+        roleFilter.innerHTML = `<option value="">All Roles</option>`;
+
+        roles.forEach(r => {
+            select.innerHTML += `<option value="${r}">${r}</option>`;
+            roleFilter.innerHTML += `<option value="${r}">${r}</option>`;
+        });
+
+    } catch (error) {
+        console.error("Error loading roles:", error);
     }
+}
 
     async function addNewRole() {
         const newRole = prompt("Enter new role name:");
