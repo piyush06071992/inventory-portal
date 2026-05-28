@@ -133,9 +133,18 @@
     });
 
     // --- 1. SCANNER INITIALIZATION ---
+ // --- 1. SCANNER INITIALIZATION ---
     function initScanner() {
-        // This uses the full UI provided by the library. It handles cameras automatically.
-        html5QrcodeScanner = new Html5QrcodeScanner("reader", { fps: 10, qrbox: {width: 250, height: 250}, rememberLastUsedCamera: true });
+        // Optimized for 1D Product Barcodes (Rectangular box, higher FPS)
+        html5QrcodeScanner = new Html5QrcodeScanner(
+            "reader", 
+            { 
+                fps: 15, // Faster scanning rate
+                qrbox: { width: 300, height: 120 }, // Wide rectangular box for product barcodes
+                rememberLastUsedCamera: true
+            }, 
+            false // Hides verbose console logs
+        );
         html5QrcodeScanner.render(onScanSuccess);
     }
     
