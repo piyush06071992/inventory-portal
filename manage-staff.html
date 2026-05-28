@@ -429,8 +429,24 @@ const selectedBranch = document.getElementById('branch-filter')?.value || '';
         let displayCount = 0;
 
         staffArray.forEach(stf => {
-            if (currentFilter === 'active' && stf.status === 'Terminated') return;
-            if (currentFilter === 'past' && stf.status !== 'Terminated') return;
+          if (currentFilter === 'active' && stf.status === 'Terminated') return;
+if (currentFilter === 'past' && stf.status !== 'Terminated') return;
+
+if (
+    searchText &&
+    !stf.name.toLowerCase().includes(searchText) &&
+    !stf.phone.includes(searchText)
+) return;
+
+if (
+    selectedRole &&
+    stf.role !== selectedRole
+) return;
+
+if (
+    selectedBranch &&
+    stf.assignedBranch !== selectedBranch
+) return;
             
             displayCount++;
             const isTerminated = stf.status === 'Terminated';
