@@ -1,0 +1,191 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Staff Dashboard - Business Saarthi</title>
+    
+    <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-auth-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-firestore-compat.js"></script>
+
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.1/font/bootstrap-icons.css">
+    <link rel="stylesheet" href="/style.css">
+
+    <style>
+        body { font-family: 'Inter', sans-serif; background-color: #f1f5f9; margin: 0; padding: 0; }
+        .dashboard-layout { display: flex; flex-direction: column; align-items: center; justify-content: flex-start; min-height: 100vh; width: 100%; padding: 20px 10px; box-sizing: border-box; }
+        
+        .shop-header-card { width: 100%; max-width: 650px; background: linear-gradient(135deg, #1e3a8a, #0f172a); color: #ffffff; padding: 25px 20px; border-radius: 16px; text-align: center; box-shadow: 0 10px 25px rgba(30, 58, 138, 0.15); margin-bottom: 20px; box-sizing: border-box; }
+        .shop-header-card h1 { margin: 0; font-size: 24px; font-weight: 700; letter-spacing: 0.5px; text-transform: uppercase; }
+        .shop-header-card p { margin: 5px 0 0 0; font-size: 15px; color: #93c5fd; font-weight: 600; }
+        
+        .menu-grid-container { width: 100%; max-width: 650px; background: #ffffff; border-radius: 16px; padding: 24px; box-shadow: 0 4px 20px rgba(0, 0, 0, 0.03); box-sizing: border-box; }
+        
+        .grid-row { display: grid; grid-template-columns: 1fr; gap: 16px; margin-bottom: 24px; }
+        
+        .btn-dashboard-item { border: none; border-radius: 16px; padding: 20px; font-size: 16px; font-weight: 700; cursor: pointer; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 10px; color: #ffffff; transition: all 0.2s ease; box-shadow: 0 4px 12px rgba(0, 0, 0, 0.05); }
+        .btn-dashboard-item i { font-size: 28px; }
+        .btn-dashboard-item:hover { transform: translateY(-2px); filter: brightness(1.05); box-shadow: 0 8px 15px rgba(0, 0, 0, 0.1); }
+        .color-indigo { background: linear-gradient(135deg, #6366f1, #4338ca); }
+        
+        .btn-logout-panel { width: 100%; background-color: #f1f5f9; color: #64748b; border: 1px solid #e2e8f0; border-radius: 10px; padding: 14px; font-size: 15px; font-weight: 600; cursor: pointer; display: flex; align-items: center; justify-content: center; gap: 8px; transition: all 0.2s ease; }
+        .btn-logout-panel:hover { background-color: #fee2e2; color: #ef4444; border-color: #fca5a5; }
+
+        /* Sub-menu Modal Styles */
+        .modal-overlay { display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(15, 23, 42, 0.7); z-index: 1000; justify-content: center; align-items: center; padding: 20px; box-sizing: border-box; backdrop-filter: blur(6px);}
+        .modal-card { background: white; width: 100%; max-width: 380px; border-radius: 24px; padding: 30px 24px; position: relative; animation: popIn 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275); box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.25);}
+        @keyframes popIn { from { transform: scale(0.9); opacity: 0; } to { transform: scale(1); opacity: 1; } }
+        .modal-close { position: absolute; top: 16px; right: 16px; background: #f1f5f9; border: none; border-radius: 50%; width: 36px; height: 36px; font-size: 18px; cursor: pointer; color: #64748b; transition: background 0.2s; display: flex; align-items: center; justify-content: center;}
+        .modal-close:hover { background: #e2e8f0; color: #0f172a; }
+        .submenu-btn { width: 100%; background: #ffffff; border: 2px solid #e2e8f0; color: #1e293b; padding: 18px; border-radius: 16px; font-size: 16px; font-weight: 700; text-align: left; margin-bottom: 12px; cursor: pointer; display: flex; align-items: center; gap: 15px; transition: all 0.2s; box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.05);}
+        .submenu-btn:hover { border-color: #3b82f6; background: #f8fafc; transform: translateY(-2px); box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1); }
+        .submenu-btn i { font-size: 24px; color: #3b82f6; }
+        .submenu-btn.disabled { opacity: 0.6; border-color: #e2e8f0; background: #f8fafc; cursor: not-allowed; }
+        .submenu-btn.disabled i { color: #94a3b8; }
+    </style>
+</head>
+<body>
+
+<div class="dashboard-layout">
+    <div class="shop-header-card">
+        <h1 id="display-shop-name">Loading Workspace...</h1>
+        <p id="display-staff-name"><i class="bi bi-person-badge-fill"></i> Staff Portal</p>
+    </div>
+
+    <div class="menu-grid-container">
+        <div class="grid-row">
+            <button class="btn-dashboard-item color-indigo" onclick="openStockMenu()">
+                <i class="bi bi-box-seam-fill"></i><span>Manage Stock</span>
+            </button>
+        </div>
+
+        <button class="btn-logout-panel" onclick="handleLogout()">
+            <i class="bi bi-box-arrow-left"></i> Logout Securely
+        </button>
+    </div>
+</div>
+
+<div class="modal-overlay" id="stock-menu-modal">
+    <div class="modal-card">
+        <button class="modal-close" onclick="closeStockMenu()"><i class="bi bi-x-lg"></i></button>
+        <h2 style="margin-top:0; color:#1e3a8a; font-size:20px; margin-bottom: 20px;"><i class="bi bi-box-seam-fill"></i> Manage Stock</h2>
+        
+        <button class="submenu-btn" id="btn-enter-stock" onclick="goToEnterStock()">
+            <i class="bi bi-plus-circle-fill"></i> Enter New Stock
+            <span id="lock-icon" style="margin-left:auto; display:none; color:#ef4444;"><i class="bi bi-lock-fill"></i></span>
+        </button>
+        
+        <button class="submenu-btn" onclick="alert('View Stock module coming soon!')">
+            <i class="bi bi-eye-fill"></i> View Stock
+        </button>
+    </div>
+</div>
+
+<script src="/auth.js"></script>
+
+<script>
+    let hasEnterStockPermission = false;
+
+    // Secure Logout Function
+    function handleLogout(customMessage = null) {
+        if(customMessage) alert(customMessage);
+        localStorage.clear();
+        sessionStorage.clear();
+        firebase.auth().signOut().then(() => {
+            window.location.replace('/login.html'); 
+        }).catch(() => {
+            window.location.replace('/login.html');
+        });
+    }
+
+    // MASTER SECURITY & INITIALIZATION LISTENER
+    firebase.auth().onAuthStateChanged((user) => {
+        
+        // LAYER 1: DIRECT URL BYPASS PROTECTION
+        if (!user) return window.location.replace('/login.html');
+
+        const activeUserPhone = localStorage.getItem("activeUserPhone"); // Shop Owner ID
+        const activeStaffId = localStorage.getItem("activeStaffId");     // The logged-in Staff ID
+        const myLoginTime = localStorage.getItem("myLoginTime");         // Unique Session Timestamp
+
+        // Failsafe if local storage was cleared manually
+        if (!activeUserPhone || !activeStaffId || !myLoginTime) {
+            handleLogout();
+            return;
+        }
+
+        const db = firebase.firestore();
+
+        // 1. Fetch Shop Name
+        db.collection('companies').doc(activeUserPhone).get().then((doc) => {
+            if (doc.exists && doc.data().businessName) {
+                document.getElementById("display-shop-name").innerText = doc.data().businessName;
+            } else {
+                document.getElementById("display-shop-name").innerText = "BUSINESS WORKSPACE";
+            }
+        });
+
+        // 2. LAYER 2: MULTI-DEVICE & PERMISSION PROTECTION (Real-time Snapshot)
+        db.collection('companies').doc(activeUserPhone).collection('staff').doc(activeStaffId)
+        .onSnapshot((doc) => {
+            if (doc.exists) {
+                const data = doc.data();
+
+                // Multi-Device Protection: Compare database login time to this browser's login time
+                if (data.lastLoginTime && data.lastLoginTime !== myLoginTime) {
+                    handleLogout("SECURITY ALERT: Your account was just logged in from another device. This active session is being closed.");
+                    return;
+                }
+
+                // Termination Protection: Auto-kick if Admin terminates them
+                if (data.status === 'Terminated') {
+                    handleLogout("Your access has been revoked by the administrator.");
+                    return;
+                }
+
+                // Update UI details
+                document.getElementById('display-staff-name').innerHTML = `<i class="bi bi-person-badge-fill"></i> Welcome, ${data.name}`;
+
+                // LIVE PERMISSION CHECK
+                hasEnterStockPermission = data.permissions && data.permissions.canEnterStock === true;
+
+            } else {
+                handleLogout("Staff record no longer exists. Contact Administrator.");
+            }
+        });
+    });
+
+    // Modal Functions
+    function openStockMenu() {
+        document.getElementById('stock-menu-modal').style.display = 'flex';
+        
+        // Visually update the button based on real-time permissions
+        const btn = document.getElementById('btn-enter-stock');
+        const lock = document.getElementById('lock-icon');
+        
+        if (!hasEnterStockPermission) {
+            btn.classList.add('disabled');
+            lock.style.display = 'block';
+        } else {
+            btn.classList.remove('disabled');
+            lock.style.display = 'none';
+        }
+    }
+    
+    function closeStockMenu() {
+        document.getElementById('stock-menu-modal').style.display = 'none';
+    }
+
+    function goToEnterStock() {
+        if (hasEnterStockPermission) {
+            window.location.href = '/enter-stock.html';
+        } else {
+            alert("ACCESS DENIED: You are not authorized to enter new stock. Please contact your Administrator to request permission.");
+        }
+    }
+</script>
+
+</body>
+</html>
