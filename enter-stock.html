@@ -51,6 +51,16 @@
 <body>
 
 <div class="wrapper">
+    <div class="card" id="admin-auth-card" style="display: none; background: #f0fdf4; border-color: #bbf7d0;">
+        <div style="display: flex; justify-content: space-between; align-items: center;">
+            <div>
+                <h2 style="margin:0; color:#166534; font-size: 16px;"><i class="bi bi-shield-lock-fill"></i> Access Control</h2>
+                <p style="margin:4px 0 0 0; font-size:12px; color:#15803d;">Manage staff entry permissions</p>
+            </div>
+            <button class="btn-main btn-emerald" style="width: auto; padding: 10px 15px; margin: 0; font-size: 13px;" onclick="openAuthModal()">AUTHORIZE</button>
+        </div>
+    </div>
+
     <div class="card">
         <h2><i class="bi bi-receipt"></i> 1. Bill Details</h2>
         <label>Select Branch</label>
@@ -158,9 +168,33 @@
         </div>
         <h3 id="grand-total" style="text-align: right; color: var(--navy);">Total: ₹0.00</h3>
         
-        <button class="btn-main btn-emerald" onclick="saveWholeBill()" id="save-bill-btn" style="margin-top: 15px;">
+     <button class="btn-main btn-emerald" onclick="saveWholeBill()" id="save-bill-btn" style="margin-top: 15px;">
             <i class="bi bi-cloud-arrow-up-fill"></i> SAVE WHOLE BILL
         </button>
+    </div>
+</div>
+
+<div id="auth-modal" style="display:none; position:fixed; top:0; left:0; width:100%; height:100%; background:rgba(15,23,42,0.7); z-index:1000; align-items:center; justify-content:center; padding:15px; box-sizing:border-box; backdrop-filter:blur(4px);">
+    <div style="background:white; width:100%; max-width:500px; border-radius:20px; padding:24px; max-height:90vh; display:flex; flex-direction:column; position:relative; box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.25);">
+        <button onclick="closeAuthModal()" style="position:absolute; top:15px; right:15px; background:#f1f5f9; border:none; border-radius:50%; width:32px; height:32px; cursor:pointer; color:#64748b;"><i class="bi bi-x-lg"></i></button>
+        <h2 style="margin-top:0; color:#1e3a8a; font-size:18px; margin-bottom:15px;"><i class="bi bi-person-lines-fill"></i> Authorize Staff</h2>
+        
+        <div class="grid-2" style="margin-bottom: 5px;">
+            <div>
+                <label style="font-size: 11px;">Filter Branch</label>
+                <select id="auth-branch-filter" onchange="renderAuthList()" style="padding:10px; font-size:13px; margin-bottom:10px;"><option value="">All Branches</option></select>
+            </div>
+            <div>
+                <label style="font-size: 11px;">Filter Role</label>
+                <select id="auth-role-filter" onchange="renderAuthList()" style="padding:10px; font-size:13px; margin-bottom:10px;"><option value="">All Roles</option></select>
+            </div>
+        </div>
+
+        <div style="flex-grow: 1; overflow-y: auto; background: #f8fafc; border: 1px inset #e2e8f0; border-radius: 12px; padding: 10px; margin-bottom: 10px; min-height: 200px;" id="auth-staff-list">
+            <p style="text-align:center; color:#64748b; font-size:13px; margin-top:20px;">Loading staff...</p>
+        </div>
+        
+        <p style="font-size:11px; color:#64748b; margin-top:0; margin-bottom:0; text-align:center;">Permissions update instantly when you tap Grant or Revoke.</p>
     </div>
 </div>
 
@@ -184,12 +218,117 @@
 document.addEventListener('DOMContentLoaded', () => {
         firebase.auth().onAuthStateChanged(async (user) => {
             if (user && activeUserPhone) {
+                // Show Admin Security Panel if they are the owner/admin
+                if (!assignedBranch || assignedBranch === "admin") {
+                    document.getElementById('admin-auth-card').style.display = 'block';
+                }
+
                 await loadShopSettings(); 
-                clearItemForm(); // This instantly draws the parameter boxes on page load
+                clearItemForm(); 
                 loadBranches(); loadSuppliers(); setupCalculators();
             }
         });
     });
+
+// --- ADMIN AUTHORIZATION LOGIC ---
+    let globalAuthStaff = [];
+    let globalAuthBranches = {};
+
+    async function openAuthModal() {
+        document.getElementById('auth-modal').style.display = 'flex';
+        const db = firebase.firestore();
+        document.getElementById('auth-staff-list').innerHTML = `<p style="text-align:center; color:#64748b; font-size:13px; margin-top:20px;">Loading staff...</p>`;
+        
+        try {
+            // 1. Fetch Branches for filter
+            const branchSnap = await db.collection('companies').doc(activeUserPhone).collection('branches').get();
+            const bFilter = document.getElementById('auth-branch-filter');
+            bFilter.innerHTML = '<option value="">All Branches</option>';
+            branchSnap.forEach(doc => {
+                globalAuthBranches[doc.data().branchId] = doc.data().branchName;
+                bFilter.innerHTML += `<option value="${doc.data().branchId}">${doc.data().branchName}</option>`;
+            });
+
+            // 2. Fetch Roles for filter
+            const compDoc = await db.collection('companies').doc(activeUserPhone).get();
+            const rFilter = document.getElementById('auth-role-filter');
+            rFilter.innerHTML = '<option value="">All Roles</option>';
+            if (compDoc.exists && compDoc.data().roles) {
+                compDoc.data().roles.forEach(r => rFilter.innerHTML += `<option value="${r}">${r}</option>`);
+            }
+
+            // 3. Fetch Active Staff
+            const staffSnap = await db.collection('companies').doc(activeUserPhone).collection('staff').where('status', '==', 'Active').get();
+            globalAuthStaff = [];
+            staffSnap.forEach(doc => {
+                globalAuthStaff.push({ id: doc.id, ...doc.data() });
+            });
+            
+            renderAuthList();
+        } catch (e) {
+            console.error(e);
+            document.getElementById('auth-staff-list').innerHTML = `<p style="color:red; text-align:center;">Error loading data.</p>`;
+        }
+    }
+
+    function closeAuthModal() {
+        document.getElementById('auth-modal').style.display = 'none';
+    }
+
+    function renderAuthList() {
+        const bFilter = document.getElementById('auth-branch-filter').value;
+        const rFilter = document.getElementById('auth-role-filter').value;
+        const list = document.getElementById('auth-staff-list');
+        list.innerHTML = '';
+
+        let count = 0;
+        globalAuthStaff.forEach(stf => {
+            // Multi-branch array support filter
+            if (bFilter) {
+                const stfBranches = Array.isArray(stf.assignedBranch) ? stf.assignedBranch : [stf.assignedBranch];
+                if (!stfBranches.includes(bFilter)) return;
+            }
+            // Role Filter
+            if (rFilter && stf.role !== rFilter) return;
+
+            count++;
+            const isAuth = stf.permissions && stf.permissions.canEnterStock === true;
+            
+            list.innerHTML += `
+                <div style="background:white; padding:12px; border-radius:10px; margin-bottom:8px; display:flex; justify-content:space-between; align-items:center; border:1px solid #e2e8f0; box-shadow: 0 2px 4px rgba(0,0,0,0.02);">
+                    <div>
+                        <p style="margin:0; font-weight:700; font-size:14px; color:var(--navy);">${stf.name}</p>
+                        <p style="margin:3px 0 0 0; font-size:11px; color:#64748b;"><span style="background:#e2e8f0; padding:2px 6px; border-radius:4px;">${stf.role}</span> | +91 ${stf.phone}</p>
+                    </div>
+                    <button onclick="toggleStockAuth('${stf.id}', ${!isAuth})" style="background:${isAuth ? '#fee2e2' : '#dcfce7'}; color:${isAuth ? '#ef4444' : '#10b981'}; border:1px solid ${isAuth ? '#fca5a5' : '#86efac'}; padding:8px 12px; border-radius:8px; font-weight:700; font-size:12px; cursor:pointer; width:90px; transition: all 0.2s;">
+                        ${isAuth ? '<i class="bi bi-x-circle"></i> REVOKE' : '<i class="bi bi-check-circle"></i> GRANT'}
+                    </button>
+                </div>
+            `;
+        });
+
+        if (count === 0) list.innerHTML = `<p style="text-align:center; color:#94a3b8; font-size:13px; margin-top:20px;">No staff match these filters.</p>`;
+    }
+
+    async function toggleStockAuth(staffId, newState) {
+        try {
+            const db = firebase.firestore();
+            // Updates specifically the canEnterStock permission inside the permissions object
+            await db.collection('companies').doc(activeUserPhone).collection('staff').doc(staffId).set({
+                permissions: { canEnterStock: newState }
+            }, { merge: true });
+            
+            // Update local memory to change the button color instantly
+            const stf = globalAuthStaff.find(s => s.id === staffId);
+            if (stf) {
+                if (!stf.permissions) stf.permissions = {};
+                stf.permissions.canEnterStock = newState;
+            }
+            renderAuthList(); // Refresh the list
+        } catch (e) {
+            alert("Error updating permissions: " + e.message);
+        }
+    }
 
     // --- 1. SMART RESPONSIVE SCANNER ---
     function startScanner() {
