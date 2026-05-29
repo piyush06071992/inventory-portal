@@ -94,8 +94,11 @@
             <i class="bi bi-qr-code-scan"></i> SCAN BARCODE
         </button>
         
-        <label>Barcode / Product Code</label>
-        <input type="text" id="barcode" placeholder="Enter or Scan Barcode" onchange="lookupProduct()">
+  <label>Search Product / Barcode</label>
+        <div style="position: relative;">
+            <input type="text" id="barcode" placeholder="Scan Barcode or Type Name..." oninput="handleSmartSearch()" autocomplete="off">
+            <div id="search-suggestions" style="display: none; position: absolute; top: 100%; left: 0; width: 100%; background: white; border: 1px solid #cbd5e1; border-radius: 8px; box-shadow: 0 10px 15px -3px rgba(0,0,0,0.1); max-height: 200px; overflow-y: auto; z-index: 50;"></div>
+        </div>
         
         <label>Product Name</label>
         <input type="text" id="item-name" placeholder="Item Name">
@@ -206,7 +209,8 @@
  let html5QrCode;
     let currentFacingMode = "environment"; 
     let isRetryingScanner = false; 
-    let savedShopParams = {}; // Master memory for custom parameters
+   let savedShopParams = {}; // Master memory for custom parameters
+    let globalProductCatalog = []; // Memory for Smart Search
 
     async function loadShopSettings() {
         try {
@@ -223,12 +227,24 @@ document.addEventListener('DOMContentLoaded', () => {
                     document.getElementById('admin-auth-card').style.display = 'block';
                 }
 
-                await loadShopSettings(); 
+           await loadShopSettings(); 
                 clearItemForm(); 
-                loadBranches(); loadSuppliers(); setupCalculators();
+                loadBranches(); loadSuppliers(); setupCalculators(); loadProductCatalog();
             }
         });
     });
+
+    // --- SMART SEARCH CATALOG LOADER ---
+    async function loadProductCatalog() {
+        try {
+            const db = firebase.firestore();
+            const snap = await db.collection('companies').doc(activeUserPhone).collection('products_master').get();
+            globalProductCatalog = [];
+            snap.forEach(doc => {
+                globalProductCatalog.push({ id: doc.id, ...doc.data() });
+            });
+        } catch(e) { console.error("Error loading catalog for search", e); }
+    }
 
 // --- ADMIN AUTHORIZATION LOGIC ---
     let globalAuthStaff = [];
@@ -460,7 +476,7 @@ document.addEventListener('DOMContentLoaded', () => {
         snap.forEach(doc => select.innerHTML += `<option value="${doc.data().id}">${doc.data().businessName}</option>`);
     }
 
-    function handleDropdownAdd(elemId) {
+function handleDropdownAdd(elemId) {
         const el = document.getElementById(elemId);
         if(el.value === 'ADD_NEW') {
             const newVal = prompt(`Enter new ${elemId}:`);
@@ -471,7 +487,47 @@ document.addEventListener('DOMContentLoaded', () => {
         }
     }
 
-async function lookupProduct() {
+    // --- SMART SEARCH LOGIC ---
+    function handleSmartSearch() {
+        const query = document.getElementById('barcode').value.trim().toLowerCase();
+        const suggestionsBox = document.getElementById('search-suggestions');
+        
+        if (query.length < 2) { suggestionsBox.style.display = 'none'; return; }
+        
+        // Search by Product Name or Barcode
+        const matches = globalProductCatalog.filter(p => 
+            (p.name && p.name.toLowerCase().includes(query)) || 
+            (p.id && p.id.toLowerCase().includes(query))
+        ).slice(0, 10); // Show top 10 results
+        
+        if (matches.length === 0) { suggestionsBox.style.display = 'none'; return; }
+        
+        suggestionsBox.innerHTML = '';
+        matches.forEach(match => {
+            const div = document.createElement('div');
+            div.style.padding = '10px 15px'; div.style.borderBottom = '1px solid #f1f5f9';
+            div.style.cursor = 'pointer'; div.style.color = 'var(--navy)'; div.style.fontSize = '14px'; div.style.fontWeight = '600';
+            div.innerHTML = `${match.name} <span style="color:#94a3b8; font-size:12px; font-weight:500;">(${match.id})</span>`;
+            
+            div.onmouseover = () => div.style.background = '#f8fafc';
+            div.onmouseout = () => div.style.background = 'white';
+            
+            div.onclick = () => {
+                document.getElementById('barcode').value = match.id;
+                suggestionsBox.style.display = 'none';
+                lookupProduct(); // Load the data
+            };
+            suggestionsBox.appendChild(div);
+        });
+        suggestionsBox.style.display = 'block';
+    }
+
+    // Hide suggestions when clicking outside
+    document.addEventListener('click', (e) => {
+        if (e.target.id !== 'barcode') document.getElementById('search-suggestions').style.display = 'none';
+    });
+
+    async function lookupProduct() {
         const barcode = document.getElementById('barcode').value.trim();
         if (!barcode) return;
         
@@ -590,10 +646,16 @@ document.getElementById('category').selectedIndex = 0;
             }
         });
 
+        // AUTO-SKU GENERATOR
+        let rawBarcode = document.getElementById('barcode').value.trim();
+        if (!rawBarcode) {
+            rawBarcode = "SKU-" + Date.now().toString(36).toUpperCase();
+        }
+
         const item = {
             id: Date.now().toString(), 
-            barcode: document.getElementById('barcode').value.trim(),
-            name: document.getElementById('item-name').value.trim(), 
+            barcode: rawBarcode,
+            name: document.getElementById('item-name').value.trim(),
             category: document.getElementById('category').value,
             unit: document.getElementById('unit').value, 
             qty: parseFloat(document.getElementById('qty').value) || 0,
