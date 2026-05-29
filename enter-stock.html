@@ -103,26 +103,27 @@
         <label>Product Name</label>
         <input type="text" id="item-name" placeholder="Item Name">
         
-        <div class="grid-2">
+     <div class="grid-2">
             <div>
                 <label>Category</label>
-                <select id="category" onchange="handleDropdownAdd('category')">
-                    <option value="">Select...</option>
-                    <option value="Grocery">Grocery</option>
-                    <option value="Stationery">Stationery</option>
-                    <option value="ADD_NEW">+ Add New</option>
-                </select>
+                <select id="category" onchange="handleCategoryChange()"><option value="">Loading...</option></select>
             </div>
             <div>
-                <label>Unit</label>
-                <select id="unit" onchange="handleDropdownAdd('unit')">
-                    <option value="">Select...</option>
-                    <option value="Pieces">Pieces</option>
-                    <option value="Litres">Litres</option>
-                    <option value="Box">Box</option>
-                    <option value="ADD_NEW">+ Add New</option>
-                </select>
+                <label>Sub-Category</label>
+                <select id="subcategory" onchange="handleSubcategoryChange()"><option value="">Select Category First</option></select>
             </div>
+        </div>
+        
+        <div style="margin-bottom: 12px;">
+            <label>Unit</label>
+            <select id="unit" onchange="handleDropdownAdd('unit')">
+                <option value="">Select...</option>
+                <option value="Pieces">Pieces</option>
+                <option value="Litres">Litres</option>
+                <option value="Box">Box</option>
+                <option value="Kg">Kg</option>
+                <option value="ADD_NEW">+ Add New Unit</option>
+            </select>
         </div>
 
         <div id="dynamic-params"></div>         <datalist id="saved-param-keys"></datalist>
