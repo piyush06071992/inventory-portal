@@ -213,10 +213,17 @@
    let savedShopParams = {}; // Master memory for custom parameters
     let globalProductCatalog = []; // Memory for Smart Search
 
+ let shopTaxonomy = {}; // Memory for Category -> Subcategory hierarchy
+    let taxonomyChanged = false; // Tracks if we learned a new category
+
     async function loadShopSettings() {
         try {
             const doc = await firebase.firestore().collection('companies').doc(activeUserPhone).collection('settings').doc('params').get();
-            if (doc.exists && doc.data().customParams) savedShopParams = doc.data().customParams;
+            if (doc.exists) {
+                if (doc.data().customParams) savedShopParams = doc.data().customParams;
+                if (doc.data().shopTaxonomy) shopTaxonomy = doc.data().shopTaxonomy;
+            }
+            populateCategoryDropdown();
         } catch (e) { console.error("Error loading params", e); }
     }
 
@@ -488,6 +495,58 @@ function handleDropdownAdd(elemId) {
         }
     }
 
+    // --- PHASE 3: TAXONOMY (HIERARCHY) LOGIC ---
+    function populateCategoryDropdown() {
+        const catSelect = document.getElementById('category');
+        catSelect.innerHTML = '<option value="">Select Category...</option>';
+        for (const cat in shopTaxonomy) {
+            catSelect.innerHTML += `<option value="${cat}">${cat}</option>`;
+        }
+        catSelect.innerHTML += `<option value="ADD_NEW" style="color:var(--emerald); font-weight:bold;">+ Add New Category</option>`;
+    }
+
+    function handleCategoryChange() {
+        const catSelect = document.getElementById('category');
+        const subSelect = document.getElementById('subcategory');
+        
+        if (catSelect.value === 'ADD_NEW') {
+            const newCat = prompt("Enter New Category (e.g., Grocery, Stationery):");
+            if (newCat && newCat.trim() !== "") {
+                if (!shopTaxonomy[newCat]) { shopTaxonomy[newCat] = []; taxonomyChanged = true; }
+                populateCategoryDropdown();
+                catSelect.value = newCat;
+            } else { catSelect.selectedIndex = 0; }
+        }
+        
+        // Populate Subcategories automatically
+        subSelect.innerHTML = '<option value="">Select Sub-Category...</option>';
+        if (catSelect.value && catSelect.value !== 'ADD_NEW' && shopTaxonomy[catSelect.value]) {
+            shopTaxonomy[catSelect.value].forEach(sub => {
+                subSelect.innerHTML += `<option value="${sub}">${sub}</option>`;
+            });
+            subSelect.innerHTML += `<option value="ADD_NEW" style="color:var(--emerald); font-weight:bold;">+ Add New Sub-Category</option>`;
+        } else {
+            subSelect.innerHTML = '<option value="">Select Category First</option>';
+        }
+    }
+
+    function handleSubcategoryChange() {
+        const catSelect = document.getElementById('category');
+        const subSelect = document.getElementById('subcategory');
+        
+        if (subSelect.value === 'ADD_NEW') {
+            const newSub = prompt(`Enter New Sub-Category under "${catSelect.value}":`);
+            if (newSub && newSub.trim() !== "") {
+                if (!shopTaxonomy[catSelect.value].includes(newSub)) {
+                    shopTaxonomy[catSelect.value].push(newSub);
+                    taxonomyChanged = true;
+                }
+                handleCategoryChange(); // Refresh list to show new item
+                subSelect.value = newSub;
+            } else { subSelect.selectedIndex = 0; }
+        }
+    }
+
     // --- SMART SEARCH LOGIC ---
     function handleSmartSearch() {
         const query = document.getElementById('barcode').value.trim().toLowerCase();
@@ -550,14 +609,23 @@ document.getElementById('category').selectedIndex = 0;
             
             if (doc.exists) {
                 const data = doc.data();
-                document.getElementById('item-name').value = data.name || "";
-                ['category', 'unit'].forEach(id => {
-                    const el = document.getElementById(id);
-                    if(data[id] && !Array.from(el.options).some(opt => opt.value === data[id])) {
-                        el.add(new Option(data[id], data[id]), el.options[1]);
-                    }
-                    el.value = data[id] || "";
-                });
+            document.getElementById('item-name').value = data.name || "";
+                
+                // Handle Smart Category & Subcategory Loading
+                if (data.category) {
+                    if(!shopTaxonomy[data.category]) { shopTaxonomy[data.category] = []; taxonomyChanged = true; populateCategoryDropdown(); }
+                    document.getElementById('category').value = data.category;
+                    handleCategoryChange(); // Triggers subcategory load
+                }
+                if (data.subcategory && data.category) {
+                    if(!shopTaxonomy[data.category].includes(data.subcategory)) { shopTaxonomy[data.category].push(data.subcategory); taxonomyChanged = true; handleCategoryChange(); }
+                    document.getElementById('subcategory').value = data.subcategory;
+                }
+                if (data.unit) {
+                    const uEl = document.getElementById('unit');
+                    if(!Array.from(uEl.options).some(opt => opt.value === data.unit)) uEl.add(new Option(data.unit, data.unit), 1);
+                    uEl.value = data.unit;
+                }
                 
                 // Learn parameters from this product instantly
                 if (data.customParams) {
@@ -769,7 +837,7 @@ function clearItemForm() {
                 if (item.barcode && item.barcode !== "") {
                     const masterRef = db.collection('companies').doc(activeUserPhone).collection('products_master').doc(item.barcode);
                     batch.set(masterRef, { 
-                        name: item.name, category: item.category, unit: item.unit, 
+                        name: item.name, category: item.category, subcategory: item.subcategory || "", unit: item.unit, 
                         lastCostPrice: item.costPer, currentMsp: item.msp, 
                         customParams: item.customParams, lastUpdated: new Date().toISOString() 
                     }, { merge: true });
