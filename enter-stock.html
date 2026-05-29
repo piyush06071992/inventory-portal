@@ -700,6 +700,7 @@ document.getElementById('category').selectedIndex = 0;
  function addItemToBill() {
         // Collect Dynamic Parameters & Train Global Memory Instantly
         let customData = {};
+        let paramsChanged = false; // Track if we learned a new parameter
         document.querySelectorAll('.param-row').forEach(row => {
             let key = row.querySelector('.param-name').value.trim();
             let val = row.querySelector('.param-val').value.trim();
@@ -709,11 +710,23 @@ document.getElementById('category').selectedIndex = 0;
                 if(val && val !== "ADD_NEW") {
                     customData[key] = val;
                     // Teach the system memory immediately
-                    if(!savedShopParams[key]) savedShopParams[key] = [];
-                    if(!savedShopParams[key].includes(val)) savedShopParams[key].push(val);
+                    if(!savedShopParams[key]) { savedShopParams[key] = []; paramsChanged = true; }
+                    if(!savedShopParams[key].includes(val)) { savedShopParams[key].push(val); paramsChanged = true; }
                 }
             }
         });
+
+        // FORCE SAVE TO FIREBASE IMMEDIATELY SO IT'S NOT LOST ON PAGE REFRESH
+        if (paramsChanged || taxonomyChanged) {
+            let updatePayload = {};
+            if (paramsChanged) updatePayload.customParams = savedShopParams;
+            if (taxonomyChanged) updatePayload.shopTaxonomy = shopTaxonomy;
+            
+            firebase.firestore().collection('companies').doc(activeUserPhone).collection('settings').doc('params').set(
+                updatePayload, { merge: true }
+            );
+            taxonomyChanged = false; // Reset trigger
+        }
 
         // AUTO-SKU GENERATOR
         let rawBarcode = document.getElementById('barcode').value.trim();
@@ -726,6 +739,7 @@ document.getElementById('category').selectedIndex = 0;
             barcode: rawBarcode,
             name: document.getElementById('item-name').value.trim(),
             category: document.getElementById('category').value,
+            subcategory: document.getElementById('subcategory').value,
             unit: document.getElementById('unit').value, 
             qty: parseFloat(document.getElementById('qty').value) || 0,
             costPer: parseFloat(document.getElementById('cost-per').value) || 0, 
