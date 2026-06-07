@@ -147,18 +147,23 @@
     };
     if (!firebase.apps.length) firebase.initializeApp(firebaseConfig);
 
-    const activeUserPhone = localStorage.getItem("activeUserPhone");
+   let activeUserPhone = localStorage.getItem("activeUserPhone");
     const activeStaffId = localStorage.getItem("activeStaffId");
     let assignedBranch = localStorage.getItem("assignedBranch");
-
-    let shopTaxonomy = {};
-    let rawInventory = []; // Holds the unfiltered data from database
-    let currentAdjDocId = null;
 
     // --- SECURITY & INIT ---
     document.addEventListener('DOMContentLoaded', () => {
         firebase.auth().onAuthStateChanged(async (user) => {
-            if (!user || !activeUserPhone) return window.location.replace('/login.html');
+            if (!user) return window.location.replace('/login.html');
+            
+            // OWNER RECOVERY: If the shop owner logs in, their localStorage might be missing "activeUserPhone".
+            // We instantly recover their shop number from their secure Firebase Auth Email!
+            if (!activeUserPhone && user.email && user.email.includes('@')) {
+                activeUserPhone = user.email.split('@')[0];
+                localStorage.setItem("activeUserPhone", activeUserPhone);
+            }
+
+            if (!activeUserPhone) return window.location.replace('/login.html');
             
             // Try parsing multi-branch arrays if they exist
             try { if(assignedBranch && assignedBranch.startsWith('[')) assignedBranch = JSON.parse(assignedBranch); } catch(e){}
