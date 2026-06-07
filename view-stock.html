@@ -135,7 +135,7 @@
 </div>
 
 <script>
-    // FIREBASE INITIALIZATION (Ensures staff connection works)
+    // FIREBASE INITIALIZATION (Live Keys)
     const firebaseConfig = {
         apiKey: "AIzaSyBuyDgbmycHMjHGupeoZV2lvv_Z0n7WyoY",
         authDomain: "business-saarthi.firebaseapp.com",
@@ -147,25 +147,33 @@
     };
     if (!firebase.apps.length) firebase.initializeApp(firebaseConfig);
 
-   let activeUserPhone = localStorage.getItem("activeUserPhone");
+    let activeUserPhone = localStorage.getItem("activeUserPhone");
     const activeStaffId = localStorage.getItem("activeStaffId");
     let assignedBranch = localStorage.getItem("assignedBranch");
 
-    // --- SECURITY & INIT ---
+    let shopTaxonomy = {};
+    let rawInventory = []; // Holds the unfiltered data from database
+    let currentAdjDocId = null;
+
+    // --- BULLETPROOF SECURITY & INIT ---
     document.addEventListener('DOMContentLoaded', () => {
         firebase.auth().onAuthStateChanged(async (user) => {
-            if (!user) return window.location.replace('/login.html');
-            
-            // OWNER RECOVERY: If the shop owner logs in, their localStorage might be missing "activeUserPhone".
-            // We instantly recover their shop number from their secure Firebase Auth Email!
+            if (!user) {
+                return window.location.replace('/login.html');
+            }
+
+            // RECOVERY LOGIC: If localStorage is acting up, we extract the phone directly from the secure session!
             if (!activeUserPhone && user.email && user.email.includes('@')) {
                 activeUserPhone = user.email.split('@')[0];
                 localStorage.setItem("activeUserPhone", activeUserPhone);
             }
 
-            if (!activeUserPhone) return window.location.replace('/login.html');
+            // Final safety check
+            if (!activeUserPhone) {
+                return window.location.replace('/login.html');
+            }
             
-            // Try parsing multi-branch arrays if they exist
+            // Try parsing multi-branch arrays if they exist for staff
             try { if(assignedBranch && assignedBranch.startsWith('[')) assignedBranch = JSON.parse(assignedBranch); } catch(e){}
 
             await loadShopTaxonomy();
