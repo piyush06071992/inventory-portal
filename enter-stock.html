@@ -203,8 +203,8 @@
 </div>
 
 <script>
-    const activeUserPhone = localStorage.getItem("activeUserPhone");
-    const assignedBranch = localStorage.getItem("assignedBranch");
+ let activeUserPhone = localStorage.getItem("activeUserPhone");
+    let assignedBranch = localStorage.getItem("assignedBranch");
     let currentBillItems = [];
     
  let html5QrCode;
@@ -229,13 +229,32 @@
 
 document.addEventListener('DOMContentLoaded', () => {
         firebase.auth().onAuthStateChanged(async (user) => {
-            if (user && activeUserPhone) {
+            if (!user) return window.location.replace('/login.html');
+            
+            // OWNER RECOVERY: Rebuild session from email if owner is logged in
+            if (!activeUserPhone && user.email && user.email.includes('@')) {
+                activeUserPhone = user.email.split('@')[0];
+                localStorage.setItem("activeUserPhone", activeUserPhone);
+            }
+
+            if (activeUserPhone) {
                 // Show Admin Security Panel if they are the owner/admin
                 if (!assignedBranch || assignedBranch === "admin") {
                     document.getElementById('admin-auth-card').style.display = 'block';
+                } else {
+                    // STAFF SECURITY CHECK: If not Admin, verify permission in real-time
+                    const db = firebase.firestore();
+                    db.collection('companies').doc(activeUserPhone).collection('staff').doc(localStorage.getItem("activeStaffId"))
+                    .onSnapshot(doc => {
+                        const perm = doc.data()?.permissions?.canEnterStock;
+                        if (!perm) {
+                            alert("ACCESS DENIED: You do not have permission to enter stock.");
+                            window.location.replace('/staff-dashboard.html');
+                        }
+                    });
                 }
 
-           await loadShopSettings(); 
+                await loadShopSettings(); 
                 clearItemForm(); 
                 loadBranches(); loadSuppliers(); setupCalculators(); loadProductCatalog();
             }
