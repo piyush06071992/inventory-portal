@@ -94,8 +94,11 @@
         <label>Branch Selection</label>
         <select id="filter-branch" onchange="fetchInventory()" style="margin-bottom: 12px;"></select>
         
-        <label>Search Barcode or Name</label>
-        <input type="text" id="search-input" placeholder="Type to instantly filter..." oninput="renderInventory()" style="margin-bottom: 12px;">
+       <label>Search Barcode or Name</label>
+        <div style="position: relative;">
+            <input type="text" id="search-input" placeholder="Type to instantly filter..." oninput="handleSmartSearch()" autocomplete="off" style="margin-bottom: 12px;">
+            <div id="search-suggestions" style="display: none; position: absolute; top: 100%; left: 0; width: 100%; background: white; border: 1px solid #cbd5e1; border-radius: 8px; box-shadow: 0 10px 15px -3px rgba(0,0,0,0.1); max-height: 200px; overflow-y: auto; z-index: 50;"></div>
+        </div>
         
         <div class="filter-grid">
             <div>
@@ -176,8 +179,12 @@
             // Try parsing multi-branch arrays if they exist for staff
             try { if(assignedBranch && assignedBranch.startsWith('[')) assignedBranch = JSON.parse(assignedBranch); } catch(e){}
 
+          // Use a small delay to ensure page elements are ready
             await loadShopTaxonomy();
             await loadBranches();
+            
+            // Remove the loading screen if you added one, or just stop worrying about the redirect
+            console.log("Session verified, ready to view stock.");
         });
     });
 
@@ -194,6 +201,41 @@
             }
         } catch(e) { console.error("Taxonomy Error", e); }
     }
+    // --- SMART SEARCH LOGIC ---
+    function handleSmartSearch() {
+        const query = document.getElementById('search-input').value.toLowerCase().trim();
+        const suggestionsBox = document.getElementById('search-suggestions');
+        
+        if (query.length < 2) { suggestionsBox.style.display = 'none'; renderInventory(); return; }
+        
+        // Search by Product Name or Barcode
+        const matches = rawInventory.filter(p => 
+            (p.name && p.name.toLowerCase().includes(query)) || 
+            (p.barcode && p.barcode.toLowerCase().includes(query))
+        ).slice(0, 10);
+        
+        if (matches.length === 0) { suggestionsBox.style.display = 'none'; return; }
+        
+        suggestionsBox.innerHTML = '';
+        matches.forEach(match => {
+            const div = document.createElement('div');
+            div.style.padding = '10px 15px'; div.style.borderBottom = '1px solid #f1f5f9';
+            div.style.cursor = 'pointer'; div.style.color = 'var(--navy)'; div.style.fontSize = '14px'; div.style.fontWeight = '600';
+            div.innerHTML = `${match.name} <span style="color:#94a3b8; font-size:12px; font-weight:500;">(${match.barcode || match.id})</span>`;
+            div.onclick = () => {
+                document.getElementById('search-input').value = match.barcode || match.id;
+                suggestionsBox.style.display = 'none';
+                renderInventory();
+            };
+            suggestionsBox.appendChild(div);
+        });
+        suggestionsBox.style.display = 'block';
+    }
+
+    // Hide suggestions when clicking outside
+    document.addEventListener('click', (e) => {
+        if (e.target.id !== 'search-input') document.getElementById('search-suggestions').style.display = 'none';
+    });
 
     async function loadBranches() {
         const db = firebase.firestore();
