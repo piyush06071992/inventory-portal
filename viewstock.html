@@ -16,129 +16,31 @@
         :root { --navy: #1e3a8a; --emerald: #059669; --slate: #f8fafc; --text: #0f172a; --danger: #ef4444; --warning: #f59e0b; }
         body { font-family: 'Inter', sans-serif; background-color: #f1f5f9; margin: 0; padding: 0; color: var(--text); }
         .wrapper { padding: 16px; max-width: 900px; margin: auto; padding-bottom: 50px; }
-        
         .header-bar { display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px; }
-        .header-bar h1 { margin: 0; font-size: 22px; color: var(--navy); }
-        .btn-back { background: white; border: 1px solid #cbd5e1; padding: 8px 12px; border-radius: 8px; cursor: pointer; font-weight: 600; color: #475569; text-decoration: none; }
-        
-        /* Summary Dashboard */
-        .dashboard-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(140px, 1fr)); gap: 12px; margin-bottom: 20px; }
-        .dash-card { background: white; padding: 16px; border-radius: 12px; border: 1px solid #e2e8f0; text-align: center; box-shadow: 0 2px 4px rgba(0,0,0,0.02); }
-        .dash-card h3 { margin: 0 0 5px 0; font-size: 24px; color: var(--navy); }
-        .dash-card p { margin: 0; font-size: 12px; font-weight: 600; color: #64748b; text-transform: uppercase; }
-        .dash-danger h3 { color: var(--danger); }
-        .dash-warning h3 { color: var(--warning); }
-
-        /* Filters Section */
-        .filter-card { background: white; padding: 16px; border-radius: 12px; margin-bottom: 20px; border: 1px solid #e2e8f0; }
-        .filter-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-bottom: 10px; }
-        label { display: block; font-size: 11px; font-weight: 700; color: #64748b; margin-bottom: 4px; text-transform: uppercase; }
-        input, select { width: 100%; padding: 12px; border: 1px solid #cbd5e1; border-radius: 8px; font-size: 14px; box-sizing: border-box; background: #f8fafc; color: var(--text); }
-        input:focus, select:focus { border-color: var(--navy); outline: none; background: white; }
-        
-        .btn-export { width: 100%; padding: 12px; background: #10b981; color: white; border: none; border-radius: 8px; font-weight: 700; cursor: pointer; display: flex; align-items: center; justify-content: center; gap: 8px; margin-top: 10px; }
-        
-        /* Inventory List */
+        .btn-back { background: white; border: 1px solid #cbd5e1; padding: 8px 12px; border-radius: 8px; cursor: pointer; text-decoration: none; color: #475569; font-weight: 600; }
         .inventory-list { display: flex; flex-direction: column; gap: 12px; }
-        .stock-item { background: white; border: 1px solid #e2e8f0; border-radius: 12px; padding: 15px; position: relative; box-shadow: 0 2px 4px rgba(0,0,0,0.02); }
-        .stock-item h4 { margin: 0 0 4px 0; font-size: 16px; color: var(--navy); padding-right: 40px; }
-        .stock-item p { margin: 2px 0; font-size: 13px; color: #475569; }
-        .badge { display: inline-block; padding: 3px 8px; border-radius: 6px; font-size: 11px; font-weight: 700; margin-right: 5px; margin-top: 5px; }
-        .badge-cat { background: #e0e7ff; color: #1e40af; }
-        .badge-param { background: #f1f5f9; color: #475569; border: 1px solid #cbd5e1; }
-        .badge-low { background: #fee2e2; color: #b91c1c; border: 1px solid #fca5a5; }
-        .badge-exp { background: #fef3c7; color: #b45309; border: 1px solid #fcd34d; }
-        
-        .stock-qty { font-size: 18px; font-weight: 800; color: var(--emerald); }
-        .stock-qty.low { color: var(--danger); }
-
-        .btn-adjust { position: absolute; top: 15px; right: 15px; background: #eff6ff; color: #2563eb; border: none; padding: 8px 12px; border-radius: 8px; font-weight: 700; cursor: pointer; font-size: 12px; }
-
-        /* Modal */
-        .modal-overlay { display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(15,23,42,0.7); z-index: 1000; align-items: center; justify-content: center; padding: 20px; box-sizing: border-box; backdrop-filter: blur(4px); }
-        .modal-card { background: white; width: 100%; max-width: 400px; border-radius: 16px; padding: 24px; position: relative; text-align: center; }
-        .qty-controls { display: flex; align-items: center; justify-content: center; gap: 15px; margin: 20px 0; }
-        .btn-circle { width: 40px; height: 40px; border-radius: 50%; border: none; font-size: 20px; font-weight: bold; cursor: pointer; display: flex; align-items: center; justify-content: center; color: white;}
-        .btn-minus { background: var(--danger); }
-        .btn-plus { background: var(--emerald); }
-        .qty-display { font-size: 24px; font-weight: 800; width: 60px; text-align: center; border: none; background: #f1f5f9; padding: 10px; border-radius: 8px; }
-        .btn-save-adj { width: 100%; padding: 14px; background: var(--navy); color: white; border: none; border-radius: 8px; font-weight: 700; font-size: 15px; cursor: pointer; }
+        .stock-item { background: white; border: 1px solid #e2e8f0; border-radius: 12px; padding: 15px; box-shadow: 0 2px 4px rgba(0,0,0,0.02); }
     </style>
 </head>
 <body>
 
 <div class="wrapper">
     <div class="header-bar">
-        <h1><i class="bi bi-box-seam"></i> Live Inventory</h1>
+        <h1>Live Inventory</h1>
         <a href="javascript:history.back()" class="btn-back"><i class="bi bi-arrow-left"></i> Back</a>
     </div>
 
-    <!-- Dashboard -->
-    <div class="dashboard-grid">
-        <div class="dash-card">
-            <h3 id="dash-total">0</h3>
-            <p>Total Items</p>
-        </div>
-        <div class="dash-card dash-danger">
-            <h3 id="dash-low">0</h3>
-            <p>Low Stock</p>
-        </div>
-        <div class="dash-card dash-warning">
-            <h3 id="dash-exp">0</h3>
-            <p>Expiring Soon</p>
-        </div>
+    <div class="filter-card" style="background:white; padding:16px; border-radius:12px; margin-bottom:20px;">
+        <input type="text" id="search-input" placeholder="Search product name or barcode..." oninput="renderInventory()" style="width:100%; padding:12px; border:1px solid #cbd5e1; border-radius:8px;">
     </div>
 
-    <!-- Filters -->
-    <div class="filter-card">
-        <label>Branch Selection</label>
-        <select id="filter-branch" onchange="fetchInventory()" style="margin-bottom: 12px;"></select>
-        
-       <label>Search Barcode or Name</label>
-        <div style="position: relative;">
-            <input type="text" id="search-input" placeholder="Type to instantly filter..." oninput="handleSmartSearch()" autocomplete="off" style="margin-bottom: 12px;">
-            <div id="search-suggestions" style="display: none; position: absolute; top: 100%; left: 0; width: 100%; background: white; border: 1px solid #cbd5e1; border-radius: 8px; box-shadow: 0 10px 15px -3px rgba(0,0,0,0.1); max-height: 200px; overflow-y: auto; z-index: 50;"></div>
-        </div>
-        
-        <div class="filter-grid">
-            <div>
-                <label>Category</label>
-                <select id="filter-category" onchange="handleCategoryFilter()"><option value="ALL">All Categories</option></select>
-            </div>
-            <div>
-                <label>Sub-Category</label>
-                <select id="filter-subcategory" onchange="renderInventory()"><option value="ALL">All Sub-Categories</option></select>
-            </div>
-        </div>
-        
-        <button class="btn-export" onclick="exportToCSV()"><i class="bi bi-file-earmark-excel-fill"></i> Export to Excel</button>
-    </div>
-
-    <!-- Inventory Grid -->
     <div class="inventory-list" id="inventory-list">
-        <p style="text-align: center; color: #94a3b8; font-size: 14px; margin-top: 20px;">Select a branch to load inventory.</p>
-    </div>
-</div>
-
-<!-- Quick Adjust Modal -->
-<div class="modal-overlay" id="adjust-modal">
-    <div class="modal-card">
-        <button onclick="closeAdjustModal()" style="position:absolute; top:15px; right:15px; background:#f1f5f9; border:none; border-radius:50%; width:32px; height:32px; cursor:pointer; color:#64748b;"><i class="bi bi-x-lg"></i></button>
-        <h2 style="margin:0 0 5px 0; color:var(--navy); font-size:18px;">Adjust Stock</h2>
-        <p id="adj-item-name" style="margin:0 0 15px 0; color:#64748b; font-size:14px; font-weight:600;"></p>
-        
-        <div class="qty-controls">
-            <button class="btn-circle btn-minus" onclick="changeAdjQty(-1)"><i class="bi bi-dash"></i></button>
-            <input type="number" id="adj-qty" class="qty-display" onchange="validateAdjQty()">
-            <button class="btn-circle btn-plus" onclick="changeAdjQty(1)"><i class="bi bi-plus"></i></button>
-        </div>
-        
-        <button class="btn-save-adj" id="btn-save-adj" onclick="saveAdjustment()">UPDATE STOCK</button>
+        <p style="text-align:center;">Initializing...</p>
     </div>
 </div>
 
 <script>
-    // FIREBASE INITIALIZATION (Live Keys)
+    // 1. Initialize Firebase first
     const firebaseConfig = {
         apiKey: "AIzaSyBuyDgbmycHMjHGupeoZV2lvv_Z0n7WyoY",
         authDomain: "business-saarthi.firebaseapp.com",
@@ -150,284 +52,66 @@
     };
     if (!firebase.apps.length) firebase.initializeApp(firebaseConfig);
 
+    let rawInventory = [];
     let activeUserPhone = localStorage.getItem("activeUserPhone");
-    const activeStaffId = localStorage.getItem("activeStaffId");
-    let assignedBranch = localStorage.getItem("assignedBranch");
 
-    let shopTaxonomy = {};
-    let rawInventory = []; // Holds the unfiltered data from database
-    let currentAdjDocId = null;
-
-    // --- BULLETPROOF SECURITY & INIT ---
-    document.addEventListener('DOMContentLoaded', () => {
-        firebase.auth().onAuthStateChanged(async (user) => {
-            if (!user) {
-                return window.location.replace('/login.html');
-            }
-
-            // RECOVERY LOGIC: If localStorage is acting up, we extract the phone directly from the secure session!
-            if (!activeUserPhone && user.email && user.email.includes('@')) {
-                activeUserPhone = user.email.split('@')[0];
-                localStorage.setItem("activeUserPhone", activeUserPhone);
-            }
-
-            // Final safety check
-            if (!activeUserPhone) {
-                return window.location.replace('/login.html');
-            }
-            
-            // Try parsing multi-branch arrays if they exist for staff
-            try { if(assignedBranch && assignedBranch.startsWith('[')) assignedBranch = JSON.parse(assignedBranch); } catch(e){}
-
-          // Use a small delay to ensure page elements are ready
-            await loadShopTaxonomy();
-            await loadBranches();
-            
-            // Remove the loading screen if you added one, or just stop worrying about the redirect
-            console.log("Session verified, ready to view stock.");
-        });
-    });
-
-    // --- DATA LOADERS ---
-    async function loadShopTaxonomy() {
-        try {
-            const doc = await firebase.firestore().collection('companies').doc(activeUserPhone).collection('settings').doc('params').get();
-            if (doc.exists && doc.data().shopTaxonomy) {
-                shopTaxonomy = doc.data().shopTaxonomy;
-                const catFilter = document.getElementById('filter-category');
-                for (const cat in shopTaxonomy) {
-                    catFilter.innerHTML += `<option value="${cat}">${cat}</option>`;
-                }
-            }
-        } catch(e) { console.error("Taxonomy Error", e); }
-    }
-    // --- SMART SEARCH LOGIC ---
-    function handleSmartSearch() {
-        const query = document.getElementById('search-input').value.toLowerCase().trim();
-        const suggestionsBox = document.getElementById('search-suggestions');
-        
-        if (query.length < 2) { suggestionsBox.style.display = 'none'; renderInventory(); return; }
-        
-        // Search by Product Name or Barcode
-        const matches = rawInventory.filter(p => 
-            (p.name && p.name.toLowerCase().includes(query)) || 
-            (p.barcode && p.barcode.toLowerCase().includes(query))
-        ).slice(0, 10);
-        
-        if (matches.length === 0) { suggestionsBox.style.display = 'none'; return; }
-        
-        suggestionsBox.innerHTML = '';
-        matches.forEach(match => {
-            const div = document.createElement('div');
-            div.style.padding = '10px 15px'; div.style.borderBottom = '1px solid #f1f5f9';
-            div.style.cursor = 'pointer'; div.style.color = 'var(--navy)'; div.style.fontSize = '14px'; div.style.fontWeight = '600';
-            div.innerHTML = `${match.name} <span style="color:#94a3b8; font-size:12px; font-weight:500;">(${match.barcode || match.id})</span>`;
-            div.onclick = () => {
-                document.getElementById('search-input').value = match.barcode || match.id;
-                suggestionsBox.style.display = 'none';
-                renderInventory();
-            };
-            suggestionsBox.appendChild(div);
-        });
-        suggestionsBox.style.display = 'block';
-    }
-
-    // Hide suggestions when clicking outside
-    document.addEventListener('click', (e) => {
-        if (e.target.id !== 'search-input') document.getElementById('search-suggestions').style.display = 'none';
-    });
-
-    async function loadBranches() {
-        const db = firebase.firestore();
-        const bSelect = document.getElementById('filter-branch');
-        bSelect.innerHTML = '<option value="">Select Branch...</option>';
-        
-        const snap = await db.collection('companies').doc(activeUserPhone).collection('branches').get();
-        snap.forEach(doc => {
-            const bId = doc.data().branchId;
-            const bName = doc.data().branchName;
-            
-            // Permission check: Admins see all, Staff see only assigned
-            const isAdmin = !activeStaffId || assignedBranch === "admin";
-            const isAssigned = Array.isArray(assignedBranch) ? assignedBranch.includes(bId) : assignedBranch === bId;
-            
-            if (isAdmin || isAssigned) {
-                bSelect.innerHTML += `<option value="${bId}">${bName}</option>`;
-            }
-        });
-
-        // Auto-select if only 1 option available (besides placeholder)
-        if (bSelect.options.length === 2) {
-            bSelect.selectedIndex = 1;
-            fetchInventory();
+    // 2. Wait for Firebase to finish loading session
+    firebase.auth().onAuthStateChanged(async (user) => {
+        if (!user) {
+            window.location.replace('/login.html');
+            return;
         }
-    }
 
-    async function fetchInventory() {
-        const branchId = document.getElementById('filter-branch').value;
-        if (!branchId) return;
+        // Recover phone if missing
+        if (!activeUserPhone && user.email) {
+            activeUserPhone = user.email.split('@')[0];
+            localStorage.setItem("activeUserPhone", activeUserPhone);
+        }
 
-        document.getElementById('inventory-list').innerHTML = '<p style="text-align:center; color:#94a3b8;"><i class="bi bi-arrow-repeat bi-spin"></i> Loading stock from server...</p>';
-        
-        const db = firebase.firestore();
+        if (activeUserPhone) {
+            console.log("Session verified. Loading data...");
+            // Load your data here
+            loadInventory();
+        }
+    });
+
+    async function loadInventory() {
         try {
+            const db = firebase.firestore();
+            // Assuming you want to load from a specific branch or the first one found
+            const branchSnap = await db.collection('companies').doc(activeUserPhone).collection('branches').limit(1).get();
+            if(branchSnap.empty) { document.getElementById('inventory-list').innerHTML = "No branches found."; return; }
+            
+            const branchId = branchSnap.docs[0].id;
             const snap = await db.collection('companies').doc(activeUserPhone).collection('branches').doc(branchId).collection('inventory').get();
+            
             rawInventory = [];
-            snap.forEach(doc => { rawInventory.push({ docId: doc.id, ...doc.data() }); });
+            snap.forEach(doc => rawInventory.push({ docId: doc.id, ...doc.data() }));
             renderInventory();
-        } catch(e) {
-            alert("Error loading inventory: " + e.message);
-        }
-    }
-
-    // --- FILTERS & RENDERING ---
-    function handleCategoryFilter() {
-        const cat = document.getElementById('filter-category').value;
-        const subSelect = document.getElementById('filter-subcategory');
-        subSelect.innerHTML = '<option value="ALL">All Sub-Categories</option>';
-        
-        if (cat !== 'ALL' && shopTaxonomy[cat]) {
-            shopTaxonomy[cat].forEach(sub => { subSelect.innerHTML += `<option value="${sub}">${sub}</option>`; });
-        }
-        renderInventory();
-    }
-
-    function isExpiringSoon(dateString) {
-        if(!dateString) return false;
-        const exp = new Date(dateString);
-        const today = new Date();
-        const diffDays = Math.ceil((exp - today) / (1000 * 60 * 60 * 24));
-        return diffDays > 0 && diffDays <= 30;
+        } catch(e) { console.error(e); }
     }
 
     function renderInventory() {
         const list = document.getElementById('inventory-list');
-        const query = document.getElementById('search-input').value.toLowerCase().trim();
-        const fCat = document.getElementById('filter-category').value;
-        const fSub = document.getElementById('filter-subcategory').value;
-
-        let totalItems = 0; let lowStock = 0; let expAlert = 0;
+        const query = document.getElementById('search-input').value.toLowerCase();
         list.innerHTML = "";
 
-        const filtered = rawInventory.filter(item => {
-            // Text Search
-            const textMatch = (item.name && item.name.toLowerCase().includes(query)) || (item.barcode && item.barcode.toLowerCase().includes(query));
-            if(!textMatch) return false;
-            // Taxonomy Filters
-            if(fCat !== 'ALL' && item.category !== fCat) return false;
-            if(fSub !== 'ALL' && item.subcategory !== fSub) return false;
-            return true;
-        });
+        const filtered = rawInventory.filter(item => 
+            (item.name && item.name.toLowerCase().includes(query)) || 
+            (item.barcode && item.barcode.toLowerCase().includes(query))
+        );
 
+        if(filtered.length === 0) list.innerHTML = "<p>No items found.</p>";
+        
         filtered.forEach(item => {
-            totalItems++;
-            const isLow = parseFloat(item.qty) < 5; // Configurable threshold
-            const isExp = isExpiringSoon(item.expiryDate);
-            
-            if(isLow) lowStock++;
-            if(isExp) expAlert++;
-
-            let paramHtml = "";
-            if(item.customParams) {
-                for (const [k, v] of Object.entries(item.customParams)) {
-                    paramHtml += `<span class="badge badge-param">${k}: ${v}</span>`;
-                }
-            }
-
             list.innerHTML += `
                 <div class="stock-item">
-                    <button class="btn-adjust" onclick="openAdjustModal('${item.docId}', '${item.name.replace(/'/g, "\\'")}', ${item.qty})"><i class="bi bi-pencil-square"></i> Adjust</button>
                     <h4>${item.name}</h4>
-                    <p><strong>SKU:</strong> ${item.barcode} | <strong>MSP:</strong> ₹${item.msp}</p>
-                    
-                    <div style="margin: 8px 0;">
-                        ${item.category ? `<span class="badge badge-cat">${item.category} ${item.subcategory ? `> ${item.subcategory}` : ''}</span>` : ''}
-                        ${paramHtml}
-                        ${isLow ? `<span class="badge badge-low"><i class="bi bi-exclamation-triangle-fill"></i> Low Stock</span>` : ''}
-                        ${isExp ? `<span class="badge badge-exp"><i class="bi bi-clock-history"></i> Expiring Soon</span>` : ''}
-                    </div>
-
-                    <div style="margin-top: 10px; border-top: 1px dashed #e2e8f0; padding-top: 8px; display:flex; justify-content: space-between; align-items: center;">
-                        <span style="font-size:12px; color:#64748b;">Current Quantity:</span>
-                        <span class="stock-qty ${isLow ? 'low' : ''}">${item.qty} <span style="font-size:12px; color:#64748b;">${item.unit}</span></span>
-                    </div>
+                    <p>SKU: ${item.barcode} | Qty: ${item.qty} ${item.unit}</p>
                 </div>
             `;
         });
-
-        // Update Dashboard
-        document.getElementById('dash-total').innerText = totalItems;
-        document.getElementById('dash-low').innerText = lowStock;
-        document.getElementById('dash-exp').innerText = expAlert;
-
-        if(filtered.length === 0) list.innerHTML = '<p style="text-align:center; color:#94a3b8; margin-top:20px;">No matching items found.</p>';
-    }
-
-    // --- QUICK ADJUST LOGIC ---
-    function openAdjustModal(docId, name, currentQty) {
-        currentAdjDocId = docId;
-        document.getElementById('adj-item-name').innerText = name;
-        document.getElementById('adj-qty').value = currentQty;
-        document.getElementById('adjust-modal').style.display = 'flex';
-    }
-    function closeAdjustModal() { document.getElementById('adjust-modal').style.display = 'none'; }
-    function changeAdjQty(val) {
-        const input = document.getElementById('adj-qty');
-        input.value = Math.max(0, parseFloat(input.value || 0) + val);
-    }
-    function validateAdjQty() {
-        const input = document.getElementById('adj-qty');
-        if (input.value < 0) input.value = 0;
-    }
-
-    async function saveAdjustment() {
-        const newQty = parseFloat(document.getElementById('adj-qty').value);
-        const branchId = document.getElementById('filter-branch').value;
-        const btn = document.getElementById('btn-save-adj');
-        
-        btn.innerText = "UPDATING..."; btn.disabled = true;
-
-        try {
-            await firebase.firestore().collection('companies').doc(activeUserPhone).collection('branches').doc(branchId).collection('inventory').doc(currentAdjDocId).update({
-                qty: newQty
-            });
-            // Update local memory and UI instantly without a full server reload
-            const index = rawInventory.findIndex(i => i.docId === currentAdjDocId);
-            if(index !== -1) rawInventory[index].qty = newQty;
-            
-            closeAdjustModal(); renderInventory();
-        } catch(e) { alert("Error updating stock: " + e.message); }
-        
-        btn.innerText = "UPDATE STOCK"; btn.disabled = false;
-    }
-
-    // --- EXPORT TO CSV ---
-    function exportToCSV() {
-        if(rawInventory.length === 0) return alert("No data to export.");
-        
-        const branchName = document.getElementById('filter-branch').options[document.getElementById('filter-branch').selectedIndex].text;
-        
-        let csvContent = "data:text/csv;charset=utf-8,";
-        // Header Row
-        csvContent += "Product Name,SKU / Barcode,Category,Sub-Category,Quantity,Unit,Cost Price,MSP,Expiry Date\n";
-        
-        // Data Rows
-        rawInventory.forEach(item => {
-            const name = `"${(item.name || "").replace(/"/g, '""')}"`; // Escape quotes for CSV
-            const row = `${name},${item.barcode || ""},${item.category || ""},${item.subcategory || ""},${item.qty || 0},${item.unit || ""},${item.costPer || 0},${item.msp || 0},${item.expiryDate || ""}`;
-            csvContent += row + "\n";
-        });
-
-        // Trigger Download
-        const encodedUri = encodeURI(csvContent);
-        const link = document.createElement("a");
-        link.setAttribute("href", encodedUri);
-        link.setAttribute("download", `Stock_Report_${branchName.replace(/\s+/g, '_')}_${new Date().toLocaleDateString()}.csv`);
-        document.body.appendChild(link);
-        link.click();
-        document.body.removeChild(link);
     }
 </script>
-
 </body>
 </html>
