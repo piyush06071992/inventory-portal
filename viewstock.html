@@ -183,31 +183,32 @@
     let rawInventory = []; 
     let currentAdjDocId = null;
 
-    document.addEventListener('DOMContentLoaded', () => {
-        if (activeUserPhone) {
+document.addEventListener('DOMContentLoaded', () => {
+        // Wait for Firebase to securely attach the token before querying the database
+        firebase.auth().onAuthStateChanged(async (user) => {
+            if (!user) {
+                // Not logged in properly
+                document.getElementById('error-screen').style.display = 'block';
+                document.getElementById('main-content').style.display = 'none';
+                return;
+            }
+
+            // User is logged in securely! Show the UI.
             document.getElementById('error-screen').style.display = 'none';
             document.getElementById('main-content').style.display = 'block';
+
+            // Owner session recovery
+            if (!activeUserPhone && user.email) {
+                activeUserPhone = user.email.split('@')[0];
+                localStorage.setItem("activeUserPhone", activeUserPhone);
+            }
+            
             try { if(assignedBranch && assignedBranch.startsWith('[')) assignedBranch = JSON.parse(assignedBranch); } catch(e){}
-            loadShopTaxonomy();
-            loadBranches();
-        } else {
-            firebase.auth().onAuthStateChanged(async (user) => {
-                if (user && user.email) {
-                    activeUserPhone = user.email.split('@')[0];
-                    localStorage.setItem("activeUserPhone", activeUserPhone);
-                    
-                    document.getElementById('error-screen').style.display = 'none';
-                    document.getElementById('main-content').style.display = 'block';
-                    
-                    try { if(assignedBranch && assignedBranch.startsWith('[')) assignedBranch = JSON.parse(assignedBranch); } catch(e){}
-                    await loadShopTaxonomy();
-                    await loadBranches();
-                } else {
-                    document.getElementById('error-screen').style.display = 'block';
-                    document.getElementById('main-content').style.display = 'none';
-                }
-            });
-        }
+
+            // Fire the database queries ONLY after auth is confirmed
+            await loadShopTaxonomy();
+            await loadBranches();
+        });
     });
 
     async function loadShopTaxonomy() {
