@@ -178,29 +178,45 @@
     let rawInventory = []; 
     let currentAdjDocId = null;
 
-    document.addEventListener('DOMContentLoaded', () => {
-        // 1. TRUST LOCAL STORAGE INSTANTLY. No strict bouncers.
-        if (activeUserPhone) {
-            document.getElementById('error-screen').style.display = 'none';
-            document.getElementById('main-content').style.display = 'block';
-            
-            try { if(assignedBranch && assignedBranch.startsWith('[')) assignedBranch = JSON.parse(assignedBranch); } catch(e){}
+   document.addEventListener('DOMContentLoaded', () => {
+        // We ALWAYS let Firebase check the connection first to grab your secure Admin Token
+        firebase.auth().onAuthStateChanged(async (user) => {
+            let phone = localStorage.getItem("activeUserPhone");
+            const staffId = localStorage.getItem("activeStaffId");
 
-            loadShopTaxonomy();
-            loadBranches();
-        } else {
-            // 2. Only if local storage is completely empty, see if Firebase can recover it
-            firebase.auth().onAuthStateChanged((user) => {
-                if (user && user.email) {
-                    activeUserPhone = user.email.split('@')[0];
-                    localStorage.setItem("activeUserPhone", activeUserPhone);
-                    window.location.reload(); // Reload with the newly found phone number
-                } else {
-                    document.getElementById('error-screen').style.display = 'block';
-                    document.getElementById('main-content').style.display = 'none';
+            if (user) {
+                // SCENARIO 1: ADMIN IS LOGGED IN SECURELY
+                if (user.email) {
+                    phone = user.email.split('@')[0];
+                    localStorage.setItem("activeUserPhone", phone);
+                    activeUserPhone = phone;
                 }
-            });
-        }
+                
+                document.getElementById('error-screen').style.display = 'none';
+                document.getElementById('main-content').style.display = 'block';
+                
+                try { if(assignedBranch && assignedBranch.startsWith('[')) assignedBranch = JSON.parse(assignedBranch); } catch(e){}
+                
+                // Fetch data WITH the secure Firebase token attached
+                await loadShopTaxonomy();
+                await loadBranches();
+            } 
+            else if (phone && staffId) {
+                // SCENARIO 2: STAFF IS LOGGED IN (Via PIN)
+                document.getElementById('error-screen').style.display = 'none';
+                document.getElementById('main-content').style.display = 'block';
+                
+                try { if(assignedBranch && assignedBranch.startsWith('[')) assignedBranch = JSON.parse(assignedBranch); } catch(e){}
+                
+                await loadShopTaxonomy();
+                await loadBranches();
+            } 
+            else {
+                // SCENARIO 3: NOBODY IS LOGGED IN
+                document.getElementById('error-screen').style.display = 'block';
+                document.getElementById('main-content').style.display = 'none';
+            }
+        });
     });
 
     async function loadShopTaxonomy() {
