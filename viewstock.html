@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>Live Showroom - Business Saarthi</title>
+    <title>Stock Manager - Business Saarthi</title>
     
     <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-firestore-compat.js"></script>
@@ -17,99 +17,96 @@
         :root { 
             --navy: #0f172a; --primary: #3b82f6; 
             --emerald: #10b981; --danger: #ef4444; --warning: #f59e0b;
-            --text-light: #64748b;
+            --text-light: #64748b; --border: #e2e8f0; --bg-light: #f8fafc;
         }
-        body { font-family: 'Inter', sans-serif; background-color: #f8fafc; margin: 0; padding: 0; color: var(--navy); overflow-x: hidden;}
+        body { font-family: 'Inter', sans-serif; background-color: #f1f5f9; margin: 0; padding: 0; color: var(--navy); }
         .wrapper { padding: 20px; max-width: 1400px; margin: auto; padding-bottom: 80px; }
         
-        .header-bar { display: flex; justify-content: space-between; align-items: center; margin-bottom: 24px; }
+        .header-bar { display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px; }
         .header-bar h1 { margin: 0; font-size: 28px; font-weight: 900; letter-spacing: -1px;}
         
-        .btn-action { background: white; border: 2px solid #cbd5e1; padding: 10px 16px; border-radius: 12px; cursor: pointer; font-weight: 800; color: var(--navy); text-decoration: none; transition: all 0.2s; box-shadow: 0 4px 6px rgba(0,0,0,0.05); display: flex; align-items: center; gap: 8px;}
-        .btn-action:hover { background: #f1f5f9; transform: translateY(-2px); }
+        .btn-action { background: white; border: 2px solid var(--border); padding: 10px 16px; border-radius: 10px; cursor: pointer; font-weight: 800; color: var(--navy); display: flex; align-items: center; gap: 8px; transition: 0.2s;}
+        .btn-action:hover { background: var(--bg-light); transform: translateY(-2px); }
 
-        /* Glowing Dashboard Pills */
-        .dashboard-grid { display: flex; flex-wrap: wrap; gap: 15px; margin-bottom: 30px; }
-        .dash-pill { flex: 1; min-width: 130px; padding: 20px; border-radius: 20px; color: white; display: flex; flex-direction: column; align-items: center; justify-content: center; box-shadow: 0 10px 20px -5px rgba(0,0,0,0.15); transition: transform 0.2s;}
+        /* Glowing Dashboards */
+        .dashboard-grid { display: flex; flex-wrap: wrap; gap: 15px; margin-bottom: 24px; }
+        .dash-pill { flex: 1; min-width: 130px; padding: 20px; border-radius: 16px; color: white; display: flex; flex-direction: column; align-items: center; justify-content: center; box-shadow: 0 10px 20px -5px rgba(0,0,0,0.15); transition: transform 0.2s;}
         .dash-pill:hover { transform: translateY(-3px); }
-        .dash-pill h3 { margin: 0; font-size: 36px; font-weight: 900; line-height: 1; }
-        .dash-pill p { margin: 6px 0 0 0; font-size: 13px; font-weight: 800; text-transform: uppercase; letter-spacing: 1px; opacity: 0.9;}
+        .dash-pill h3 { margin: 0; font-size: 32px; font-weight: 900; line-height: 1; }
+        .dash-pill p { margin: 6px 0 0 0; font-size: 12px; font-weight: 800; text-transform: uppercase; opacity: 0.9;}
         
-        .pill-total { background: linear-gradient(135deg, #0ea5e9, #10b981); box-shadow: 0 10px 20px -5px rgba(16, 185, 129, 0.4);}
-        .pill-danger { background: linear-gradient(135deg, #f43f5e, #f97316); box-shadow: 0 10px 20px -5px rgba(244, 63, 94, 0.4);}
-        .pill-warning { background: linear-gradient(135deg, #8b5cf6, #d946ef); box-shadow: 0 10px 20px -5px rgba(139, 92, 246, 0.4);}
+        .pill-total { background: linear-gradient(135deg, #0ea5e9, #10b981); }
+        .pill-danger { background: linear-gradient(135deg, #f43f5e, #f97316); }
+        .pill-warning { background: linear-gradient(135deg, #8b5cf6, #d946ef); }
 
-        /* Slide-out Side Drawer */
-        .drawer-overlay { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(15,23,42,0.6); z-index: 1999; display: none; backdrop-filter: blur(4px); }
-        .side-drawer { position: fixed; top: 0; right: -350px; width: 300px; height: 100%; background: white; z-index: 2000; transition: right 0.3s cubic-bezier(0.4, 0, 0.2, 1); box-shadow: -10px 0 25px rgba(0,0,0,0.1); display: flex; flex-direction: column;}
-        .drawer-header { padding: 20px; border-bottom: 1px solid #e2e8f0; display: flex; justify-content: space-between; align-items: center; }
-        .drawer-body { padding: 20px; flex-grow: 1; overflow-y: auto; }
-        .drawer-body label { display: block; font-size: 11px; font-weight: 800; color: #64748b; margin-bottom: 6px; text-transform: uppercase; }
-        .drawer-body input, .drawer-body select { width: 100%; padding: 14px; border: 2px solid #cbd5e1; border-radius: 10px; font-size: 14px; font-weight: 700; color: var(--navy); background: #f8fafc; outline: none; margin-bottom: 20px; box-sizing: border-box;}
-        .drawer-body input:focus, .drawer-body select:focus { border-color: var(--primary); background: white; }
+        /* Filter Row */
+        .filter-row { display: flex; gap: 15px; margin-bottom: 20px; background: white; padding: 15px; border-radius: 16px; border: 1px solid var(--border); align-items: center; flex-wrap: wrap;}
+        .filter-input { padding: 12px 16px; border: 2px solid var(--border); border-radius: 10px; font-size: 14px; font-weight: 700; color: var(--navy); background: var(--bg-light); flex: 1; min-width: 200px; outline: none;}
+        .filter-input:focus { border-color: var(--primary); background: white; }
 
-        /* Netflix-style Category Rows */
-        .category-section { margin-bottom: 45px; }
-        .category-title { font-size: 24px; font-weight: 900; color: var(--navy); margin: 0 0 15px 0; padding-left: 5px; display: flex; align-items: center; gap: 10px; letter-spacing: -0.5px;}
-        .horizontal-scroll { display: flex; overflow-x: auto; gap: 20px; padding: 10px 5px 25px 5px; scroll-snap-type: x mandatory; scroll-behavior: smooth; }
-        .horizontal-scroll::-webkit-scrollbar { height: 8px; }
-        .horizontal-scroll::-webkit-scrollbar-track { background: #f1f5f9; border-radius: 10px; }
-        .horizontal-scroll::-webkit-scrollbar-thumb { background: #cbd5e1; border-radius: 10px; }
-        .horizontal-scroll::-webkit-scrollbar-thumb:hover { background: #94a3b8; }
-
-        /* The Product Card */
-        .product-card { min-width: 260px; max-width: 260px; background: white; border-radius: 20px; border: 1px solid #e2e8f0; overflow: hidden; display: flex; flex-direction: column; scroll-snap-align: start; flex-shrink: 0; box-shadow: 0 4px 6px -1px rgba(0,0,0,0.03); position: relative; transition: all 0.2s;}
-        .product-card:hover { transform: translateY(-4px); box-shadow: 0 20px 25px -5px rgba(0,0,0,0.1); border-color: #cbd5e1;}
+        /* --- ACCORDION LIST VIEW --- */
+        .category-accordion { background: white; border-radius: 16px; border: 1px solid var(--border); margin-bottom: 15px; overflow: hidden; box-shadow: 0 2px 4px rgba(0,0,0,0.02);}
+        .cat-header { background: var(--bg-light); padding: 16px 20px; font-size: 18px; font-weight: 900; cursor: pointer; display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid var(--border); transition: background 0.2s;}
+        .cat-header:hover { background: #e2e8f0; }
+        .cat-count { background: var(--primary); color: white; padding: 4px 10px; border-radius: 20px; font-size: 12px; font-weight: 800;}
         
-        /* Smart Image Area */
-        .card-image-area { height: 160px; width: 100%; position: relative; display: flex; align-items: center; justify-content: center; overflow: hidden;}
-        .card-image-area h2 { font-size: 60px; color: white; opacity: 0.3; margin: 0; font-weight: 900;}
+        .cat-content { display: none; } /* Hidden by default */
+        .cat-content.open { display: block; }
         
-        .promo-badge { position: absolute; top: 12px; left: -8px; background: var(--danger); color: white; padding: 6px 12px 6px 16px; font-size: 11px; font-weight: 900; text-transform: uppercase; border-radius: 0 8px 8px 0; box-shadow: 0 4px 10px rgba(239, 68, 68, 0.4); z-index: 10;}
-        .gear-btn { position: absolute; top: 12px; right: 12px; background: rgba(0,0,0,0.5); color: white; width: 32px; height: 32px; border-radius: 50%; display: flex; align-items: center; justify-content: center; cursor: pointer; backdrop-filter: blur(4px); transition: background 0.2s; z-index: 10;}
-        .gear-btn:hover { background: rgba(0,0,0,0.8); }
-
-        .card-body { padding: 16px; flex-grow: 1; display: flex; flex-direction: column; }
-        .product-name { margin: 0 0 4px 0; font-size: 18px; font-weight: 900; line-height: 1.2; }
-        .product-sku { font-size: 12px; color: var(--text-light); font-family: monospace; font-weight: 600;}
+        /* High-Density Row */
+        .item-row { display: flex; align-items: center; padding: 12px 20px; border-bottom: 1px solid var(--border); transition: background 0.2s; gap: 15px;}
+        .item-row:hover { background: #f8fafc; }
+        .item-row:last-child { border-bottom: none; }
         
-        .price-row { display: flex; justify-content: space-between; align-items: baseline; margin: 12px 0;}
-        .msp-price { font-size: 24px; font-weight: 900; color: var(--navy); }
-        .stock-pill { padding: 4px 8px; border-radius: 6px; font-size: 12px; font-weight: 900; border: 1px solid;}
+        .item-avatar { width: 44px; height: 44px; border-radius: 10px; display: flex; align-items: center; justify-content: center; font-size: 20px; font-weight: 900; color: white; flex-shrink: 0;}
+        
+        .item-details { flex: 2; min-width: 200px;}
+        .item-name { font-size: 15px; font-weight: 900; margin: 0 0 4px 0; display: flex; align-items: center; gap: 8px;}
+        .item-sku { font-size: 11px; color: var(--text-light); font-family: monospace; font-weight: 600; background: #e2e8f0; padding: 2px 6px; border-radius: 4px;}
+        
+        .item-finance { flex: 1; text-align: left; min-width: 120px;}
+        .item-msp { font-size: 18px; font-weight: 900; color: var(--navy); display: block;}
+        .item-wholesale { font-size: 11px; color: var(--text-light); font-weight: 700; margin-top: 2px; display: flex; align-items: center; gap: 5px;}
+        
+        .item-stock { flex: 1; text-align: center; min-width: 100px;}
+        .stock-pill { padding: 6px 12px; border-radius: 8px; font-size: 13px; font-weight: 900; border: 2px solid; display: inline-block;}
         .stock-good { background: #dcfce7; color: #065f46; border-color: #86efac; }
         .stock-low { background: #fee2e2; color: #b91c1c; border-color: #fca5a5; animation: pulse 2s infinite; }
         @keyframes pulse { 0% { opacity: 1; } 50% { opacity: 0.7; } 100% { opacity: 1; } }
 
-        /* Privacy Mask Grid */
-        .finance-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; background: #f8fafc; padding: 10px; border-radius: 8px; border: 1px solid #e2e8f0; margin-bottom: 12px;}
-        .finance-item { font-size: 9px; color: var(--text-light); display: flex; flex-direction: column; text-transform: uppercase; font-weight: 800;}
-        .finance-item strong { color: var(--navy); font-size: 13px; font-weight: 900; display: flex; align-items: center; gap: 6px;}
+        .item-actions { display: flex; gap: 8px; flex: 1; justify-content: flex-end;}
+        .btn-icon { width: 36px; height: 36px; border-radius: 8px; border: none; font-size: 16px; cursor: pointer; display: flex; align-items: center; justify-content: center; font-weight: 900; transition: transform 0.1s;}
+        .btn-icon:hover { transform: scale(1.1); }
+        .btn-move { background: #e0f2fe; color: #0284c7; }
+        .btn-offer { background: #fef08a; color: #a16207; }
+        .btn-set { background: #f1f5f9; color: #475569; }
 
-        /* Card Button Group */
-        .btn-group { display: flex; border-top: 1px solid #e2e8f0; background: #f8fafc; }
-        .card-btn { flex: 1; padding: 12px; border: none; background: transparent; font-weight: 800; font-size: 12px; text-transform: uppercase; cursor: pointer; color: var(--navy); display: flex; align-items: center; justify-content: center; gap: 6px; transition: background 0.2s;}
-        .card-btn:hover { background: #e2e8f0; }
-        .btn-border-right { border-right: 1px solid #e2e8f0; }
-        .promo-active-btn { color: var(--danger); }
+        .promo-badge { background: var(--danger); color: white; font-size: 10px; font-weight: 900; padding: 2px 6px; border-radius: 4px; display: inline-block; vertical-align: middle; animation: glow 1.5s infinite alternate;}
+        @keyframes glow { 0% { box-shadow: 0 0 5px rgba(239,68,68,0.2); } 100% { box-shadow: 0 0 15px rgba(239,68,68,0.6); } }
 
-        /* Modal Styles */
+        /* Modals */
         .modal-overlay { display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(15,23,42,0.7); z-index: 3000; align-items: center; justify-content: center; padding: 20px; box-sizing: border-box; backdrop-filter: blur(4px); }
-        .modal-card { background: white; width: 100%; max-width: 400px; border-radius: 20px; padding: 24px; position: relative; text-align: center; box-shadow: 0 25px 50px -12px rgba(0,0,0,0.25);}
-        .modal-input { width: 100%; padding: 14px; border: 2px solid #cbd5e1; border-radius: 10px; font-size: 14px; font-weight: 700; color: var(--navy); outline: none; margin-bottom: 15px; box-sizing: border-box; background:#f8fafc;}
-        .modal-input:focus { border-color: var(--primary); background:white;}
+        .modal-card { background: white; width: 100%; max-width: 450px; border-radius: 20px; padding: 24px; position: relative; text-align: center; box-shadow: 0 25px 50px -12px rgba(0,0,0,0.25); max-height: 90vh; overflow-y: auto;}
+        .modal-input { width: 100%; padding: 14px; border: 2px solid var(--border); border-radius: 10px; font-size: 14px; font-weight: 700; color: var(--navy); outline: none; margin-bottom: 15px; box-sizing: border-box; background: var(--bg-light);}
+        .modal-input:focus { border-color: var(--primary); background: white; }
         .btn-save-modal { width: 100%; padding: 16px; background: var(--primary); color: white; border: none; border-radius: 12px; font-weight: 800; font-size: 16px; cursor: pointer; box-shadow: 0 4px 6px rgba(59, 130, 246, 0.3); margin-top: 10px;}
-        
-        #error-screen { display: none; text-align: center; margin-top: 10vh; padding: 40px; background: white; border-radius: 20px; box-shadow: 0 10px 25px rgba(0,0,0,0.05);}
+        .math-box { display: flex; gap: 10px; align-items: center; margin-bottom: 15px; }
+        .math-box div { flex: 1; text-align: left; }
+        .math-box i { font-size: 20px; color: var(--text-light); margin-top: 20px; }
+
+        label { display: block; font-size: 11px; font-weight: 900; color: var(--text-light); text-transform: uppercase; margin-bottom: 6px; text-align: left;}
+
+        #error-screen { display: none; text-align: center; margin-top: 10vh; padding: 40px; background: white; border-radius: 20px;}
     </style>
 </head>
 <body>
 
 <div class="wrapper">
     <div class="header-bar">
-        <h1>Showroom</h1>
+        <h1>Inventory Manager</h1>
         <div style="display: flex; gap: 10px;">
             <a href="javascript:history.back()" class="btn-action"><i class="bi bi-arrow-left"></i> Exit</a>
-            <button class="btn-action" style="border-color:var(--navy); color:white; background:var(--navy);" onclick="openDrawer()"><i class="bi bi-search"></i> Filters</button>
+            <button class="btn-action" style="background:var(--warning); color:white; border-color:var(--warning);" onclick="openGlobalDealsModal()"><i class="bi bi-megaphone-fill"></i> Store Deals</button>
         </div>
     </div>
 
@@ -129,76 +126,86 @@
             </div>
         </div>
 
+        <div class="filter-row">
+            <div style="flex:2; position:relative;">
+                <i class="bi bi-search" style="position:absolute; left:16px; top:14px; color:var(--text-light);"></i>
+                <input type="text" id="search-input" class="filter-input" style="padding-left: 45px; width:100%;" placeholder="Search product name or barcode..." oninput="renderInventory()">
+            </div>
+            <select id="filter-branch" class="filter-input" onchange="fetchInventory()"></select>
+            <select id="filter-category" class="filter-input" onchange="handleCategoryFilter()"><option value="ALL">All Categories</option></select>
+            <button class="btn-action" style="background:var(--emerald); color:white; border-color:var(--emerald);" onclick="exportToCSV()"><i class="bi bi-download"></i> Export</button>
+        </div>
+
         <div id="inventory-list">
             <div style="text-align: center; padding: 40px; color: var(--text-light);">
-                <i class="bi bi-box-seam" style="font-size: 40px; color: #cbd5e1; display: block; margin-bottom: 10px;"></i>
-                Loading showroom data...
+                <i class="bi bi-hdd-network" style="font-size: 40px; color: #cbd5e1; display: block; margin-bottom: 10px;"></i>
+                Loading your database...
             </div>
         </div>
     </div>
 </div>
 
-<div class="drawer-overlay" id="drawer-overlay" onclick="closeDrawer()"></div>
-<div class="side-drawer" id="side-drawer">
-    <div class="drawer-header">
-        <h2 style="margin:0; font-size:20px; font-weight:900;">Search & Filter</h2>
-        <button onclick="closeDrawer()" style="background:none; border:none; font-size:24px; cursor:pointer; color:var(--text-light);"><i class="bi bi-x-lg"></i></button>
-    </div>
-    <div class="drawer-body">
-        <label>Search Products</label>
-        <input type="text" id="search-input" placeholder="Name or Barcode..." oninput="renderInventory()">
+<div class="modal-overlay" id="promo-modal">
+    <div class="modal-card">
+        <button onclick="closePromoModal()" style="position:absolute; top:16px; right:16px; background:#f1f5f9; border:none; border-radius:50%; width:36px; height:36px; cursor:pointer;"><i class="bi bi-x-lg"></i></button>
+        <h2 style="margin:0 0 5px 0; font-size:24px; font-weight:900;">🎁 Item Offer</h2>
+        <p id="promo-item-name" style="margin:0 0 20px 0; color:var(--primary); font-weight:800;"></p>
+        <p style="font-size: 13px; font-weight: 800; color: var(--navy); margin-bottom: 15px; background: #e0f2fe; padding: 8px; border-radius: 8px;">Base MSP: <span id="promo-base-msp"></span></p>
+
+        <label>Offer Type</label>
+        <select id="promo-type" class="modal-input" onchange="togglePromoFields()">
+            <option value="">No Offer (Remove Promotion)</option>
+            <option value="discount">Direct Discount (% or Flat)</option>
+            <option value="volume">Volume Deal (Buy X for ₹Y)</option>
+            <option value="bogo">BOGO (Buy X Get Y Free)</option>
+        </select>
+
+        <div id="promo-dynamic-fields"></div>
+
+        <div style="display:flex; gap:10px; margin-top: 5px;">
+            <div style="flex:1;">
+                <label>Valid From</label>
+                <input type="datetime-local" id="promo-start" class="modal-input">
+            </div>
+            <div style="flex:1;">
+                <label>Valid Until</label>
+                <input type="datetime-local" id="promo-end" class="modal-input">
+            </div>
+        </div>
         
-        <label>Select Branch</label>
-        <select id="filter-branch" onchange="fetchInventory()"></select>
-        
-        <label>Category</label>
-        <select id="filter-category" onchange="handleCategoryFilter()"><option value="ALL">All Categories</option></select>
-        
-        <label>Sub-Category</label>
-        <select id="filter-subcategory" onchange="renderInventory()"><option value="ALL">All Sub-Categories</option></select>
-        
-        <button class="btn-action" style="width:100%; justify-content:center; margin-top:20px; background:var(--emerald); color:white; border:none;" onclick="exportToCSV()"><i class="bi bi-file-earmark-excel-fill"></i> Export to Excel</button>
+        <button class="btn-save-modal" id="btn-save-promo" onclick="savePromo()">Apply Offer</button>
     </div>
 </div>
 
-<div class="modal-overlay" id="promo-modal">
+<div class="modal-overlay" id="global-modal">
     <div class="modal-card">
-        <button onclick="closePromoModal()" style="position:absolute; top:16px; right:16px; background:#f1f5f9; border:none; border-radius:50%; width:36px; height:36px; cursor:pointer; color:var(--text-light);"><i class="bi bi-x-lg"></i></button>
-        <h2 style="margin:0 0 5px 0; color:var(--navy); font-size:22px; font-weight:900;">🎁 Setup Offer</h2>
-        <p id="promo-item-name" style="margin:0 0 20px 0; color:var(--text-light); font-size:14px; font-weight:600;"></p>
+        <button onclick="closeGlobalDealsModal()" style="position:absolute; top:16px; right:16px; background:#f1f5f9; border:none; border-radius:50%; width:36px; height:36px; cursor:pointer;"><i class="bi bi-x-lg"></i></button>
+        <h2 style="margin:0 0 5px 0; font-size:24px; font-weight:900; color:var(--warning);">📢 Store Deals</h2>
+        <p style="margin:0 0 20px 0; color:var(--text-light); font-size:13px; font-weight:600;">These rules apply to the entire customer bill automatically.</p>
 
-        <div style="text-align: left; margin-bottom: 15px;">
-            <label style="font-size: 11px; font-weight: 800; color: var(--text-light); text-transform: uppercase;">Offer Type</label>
-            <select id="promo-type" class="modal-input" style="margin-top: 5px;" onchange="togglePromoFields()">
-                <option value="">No Offer (Remove Promotion)</option>
-                <option value="flat_pct">Percentage Off (e.g., 10% Off)</option>
-                <option value="flat_amt">Flat Amount Off (e.g., ₹50 Off)</option>
-                <option value="volume">Volume Deal (e.g., Buy 3 for ₹100)</option>
-                <option value="bogo">BOGO (e.g., Buy 2 Get 1 Free)</option>
-            </select>
-        </div>
+        <label>Deal Type</label>
+        <select id="global-type" class="modal-input" onchange="toggleGlobalFields()">
+            <option value="">No Global Deals</option>
+            <option value="cart_min">Cart Minimum Discount (e.g. Spend ₹1000 Get 10% Off)</option>
+        </select>
 
-        <div id="promo-dynamic-fields" style="text-align: left;"></div>
+        <div id="global-dynamic-fields"></div>
         
-        <button class="btn-save-modal" id="btn-save-promo" onclick="savePromo()">Apply Promotion</button>
+        <button class="btn-save-modal" style="background:var(--warning); box-shadow: 0 4px 6px rgba(245, 158, 11, 0.3);" onclick="saveGlobalDeals()">Save Store Deal</button>
     </div>
 </div>
 
 <div class="modal-overlay" id="move-modal">
     <div class="modal-card">
-        <button onclick="closeMoveModal()" style="position:absolute; top:16px; right:16px; background:#f1f5f9; border:none; border-radius:50%; width:36px; height:36px; cursor:pointer; color:var(--text-light);"><i class="bi bi-x-lg"></i></button>
-        <h2 style="margin:0 0 5px 0; color:var(--navy); font-size:22px; font-weight:900;">🚚 Move Stock</h2>
-        <p id="move-item-name" style="margin:0 0 15px 0; color:var(--primary); font-size:16px; font-weight:800;"></p>
+        <button onclick="closeMoveModal()" style="position:absolute; top:16px; right:16px; background:#f1f5f9; border:none; border-radius:50%; width:36px; height:36px; cursor:pointer;"><i class="bi bi-x-lg"></i></button>
+        <h2 style="margin:0 0 5px 0; font-size:24px; font-weight:900;">🚚 Move Stock</h2>
+        <p id="move-item-name" style="margin:0 0 15px 0; color:var(--primary); font-weight:800;"></p>
 
-        <div style="text-align: left; margin-bottom: 15px;">
-            <label style="font-size: 11px; font-weight: 800; color: var(--text-light); text-transform: uppercase;">Quantity to Move <span id="move-max-qty" style="color: var(--danger);"></span></label>
-            <input type="number" id="move-qty" class="modal-input" style="margin-top: 5px;" min="1" oninput="validateMoveQty()">
-        </div>
+        <label>Quantity to Move <span id="move-max-qty" style="color: var(--danger);"></span></label>
+        <input type="number" id="move-qty" class="modal-input" min="1" oninput="validateMoveQty()">
 
-        <div style="text-align: left;">
-            <label style="font-size: 11px; font-weight: 800; color: var(--text-light); text-transform: uppercase;">Destination Branch</label>
-            <select id="move-target-branch" class="modal-input" style="margin-top: 5px;"></select>
-        </div>
+        <label>Destination Branch</label>
+        <select id="move-target-branch" class="modal-input"></select>
         
         <button class="btn-save-modal" id="btn-save-move" onclick="saveMove()">Confirm Transfer</button>
     </div>
@@ -206,19 +213,15 @@
 
 <div class="modal-overlay" id="settings-modal">
     <div class="modal-card">
-        <button onclick="closeSettingsModal()" style="position:absolute; top:16px; right:16px; background:#f1f5f9; border:none; border-radius:50%; width:36px; height:36px; cursor:pointer; color:var(--text-light);"><i class="bi bi-x-lg"></i></button>
-        <h2 style="margin:0 0 5px 0; color:var(--navy); font-size:22px; font-weight:900;">⚙️ Stock Settings</h2>
-        <p id="set-item-name" style="margin:0 0 20px 0; color:var(--primary); font-size:16px; font-weight:800;"></p>
+        <button onclick="closeSettingsModal()" style="position:absolute; top:16px; right:16px; background:#f1f5f9; border:none; border-radius:50%; width:36px; height:36px; cursor:pointer;"><i class="bi bi-x-lg"></i></button>
+        <h2 style="margin:0 0 5px 0; font-size:24px; font-weight:900;">⚙️ Stock Alerts</h2>
+        <p id="set-item-name" style="margin:0 0 20px 0; color:var(--primary); font-weight:800;"></p>
 
-        <div style="text-align: left; margin-bottom: 15px;">
-            <label style="font-size: 11px; font-weight: 800; color: var(--text-light); text-transform: uppercase;">Low Stock Alert Level</label>
-            <input type="number" id="set-min-stock" class="modal-input" style="margin-top: 5px;" min="0">
-            <p style="font-size: 11px; color: var(--text-light); margin-top: 0; line-height: 1.4;">
-                The pill will flash <strong style="color:var(--danger);">red</strong> if physical stock falls below this.
-            </p>
-        </div>
+        <label>Low Stock Warning Level</label>
+        <input type="number" id="set-min-stock" class="modal-input" min="0">
+        <p style="font-size: 11px; color: var(--text-light); text-align:left; font-weight:700;">Stock pills turn red if count falls below this number.</p>
         
-        <button class="btn-save-modal" id="btn-save-settings" onclick="saveSettings()">Save Settings</button>
+        <button class="btn-save-modal" style="background:var(--navy);" id="btn-save-settings" onclick="saveSettings()">Save Alert Level</button>
     </div>
 </div>
 
@@ -234,8 +237,8 @@
     let currentMoveItem = null;
     let currentSettingsDocId = null;
     let currentPromoDocId = null;
+    let currentMspForMath = 0; // Needed for Auto-Calculations
 
-    // Image Gradients for Placeholders
     const bgGradients = [
         'linear-gradient(135deg, #3b82f6, #8b5cf6)', 'linear-gradient(135deg, #10b981, #0ea5e9)',
         'linear-gradient(135deg, #f43f5e, #f97316)', 'linear-gradient(135deg, #8b5cf6, #d946ef)',
@@ -251,17 +254,6 @@
         });
     });
 
-    // --- DRAWER UI LOGIC ---
-    function openDrawer() {
-        document.getElementById('side-drawer').style.right = '0';
-        document.getElementById('drawer-overlay').style.display = 'block';
-    }
-    function closeDrawer() {
-        document.getElementById('side-drawer').style.right = '-350px';
-        document.getElementById('drawer-overlay').style.display = 'none';
-    }
-
-    // --- DATA LOADERS ---
     async function loadShopTaxonomy() {
         try {
             const doc = await firebase.firestore().collection('companies').doc(activeUserPhone).collection('settings').doc('params').get();
@@ -289,36 +281,25 @@
                 if (isAdmin || isAssigned) bSelect.innerHTML += `<option value="${bId}">${bName}</option>`;
             });
 
-            if (bSelect.options.length === 2) {
-                bSelect.selectedIndex = 1; fetchInventory();
-            }
-        } catch(e) { alert("Database error: " + e.message); }
+            if (bSelect.options.length === 2) { bSelect.selectedIndex = 1; fetchInventory(); }
+        } catch(e) { alert("Error: " + e.message); }
     }
 
     async function fetchInventory() {
         const branchId = document.getElementById('filter-branch').value;
         if (!branchId) return;
 
-        document.getElementById('inventory-list').innerHTML = `<div style="text-align:center; padding:40px;"><p style="font-weight:800; color:var(--primary);">Arranging Carousels...</p></div>`;
-        const db = firebase.firestore();
+        document.getElementById('inventory-list').innerHTML = `<div style="text-align:center; padding:40px; font-weight:900; color:var(--primary);">Loading database...</div>`;
+        
         try {
-            const snap = await db.collection('companies').doc(activeUserPhone).collection('branches').doc(branchId).collection('inventory').get();
+            const snap = await firebase.firestore().collection('companies').doc(activeUserPhone).collection('branches').doc(branchId).collection('inventory').get();
             rawInventory = [];
             snap.forEach(doc => { rawInventory.push({ docId: doc.id, ...doc.data() }); });
             renderInventory();
         } catch(e) { alert("Error: " + e.message); }
     }
 
-    function handleCategoryFilter() {
-        const cat = document.getElementById('filter-category').value;
-        const subSelect = document.getElementById('filter-subcategory');
-        subSelect.innerHTML = '<option value="ALL">All Sub-Categories</option>';
-        if (cat !== 'ALL' && shopTaxonomy[cat]) {
-            shopTaxonomy[cat].forEach(sub => { subSelect.innerHTML += `<option value="${sub}">${sub}</option>`; });
-        }
-        renderInventory();
-    }
-
+    function handleCategoryFilter() { renderInventory(); }
     function isExpiringSoon(dateString) {
         if(!dateString) return false;
         const diffDays = Math.ceil((new Date(dateString) - new Date()) / (1000 * 60 * 60 * 24));
@@ -331,12 +312,23 @@
         const icon = document.getElementById(`eye-${docId}`);
         if(el.innerText === '₹ ***') {
             el.innerText = el.getAttribute('data-price');
-            icon.classList.replace('bi-eye-fill', 'bi-eye-slash-fill');
-            icon.style.color = 'var(--danger)';
+            icon.classList.replace('bi-eye-fill', 'bi-eye-slash-fill'); icon.style.color = 'var(--danger)';
         } else {
             el.innerText = '₹ ***';
-            icon.classList.replace('bi-eye-slash-fill', 'bi-eye-fill');
-            icon.style.color = 'var(--primary)';
+            icon.classList.replace('bi-eye-slash-fill', 'bi-eye-fill'); icon.style.color = 'var(--text-light)';
+        }
+    };
+
+    // Accordion Toggle
+    window.toggleAccordion = function(catId) {
+        const content = document.getElementById(catId);
+        const icon = document.getElementById('icon-' + catId);
+        if (content.classList.contains('open')) {
+            content.classList.remove('open');
+            icon.classList.replace('bi-chevron-up', 'bi-chevron-down');
+        } else {
+            content.classList.add('open');
+            icon.classList.replace('bi-chevron-down', 'bi-chevron-up');
         }
     };
 
@@ -344,7 +336,6 @@
         const list = document.getElementById('inventory-list');
         const query = document.getElementById('search-input').value.toLowerCase().trim();
         const fCat = document.getElementById('filter-category').value;
-        const fSub = document.getElementById('filter-subcategory').value;
 
         let totalItems = 0; let lowStock = 0; let expAlert = 0;
         list.innerHTML = "";
@@ -353,12 +344,11 @@
             const textMatch = (item.name && item.name.toLowerCase().includes(query)) || (item.barcode && item.barcode.toLowerCase().includes(query));
             if(!textMatch) return false;
             if(fCat !== 'ALL' && item.category !== fCat) return false;
-            if(fSub !== 'ALL' && item.subcategory !== fSub) return false;
             return true;
         });
 
         if(filtered.length === 0) {
-            list.innerHTML = `<div style="text-align:center; padding:60px; color:var(--text-light);"><i class="bi bi-box" style="font-size:48px;"></i><h3>Empty View</h3></div>`;
+            list.innerHTML = `<div style="text-align:center; padding:60px; color:var(--text-light);"><i class="bi bi-box" style="font-size:48px;"></i><h3>No items found.</h3></div>`;
             return;
         }
 
@@ -370,11 +360,23 @@
             grouped[cat].push(item);
         });
 
+        let colorIndex = 0;
+
         for (const [categoryName, items] of Object.entries(grouped)) {
+            const safeCatId = 'cat-' + categoryName.replace(/[^a-zA-Z0-9]/g, '');
+            // Auto-open if searching, otherwise closed
+            const isOpen = query.length > 0 || Object.keys(grouped).length === 1 ? 'open' : '';
+            const iconClass = isOpen ? 'bi-chevron-up' : 'bi-chevron-down';
+
             let sectionHTML = `
-            <div class="category-section">
-                <h2 class="category-title">${categoryName} <span style="font-size:14px; color:var(--text-light); font-weight:600; padding-top:4px;">(${items.length})</span></h2>
-                <div class="horizontal-scroll">`;
+            <div class="category-accordion">
+                <div class="cat-header" onclick="toggleAccordion('${safeCatId}')">
+                    <div style="display:flex; align-items:center; gap:10px;">
+                        ${categoryName} <span class="cat-count">${items.length}</span>
+                    </div>
+                    <i id="icon-${safeCatId}" class="bi ${iconClass}"></i>
+                </div>
+                <div id="${safeCatId}" class="cat-content ${isOpen}">`;
 
             items.forEach((item, index) => {
                 const costPrice = parseFloat(item.costPer || 0).toFixed(2);
@@ -385,58 +387,45 @@
                 
                 if(isLow) lowStock++; if(isExp) expAlert++;
 
-                // Smart Image Logic
                 const firstLetter = item.name ? item.name.charAt(0).toUpperCase() : 'B';
                 const bgGrad = bgGradients[index % bgGradients.length];
                 
-                // Promo Engine Logic
-                let badgeHTML = '';
-                let hasPromo = false;
-                if(item.offer) {
-                    hasPromo = true;
-                    let txt = '';
-                    if(item.offer.type === 'flat_pct') txt = `🔥 ${item.offer.value}% OFF`;
-                    if(item.offer.type === 'flat_amt') txt = `🔥 ₹${item.offer.value} OFF`;
-                    if(item.offer.type === 'volume') txt = `📦 ${item.offer.reqQty} FOR ₹${item.offer.targetPrice}`;
-                    if(item.offer.type === 'bogo') txt = `✨ BUY ${item.offer.reqQty} GET ${item.offer.freeQty}`;
-                    badgeHTML = `<div class="promo-badge">${txt}</div>`;
+                // Active Promo Check
+                let promoBadge = '';
+                if(item.offer && item.offer.type) {
+                    // Quick check if promo is currently valid based on dates
+                    let isValid = true;
+                    const now = new Date();
+                    if(item.offer.validFrom && new Date(item.offer.validFrom) > now) isValid = false;
+                    if(item.offer.validUntil && new Date(item.offer.validUntil) < now) isValid = false;
+                    
+                    if(isValid) promoBadge = `<span class="promo-badge"><i class="bi bi-fire"></i> OFFER ACTIVE</span>`;
                 }
 
-                // Render Card
                 sectionHTML += `
-                    <div class="product-card">
-                        <div class="card-image-area" style="background: ${bgGrad};">
-                            ${badgeHTML}
-                            <div class="gear-btn" onclick="openSettingsModal('${item.docId}', '${item.name.replace(/'/g, "\\'")}', ${minStockLevel})"><i class="bi bi-gear-fill"></i></div>
-                            <h2>${firstLetter}</h2>
-                        </div>
+                    <div class="item-row">
+                        <div class="item-avatar" style="background: ${bgGrad};">${firstLetter}</div>
                         
-                        <div class="card-body">
-                            <h4 class="product-name" title="${item.name}">${item.name.length > 22 ? item.name.substring(0,22)+'...' : item.name}</h4>
-                            <span class="product-sku">SKU: ${item.barcode}</span>
-                            
-                            <div class="price-row">
-                                <span class="msp-price">₹${mspPrice}</span>
-                                <span class="stock-pill ${isLow ? 'stock-low' : 'stock-good'}">
-                                    <i class="bi ${isLow ? 'bi-exclamation-triangle-fill' : 'bi-check-circle-fill'}"></i> ${item.qty} ${item.unit}
-                                </span>
-                            </div>
+                        <div class="item-details">
+                            <h4 class="item-name">${item.name} ${promoBadge}</h4>
+                            <span class="item-sku">SKU: ${item.barcode}</span>
+                        </div>
 
-                            <div class="finance-grid">
-                                <div class="finance-item">
-                                    <span style="display:flex; justify-content:space-between; align-items:center;">Wholesale <i id="eye-${item.docId}" class="bi bi-eye-fill" onclick="togglePrice('${item.docId}')" style="cursor:pointer; color:var(--primary); font-size:14px;"></i></span>
-                                    <strong><span id="price-${item.docId}" data-price="₹${costPrice}">₹ ***</span></strong>
-                                </div>
-                                <div class="finance-item">
-                                    <span>GST Rate</span>
-                                    <strong>${item.gstRate || 0}% ${item.gstType ? `(${item.gstType})` : ''}</strong>
-                                </div>
+                        <div class="item-finance">
+                            <span class="item-msp">₹${mspPrice}</span>
+                            <span class="item-wholesale">Buy: <span id="price-${item.docId}" data-price="₹${costPrice}">₹ ***</span> <i id="eye-${item.docId}" class="bi bi-eye-fill" onclick="togglePrice('${item.docId}')" style="cursor:pointer; font-size:14px; margin-left:4px;"></i></span>
+                        </div>
+
+                        <div class="item-stock">
+                            <div class="stock-pill ${isLow ? 'stock-low' : 'stock-good'}">
+                                ${item.qty} ${item.unit}
                             </div>
                         </div>
 
-                        <div class="btn-group">
-                            <button class="card-btn btn-border-right" onclick="openMoveModal('${item.docId}')"><i class="bi bi-truck"></i> Move</button>
-                            <button class="card-btn ${hasPromo ? 'promo-active-btn' : ''}" onclick="openPromoModal('${item.docId}', '${item.name.replace(/'/g, "\\'")}')"><i class="bi bi-gift-fill"></i> Offer</button>
+                        <div class="item-actions">
+                            <button class="btn-icon btn-move" onclick="openMoveModal('${item.docId}')" title="Move Stock"><i class="bi bi-truck"></i></button>
+                            <button class="btn-icon btn-offer" onclick="openPromoModal('${item.docId}', '${item.name.replace(/'/g, "\\'")}', ${mspPrice})" title="Set Offer"><i class="bi bi-gift-fill"></i></button>
+                            <button class="btn-icon btn-set" onclick="openSettingsModal('${item.docId}', '${item.name.replace(/'/g, "\\'")}', ${minStockLevel})" title="Settings"><i class="bi bi-gear-fill"></i></button>
                         </div>
                     </div>
                 `;
@@ -451,11 +440,14 @@
         document.getElementById('dash-exp').innerText = expAlert;
     }
 
-    // --- PROMO ENGINE LOGIC ---
-    function openPromoModal(docId, name) {
+    // --- PROMO ENGINE (AUTO-MATH) LOGIC ---
+    function openPromoModal(docId, name, msp) {
         currentPromoDocId = docId;
+        currentMspForMath = parseFloat(msp);
         const item = rawInventory.find(i => i.docId === docId);
+        
         document.getElementById('promo-item-name').innerText = name;
+        document.getElementById('promo-base-msp').innerText = `₹${currentMspForMath.toFixed(2)}`;
         
         const typeSelect = document.getElementById('promo-type');
         if(item.offer && item.offer.type) {
@@ -463,6 +455,11 @@
         } else { typeSelect.value = ""; }
         
         togglePromoFields(item.offer);
+        
+        // Load Dates
+        document.getElementById('promo-start').value = item.offer?.validFrom || "";
+        document.getElementById('promo-end').value = item.offer?.validUntil || "";
+        
         document.getElementById('promo-modal').style.display = 'flex';
     }
 
@@ -473,47 +470,72 @@
         const container = document.getElementById('promo-dynamic-fields');
         container.innerHTML = "";
 
-        if (type === "flat_pct") {
-            container.innerHTML = `<label style="font-size:11px; font-weight:800; color:var(--text-light);">Percentage Discount (%)</label><input type="number" id="promo-val" class="modal-input" placeholder="e.g. 10" value="${existingOffer?.value||''}">`;
-        } else if (type === "flat_amt") {
-            container.innerHTML = `<label style="font-size:11px; font-weight:800; color:var(--text-light);">Flat Amount Discount (₹)</label><input type="number" id="promo-val" class="modal-input" placeholder="e.g. 50" value="${existingOffer?.value||''}">`;
+        if (type === "discount") {
+            const pctVal = existingOffer?.pctOff || '';
+            const flatVal = existingOffer?.flatOff || '';
+            container.innerHTML = `
+                <div class="math-box">
+                    <div><label>Discount (%)</label><input type="number" id="promo-pct" class="modal-input" placeholder="10" value="${pctVal}" oninput="calcPromoMath('pct')"></div>
+                    <i class="bi bi-arrow-left-right"></i>
+                    <div><label>Flat Off (₹)</label><input type="number" id="promo-flat" class="modal-input" placeholder="₹50" value="${flatVal}" oninput="calcPromoMath('flat')"></div>
+                </div>`;
         } else if (type === "volume") {
             container.innerHTML = `
                 <div style="display:flex; gap:10px;">
-                    <div style="flex:1;"><label style="font-size:11px; font-weight:800; color:var(--text-light);">Buy Quantity</label><input type="number" id="promo-req" class="modal-input" placeholder="e.g. 3" value="${existingOffer?.reqQty||''}"></div>
-                    <div style="flex:1;"><label style="font-size:11px; font-weight:800; color:var(--text-light);">For Final Price (₹)</label><input type="number" id="promo-price" class="modal-input" placeholder="e.g. 100" value="${existingOffer?.targetPrice||''}"></div>
+                    <div style="flex:1;"><label>Buy Quantity</label><input type="number" id="promo-req" class="modal-input" placeholder="e.g. 3" value="${existingOffer?.reqQty||''}"></div>
+                    <div style="flex:1;"><label>For Total Price (₹)</label><input type="number" id="promo-price" class="modal-input" placeholder="e.g. 100" value="${existingOffer?.targetPrice||''}"></div>
                 </div>`;
         } else if (type === "bogo") {
             container.innerHTML = `
                 <div style="display:flex; gap:10px;">
-                    <div style="flex:1;"><label style="font-size:11px; font-weight:800; color:var(--text-light);">Buy Quantity</label><input type="number" id="promo-req" class="modal-input" placeholder="e.g. 2" value="${existingOffer?.reqQty||''}"></div>
-                    <div style="flex:1;"><label style="font-size:11px; font-weight:800; color:var(--text-light);">Get Free Qty</label><input type="number" id="promo-free" class="modal-input" placeholder="e.g. 1" value="${existingOffer?.freeQty||''}"></div>
+                    <div style="flex:1;"><label>Buy Quantity</label><input type="number" id="promo-req" class="modal-input" placeholder="e.g. 2" value="${existingOffer?.reqQty||''}"></div>
+                    <div style="flex:1;"><label>Get Free Qty</label><input type="number" id="promo-free" class="modal-input" placeholder="e.g. 1" value="${existingOffer?.freeQty||''}"></div>
                 </div>`;
         }
     }
+
+    // The Magic Calculator
+    window.calcPromoMath = function(source) {
+        const pctInput = document.getElementById('promo-pct');
+        const flatInput = document.getElementById('promo-flat');
+        
+        if(source === 'pct') {
+            const pct = parseFloat(pctInput.value) || 0;
+            if(pct >= 0 && pct <= 100) { flatInput.value = (currentMspForMath * (pct / 100)).toFixed(2); }
+        } else if(source === 'flat') {
+            const flat = parseFloat(flatInput.value) || 0;
+            if(flat >= 0 && flat <= currentMspForMath) { pctInput.value = ((flat / currentMspForMath) * 100).toFixed(2); }
+        }
+    };
 
     async function savePromo() {
         const type = document.getElementById('promo-type').value;
         let offerObj = null;
 
         if (type !== "") {
-            offerObj = { type: type };
-            if (type === "flat_pct" || type === "flat_amt") {
-                const val = parseFloat(document.getElementById('promo-val').value);
-                if(isNaN(val) || val <= 0) return alert("Invalid discount value.");
-                offerObj.value = val;
+            offerObj = { 
+                type: type,
+                validFrom: document.getElementById('promo-start').value || null,
+                validUntil: document.getElementById('promo-end').value || null
+            };
+
+            if (type === "discount") {
+                const pct = parseFloat(document.getElementById('promo-pct').value);
+                const flat = parseFloat(document.getElementById('promo-flat').value);
+                if(isNaN(pct) || isNaN(flat)) return alert("Invalid discount numbers.");
+                offerObj.pctOff = pct; offerObj.flatOff = flat;
             } else if (type === "volume") {
                 const req = parseFloat(document.getElementById('promo-req').value);
                 const price = parseFloat(document.getElementById('promo-price').value);
-                if(isNaN(req) || isNaN(price)) return alert("Invalid volume configuration.");
+                if(isNaN(req) || isNaN(price)) return alert("Invalid volume deal.");
                 offerObj.reqQty = req; offerObj.targetPrice = price;
             } else if (type === "bogo") {
                 const req = parseFloat(document.getElementById('promo-req').value);
                 const free = parseFloat(document.getElementById('promo-free').value);
-                if(isNaN(req) || isNaN(free)) return alert("Invalid BOGO configuration.");
+                if(isNaN(req) || isNaN(free)) return alert("Invalid BOGO deal.");
                 offerObj.reqQty = req; offerObj.freeQty = free;
             }
-        } // If type is "", offerObj remains null, effectively deleting the offer
+        }
 
         const branchId = document.getElementById('filter-branch').value;
         const btn = document.getElementById('btn-save-promo');
@@ -531,11 +553,38 @@
                 if(offerObj) rawInventory[index].offer = offerObj;
                 else delete rawInventory[index].offer;
             }
-            
             closePromoModal(); renderInventory();
         } catch(e) { alert("Error saving promotion: " + e.message); }
+        btn.innerText = "Apply Offer"; btn.disabled = false;
+    }
+
+    // --- GLOBAL DEALS LOGIC ---
+    function openGlobalDealsModal() {
+        document.getElementById('global-modal').style.display = 'flex';
+        // In a full implementation, you would load existing Global rules from Firestore here
+    }
+    function closeGlobalDealsModal() { document.getElementById('global-modal').style.display = 'none'; }
+    function toggleGlobalFields() {
+        const type = document.getElementById('global-type').value;
+        const container = document.getElementById('global-dynamic-fields');
+        container.innerHTML = "";
         
-        btn.innerText = "Apply Promotion"; btn.disabled = false;
+        if (type === "cart_min") {
+            container.innerHTML = `
+                <label>If Customer Spends Over (₹)</label>
+                <input type="number" id="global-min-spend" class="modal-input" placeholder="e.g. 1000">
+                
+                <div class="math-box">
+                    <div><label>Give Discount (%)</label><input type="number" id="global-pct" class="modal-input" placeholder="10"></div>
+                    <i class="bi bi-arrow-left-right"></i>
+                    <div><label>OR Flat Off (₹)</label><input type="number" id="global-flat" class="modal-input" placeholder="₹100"></div>
+                </div>`;
+        }
+    }
+    async function saveGlobalDeals() {
+        // Future Connection: Save to `companies/{phone}/settings/storeDeals`
+        alert("Global Deals Engine saved! (Connection to Billing POS pending)");
+        closeGlobalDealsModal();
     }
 
     // --- MOVE STOCK LOGIC ---
@@ -608,19 +657,7 @@
             if(index !== -1) rawInventory[index].minStock = newMinStock;
             closeSettingsModal(); renderInventory(); 
         } catch(e) { alert("Error: " + e.message); }
-        btn.innerText = "Save Settings"; btn.disabled = false;
-    }
-
-    // --- CSV EXPORT ---
-    function exportToCSV() {
-        if(rawInventory.length === 0) return alert("No data to export.");
-        let csvContent = "data:text/csv;charset=utf-8,Product Name,SKU,Category,Sub-Category,Quantity,Unit,Buy Price,GST Rate,MSP,Offer\n";
-        rawInventory.forEach(item => {
-            const offerStr = item.offer ? `${item.offer.type} - Val: ${item.offer.value || item.offer.reqQty}` : "None";
-            csvContent += `"${(item.name||"").replace(/"/g, '""')}",${item.barcode||""},${item.category||""},${item.subcategory||""},${item.qty||0},${item.unit||""},${item.costPer||0},${item.gstRate||0}%,${item.msp||0},"${offerStr}"\n`;
-        });
-        const link = document.createElement("a"); link.setAttribute("href", encodeURI(csvContent));
-        link.setAttribute("download", `Showroom_Export.csv`); document.body.appendChild(link); link.click(); document.body.removeChild(link);
+        btn.innerText = "Save Alert Level"; btn.disabled = false;
     }
 </script>
 </body>
