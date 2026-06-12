@@ -43,18 +43,18 @@
         #search-input:focus { border-color: var(--primary); background: white; box-shadow: 0 0 0 4px #eff6ff; }
         
         .filter-controls { display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 12px; }
-        select { width: 100%; padding: 16px; border: 2px solid #cbd5e1; border-radius: 12px; font-size: 15px; font-weight: 700; color: var(--navy); background: white; outline: none; cursor: pointer; }
+        select, .move-input { width: 100%; padding: 16px; border: 2px solid #cbd5e1; border-radius: 12px; font-size: 15px; font-weight: 700; color: var(--navy); background: white; outline: none; box-sizing: border-box;}
         .btn-export { background: var(--emerald); color: white; border: none; padding: 16px; border-radius: 12px; font-weight: 800; cursor: pointer; display: flex; align-items: center; justify-content: center; gap: 8px; transition: background 0.2s; font-size: 15px;}
         
         /* -------------------------------------------
            THE COLORFUL ALMIRAH / SHELF DESIGN 
            ------------------------------------------- */
         .almirah-cabinet {
-            border: 8px solid; /* Frame color injected by JS */
+            border: 8px solid; 
             border-radius: 16px;
             margin-bottom: 60px;
             box-shadow: 0 25px 50px -12px rgba(0,0,0,0.25);
-            background: #ffffff; /* Inner back wall */
+            background: #ffffff; 
             overflow: hidden;
         }
         .cabinet-header {
@@ -68,16 +68,16 @@
         }
         .showroom-grid {
             display: grid;
-            grid-template-columns: repeat(auto-fill, minmax(220px, 1fr));
-            row-gap: 30px; /* Vertical space between shelves */
+            grid-template-columns: repeat(auto-fill, minmax(260px, 1fr));
+            row-gap: 30px; 
             padding: 30px 20px 20px 20px;
         }
         
         /* The Physical Shelf */
         .shelf-slot {
-            border-bottom: 16px solid; /* Shelf material injected by JS */
+            border-bottom: 16px solid; 
             display: flex;
-            align-items: flex-end; /* Pushes product box flat onto the shelf */
+            align-items: flex-end; 
             padding: 0 10px 0 10px;
             position: relative;
         }
@@ -85,17 +85,17 @@
             position: absolute;
             bottom: -16px; left: 0; right: 0;
             height: 8px;
-            box-shadow: 0 5px 10px rgba(0,0,0,0.15); /* 3D depth under shelf */
+            box-shadow: 0 5px 10px rgba(0,0,0,0.15); 
         }
 
-        /* The Product Box (Item sitting on the shelf) */
+        /* The Product Box */
         .product-box {
             width: 100%;
             background: white;
             border-radius: 8px 8px 0 0;
             box-shadow: 0 -4px 15px rgba(0,0,0,0.06);
             border: 1px solid rgba(0,0,0,0.08);
-            border-bottom: none; /* Merges visually with the shelf */
+            border-bottom: none; 
             display: flex; flex-direction: column;
             transform-origin: bottom center;
             transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
@@ -103,18 +103,19 @@
             z-index: 5;
         }
         .product-box:hover {
-            transform: scale(1.05);
+            transform: scale(1.03);
             z-index: 10;
             box-shadow: 0 -10px 25px rgba(0,0,0,0.15);
         }
         .product-ribbon {
             text-align: center;
-            padding: 8px;
+            padding: 10px;
             font-weight: 900;
             color: white;
-            font-size: 22px;
+            font-size: 20px;
             border-radius: 7px 7px 0 0;
             letter-spacing: -0.5px;
+            display: flex; justify-content: space-between; align-items: center;
         }
         .product-content {
             padding: 16px;
@@ -130,23 +131,29 @@
         .stock-low { background: #fee2e2; color: #b91c1c; border-color: #fca5a5; animation: pulse 2s infinite; }
         @keyframes pulse { 0% { opacity: 1; } 50% { opacity: 0.7; } 100% { opacity: 1; } }
 
+        /* Financials Grid */
+        .finance-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 8px;
+            background: #f8fafc;
+            padding: 10px;
+            border-radius: 8px;
+            border: 1px solid #e2e8f0;
+        }
+        .finance-item { font-size: 10px; color: var(--text-light); display: flex; flex-direction: column; text-transform: uppercase; font-weight: 700;}
+        .finance-item strong { color: var(--navy); font-size: 14px; font-weight: 900;}
+
         .tag-container { display: flex; flex-wrap: wrap; gap: 6px; margin-top: auto; padding-top: 10px; border-top: 1px dashed #e2e8f0; }
         .param-tag { font-size: 10px; font-weight: 800; background: #f1f5f9; color: var(--text-light); padding: 4px 8px; border-radius: 6px; border: 1px solid #cbd5e1; text-transform: uppercase;}
 
-        .btn-adjust { width: 100%; background: #f8fafc; color: var(--navy); border: none; border-top: 2px solid #e2e8f0; padding: 12px; font-weight: 900; font-size: 13px; cursor: pointer; transition: background 0.2s; text-transform: uppercase;}
-        .btn-adjust:hover { background: #e2e8f0; }
+        .btn-move { width: 100%; background: #f8fafc; color: var(--primary); border: none; border-top: 2px solid #e2e8f0; padding: 12px; font-weight: 900; font-size: 13px; cursor: pointer; transition: background 0.2s; text-transform: uppercase;}
+        .btn-move:hover { background: #e2e8f0; }
 
         /* Modal Styles */
         .modal-overlay { display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(15,23,42,0.7); z-index: 1000; align-items: center; justify-content: center; padding: 20px; box-sizing: border-box; backdrop-filter: blur(4px); }
-        .modal-card { background: white; width: 100%; max-width: 360px; border-radius: 20px; padding: 24px; position: relative; text-align: center; box-shadow: 0 25px 50px -12px rgba(0,0,0,0.25);}
-        .qty-controls { display: flex; align-items: center; justify-content: center; gap: 20px; margin: 24px 0; }
-        .btn-circle { width: 48px; height: 48px; border-radius: 50%; border: none; font-size: 24px; font-weight: bold; cursor: pointer; display: flex; align-items: center; justify-content: center; color: white;}
-        .btn-circle:active { transform: scale(0.9); }
-        .btn-minus { background: var(--danger); }
-        .btn-plus { background: var(--emerald); }
-        .qty-display { font-size: 32px; font-weight: 900; width: 80px; text-align: center; border: 3px solid #e2e8f0; background: white; padding: 10px; border-radius: 12px; color: var(--navy); outline: none;}
-        .qty-display:focus { border-color: var(--primary); }
-        .btn-save-adj { width: 100%; padding: 16px; background: var(--navy); color: white; border: none; border-radius: 12px; font-weight: 800; font-size: 16px; cursor: pointer; box-shadow: 0 4px 6px rgba(15, 23, 42, 0.2); }
+        .modal-card { background: white; width: 100%; max-width: 400px; border-radius: 20px; padding: 24px; position: relative; text-align: center; box-shadow: 0 25px 50px -12px rgba(0,0,0,0.25);}
+        .btn-save-move { width: 100%; padding: 16px; background: var(--primary); color: white; border: none; border-radius: 12px; font-weight: 800; font-size: 16px; cursor: pointer; box-shadow: 0 4px 6px rgba(59, 130, 246, 0.3); margin-top: 15px;}
         
         #error-screen { display: none; text-align: center; margin-top: 10vh; padding: 40px; background: white; border-radius: 20px; box-shadow: 0 10px 25px rgba(0,0,0,0.05);}
     </style>
@@ -159,15 +166,8 @@
         <a href="javascript:history.back()" class="btn-back"><i class="bi bi-arrow-left"></i> Exit</a>
     </div>
 
-    <div id="error-screen">
-        <i class="bi bi-shield-lock-fill" style="font-size: 48px; color: var(--danger); margin-bottom: 16px; display: block;"></i>
-        <h2 style="margin:0 0 10px 0;">Session Expired</h2>
-        <p style="margin:0; color:var(--text-light);">Please log in again to securely view your showroom.</p>
-        <a href="/login.html" style="display: inline-block; background: var(--navy); color: white; padding: 14px 28px; border-radius: 12px; text-decoration: none; font-weight: 700; margin-top: 20px;">Go to Login</a>
-    </div>
-
-    <div id="main-content" style="display: none;">
-        
+    <!-- Main Content -->
+    <div id="main-content">
         <div class="dashboard-grid">
             <div class="dash-pill">
                 <h3 id="dash-total">0</h3>
@@ -199,26 +199,33 @@
 
         <div id="inventory-list">
             <div style="text-align: center; padding: 40px; color: var(--text-light);">
-                <i class="bi bi-shop" style="font-size: 40px; color: #cbd5e1; display: block; margin-bottom: 10px;"></i>
+                <i class="bi bi-box-seam" style="font-size: 40px; color: #cbd5e1; display: block; margin-bottom: 10px;"></i>
                 Loading showroom data...
             </div>
         </div>
     </div>
 </div>
 
-<div class="modal-overlay" id="adjust-modal">
+<!-- Move Stock Modal -->
+<div class="modal-overlay" id="move-modal">
     <div class="modal-card">
-        <button onclick="closeAdjustModal()" style="position:absolute; top:16px; right:16px; background:#f1f5f9; border:none; border-radius:50%; width:36px; height:36px; cursor:pointer; color:var(--text-light); transition:background 0.2s;"><i class="bi bi-x-lg"></i></button>
-        <h2 style="margin:0 0 8px 0; color:var(--navy); font-size:22px; font-weight:900;">Adjust Stock</h2>
-        <p id="adj-item-name" style="margin:0; color:var(--text-light); font-size:14px; font-weight:600; line-height:1.4; padding:0 20px;"></p>
+        <button onclick="closeMoveModal()" style="position:absolute; top:16px; right:16px; background:#f1f5f9; border:none; border-radius:50%; width:36px; height:36px; cursor:pointer; color:var(--text-light); transition:background 0.2s;"><i class="bi bi-x-lg"></i></button>
+        <h2 style="margin:0 0 5px 0; color:var(--navy); font-size:22px; font-weight:900;">Move Stock</h2>
+        <p id="move-item-name" style="margin:0 0 20px 0; color:var(--primary); font-size:16px; font-weight:800;"></p>
         
-        <div class="qty-controls">
-            <button class="btn-circle btn-minus" onclick="changeAdjQty(-1)"><i class="bi bi-dash"></i></button>
-            <input type="number" id="adj-qty" class="qty-display" onchange="validateAdjQty()">
-            <button class="btn-circle btn-plus" onclick="changeAdjQty(1)"><i class="bi bi-plus"></i></button>
+        <div style="text-align: left; margin-bottom: 15px;">
+            <label style="font-size: 12px; font-weight: 800; color: var(--text-light); text-transform: uppercase;">Quantity to Move <span id="move-max-qty" style="color: var(--danger);"></span></label>
+            <input type="number" id="move-qty" class="move-input" style="margin-top: 5px;" min="1" oninput="validateMoveQty()">
+        </div>
+
+        <div style="text-align: left;">
+            <label style="font-size: 12px; font-weight: 800; color: var(--text-light); text-transform: uppercase;">Destination Branch</label>
+            <select id="move-target-branch" class="move-input" style="margin-top: 5px;">
+                <!-- Populated Dynamically -->
+            </select>
         </div>
         
-        <button class="btn-save-adj" id="btn-save-adj" onclick="saveAdjustment()">Confirm Adjustment</button>
+        <button class="btn-save-move" id="btn-save-move" onclick="saveMove()">Confirm Move</button>
     </div>
 </div>
 
@@ -229,34 +236,26 @@
 
     let shopTaxonomy = {};
     let rawInventory = []; 
-    let currentAdjDocId = null;
+    let globalBranches = []; // Used to populate the move dropdown
+    let currentMoveItem = null;
 
     // Vibrant Almirah Color Palettes
     const almirahPalettes = [
-        { frame: '#1e3a8a', shelf: '#93c5fd', shelfLip: '#60a5fa', bg: '#eff6ff', txt: '#ffffff' }, // Royal Blue
-        { frame: '#831843', shelf: '#f9a8d4', shelfLip: '#f472b6', bg: '#fdf2f8', txt: '#ffffff' }, // Magenta/Pink
-        { frame: '#14532d', shelf: '#6ee7b7', shelfLip: '#34d399', bg: '#ecfdf5', txt: '#ffffff' }, // Emerald Green
-        { frame: '#7c2d12', shelf: '#fcd34d', shelfLip: '#fbbf24', bg: '#fffbeb', txt: '#ffffff' }, // Wood/Amber
-        { frame: '#4c1d95', shelf: '#c4b5fd', shelfLip: '#a78bfa', bg: '#f5f3ff', txt: '#ffffff' }, // Deep Purple
-        { frame: '#9a3412', shelf: '#fdba74', shelfLip: '#f59e0b', bg: '#fff7ed', txt: '#ffffff' }  // Orange Rust
+        { frame: '#1e3a8a', shelf: '#93c5fd', shelfLip: '#60a5fa', bg: '#eff6ff', txt: '#ffffff' }, 
+        { frame: '#831843', shelf: '#f9a8d4', shelfLip: '#f472b6', bg: '#fdf2f8', txt: '#ffffff' }, 
+        { frame: '#14532d', shelf: '#6ee7b7', shelfLip: '#34d399', bg: '#ecfdf5', txt: '#ffffff' }, 
+        { frame: '#7c2d12', shelf: '#fcd34d', shelfLip: '#fbbf24', bg: '#fffbeb', txt: '#ffffff' }, 
+        { frame: '#4c1d95', shelf: '#c4b5fd', shelfLip: '#a78bfa', bg: '#f5f3ff', txt: '#ffffff' }, 
+        { frame: '#9a3412', shelf: '#fdba74', shelfLip: '#f59e0b', bg: '#fff7ed', txt: '#ffffff' }  
     ];
 
     document.addEventListener('DOMContentLoaded', () => {
-        firebase.auth().onAuthStateChanged(async (user) => {
-            if (!user) return window.location.replace('/login.html');
-            
-            if (!activeUserPhone && user.email && user.email.includes('@')) {
-                activeUserPhone = user.email.split('@')[0];
-                localStorage.setItem("activeUserPhone", activeUserPhone);
-            }
+        firebase.auth().onAuthStateChanged(async () => {
+            if (!activeUserPhone) return; 
+            try { if(assignedBranch && assignedBranch.startsWith('[')) assignedBranch = JSON.parse(assignedBranch); } catch(e){}
 
-            if (activeUserPhone) {
-                document.getElementById('main-content').style.display = 'block';
-                try { if(assignedBranch && assignedBranch.startsWith('[')) assignedBranch = JSON.parse(assignedBranch); } catch(e){}
-
-                await loadShopTaxonomy(); 
-                await loadBranches();
-            }
+            await loadShopTaxonomy(); 
+            await loadBranches();
         });
     });
 
@@ -277,6 +276,7 @@
         const db = firebase.firestore();
         const bSelect = document.getElementById('filter-branch');
         bSelect.innerHTML = '<option value="">Select Branch...</option>';
+        globalBranches = [];
         
         try {
             const snap = await db.collection('companies').doc(activeUserPhone).collection('branches').get();
@@ -284,6 +284,8 @@
                 const bId = doc.data().branchId;
                 const bName = doc.data().branchName;
                 
+                globalBranches.push({ id: bId, name: bName });
+
                 const isAdmin = !activeStaffId || assignedBranch === "admin";
                 const isAssigned = Array.isArray(assignedBranch) ? assignedBranch.includes(bId) : assignedBranch === bId;
                 
@@ -302,7 +304,9 @@
                      No branches found. Please create a branch first.
                  </div>`;
             }
-        } catch(e) { alert("Database error: " + e.message); }
+        } catch(e) {
+            alert("Database error loading branches: " + e.message);
+        }
     }
 
     async function fetchInventory() {
@@ -321,7 +325,9 @@
             rawInventory = [];
             snap.forEach(doc => { rawInventory.push({ docId: doc.id, ...doc.data() }); });
             renderInventory();
-        } catch(e) { alert("Error fetching inventory: " + e.message); }
+        } catch(e) {
+            alert("Error fetching inventory: " + e.message);
+        }
     }
 
     function handleCategoryFilter() {
@@ -384,7 +390,6 @@
         let colorIndex = 0;
 
         for (const [categoryName, items] of Object.entries(grouped)) {
-            // Pick a vibrant palette for this cabinet
             const pal = almirahPalettes[colorIndex % almirahPalettes.length];
             colorIndex++;
 
@@ -396,6 +401,12 @@
                 <div class="showroom-grid">`;
 
             items.forEach(item => {
+                // Ensure number safety
+                const costPrice = parseFloat(item.costPer || 0).toFixed(2);
+                const mspPrice = parseFloat(item.msp || 0).toFixed(2);
+                const gstRate = item.gstRate || 0;
+                const gstType = item.gstType ? `(${item.gstType})` : '';
+
                 const isLow = parseFloat(item.qty) < 5; 
                 const isExp = isExpiringSoon(item.expiryDate);
                 
@@ -416,10 +427,25 @@
                     <div class="shelf-slot" style="border-bottom-color: ${pal.shelf};">
                         <div class="shelf-lip" style="background: ${pal.shelfLip};"></div>
                         <div class="product-box">
-                            <div class="product-ribbon" style="background: ${pal.frame};">₹${parseFloat(item.msp || item.costPer || 0).toFixed(2)}</div>
+                            <div class="product-ribbon" style="background: ${pal.frame};">
+                                <span style="font-size: 12px; text-transform:uppercase; font-weight:700;">MSP</span>
+                                <span>₹${mspPrice}</span>
+                            </div>
                             <div class="product-content">
                                 <h4 class="product-name">${item.name}</h4>
                                 <span class="product-sku">SKU: ${item.barcode}</span>
+                                
+                                <div class="finance-grid">
+                                    <div class="finance-item">
+                                        <span>Buy Price</span>
+                                        <strong>₹${costPrice}</strong>
+                                    </div>
+                                    <div class="finance-item">
+                                        <span>GST Applied</span>
+                                        <strong>${gstRate}% ${gstType}</strong>
+                                    </div>
+                                </div>
+
                                 <div style="margin-top:5px;">
                                     <span class="stock-pill ${isLow ? 'stock-low' : 'stock-good'}">
                                         <i class="bi ${isLow ? 'bi-exclamation-triangle-fill' : 'bi-check-circle-fill'}"></i> ${item.qty} ${item.unit}
@@ -429,8 +455,8 @@
                                     ${subBadge} ${paramHtml} ${expBadge}
                                 </div>
                             </div>
-                            <button class="btn-adjust" onclick="openAdjustModal('${item.docId}', '${item.name.replace(/'/g, "\\'")}', ${item.qty})">
-                                <i class="bi bi-sliders"></i> Update Stock
+                            <button class="btn-move" onclick="openMoveModal('${item.docId}')">
+                                <i class="bi bi-truck"></i> Move Branch
                             </button>
                         </div>
                     </div>
@@ -446,51 +472,117 @@
         document.getElementById('dash-exp').innerText = expAlert;
     }
 
-    function openAdjustModal(docId, name, currentQty) {
-        currentAdjDocId = docId;
-        document.getElementById('adj-item-name').innerText = name;
-        document.getElementById('adj-qty').value = currentQty;
-        document.getElementById('adjust-modal').style.display = 'flex';
-    }
-    function closeAdjustModal() { document.getElementById('adjust-modal').style.display = 'none'; }
-    function changeAdjQty(val) {
-        const input = document.getElementById('adj-qty');
-        input.value = Math.max(0, parseFloat(input.value || 0) + val);
-    }
-    function validateAdjQty() {
-        const input = document.getElementById('adj-qty');
-        if (input.value < 0) input.value = 0;
+    // --- MOVE STOCK LOGIC ---
+    function openMoveModal(docId) {
+        currentMoveItem = rawInventory.find(i => i.docId === docId);
+        if(!currentMoveItem) return;
+
+        const currentBranchId = document.getElementById('filter-branch').value;
+        const targetSelect = document.getElementById('move-target-branch');
+        
+        // Populate Target Dropdown (Excluding current branch)
+        targetSelect.innerHTML = '<option value="">Select Destination...</option>';
+        globalBranches.forEach(b => {
+            if (b.id !== currentBranchId) {
+                targetSelect.innerHTML += `<option value="${b.id}">${b.name}</option>`;
+            }
+        });
+
+        if(targetSelect.options.length <= 1) {
+            alert("You need at least one other branch to move stock.");
+            return;
+        }
+
+        document.getElementById('move-item-name').innerText = currentMoveItem.name;
+        document.getElementById('move-max-qty').innerText = `(Max: ${currentMoveItem.qty})`;
+        document.getElementById('move-qty').value = 1;
+        document.getElementById('move-qty').max = currentMoveItem.qty;
+        
+        document.getElementById('move-modal').style.display = 'flex';
     }
 
-    async function saveAdjustment() {
-        const newQty = parseFloat(document.getElementById('adj-qty').value);
-        const branchId = document.getElementById('filter-branch').value;
-        const btn = document.getElementById('btn-save-adj');
+    function closeMoveModal() { 
+        document.getElementById('move-modal').style.display = 'none'; 
+        currentMoveItem = null;
+    }
+
+    function validateMoveQty() {
+        const input = document.getElementById('move-qty');
+        let val = parseFloat(input.value);
+        if (isNaN(val) || val <= 0) input.value = 1;
+        if (val > currentMoveItem.qty) input.value = currentMoveItem.qty;
+    }
+
+    async function saveMove() {
+        if(!currentMoveItem) return;
         
-        btn.innerText = "UPDATING..."; btn.disabled = true;
+        const moveQty = parseFloat(document.getElementById('move-qty').value);
+        const targetBranchId = document.getElementById('move-target-branch').value;
+        const currentBranchId = document.getElementById('filter-branch').value;
+
+        if(!targetBranchId) return alert("Please select a destination branch.");
+        if(isNaN(moveQty) || moveQty <= 0 || moveQty > currentMoveItem.qty) return alert("Invalid quantity.");
+
+        const btn = document.getElementById('btn-save-move');
+        btn.innerText = "MOVING TRUCK..."; btn.disabled = true;
 
         try {
-            await firebase.firestore().collection('companies').doc(activeUserPhone).collection('branches').doc(branchId).collection('inventory').doc(currentAdjDocId).update({
-                qty: newQty
-            });
-            const index = rawInventory.findIndex(i => i.docId === currentAdjDocId);
-            if(index !== -1) rawInventory[index].qty = newQty;
+            const db = firebase.firestore();
+            const sourceRef = db.collection('companies').doc(activeUserPhone).collection('branches').doc(currentBranchId).collection('inventory').doc(currentMoveItem.docId);
+            const targetInvRef = db.collection('companies').doc(activeUserPhone).collection('branches').doc(targetBranchId).collection('inventory');
+
+            // 1. Check if item already exists in target branch using Barcode
+            const existingSnap = await targetInvRef.where('barcode', '==', currentMoveItem.barcode).get();
+
+            const batch = db.batch();
+
+            // 2. Deduct from Source
+            batch.update(sourceRef, { qty: firebase.firestore.FieldValue.increment(-moveQty) });
+
+            // 3. Add to Target
+            if (!existingSnap.empty) {
+                // Item exists, just add quantity
+                const targetDocRef = targetInvRef.doc(existingSnap.docs[0].id);
+                batch.update(targetDocRef, { qty: firebase.firestore.FieldValue.increment(moveQty) });
+            } else {
+                // Item does not exist, copy entire profile over
+                const newTargetDocRef = targetInvRef.doc();
+                const newItemData = { ...currentMoveItem, qty: moveQty };
+                delete newItemData.docId; // Don't copy the unique database ID
+                batch.set(newTargetDocRef, newItemData);
+            }
+
+            // Execute the transfer
+            await batch.commit();
+
+            // Update local UI
+            currentMoveItem.qty -= moveQty;
+            if(currentMoveItem.qty <= 0) {
+                // Remove item from local array if it's completely empty
+                rawInventory = rawInventory.filter(i => i.docId !== currentMoveItem.docId);
+            }
             
-            closeAdjustModal(); renderInventory();
-        } catch(e) { alert("Error updating stock: " + e.message); }
+            renderInventory();
+            closeMoveModal();
+            alert(`Success! Moved ${moveQty} ${currentMoveItem.unit} to the new branch.`);
+
+        } catch(e) { 
+            alert("Error moving stock: " + e.message); 
+        }
         
-        btn.innerText = "Confirm Adjustment"; btn.disabled = false;
+        btn.innerText = "Confirm Move"; btn.disabled = false;
     }
 
+    // --- Export Logic ---
     function exportToCSV() {
         if(rawInventory.length === 0) return alert("No data to export.");
         const branchName = document.getElementById('filter-branch').options[document.getElementById('filter-branch').selectedIndex].text;
         
-        let csvContent = "data:text/csv;charset=utf-8,Product Name,SKU / Barcode,Category,Sub-Category,Quantity,Unit,Cost Price,MSP,Expiry Date\n";
+        let csvContent = "data:text/csv;charset=utf-8,Product Name,SKU / Barcode,Category,Sub-Category,Quantity,Unit,Buy Price,GST Rate,MSP,Expiry Date\n";
         
         rawInventory.forEach(item => {
             const name = `"${(item.name || "").replace(/"/g, '""')}"`; 
-            csvContent += `${name},${item.barcode || ""},${item.category || ""},${item.subcategory || ""},${item.qty || 0},${item.unit || ""},${item.costPer || 0},${item.msp || 0},${item.expiryDate || ""}\n`;
+            csvContent += `${name},${item.barcode || ""},${item.category || ""},${item.subcategory || ""},${item.qty || 0},${item.unit || ""},${item.costPer || 0},${item.gstRate || 0}%,${item.msp || 0},${item.expiryDate || ""}\n`;
         });
 
         const encodedUri = encodeURI(csvContent);
