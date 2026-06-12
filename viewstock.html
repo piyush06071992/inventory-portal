@@ -108,8 +108,7 @@
             box-shadow: 0 -10px 25px rgba(0,0,0,0.15);
         }
         .product-ribbon {
-            text-align: center;
-            padding: 10px;
+            padding: 10px 16px;
             font-weight: 900;
             color: white;
             font-size: 20px;
@@ -142,7 +141,7 @@
             border: 1px solid #e2e8f0;
         }
         .finance-item { font-size: 10px; color: var(--text-light); display: flex; flex-direction: column; text-transform: uppercase; font-weight: 700;}
-        .finance-item strong { color: var(--navy); font-size: 14px; font-weight: 900;}
+        .finance-item strong { color: var(--navy); font-size: 14px; font-weight: 900; display: flex; align-items: center; gap: 6px;}
 
         .tag-container { display: flex; flex-wrap: wrap; gap: 6px; margin-top: auto; padding-top: 10px; border-top: 1px dashed #e2e8f0; }
         .param-tag { font-size: 10px; font-weight: 800; background: #f1f5f9; color: var(--text-light); padding: 4px 8px; border-radius: 6px; border: 1px solid #cbd5e1; text-transform: uppercase;}
@@ -153,7 +152,9 @@
         /* Modal Styles */
         .modal-overlay { display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(15,23,42,0.7); z-index: 1000; align-items: center; justify-content: center; padding: 20px; box-sizing: border-box; backdrop-filter: blur(4px); }
         .modal-card { background: white; width: 100%; max-width: 400px; border-radius: 20px; padding: 24px; position: relative; text-align: center; box-shadow: 0 25px 50px -12px rgba(0,0,0,0.25);}
-        .btn-save-move { width: 100%; padding: 16px; background: var(--primary); color: white; border: none; border-radius: 12px; font-weight: 800; font-size: 16px; cursor: pointer; box-shadow: 0 4px 6px rgba(59, 130, 246, 0.3); margin-top: 15px;}
+        .btn-save-modal { width: 100%; padding: 16px; background: var(--primary); color: white; border: none; border-radius: 12px; font-weight: 800; font-size: 16px; cursor: pointer; box-shadow: 0 4px 6px rgba(59, 130, 246, 0.3); margin-top: 15px;}
+        
+        .info-box { background: #eff6ff; border: 1px dashed #93c5fd; padding: 12px; border-radius: 8px; font-size: 12px; color: #1e3a8a; margin-bottom: 20px; font-weight: 600; text-align: left; display: flex; gap: 8px;}
         
         #error-screen { display: none; text-align: center; margin-top: 10vh; padding: 40px; background: white; border-radius: 20px; box-shadow: 0 10px 25px rgba(0,0,0,0.05);}
     </style>
@@ -166,7 +167,6 @@
         <a href="javascript:history.back()" class="btn-back"><i class="bi bi-arrow-left"></i> Exit</a>
     </div>
 
-    <!-- Main Content -->
     <div id="main-content">
         <div class="dashboard-grid">
             <div class="dash-pill">
@@ -206,13 +206,17 @@
     </div>
 </div>
 
-<!-- Move Stock Modal -->
 <div class="modal-overlay" id="move-modal">
     <div class="modal-card">
         <button onclick="closeMoveModal()" style="position:absolute; top:16px; right:16px; background:#f1f5f9; border:none; border-radius:50%; width:36px; height:36px; cursor:pointer; color:var(--text-light); transition:background 0.2s;"><i class="bi bi-x-lg"></i></button>
         <h2 style="margin:0 0 5px 0; color:var(--navy); font-size:22px; font-weight:900;">Move Stock</h2>
-        <p id="move-item-name" style="margin:0 0 20px 0; color:var(--primary); font-size:16px; font-weight:800;"></p>
+        <p id="move-item-name" style="margin:0 0 15px 0; color:var(--primary); font-size:16px; font-weight:800;"></p>
         
+        <div class="info-box">
+            <i class="bi bi-info-circle-fill" style="font-size: 16px;"></i>
+            <span>This will safely deduct stock from your current branch and add it to the destination branch.</span>
+        </div>
+
         <div style="text-align: left; margin-bottom: 15px;">
             <label style="font-size: 12px; font-weight: 800; color: var(--text-light); text-transform: uppercase;">Quantity to Move <span id="move-max-qty" style="color: var(--danger);"></span></label>
             <input type="number" id="move-qty" class="move-input" style="margin-top: 5px;" min="1" oninput="validateMoveQty()">
@@ -221,11 +225,28 @@
         <div style="text-align: left;">
             <label style="font-size: 12px; font-weight: 800; color: var(--text-light); text-transform: uppercase;">Destination Branch</label>
             <select id="move-target-branch" class="move-input" style="margin-top: 5px;">
-                <!-- Populated Dynamically -->
-            </select>
+                </select>
         </div>
         
-        <button class="btn-save-move" id="btn-save-move" onclick="saveMove()">Confirm Move</button>
+        <button class="btn-save-modal" id="btn-save-move" onclick="saveMove()">Confirm Move</button>
+    </div>
+</div>
+
+<div class="modal-overlay" id="settings-modal">
+    <div class="modal-card">
+        <button onclick="closeSettingsModal()" style="position:absolute; top:16px; right:16px; background:#f1f5f9; border:none; border-radius:50%; width:36px; height:36px; cursor:pointer; color:var(--text-light); transition:background 0.2s;"><i class="bi bi-x-lg"></i></button>
+        <h2 style="margin:0 0 5px 0; color:var(--navy); font-size:22px; font-weight:900;">Stock Settings</h2>
+        <p id="set-item-name" style="margin:0 0 20px 0; color:var(--primary); font-size:16px; font-weight:800;"></p>
+
+        <div style="text-align: left; margin-bottom: 15px;">
+            <label style="font-size: 12px; font-weight: 800; color: var(--text-light); text-transform: uppercase;">Low Stock Alert Level</label>
+            <input type="number" id="set-min-stock" class="move-input" style="margin-top: 5px;" min="0">
+            <p style="font-size: 11px; color: var(--text-light); margin-top: 6px; line-height: 1.4;">
+                The quantity pill will flash <strong style="color:var(--danger);">red</strong> if the physical stock falls below this number in this branch.
+            </p>
+        </div>
+        
+        <button class="btn-save-modal" id="btn-save-settings" onclick="saveSettings()">Save Settings</button>
     </div>
 </div>
 
@@ -236,10 +257,11 @@
 
     let shopTaxonomy = {};
     let rawInventory = []; 
-    let globalBranches = []; // Used to populate the move dropdown
+    let globalBranches = []; 
+    
     let currentMoveItem = null;
+    let currentSettingsDocId = null;
 
-    // Vibrant Almirah Color Palettes
     const almirahPalettes = [
         { frame: '#1e3a8a', shelf: '#93c5fd', shelfLip: '#60a5fa', bg: '#eff6ff', txt: '#ffffff' }, 
         { frame: '#831843', shelf: '#f9a8d4', shelfLip: '#f472b6', bg: '#fdf2f8', txt: '#ffffff' }, 
@@ -349,6 +371,22 @@
         return diffDays > 0 && diffDays <= 30;
     }
 
+    // Global toggle function for the Buy Price Mask
+    window.togglePrice = function(docId) {
+        const el = document.getElementById(`price-${docId}`);
+        const icon = document.getElementById(`eye-${docId}`);
+        
+        if(el.innerText === '₹ ***') {
+            el.innerText = el.getAttribute('data-price');
+            icon.classList.remove('bi-eye-fill');
+            icon.classList.add('bi-eye-slash-fill');
+        } else {
+            el.innerText = '₹ ***';
+            icon.classList.remove('bi-eye-slash-fill');
+            icon.classList.add('bi-eye-fill');
+        }
+    };
+
     function renderInventory() {
         const list = document.getElementById('inventory-list');
         const query = document.getElementById('search-input').value.toLowerCase().trim();
@@ -401,13 +439,15 @@
                 <div class="showroom-grid">`;
 
             items.forEach(item => {
-                // Ensure number safety
                 const costPrice = parseFloat(item.costPer || 0).toFixed(2);
                 const mspPrice = parseFloat(item.msp || 0).toFixed(2);
                 const gstRate = item.gstRate || 0;
                 const gstType = item.gstType ? `(${item.gstType})` : '';
 
-                const isLow = parseFloat(item.qty) < 5; 
+                // Minimum Stock Logic (Defaults to 5 if not set)
+                const minStockLevel = item.minStock !== undefined ? parseFloat(item.minStock) : 5;
+                const isLow = parseFloat(item.qty) < minStockLevel; 
+                
                 const isExp = isExpiringSoon(item.expiryDate);
                 
                 if(isLow) lowStock++;
@@ -428,8 +468,11 @@
                         <div class="shelf-lip" style="background: ${pal.shelfLip};"></div>
                         <div class="product-box">
                             <div class="product-ribbon" style="background: ${pal.frame};">
-                                <span style="font-size: 12px; text-transform:uppercase; font-weight:700;">MSP</span>
-                                <span>₹${mspPrice}</span>
+                                <div>
+                                    <span style="font-size: 12px; text-transform:uppercase; font-weight:700; opacity: 0.9;">MSP</span>
+                                    <span style="margin-left: 4px;">₹${mspPrice}</span>
+                                </div>
+                                <i class="bi bi-gear-fill" onclick="openSettingsModal('${item.docId}', '${item.name.replace(/'/g, "\\'")}', ${minStockLevel})" style="cursor: pointer; font-size: 18px; opacity: 0.8; transition: opacity 0.2s;" onmouseover="this.style.opacity='1'" onmouseout="this.style.opacity='0.8'" title="Stock Settings"></i>
                             </div>
                             <div class="product-content">
                                 <h4 class="product-name">${item.name}</h4>
@@ -437,8 +480,8 @@
                                 
                                 <div class="finance-grid">
                                     <div class="finance-item">
-                                        <span>Buy Price</span>
-                                        <strong>₹${costPrice}</strong>
+                                        <span style="display:flex; justify-content:space-between;">Buy Price <i id="eye-${item.docId}" class="bi bi-eye-fill" onclick="togglePrice('${item.docId}')" style="cursor:pointer; color:var(--primary); font-size:14px;"></i></span>
+                                        <strong><span id="price-${item.docId}" data-price="₹${costPrice}">₹ ***</span></strong>
                                     </div>
                                     <div class="finance-item">
                                         <span>GST Applied</span>
@@ -480,7 +523,6 @@
         const currentBranchId = document.getElementById('filter-branch').value;
         const targetSelect = document.getElementById('move-target-branch');
         
-        // Populate Target Dropdown (Excluding current branch)
         targetSelect.innerHTML = '<option value="">Select Destination...</option>';
         globalBranches.forEach(b => {
             if (b.id !== currentBranchId) {
@@ -488,7 +530,7 @@
             }
         });
 
-        if(targetSelect.options.length <= 1) {
+        if(targetSelect.options.length === 0) {
             alert("You need at least one other branch to move stock.");
             return;
         }
@@ -518,6 +560,10 @@
         
         const moveQty = parseFloat(document.getElementById('move-qty').value);
         const targetBranchId = document.getElementById('move-target-branch').value;
+        
+        const targetSelect = document.getElementById('move-target-branch');
+        const targetBranchName = targetSelect.options[targetSelect.selectedIndex].text;
+        
         const currentBranchId = document.getElementById('filter-branch').value;
 
         if(!targetBranchId) return alert("Please select a destination branch.");
@@ -531,46 +577,84 @@
             const sourceRef = db.collection('companies').doc(activeUserPhone).collection('branches').doc(currentBranchId).collection('inventory').doc(currentMoveItem.docId);
             const targetInvRef = db.collection('companies').doc(activeUserPhone).collection('branches').doc(targetBranchId).collection('inventory');
 
-            // 1. Check if item already exists in target branch using Barcode
             const existingSnap = await targetInvRef.where('barcode', '==', currentMoveItem.barcode).get();
 
             const batch = db.batch();
 
-            // 2. Deduct from Source
             batch.update(sourceRef, { qty: firebase.firestore.FieldValue.increment(-moveQty) });
 
-            // 3. Add to Target
             if (!existingSnap.empty) {
-                // Item exists, just add quantity
                 const targetDocRef = targetInvRef.doc(existingSnap.docs[0].id);
                 batch.update(targetDocRef, { qty: firebase.firestore.FieldValue.increment(moveQty) });
             } else {
-                // Item does not exist, copy entire profile over
                 const newTargetDocRef = targetInvRef.doc();
                 const newItemData = { ...currentMoveItem, qty: moveQty };
-                delete newItemData.docId; // Don't copy the unique database ID
+                delete newItemData.docId; 
                 batch.set(newTargetDocRef, newItemData);
             }
 
-            // Execute the transfer
             await batch.commit();
 
-            // Update local UI
+            const unitName = currentMoveItem.unit;
+
             currentMoveItem.qty -= moveQty;
             if(currentMoveItem.qty <= 0) {
-                // Remove item from local array if it's completely empty
                 rawInventory = rawInventory.filter(i => i.docId !== currentMoveItem.docId);
             }
             
             renderInventory();
-            closeMoveModal();
-            alert(`Success! Moved ${moveQty} ${currentMoveItem.unit} to the new branch.`);
+            closeMoveModal(); 
+            
+            alert(`✅ Success! Safely moved ${moveQty} ${unitName} to ${targetBranchName}.`);
 
         } catch(e) { 
             alert("Error moving stock: " + e.message); 
         }
+        btn.innerText = "Confirm Move"; 
+        btn.disabled = false;
+    }
+
+    // --- SETTINGS (MINIMUM STOCK) LOGIC ---
+    function openSettingsModal(docId, name, currentMinStock) {
+        currentSettingsDocId = docId;
+        document.getElementById('set-item-name').innerText = name;
+        document.getElementById('set-min-stock').value = currentMinStock;
+        document.getElementById('settings-modal').style.display = 'flex';
+    }
+
+    function closeSettingsModal() {
+        document.getElementById('settings-modal').style.display = 'none';
+        currentSettingsDocId = null;
+    }
+
+    async function saveSettings() {
+        if(!currentSettingsDocId) return;
         
-        btn.innerText = "Confirm Move"; btn.disabled = false;
+        let newMinStock = parseFloat(document.getElementById('set-min-stock').value);
+        if (isNaN(newMinStock) || newMinStock < 0) newMinStock = 0;
+
+        const currentBranchId = document.getElementById('filter-branch').value;
+        const btn = document.getElementById('btn-save-settings');
+        
+        btn.innerText = "SAVING..."; btn.disabled = true;
+
+        try {
+            const db = firebase.firestore();
+            await db.collection('companies').doc(activeUserPhone).collection('branches').doc(currentBranchId).collection('inventory').doc(currentSettingsDocId).update({
+                minStock: newMinStock
+            });
+            
+            // Update UI Array
+            const index = rawInventory.findIndex(i => i.docId === currentSettingsDocId);
+            if(index !== -1) rawInventory[index].minStock = newMinStock;
+            
+            closeSettingsModal(); 
+            renderInventory(); // Re-render to show updated red/green pills
+        } catch(e) { 
+            alert("Error saving settings: " + e.message); 
+        }
+        
+        btn.innerText = "Save Settings"; btn.disabled = false;
     }
 
     // --- Export Logic ---
