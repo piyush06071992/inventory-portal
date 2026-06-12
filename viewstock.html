@@ -21,7 +21,6 @@
         .header-bar h1 { margin: 0; font-size: 22px; color: var(--navy); }
         .btn-back { background: white; border: 1px solid #cbd5e1; padding: 8px 12px; border-radius: 8px; cursor: pointer; font-weight: 600; color: #475569; text-decoration: none; }
         
-        /* Summary Dashboard */
         .dashboard-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(140px, 1fr)); gap: 12px; margin-bottom: 20px; }
         .dash-card { background: white; padding: 16px; border-radius: 12px; border: 1px solid #e2e8f0; text-align: center; box-shadow: 0 2px 4px rgba(0,0,0,0.02); }
         .dash-card h3 { margin: 0 0 5px 0; font-size: 24px; color: var(--navy); }
@@ -29,7 +28,6 @@
         .dash-danger h3 { color: var(--danger); }
         .dash-warning h3 { color: var(--warning); }
 
-        /* Filters Section */
         .filter-card { background: white; padding: 16px; border-radius: 12px; margin-bottom: 20px; border: 1px solid #e2e8f0; }
         .filter-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-bottom: 10px; }
         label { display: block; font-size: 11px; font-weight: 700; color: #64748b; margin-bottom: 4px; text-transform: uppercase; }
@@ -38,7 +36,6 @@
         
         .btn-export { width: 100%; padding: 12px; background: #10b981; color: white; border: none; border-radius: 8px; font-weight: 700; cursor: pointer; display: flex; align-items: center; justify-content: center; gap: 8px; margin-top: 10px; }
         
-        /* Inventory List */
         .inventory-list { display: flex; flex-direction: column; gap: 12px; }
         .stock-item { background: white; border: 1px solid #e2e8f0; border-radius: 12px; padding: 15px; position: relative; box-shadow: 0 2px 4px rgba(0,0,0,0.02); }
         .stock-item h4 { margin: 0 0 4px 0; font-size: 16px; color: var(--navy); padding-right: 40px; }
@@ -54,7 +51,6 @@
 
         .btn-adjust { position: absolute; top: 15px; right: 15px; background: #eff6ff; color: #2563eb; border: none; padding: 8px 12px; border-radius: 8px; font-weight: 700; cursor: pointer; font-size: 12px; }
 
-        /* Modal */
         .modal-overlay { display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(15,23,42,0.7); z-index: 1000; align-items: center; justify-content: center; padding: 20px; box-sizing: border-box; backdrop-filter: blur(4px); }
         .modal-card { background: white; width: 100%; max-width: 400px; border-radius: 16px; padding: 24px; position: relative; text-align: center; }
         .qty-controls { display: flex; align-items: center; justify-content: center; gap: 15px; margin: 20px 0; }
@@ -63,8 +59,10 @@
         .btn-plus { background: var(--emerald); }
         .qty-display { font-size: 24px; font-weight: 800; width: 60px; text-align: center; border: none; background: #f1f5f9; padding: 10px; border-radius: 8px; }
         .btn-save-adj { width: 100%; padding: 14px; background: var(--navy); color: white; border: none; border-radius: 8px; font-weight: 700; font-size: 15px; cursor: pointer; }
-        
-        .error-card { background: #fee2e2; border: 2px solid #ef4444; color: #b91c1c; padding: 20px; text-align: center; border-radius: 12px; font-weight: bold; display: none; }
+
+        #error-screen { display: none; text-align: center; margin-top: 50px; }
+        #error-screen i { font-size: 40px; color: var(--danger); margin-bottom: 15px; }
+        .btn-login-redirect { display: inline-block; background: var(--navy); color: white; padding: 12px 24px; border-radius: 8px; text-decoration: none; font-weight: bold; margin-top: 15px; }
     </style>
 </head>
 <body>
@@ -75,10 +73,11 @@
         <a href="javascript:history.back()" class="btn-back"><i class="bi bi-arrow-left"></i> Back</a>
     </div>
 
-    <div id="error-screen" class="error-card">
-        <i class="bi bi-exclamation-triangle" style="font-size: 30px; display: block; margin-bottom: 10px;"></i>
-        Session Missing or Expired.<br><br>
-        <a href="/login.html" style="background: #b91c1c; color: white; padding: 10px 20px; border-radius: 8px; text-decoration: none; display: inline-block;">Click here to Login securely</a>
+    <div id="error-screen">
+        <i class="bi bi-shield-lock-fill"></i>
+        <h2>Session Expired</h2>
+        <p style="color: #64748b;">Please log in again to securely view your inventory.</p>
+        <a href="/login.html" class="btn-login-redirect">Go to Login</a>
     </div>
 
     <div id="main-content" style="display: none;">
@@ -141,7 +140,6 @@
 </div>
 
 <script>
-    // FIREBASE INITIALIZATION 
     const firebaseConfig = {
         apiKey: "AIzaSyBuyDgbmycHMjHGupeoZV2lvv_Z0n7WyoY",
         authDomain: "business-saarthi.firebaseapp.com",
@@ -162,18 +160,22 @@
     let currentAdjDocId = null;
 
     document.addEventListener('DOMContentLoaded', () => {
-        // If there is strictly no shop ID found, display error (NO REDIRECT)
-        if (!activeUserPhone) {
-            document.getElementById('error-screen').style.display = 'block';
-            return;
-        }
-
-        // Show main interface
-        document.getElementById('main-content').style.display = 'block';
-
         firebase.auth().onAuthStateChanged(async (user) => {
-            // We ignore `!user` here entirely to prevent kickouts. 
-            // We only care about activeUserPhone to fetch the data.
+            if (!user) {
+                // Not logged in properly - show the login prompt safely
+                document.getElementById('error-screen').style.display = 'block';
+                document.getElementById('main-content').style.display = 'none';
+                return;
+            }
+
+            // User is logged in securely! Show the UI.
+            document.getElementById('error-screen').style.display = 'none';
+            document.getElementById('main-content').style.display = 'block';
+
+            if (!activeUserPhone && user.email) {
+                activeUserPhone = user.email.split('@')[0];
+                localStorage.setItem("activeUserPhone", activeUserPhone);
+            }
             
             try { if(assignedBranch && assignedBranch.startsWith('[')) assignedBranch = JSON.parse(assignedBranch); } catch(e){}
 
@@ -182,7 +184,6 @@
         });
     });
 
-    // --- DATA LOADERS ---
     async function loadShopTaxonomy() {
         try {
             const doc = await firebase.firestore().collection('companies').doc(activeUserPhone).collection('settings').doc('params').get();
@@ -220,7 +221,7 @@
                 fetchInventory();
             }
         } catch(e) {
-            document.getElementById('inventory-list').innerHTML = `<p style="color:red; text-align:center;">Database Error: Are you logged out? <br><br> ${e.message}</p>`;
+            document.getElementById('inventory-list').innerHTML = `<p style="color:red; text-align:center;">Database Error: ${e.message}</p>`;
         }
     }
 
@@ -241,7 +242,6 @@
         }
     }
 
-    // --- FILTERS & RENDERING ---
     function handleCategoryFilter() {
         const cat = document.getElementById('filter-category').value;
         const subSelect = document.getElementById('filter-subcategory');
@@ -321,7 +321,6 @@
         if(filtered.length === 0) list.innerHTML = '<p style="text-align:center; color:#94a3b8; margin-top:20px;">No matching items found.</p>';
     }
 
-    // --- QUICK ADJUST LOGIC ---
     function openAdjustModal(docId, name, currentQty) {
         currentAdjDocId = docId;
         document.getElementById('adj-item-name').innerText = name;
@@ -358,7 +357,6 @@
         btn.innerText = "UPDATE STOCK"; btn.disabled = false;
     }
 
-    // --- EXPORT TO CSV ---
     function exportToCSV() {
         if(rawInventory.length === 0) return alert("No data to export.");
         const branchName = document.getElementById('filter-branch').options[document.getElementById('filter-branch').selectedIndex].text;
