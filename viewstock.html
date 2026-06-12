@@ -159,29 +159,35 @@
     let rawInventory = []; 
     let currentAdjDocId = null;
 
-    document.addEventListener('DOMContentLoaded', () => {
-        firebase.auth().onAuthStateChanged(async (user) => {
-            if (!user) {
-                // Not logged in properly - show the login prompt safely
-                document.getElementById('error-screen').style.display = 'block';
-                document.getElementById('main-content').style.display = 'none';
-                return;
-            }
-
-            // User is logged in securely! Show the UI.
+  document.addEventListener('DOMContentLoaded', () => {
+        // 1. Check Local Storage First (This instantly accepts Staff & Owners)
+        if (activeUserPhone) {
             document.getElementById('error-screen').style.display = 'none';
             document.getElementById('main-content').style.display = 'block';
-
-            if (!activeUserPhone && user.email) {
-                activeUserPhone = user.email.split('@')[0];
-                localStorage.setItem("activeUserPhone", activeUserPhone);
-            }
             
             try { if(assignedBranch && assignedBranch.startsWith('[')) assignedBranch = JSON.parse(assignedBranch); } catch(e){}
-
-            await loadShopTaxonomy();
-            await loadBranches();
-        });
+            loadShopTaxonomy();
+            loadBranches();
+        } else {
+            // 2. If memory is empty, wait for Firebase (Recovery loop for Owners)
+            firebase.auth().onAuthStateChanged(async (user) => {
+                if (user && user.email) {
+                    activeUserPhone = user.email.split('@')[0];
+                    localStorage.setItem("activeUserPhone", activeUserPhone);
+                    
+                    document.getElementById('error-screen').style.display = 'none';
+                    document.getElementById('main-content').style.display = 'block';
+                    
+                    try { if(assignedBranch && assignedBranch.startsWith('[')) assignedBranch = JSON.parse(assignedBranch); } catch(e){}
+                    await loadShopTaxonomy();
+                    await loadBranches();
+                } else {
+                    // 3. Truly logged out everywhere
+                    document.getElementById('error-screen').style.display = 'block';
+                    document.getElementById('main-content').style.display = 'none';
+                }
+            });
+        }
     });
 
     async function loadShopTaxonomy() {
