@@ -82,9 +82,6 @@
         .qty-display { font-size: 32px; font-weight: 800; width: 80px; text-align: center; border: 2px solid #e2e8f0; background: white; padding: 10px; border-radius: 12px; color: var(--navy); outline: none;}
         .qty-display:focus { border-color: var(--primary); }
         .btn-save-adj { width: 100%; padding: 16px; background: var(--navy); color: white; border: none; border-radius: 12px; font-weight: 700; font-size: 16px; cursor: pointer; box-shadow: 0 4px 6px rgba(15, 23, 42, 0.2); }
-
-        #error-screen { display: none; text-align: center; margin-top: 10vh; padding: 40px; background: white; border-radius: 20px; box-shadow: 0 10px 25px rgba(0,0,0,0.05);}
-        #error-screen i { font-size: 48px; color: var(--text-light); margin-bottom: 16px; display: block;}
     </style>
 </head>
 <body>
@@ -95,13 +92,7 @@
         <a href="javascript:history.back()" class="btn-back"><i class="bi bi-arrow-left"></i> Exit</a>
     </div>
 
-    <div id="error-screen">
-        <i class="bi bi-person-x"></i>
-        <h2 style="margin:0 0 10px 0; color:var(--navy);">Shop Not Identified</h2>
-        <p style="margin:0; color:var(--text-light);">Please log in via the dashboard to view your showroom.</p>
-        <a href="/login.html" style="display: inline-block; background: var(--navy); color: white; padding: 14px 28px; border-radius: 12px; text-decoration: none; font-weight: 700; margin-top: 20px;">Go to Login</a>
-    </div>
-
+    <!-- Main Content -->
     <div id="main-content" style="display: none;">
         
         <div class="dashboard-grid">
@@ -136,12 +127,13 @@
         <div id="inventory-list">
             <div style="text-align: center; padding: 40px; color: var(--text-light);">
                 <i class="bi bi-box-seam" style="font-size: 40px; color: #cbd5e1; display: block; margin-bottom: 10px;"></i>
-                Select a branch to load your showroom.
+                Loading showroom data...
             </div>
         </div>
     </div>
 </div>
 
+<!-- Quick Adjust Modal -->
 <div class="modal-overlay" id="adjust-modal">
     <div class="modal-card">
         <button onclick="closeAdjustModal()" style="position:absolute; top:16px; right:16px; background:#f1f5f9; border:none; border-radius:50%; width:36px; height:36px; cursor:pointer; color:var(--text-light); transition:background 0.2s;"><i class="bi bi-x-lg"></i></button>
@@ -171,50 +163,31 @@
     if (!firebase.apps.length) firebase.initializeApp(firebaseConfig);
 
     let activeUserPhone = localStorage.getItem("activeUserPhone");
-    const activeStaffId = localStorage.getItem("activeStaffId");
     let assignedBranch = localStorage.getItem("assignedBranch");
+    const activeStaffId = localStorage.getItem("activeStaffId");
 
     let shopTaxonomy = {};
     let rawInventory = []; 
     let currentAdjDocId = null;
 
-   document.addEventListener('DOMContentLoaded', () => {
-        // We ALWAYS let Firebase check the connection first to grab your secure Admin Token
+    // EXACT SAME AUTHENTICATION LOGIC AS YOUR WORKING ENTER-STOCK.HTML
+    document.addEventListener('DOMContentLoaded', () => {
         firebase.auth().onAuthStateChanged(async (user) => {
-            let phone = localStorage.getItem("activeUserPhone");
-            const staffId = localStorage.getItem("activeStaffId");
+            if (!user) return window.location.replace('/login.html');
+            
+            // OWNER RECOVERY: Rebuild session from email if owner is logged in
+            if (!activeUserPhone && user.email && user.email.includes('@')) {
+                activeUserPhone = user.email.split('@')[0];
+                localStorage.setItem("activeUserPhone", activeUserPhone);
+            }
 
-            if (user) {
-                // SCENARIO 1: ADMIN IS LOGGED IN SECURELY
-                if (user.email) {
-                    phone = user.email.split('@')[0];
-                    localStorage.setItem("activeUserPhone", phone);
-                    activeUserPhone = phone;
-                }
-                
-                document.getElementById('error-screen').style.display = 'none';
+            if (activeUserPhone) {
                 document.getElementById('main-content').style.display = 'block';
-                
+
                 try { if(assignedBranch && assignedBranch.startsWith('[')) assignedBranch = JSON.parse(assignedBranch); } catch(e){}
-                
-                // Fetch data WITH the secure Firebase token attached
-                await loadShopTaxonomy();
+
+                await loadShopTaxonomy(); 
                 await loadBranches();
-            } 
-            else if (phone && staffId) {
-                // SCENARIO 2: STAFF IS LOGGED IN (Via PIN)
-                document.getElementById('error-screen').style.display = 'none';
-                document.getElementById('main-content').style.display = 'block';
-                
-                try { if(assignedBranch && assignedBranch.startsWith('[')) assignedBranch = JSON.parse(assignedBranch); } catch(e){}
-                
-                await loadShopTaxonomy();
-                await loadBranches();
-            } 
-            else {
-                // SCENARIO 3: NOBODY IS LOGGED IN
-                document.getElementById('error-screen').style.display = 'block';
-                document.getElementById('main-content').style.display = 'none';
             }
         });
     });
@@ -262,13 +235,7 @@
                  </div>`;
             }
         } catch(e) {
-            document.getElementById('inventory-list').innerHTML = `
-            <div style="background: #fee2e2; border: 2px solid #ef4444; color: #b91c1c; padding: 20px; border-radius: 16px; text-align: center;">
-                <i class="bi bi-shield-lock" style="font-size: 32px; display: block; margin-bottom: 10px;"></i>
-                <strong>Database Permission Denied.</strong><br>
-                Please log in securely from the main portal.<br><br>
-                <small style="color: #991b1b;">Error: ${e.message}</small>
-            </div>`;
+            alert("Database error: " + e.message);
         }
     }
 
@@ -284,19 +251,12 @@
         
         const db = firebase.firestore();
         try {
-            // Note: This fetches specifically from the BRANCH inventory
             const snap = await db.collection('companies').doc(activeUserPhone).collection('branches').doc(branchId).collection('inventory').get();
             rawInventory = [];
             snap.forEach(doc => { rawInventory.push({ docId: doc.id, ...doc.data() }); });
             renderInventory();
         } catch(e) {
-            document.getElementById('inventory-list').innerHTML = `
-            <div style="background: #fee2e2; border: 2px solid #ef4444; color: #b91c1c; padding: 20px; border-radius: 16px; text-align: center;">
-                <i class="bi bi-shield-lock" style="font-size: 32px; display: block; margin-bottom: 10px;"></i>
-                <strong>Database Permission Denied.</strong><br>
-                Please log in securely from the main portal.<br><br>
-                <small style="color: #991b1b;">Error: ${e.message}</small>
-            </div>`;
+            alert("Error fetching inventory: " + e.message);
         }
     }
 
