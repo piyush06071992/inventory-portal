@@ -7,7 +7,7 @@ const isPublicPage = window.location.pathname.includes("login.html") ||
                      window.location.pathname === "/";
 
 if (!isPublicPage) {
-    // FIXED: Safely injects the hiding style without wiping the document
+    // Safely injects the hiding style without wiping the document
     const style = document.createElement('style');
     style.id = 'security-style-tag';
     style.innerHTML = 'body { display: none !important; }';
@@ -41,51 +41,53 @@ function initializeSecurityMonitor() {
         return;
     }
 
-    const db = firebase.firestore();
+    // THE FIX: Wait for Firebase to securely attach the token BEFORE querying the database
+    firebase.auth().onAuthStateChanged((user) => {
+        const db = firebase.firestore();
 
-    // One powerful real-time listener for the company document
-    db.collection('companies').doc(activePhone).onSnapshot((doc) => {
-        if (!doc.exists) {
-            // Account deleted or doesn't exist
-            forceLogout("Account not found. Please log in again.");
-            return;
-        }
+        // One powerful real-time listener for the company document
+        db.collection('companies').doc(activePhone).onSnapshot((doc) => {
+            if (!doc.exists) {
+                forceLogout("Account not found. Please log in again.");
+                return;
+            }
 
-        const data = doc.data();
-        const now = new Date();
+            const data = doc.data();
+            const now = new Date();
 
-        // A. Midnight Check
-        const lastAccess = localStorage.getItem("lastAccessDate");
-        const today = now.toDateString();
-        
-        if (lastAccess && lastAccess !== today) {
-            forceLogout("Session expired at midnight. Please login again.");
-            return;
-        }
-        localStorage.setItem("lastAccessDate", today);
+            // A. Midnight Check
+            const lastAccess = localStorage.getItem("lastAccessDate");
+            const today = now.toDateString();
+            
+            if (lastAccess && lastAccess !== today) {
+                forceLogout("Session expired at midnight. Please login again.");
+                return;
+            }
+            localStorage.setItem("lastAccessDate", today);
 
-        // B. Subscription Expiry Guard
-        const lockoutDate = new Date(data.lockoutEndsAt);
-        if (data.paymentStatus !== "PAID" && now > lockoutDate) {
-            window.location.replace('/billing.html');
-            return;
-        }
+            // B. Subscription Expiry Guard
+            const lockoutDate = new Date(data.lockoutEndsAt);
+            if (data.paymentStatus !== "PAID" && now > lockoutDate) {
+                window.location.replace('/billing.html');
+                return;
+            }
 
-        // C. Multi-Device Single Session Check
-        if (data.lastLoginTime && data.lastLoginTime !== myLoginTime) {
-            forceLogout("SECURITY ALERT: You are logged in on another device.");
-            return;
-        }
+            // C. Multi-Device Single Session Check
+            if (data.lastLoginTime && data.lastLoginTime !== myLoginTime) {
+                forceLogout("SECURITY ALERT: You are logged in on another device.");
+                return;
+            }
 
-        // D. IF ALL CHECKS PASS: Reveal the page safely
-        const styleTag = document.getElementById('security-style-tag');
-        if (styleTag) styleTag.remove(); 
-        document.body.style.display = 'block';
+            // D. IF ALL CHECKS PASS: Reveal the page safely
+            const styleTag = document.getElementById('security-style-tag');
+            if (styleTag) styleTag.remove(); 
+            document.body.style.display = 'block';
 
-    }, (error) => {
-        console.error("Security Monitor Error: ", error);
-        // Fallback: If permissions fail, send back to login
-        window.location.replace('/login.html');
+        }, (error) => {
+            console.error("Security Monitor Error: ", error);
+            // Fallback: If permissions genuinely fail, send back to login
+            window.location.replace('/login.html');
+        });
     });
 }
 
