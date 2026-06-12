@@ -84,8 +84,7 @@
         .btn-save-adj { width: 100%; padding: 16px; background: var(--navy); color: white; border: none; border-radius: 12px; font-weight: 700; font-size: 16px; cursor: pointer; box-shadow: 0 4px 6px rgba(15, 23, 42, 0.2); }
 
         #error-screen { display: none; text-align: center; margin-top: 10vh; padding: 40px; background: white; border-radius: 20px; box-shadow: 0 10px 25px rgba(0,0,0,0.05);}
-        #error-screen i { font-size: 48px; color: var(--danger); margin-bottom: 16px; display: block;}
-        .btn-login-redirect { display: inline-block; background: var(--navy); color: white; padding: 14px 28px; border-radius: 12px; text-decoration: none; font-weight: 700; margin-top: 20px; box-shadow: 0 4px 10px rgba(0,0,0,0.15);}
+        #error-screen i { font-size: 48px; color: var(--text-light); margin-bottom: 16px; display: block;}
     </style>
 </head>
 <body>
@@ -97,10 +96,10 @@
     </div>
 
     <div id="error-screen">
-        <i class="bi bi-shield-lock-fill"></i>
-        <h2 style="margin:0 0 10px 0; color:var(--navy);">Admin Login Required</h2>
-        <p style="margin:0; color:var(--text-light);">You must log in with your Admin Email & Password to read Showroom data securely.</p>
-        <a href="/login.html" class="btn-login-redirect">Go to Secure Login</a>
+        <i class="bi bi-person-x"></i>
+        <h2 style="margin:0 0 10px 0; color:var(--navy);">Shop Not Identified</h2>
+        <p style="margin:0; color:var(--text-light);">Please log in via the dashboard to view your showroom.</p>
+        <a href="/login.html" style="display: inline-block; background: var(--navy); color: white; padding: 14px 28px; border-radius: 12px; text-decoration: none; font-weight: 700; margin-top: 20px;">Go to Login</a>
     </div>
 
     <div id="main-content" style="display: none;">
@@ -180,32 +179,28 @@
     let currentAdjDocId = null;
 
     document.addEventListener('DOMContentLoaded', () => {
-        // ALWAYS wait for Firebase Auth to confirm identity. Never rush.
-        firebase.auth().onAuthStateChanged(async (user) => {
-            
-            if (!user) {
-                // Staff PIN logins do not have Firebase tokens. They cannot read this screen securely.
-                document.getElementById('error-screen').style.display = 'block';
-                document.getElementById('main-content').style.display = 'none';
-                return;
-            }
-
-            // We have a secure session!
+        // 1. TRUST LOCAL STORAGE INSTANTLY. No strict bouncers.
+        if (activeUserPhone) {
             document.getElementById('error-screen').style.display = 'none';
             document.getElementById('main-content').style.display = 'block';
-
-            // Check if phone needs recovery
-            if (!activeUserPhone && user.email) {
-                activeUserPhone = user.email.split('@')[0];
-                localStorage.setItem("activeUserPhone", activeUserPhone);
-            }
             
             try { if(assignedBranch && assignedBranch.startsWith('[')) assignedBranch = JSON.parse(assignedBranch); } catch(e){}
 
-            // Now that the token is securely attached, safely fetch data
-            await loadShopTaxonomy();
-            await loadBranches();
-        });
+            loadShopTaxonomy();
+            loadBranches();
+        } else {
+            // 2. Only if local storage is completely empty, see if Firebase can recover it
+            firebase.auth().onAuthStateChanged((user) => {
+                if (user && user.email) {
+                    activeUserPhone = user.email.split('@')[0];
+                    localStorage.setItem("activeUserPhone", activeUserPhone);
+                    window.location.reload(); // Reload with the newly found phone number
+                } else {
+                    document.getElementById('error-screen').style.display = 'block';
+                    document.getElementById('main-content').style.display = 'none';
+                }
+            });
+        }
     });
 
     async function loadShopTaxonomy() {
@@ -243,13 +238,20 @@
             if (bSelect.options.length === 2) {
                 bSelect.selectedIndex = 1;
                 fetchInventory();
+            } else if (bSelect.options.length === 1) {
+                 document.getElementById('inventory-list').innerHTML = `
+                 <div style="text-align: center; padding: 40px; color: var(--text-light);">
+                     <i class="bi bi-shop" style="font-size: 40px; color: #cbd5e1; display: block; margin-bottom: 10px;"></i>
+                     No branches found. Please create a branch first.
+                 </div>`;
             }
         } catch(e) {
             document.getElementById('inventory-list').innerHTML = `
             <div style="background: #fee2e2; border: 2px solid #ef4444; color: #b91c1c; padding: 20px; border-radius: 16px; text-align: center;">
                 <i class="bi bi-shield-lock" style="font-size: 32px; display: block; margin-bottom: 10px;"></i>
                 <strong>Database Permission Denied.</strong><br>
-                Error: ${e.message}
+                Please log in securely from the main portal.<br><br>
+                <small style="color: #991b1b;">Error: ${e.message}</small>
             </div>`;
         }
     }
@@ -266,6 +268,7 @@
         
         const db = firebase.firestore();
         try {
+            // Note: This fetches specifically from the BRANCH inventory
             const snap = await db.collection('companies').doc(activeUserPhone).collection('branches').doc(branchId).collection('inventory').get();
             rawInventory = [];
             snap.forEach(doc => { rawInventory.push({ docId: doc.id, ...doc.data() }); });
@@ -275,7 +278,8 @@
             <div style="background: #fee2e2; border: 2px solid #ef4444; color: #b91c1c; padding: 20px; border-radius: 16px; text-align: center;">
                 <i class="bi bi-shield-lock" style="font-size: 32px; display: block; margin-bottom: 10px;"></i>
                 <strong>Database Permission Denied.</strong><br>
-                Error: ${e.message}
+                Please log in securely from the main portal.<br><br>
+                <small style="color: #991b1b;">Error: ${e.message}</small>
             </div>`;
         }
     }
@@ -319,8 +323,9 @@
         if(filtered.length === 0) {
             list.innerHTML = `
             <div style="text-align: center; padding: 40px; color: var(--text-light); background: white; border-radius: 16px; border: 1px dashed #cbd5e1;">
-                <i class="bi bi-search" style="font-size: 32px; display: block; margin-bottom: 10px; color: #cbd5e1;"></i>
-                No matching items found in the showroom.
+                <i class="bi bi-box" style="font-size: 40px; display: block; margin-bottom: 10px; color: #cbd5e1;"></i>
+                No items found in this branch's inventory.<br>
+                Use "Enter Stock" to add products here!
             </div>`;
             document.getElementById('dash-total').innerText = "0";
             document.getElementById('dash-low').innerText = "0";
@@ -371,7 +376,7 @@
                         <div class="card-body">
                             <h4 class="product-name">${item.name}</h4>
                             <span class="product-sku">${item.barcode}</span>
-                            <div class="price-tag">₹${parseFloat(item.msp).toFixed(2)}</div>
+                            <div class="price-tag">₹${parseFloat(item.msp || item.costPer || 0).toFixed(2)}</div>
                             <div class="tag-container">
                                 ${subBadge}
                                 ${paramHtml}
