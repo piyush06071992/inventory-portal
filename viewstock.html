@@ -100,13 +100,15 @@
         <a href="javascript:history.back()" class="btn-back"><i class="bi bi-arrow-left"></i> Exit</a>
     </div>
 
+    <!-- Error Screen -->
     <div id="error-screen">
         <i class="bi bi-shield-lock-fill"></i>
         <h2 style="margin:0 0 10px 0; color:var(--navy);">Session Expired</h2>
-        <p style="margin:0; color:var(--text-light);">Please log in again to securely view your showroom.</p>
+        <p style="margin:0; color:var(--text-light);">We couldn't find your shop number. Please log in again.</p>
         <a href="/login.html" class="btn-login-redirect">Go to Login</a>
     </div>
 
+    <!-- Main Content -->
     <div id="main-content" style="display: none;">
         
         <div class="dashboard-grid">
@@ -147,6 +149,7 @@
     </div>
 </div>
 
+<!-- Quick Adjust Modal -->
 <div class="modal-overlay" id="adjust-modal">
     <div class="modal-card">
         <button onclick="closeAdjustModal()" style="position:absolute; top:16px; right:16px; background:#f1f5f9; border:none; border-radius:50%; width:36px; height:36px; cursor:pointer; color:var(--text-light); transition:background 0.2s;"><i class="bi bi-x-lg"></i></button>
@@ -183,31 +186,35 @@
     let rawInventory = []; 
     let currentAdjDocId = null;
 
-document.addEventListener('DOMContentLoaded', () => {
-        // Wait for Firebase to securely attach the token before querying the database
+    document.addEventListener('DOMContentLoaded', () => {
+        let initialLoadDone = false;
+
+        // We use onAuthStateChanged so Firebase has time to attach your Admin token!
         firebase.auth().onAuthStateChanged(async (user) => {
-            if (!user) {
-                // Not logged in properly
-                document.getElementById('error-screen').style.display = 'block';
-                document.getElementById('main-content').style.display = 'none';
-                return;
-            }
+            if (initialLoadDone) return; // Prevent double-loading
+            initialLoadDone = true;
 
-            // User is logged in securely! Show the UI.
-            document.getElementById('error-screen').style.display = 'none';
-            document.getElementById('main-content').style.display = 'block';
-
-            // Owner session recovery
-            if (!activeUserPhone && user.email) {
+            // 1. Recover Admin Session if needed
+            if (user && user.email && !activeUserPhone) {
                 activeUserPhone = user.email.split('@')[0];
                 localStorage.setItem("activeUserPhone", activeUserPhone);
             }
-            
-            try { if(assignedBranch && assignedBranch.startsWith('[')) assignedBranch = JSON.parse(assignedBranch); } catch(e){}
 
-            // Fire the database queries ONLY after auth is confirmed
-            await loadShopTaxonomy();
-            await loadBranches();
+            // 2. If we know the shop number (Admin OR Staff), show the UI
+            if (activeUserPhone) {
+                document.getElementById('error-screen').style.display = 'none';
+                document.getElementById('main-content').style.display = 'block';
+                
+                try { if(assignedBranch && assignedBranch.startsWith('[')) assignedBranch = JSON.parse(assignedBranch); } catch(e){}
+
+                // By calling these NOW, the Firebase token is successfully attached!
+                await loadShopTaxonomy();
+                await loadBranches();
+            } else {
+                // 3. Only kick them out if they are completely logged out
+                document.getElementById('error-screen').style.display = 'block';
+                document.getElementById('main-content').style.display = 'none';
+            }
         });
     });
 
@@ -252,7 +259,7 @@ document.addEventListener('DOMContentLoaded', () => {
             <div style="background: #fee2e2; border: 2px solid #ef4444; color: #b91c1c; padding: 20px; border-radius: 16px; text-align: center;">
                 <i class="bi bi-shield-lock" style="font-size: 32px; display: block; margin-bottom: 10px;"></i>
                 <strong>Database Permission Denied.</strong><br>
-                Please ensure you are logged in using the Admin's Email & Password to read this data.
+                Please ensure you are logged in securely.
             </div>`;
         }
     }
@@ -278,7 +285,7 @@ document.addEventListener('DOMContentLoaded', () => {
             <div style="background: #fee2e2; border: 2px solid #ef4444; color: #b91c1c; padding: 20px; border-radius: 16px; text-align: center;">
                 <i class="bi bi-shield-lock" style="font-size: 32px; display: block; margin-bottom: 10px;"></i>
                 <strong>Database Permission Denied.</strong><br>
-                Please ensure you are logged in using the Admin's Email & Password to read this data.
+                Please ensure you are logged in securely.
             </div>`;
         }
     }
@@ -331,7 +338,6 @@ document.addEventListener('DOMContentLoaded', () => {
             return;
         }
 
-        // Group by Category to create the Showroom effect
         const grouped = {};
         filtered.forEach(item => {
             totalItems++;
@@ -340,7 +346,6 @@ document.addEventListener('DOMContentLoaded', () => {
             grouped[cat].push(item);
         });
 
-        // Build UI Blocks
         for (const [categoryName, items] of Object.entries(grouped)) {
             let sectionHTML = `
             <div class="category-section">
