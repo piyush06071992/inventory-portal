@@ -5,10 +5,11 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <title>POS Checkout - Business Saarthi</title>
     
-    <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
+   <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-firestore-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-auth-compat.js"></script>
     <script src="/auth.js"></script>
+    <script src="https://unpkg.com/html5-qrcode" type="text/javascript"></script>
     
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;800;900&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.1/font/bootstrap-icons.css">
@@ -144,9 +145,9 @@
 
     <div class="grid-panel">
         <div class="search-header">
-            <div class="search-box">
-                <i class="bi bi-upc-scan search-icon"></i>
-                <input type="text" id="pos-search" class="search-input" placeholder="Scan Barcode or Type..." oninput="filterGrid()" autofocus autocomplete="off">
+           <div class="search-box">
+                <i class="bi bi-upc-scan search-icon" style="cursor: pointer; color: var(--primary); z-index: 10; pointer-events: auto;" onclick="openCameraScanner()" title="Open Camera Scanner"></i>
+                <input type="text" id="pos-search" class="search-input" placeholder="Tap icon for Camera or Type..." oninput="filterGrid()" autofocus autocomplete="off">
                 <button class="btn-custom-item" onclick="openCustomItemModal()"><i class="bi bi-plus-lg"></i> Misc</button>
             </div>
             <div class="cat-scroll" id="cat-tabs">
@@ -219,6 +220,15 @@
         <h2 style="margin:0 0 15px 0; font-size:20px; font-weight:900;">Held Bills</h2>
         <div id="draft-list" style="text-align:left; max-height:200px; overflow-y:auto; margin-bottom:15px;"></div>
         <button class="btn-modal-action" onclick="document.getElementById('drafts-modal').style.display='none'">Close</button>
+    </div>
+</div>
+
+<div class="modal-overlay" id="scanner-modal">
+    <div class="modal-card" style="max-width: 500px; padding: 15px;">
+        <button onclick="closeCameraScanner()" style="position:absolute; top:15px; right:15px; background:none; border:none; font-size:20px; cursor:pointer; z-index: 50;"><i class="bi bi-x-lg"></i></button>
+        <h2 style="margin:0 0 15px 0; font-size:20px; font-weight:900;">📸 Scan Barcode</h2>
+        <div id="reader" style="width: 100%; border-radius: 12px; overflow: hidden; border: 2px solid var(--border);"></div>
+        <p style="font-size: 11px; color: var(--text-light); margin-top: 15px; font-weight: 700;">Point your camera at the product's barcode.</p>
     </div>
 </div>
 
@@ -563,10 +573,49 @@
         document.getElementById('success-modal').style.display = 'none';
     }
 
-    // Global Keypress for Barcode
+  // Global Keypress for Barcode
     document.addEventListener('keypress', function(e) {
         if (e.target.tagName !== 'INPUT' && e.key === 'Enter') document.getElementById('pos-search').focus();
     });
+
+    // --- CAMERA SCANNER ENGINE ---
+    let html5QrcodeScanner = null;
+
+    function openCameraScanner() {
+        document.getElementById('scanner-modal').style.display = 'flex';
+        if (!html5QrcodeScanner) {
+            html5QrcodeScanner = new Html5QrcodeScanner("reader", { fps: 10, qrbox: {width: 250, height: 150} }, false);
+        }
+        html5QrcodeScanner.render(onScanSuccess, onScanFailure);
+    }
+
+    function closeCameraScanner() {
+        document.getElementById('scanner-modal').style.display = 'none';
+        if (html5QrcodeScanner) {
+            html5QrcodeScanner.clear().catch(error => console.error("Failed to clear scanner", error));
+        }
+    }
+
+    function onScanSuccess(decodedText, decodedResult) {
+        closeCameraScanner();
+        // Play beep sound
+        try { new Audio('https://www.soundjay.com/buttons/beep-07.wav').play(); } catch(e){}
+        
+        // Search inventory for the scanned barcode
+        const itemMatch = liveInventory.find(i => i.barcode && i.barcode.toLowerCase() === decodedText.toLowerCase());
+        if (itemMatch) {
+            addToCart(itemMatch.docId);
+            const searchInput = document.getElementById('pos-search');
+            searchInput.value = "Added: " + itemMatch.name;
+            setTimeout(() => { searchInput.value = ""; }, 1500);
+        } else {
+            alert(`Barcode '${decodedText}' not found in inventory.`);
+        }
+    }
+
+    function onScanFailure(error) {
+        // Ignore background scan errors
+    }
 </script>
 </body>
 </html>
