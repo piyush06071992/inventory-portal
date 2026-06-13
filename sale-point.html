@@ -240,9 +240,9 @@
 <script>
     // --- APP STATE ---
     let activeUserPhone = localStorage.getItem("activeUserPhone");
-    let activeBranchId = localStorage.getItem("assignedBranch"); 
-    if(activeBranchId && activeBranchId.startsWith('[')) activeBranchId = JSON.parse(activeBranchId)[0];
-    if(activeBranchId === "admin" || !activeBranchId) activeBranchId = "main_branch"; // Fallback for admin
+    let assignedBranch = localStorage.getItem("assignedBranch");
+    const activeStaffId = localStorage.getItem("activeStaffId");
+    let activeBranchId = null;
 
     let shopUpiId = ""; // Will be fetched dynamically from Firebase
 
@@ -255,15 +255,47 @@
 
     const bgGradients = ['#3b82f6', '#10b981', '#f43f5e', '#8b5cf6', '#eab308'];
 
-  document.addEventListener('DOMContentLoaded', () => {
+    document.addEventListener('DOMContentLoaded', () => {
         firebase.auth().onAuthStateChanged(async () => {
             if (!activeUserPhone) return;
-            document.getElementById('active-branch-name').innerText = activeBranchId === "main_branch" ? "Main Branch" : "Branch POS";
-            await loadBusinessDetails(); // Fetch dynamic UPI ID
+            try { if(assignedBranch && assignedBranch.startsWith('[')) assignedBranch = JSON.parse(assignedBranch); } catch(e){}
+            
+            // 1. Fetch real branch ID first
+            await determineBranch(); 
+            // 2. Fetch UPI and Taxonomy
+            await loadBusinessDetails(); 
             await loadTaxonomy();
-            startLiveInventorySync();
+            // 3. Start Live Sync with the correct Branch ID
+            if(activeBranchId) startLiveInventorySync();
         });
     });
+
+    // Determines the correct branch ID dynamically from Firebase
+    async function determineBranch() {
+        const db = firebase.firestore();
+        try {
+            const snap = await db.collection('companies').doc(activeUserPhone).collection('branches').get();
+            let branches = [];
+            snap.forEach(doc => branches.push({ id: doc.data().branchId, name: doc.data().branchName }));
+            
+            if (branches.length === 0) {
+                document.getElementById('active-branch-name').innerText = "No Branch Found";
+                return;
+            }
+            
+            if (!activeStaffId || assignedBranch === "admin") {
+                // Admin: Find Main Branch or pick the first one available
+                const main = branches.find(b => b.name.toLowerCase().includes('main'));
+                activeBranchId = main ? main.id : branches[0].id;
+                document.getElementById('active-branch-name').innerText = main ? main.name : branches[0].name;
+            } else {
+                // Staff: Use their assigned branch
+                activeBranchId = Array.isArray(assignedBranch) ? assignedBranch[0] : assignedBranch;
+                const b = branches.find(b => b.id === activeBranchId);
+                document.getElementById('active-branch-name').innerText = b ? b.name : "Branch POS";
+            }
+        } catch(e) { console.error("Branch Error", e); }
+    }
 
     async function loadBusinessDetails() {
         try {
