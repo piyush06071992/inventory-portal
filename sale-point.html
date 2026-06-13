@@ -244,8 +244,7 @@
     if(activeBranchId && activeBranchId.startsWith('[')) activeBranchId = JSON.parse(activeBranchId)[0];
     if(activeBranchId === "admin" || !activeBranchId) activeBranchId = "main_branch"; // Fallback for admin
 
-    // Define your UPI ID here for the QR Code
-    const SHOP_UPI_ID = "your_upi_id@okicici"; 
+    let shopUpiId = ""; // Will be fetched dynamically from Firebase
 
     let liveInventory = [];
     let shopTaxonomy = {};
@@ -256,14 +255,28 @@
 
     const bgGradients = ['#3b82f6', '#10b981', '#f43f5e', '#8b5cf6', '#eab308'];
 
-    document.addEventListener('DOMContentLoaded', () => {
+  document.addEventListener('DOMContentLoaded', () => {
         firebase.auth().onAuthStateChanged(async () => {
             if (!activeUserPhone) return;
             document.getElementById('active-branch-name').innerText = activeBranchId === "main_branch" ? "Main Branch" : "Branch POS";
+            await loadBusinessDetails(); // Fetch dynamic UPI ID
             await loadTaxonomy();
             startLiveInventorySync();
         });
     });
+
+    async function loadBusinessDetails() {
+        try {
+            const doc = await firebase.firestore().collection('companies').doc(activeUserPhone).get();
+            if (doc.exists) {
+                const data = doc.data();
+                // Grab the first UPI ID from the array if the shopkeeper has saved one
+                if (data.upiIds && data.upiIds.length > 0) {
+                    shopUpiId = data.upiIds[0];
+                }
+            }
+        } catch(e) { console.error("Error fetching business details:", e); }
+    }
 
     async function loadTaxonomy() {
         try {
@@ -444,10 +457,19 @@
         if(diff >= 0) { document.getElementById('cash-return').innerText = `₹${diff.toFixed(0)}`; box.style.display = 'block'; } else { box.style.display = 'none'; }
     }
 
-    function openUpiModal() {
+   function openUpiModal() {
         if(cart.length === 0) return;
+        
+        if(!shopUpiId) {
+            alert("No UPI ID found! Please add your UPI ID in Business Details first.");
+            return;
+        }
+
         document.getElementById('upi-bill-amt').innerText = `₹${finalSaleData.tot.toFixed(0)}`;
-        const upiString = encodeURIComponent(`upi://pay?pa=${SHOP_UPI_ID}&pn=Sarandipity&am=${finalSaleData.tot.toFixed(2)}`);
+        
+        // Use dynamic shopUpiId variable
+        const upiString = encodeURIComponent(`upi://pay?pa=${shopUpiId}&pn=Store&am=${finalSaleData.tot.toFixed(2)}`);
+        
         document.getElementById('upi-qr-img').src = `https://api.qrserver.com/v1/create-qr-code/?size=200x200&data=${upiString}`;
         document.getElementById('upi-modal').style.display = 'flex';
     }
