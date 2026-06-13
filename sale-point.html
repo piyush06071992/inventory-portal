@@ -232,7 +232,11 @@
         <button onclick="closeCameraScanner()" style="position:absolute; top:15px; right:15px; background:none; border:none; font-size:20px; cursor:pointer; z-index: 50;"><i class="bi bi-x-lg"></i></button>
         <h2 style="margin:0 0 15px 0; font-size:20px; font-weight:900;">📸 Scan Barcode</h2>
         <div id="reader" style="width: 100%; border-radius: 12px; overflow: hidden; border: 2px solid var(--border);"></div>
-        <p style="font-size: 11px; color: var(--text-light); margin-top: 15px; font-weight: 700;">Point your camera at the product's barcode.</p>
+        
+        <div style="display: flex; justify-content: space-between; align-items: center; margin-top: 15px;">
+            <p style="font-size: 11px; color: var(--text-light); font-weight: 700; margin: 0;">Point camera at the barcode.</p>
+            <button onclick="flipCamera()" style="background: var(--navy); color: white; border: none; padding: 8px 12px; border-radius: 8px; font-weight: 800; cursor: pointer; font-size: 12px;"><i class="bi bi-arrow-repeat"></i> Flip Camera</button>
+        </div>
     </div>
 </div>
 
@@ -585,18 +589,49 @@
     // --- CAMERA SCANNER ENGINE ---
     let html5QrcodeScanner = null;
 
+    // --- CAMERA SCANNER ENGINE ---
+    let html5QrCode = null;
+    let currentFacingMode = "environment"; // Defaults to the back camera instantly
+
     function openCameraScanner() {
         document.getElementById('scanner-modal').style.display = 'flex';
-        if (!html5QrcodeScanner) {
-            html5QrcodeScanner = new Html5QrcodeScanner("reader", { fps: 10, qrbox: {width: 250, height: 150} }, false);
+        
+        if (!html5QrCode) {
+            html5QrCode = new Html5Qrcode("reader");
         }
-        html5QrcodeScanner.render(onScanSuccess, onScanFailure);
+        
+        // Bypasses UI and forces camera to start immediately
+        html5QrCode.start(
+            { facingMode: currentFacingMode },
+            { fps: 10, qrbox: { width: 250, height: 150 } },
+            onScanSuccess,
+            onScanFailure
+        ).catch(err => {
+            console.error("Camera startup error:", err);
+            // Fallback: If device doesn't have a back camera (like a laptop), try front
+            if(currentFacingMode === "environment") {
+                currentFacingMode = "user";
+                openCameraScanner();
+            }
+        });
     }
 
     function closeCameraScanner() {
         document.getElementById('scanner-modal').style.display = 'none';
-        if (html5QrcodeScanner) {
-            html5QrcodeScanner.clear().catch(error => console.error("Failed to clear scanner", error));
+        if (html5QrCode && html5QrCode.isScanning) {
+            html5QrCode.stop().then(() => {
+                html5QrCode.clear();
+            }).catch(err => console.error("Failed to stop scanner", err));
+        }
+    }
+
+    // Allows user to manually flip between front and back cameras
+    function flipCamera() {
+        if (html5QrCode && html5QrCode.isScanning) {
+            html5QrCode.stop().then(() => {
+                currentFacingMode = currentFacingMode === "environment" ? "user" : "environment";
+                openCameraScanner();
+            });
         }
     }
 
