@@ -214,8 +214,9 @@
         <h2 style="margin:0 0 5px 0; font-size:22px; font-weight:900;">Sale Successful!</h2>
         <p style="margin:0 0 20px 0; font-size:14px; font-weight:800; color:var(--text-light);">Inventory updated safely.</p>
         
-     <button class="btn-modal-action" style="background:#25D366;" id="btn-whatsapp" onclick="sendWhatsApp()"><i class="bi bi-whatsapp"></i> Send Digital Bill on WhatsApp</button>
-        <button class="btn-modal-action" onclick="document.getElementById('success-modal').style.display='none';">New Sale</button>
+        <button class="btn-modal-action" style="background:var(--primary);" onclick="window.print()"><i class="bi bi-printer"></i> Print Receipt</button>
+        <button class="btn-modal-action" style="background:#25D366;" id="btn-whatsapp" onclick="sendWhatsApp()"><i class="bi bi-whatsapp"></i> Send Digital Bill on WhatsApp</button>
+        <button class="btn-modal-action" style="background:var(--border); color:var(--navy);" onclick="document.getElementById('success-modal').style.display='none';">New Sale</button>
     </div>
 </div>
 
@@ -569,16 +570,13 @@ function renderCart() {
             // Background sync successful. Show Success UI.
             cart = []; document.getElementById('customer-phone').value = ""; renderCart();
             
-            // Build Thermal Receipt HTML
+           // Build Thermal Receipt HTML
             document.getElementById('r-date').innerText = finalSaleData.date;
             document.getElementById('r-sub').innerText = finalSaleData.sub.toFixed(2);
             document.getElementById('r-disc').innerText = finalSaleData.disc.toFixed(2);
             document.getElementById('r-gst').innerText = finalSaleData.gst.toFixed(2);
             document.getElementById('r-tot').innerText = finalSaleData.tot.toFixed(2);
             document.getElementById('r-items').innerHTML = finalSaleData.items.map(i => `<div class="r-flex"><span>${i.cartQty}x ${i.name.substring(0,12)}</span><span>${(i.msp * i.cartQty).toFixed(2)}</span></div>`).join('');
-            
-            // Print Command
-            window.print();
             
             // Show WhatsApp Prompt
             document.getElementById('btn-whatsapp').style.display = finalSaleData.phone ? 'block' : 'none';
