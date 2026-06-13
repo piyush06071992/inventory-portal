@@ -4,87 +4,224 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <title>Stock Manager - Business Saarthi</title>
+    
     <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-firestore-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-auth-compat.js"></script>
     <script src="/auth.js"></script>
+    
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;800;900&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.1/font/bootstrap-icons.css">
+
     <style>
-        :root { --navy: #0f172a; --primary: #3b82f6; --emerald: #10b981; --danger: #ef4444; --warning: #f59e0b; --text-light: #64748b; --border: #e2e8f0; --bg: #f1f5f9; }
-        body { font-family: 'Inter', sans-serif; background-color: var(--bg); margin: 0; padding: 0; color: var(--navy); }
+        :root { 
+            --navy: #0f172a; --primary: #3b82f6; 
+            --emerald: #10b981; --danger: #ef4444; --warning: #f59e0b;
+            --text-light: #64748b; --border: #e2e8f0; --bg-light: #f8fafc;
+        }
+        body { font-family: 'Inter', sans-serif; background-color: #f1f5f9; margin: 0; padding: 0; color: var(--navy); }
         .wrapper { padding: 20px; max-width: 1400px; margin: auto; padding-bottom: 80px; }
+        
         .header-bar { display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px; }
-        .header-bar h1 { margin: 0; font-size: 26px; font-weight: 900; letter-spacing: -0.5px;}
+        .header-bar h1 { margin: 0; font-size: 28px; font-weight: 900; letter-spacing: -1px;}
+        
         .btn-action { background: white; border: 2px solid var(--border); padding: 10px 16px; border-radius: 10px; cursor: pointer; font-weight: 800; color: var(--navy); display: flex; align-items: center; gap: 8px; transition: 0.2s;}
-        .btn-action:hover { background: #f8fafc; }
+        .btn-action:hover { background: var(--bg-light); transform: translateY(-2px); }
+
+        /* Glowing Dashboards */
         .dashboard-grid { display: flex; flex-wrap: wrap; gap: 15px; margin-bottom: 24px; }
-        .dash-pill { flex: 1; padding: 15px; border-radius: 12px; color: white; display: flex; flex-direction: column; align-items: center; box-shadow: 0 4px 6px rgba(0,0,0,0.05); }
-        .dash-pill h3 { margin: 0; font-size: 22px; font-weight: 900; }
-        .dash-pill p { margin: 0; font-size: 9px; font-weight: 900; text-transform: uppercase; opacity: 0.9;}
+        .dash-pill { flex: 1; min-width: 130px; padding: 20px; border-radius: 16px; color: white; display: flex; flex-direction: column; align-items: center; justify-content: center; box-shadow: 0 10px 20px -5px rgba(0,0,0,0.15); transition: transform 0.2s;}
+        .dash-pill:hover { transform: translateY(-3px); }
+        .dash-pill h3 { margin: 0; font-size: 32px; font-weight: 900; line-height: 1; }
+        .dash-pill p { margin: 6px 0 0 0; font-size: 12px; font-weight: 800; text-transform: uppercase; opacity: 0.9;}
+        
         .pill-total { background: linear-gradient(135deg, #0ea5e9, #10b981); }
         .pill-danger { background: linear-gradient(135deg, #f43f5e, #f97316); }
         .pill-warning { background: linear-gradient(135deg, #8b5cf6, #d946ef); }
-        .filter-row { display: flex; gap: 10px; margin-bottom: 20px; background: white; padding: 12px; border-radius: 12px; border: 1px solid var(--border); align-items: center; flex-wrap: wrap;}
-        .filter-input { padding: 10px; border: 1px solid var(--border); border-radius: 8px; font-size: 14px; font-weight: 700; background: #f8fafc; flex: 1; outline: none;}
-        .category-accordion { background: white; border-radius: 12px; border: 1px solid var(--border); margin-bottom: 10px; overflow: hidden; }
-        .cat-header { background: #f8fafc; padding: 14px 18px; font-size: 16px; font-weight: 900; cursor: pointer; display: flex; justify-content: space-between; border-bottom: 1px solid var(--border); }
-        .cat-count { background: var(--primary); color: white; padding: 2px 8px; border-radius: 12px; font-size: 11px; }
-        .cat-content { display: none; } .cat-content.open { display: block; }
-        .item-row { display: flex; align-items: center; padding: 10px 18px; border-bottom: 1px solid var(--border); gap: 15px; }
-        .item-avatar { width: 40px; height: 40px; border-radius: 8px; display: flex; align-items: center; justify-content: center; font-size: 18px; font-weight: 900; color: white; }
-        .item-details { flex: 2; }
-        .item-name { font-size: 14px; font-weight: 900; margin: 0; }
-        .item-finance { flex: 1; font-size: 12px; font-weight: 700; }
-        .item-stock { flex: 0.5; text-align: center; font-weight: 900; }
-        .modal-overlay { display: none; position: fixed; top:0; left:0; width:100%; height:100%; background:rgba(0,0,0,0.5); z-index:9999; align-items:center; justify-content:center; }
-        .modal-card { background: white; padding: 20px; border-radius: 16px; width: 90%; max-width: 400px; max-height: 90vh; overflow-y: auto;}
-        .modal-input { width: 100%; padding: 12px; border: 1px solid var(--border); border-radius: 8px; margin-bottom: 10px; box-sizing: border-box; }
-        .btn-save { width: 100%; padding: 12px; background: var(--navy); color: white; border: none; border-radius: 8px; font-weight: 900; cursor: pointer; }
+
+        /* Filter Row */
+        .filter-row { display: flex; gap: 15px; margin-bottom: 20px; background: white; padding: 15px; border-radius: 16px; border: 1px solid var(--border); align-items: center; flex-wrap: wrap;}
+        .filter-input { padding: 12px 16px; border: 2px solid var(--border); border-radius: 10px; font-size: 14px; font-weight: 700; color: var(--navy); background: var(--bg-light); flex: 1; min-width: 200px; outline: none;}
+        .filter-input:focus { border-color: var(--primary); background: white; }
+
+        /* --- ACCORDION LIST VIEW --- */
+        .category-accordion { background: white; border-radius: 16px; border: 1px solid var(--border); margin-bottom: 15px; overflow: hidden; box-shadow: 0 2px 4px rgba(0,0,0,0.02);}
+        .cat-header { background: var(--bg-light); padding: 16px 20px; font-size: 18px; font-weight: 900; cursor: pointer; display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid var(--border); transition: background 0.2s;}
+        .cat-header:hover { background: #e2e8f0; }
+        .cat-count { background: var(--primary); color: white; padding: 4px 10px; border-radius: 20px; font-size: 12px; font-weight: 800;}
+        
+        .cat-content { display: none; } /* Hidden by default */
+        .cat-content.open { display: block; }
+        
+        /* High-Density Row */
+        .item-row { display: flex; align-items: center; padding: 12px 20px; border-bottom: 1px solid var(--border); transition: background 0.2s; gap: 15px;}
+        .item-row:hover { background: #f8fafc; }
+        .item-row:last-child { border-bottom: none; }
+        
+        .item-avatar { width: 44px; height: 44px; border-radius: 10px; display: flex; align-items: center; justify-content: center; font-size: 20px; font-weight: 900; color: white; flex-shrink: 0;}
+        
+        .item-details { flex: 2; min-width: 200px;}
+        .item-name { font-size: 15px; font-weight: 900; margin: 0 0 4px 0; display: flex; align-items: center; gap: 8px;}
+        .item-sku { font-size: 11px; color: var(--text-light); font-family: monospace; font-weight: 600; background: #e2e8f0; padding: 2px 6px; border-radius: 4px;}
+        
+        .item-finance { flex: 1; text-align: left; min-width: 120px;}
+        .item-msp { font-size: 18px; font-weight: 900; color: var(--navy); display: block;}
+        .item-wholesale { font-size: 11px; color: var(--text-light); font-weight: 700; margin-top: 2px; display: flex; align-items: center; gap: 5px;}
+        
+        .item-stock { flex: 1; text-align: center; min-width: 100px;}
+        .stock-pill { padding: 6px 12px; border-radius: 8px; font-size: 13px; font-weight: 900; border: 2px solid; display: inline-block;}
+        .stock-good { background: #dcfce7; color: #065f46; border-color: #86efac; }
+        .stock-low { background: #fee2e2; color: #b91c1c; border-color: #fca5a5; animation: pulse 2s infinite; }
+        @keyframes pulse { 0% { opacity: 1; } 50% { opacity: 0.7; } 100% { opacity: 1; } }
+
+        .item-actions { display: flex; gap: 8px; flex: 1; justify-content: flex-end;}
+        .btn-icon { width: 36px; height: 36px; border-radius: 8px; border: none; font-size: 16px; cursor: pointer; display: flex; align-items: center; justify-content: center; font-weight: 900; transition: transform 0.1s;}
+        .btn-icon:hover { transform: scale(1.1); }
+        .btn-move { background: #e0f2fe; color: #0284c7; }
+        .btn-offer { background: #fef08a; color: #a16207; }
+        .btn-set { background: #f1f5f9; color: #475569; }
+
+        .promo-badge { background: var(--danger); color: white; font-size: 10px; font-weight: 900; padding: 2px 6px; border-radius: 4px; display: inline-block; vertical-align: middle; animation: glow 1.5s infinite alternate;}
+        @keyframes glow { 0% { box-shadow: 0 0 5px rgba(239,68,68,0.2); } 100% { box-shadow: 0 0 15px rgba(239,68,68,0.6); } }
+
+        /* Modals */
+        .modal-overlay { display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(15,23,42,0.7); z-index: 3000; align-items: center; justify-content: center; padding: 20px; box-sizing: border-box; backdrop-filter: blur(4px); }
+        .modal-card { background: white; width: 100%; max-width: 450px; border-radius: 20px; padding: 24px; position: relative; text-align: center; box-shadow: 0 25px 50px -12px rgba(0,0,0,0.25); max-height: 90vh; overflow-y: auto;}
+        .modal-input { width: 100%; padding: 14px; border: 2px solid var(--border); border-radius: 10px; font-size: 14px; font-weight: 700; color: var(--navy); outline: none; margin-bottom: 15px; box-sizing: border-box; background: var(--bg-light);}
+        .modal-input:focus { border-color: var(--primary); background: white; }
+        .btn-save-modal { width: 100%; padding: 16px; background: var(--primary); color: white; border: none; border-radius: 12px; font-weight: 800; font-size: 16px; cursor: pointer; box-shadow: 0 4px 6px rgba(59, 130, 246, 0.3); margin-top: 10px;}
+        .math-box { display: flex; gap: 10px; align-items: center; margin-bottom: 15px; }
+        .math-box div { flex: 1; text-align: left; }
+        .math-box i { font-size: 20px; color: var(--text-light); margin-top: 20px; }
+
+        label { display: block; font-size: 11px; font-weight: 900; color: var(--text-light); text-transform: uppercase; margin-bottom: 6px; text-align: left;}
+
+        #error-screen { display: none; text-align: center; margin-top: 10vh; padding: 40px; background: white; border-radius: 20px;}
     </style>
 </head>
 <body>
+
 <div class="wrapper">
     <div class="header-bar">
         <h1>Inventory Manager</h1>
         <div style="display: flex; gap: 10px;">
-            <a href="javascript:history.back()" class="btn-action"><i class="bi bi-arrow-left"></i></a>
-            <button class="btn-action" style="background:var(--warning); color:white;" onclick="document.getElementById('global-modal').style.display='flex'"><i class="bi bi-megaphone-fill"></i></button>
+            <a href="javascript:history.back()" class="btn-action"><i class="bi bi-arrow-left"></i> Exit</a>
+            <button class="btn-action" style="background:var(--warning); color:white; border-color:var(--warning);" onclick="openGlobalDealsModal()"><i class="bi bi-megaphone-fill"></i> Store Deals</button>
         </div>
     </div>
+
     <div id="main-content">
         <div class="dashboard-grid">
-            <div class="dash-pill pill-total"><h3 id="dash-total">0</h3><p>Total</p></div>
-            <div class="dash-pill pill-danger"><h3 id="dash-low">0</h3><p>Low</p></div>
-            <div class="dash-pill pill-warning"><h3 id="dash-exp">0</h3><p>Expiring</p></div>
+            <div class="dash-pill pill-total">
+                <h3 id="dash-total">0</h3>
+                <p>Total Varieties</p>
+            </div>
+            <div class="dash-pill pill-danger">
+                <h3 id="dash-low">0</h3>
+                <p>Low Stock</p>
+            </div>
+            <div class="dash-pill pill-warning">
+                <h3 id="dash-exp">0</h3>
+                <p>Expiring Soon</p>
+            </div>
         </div>
+
         <div class="filter-row">
-            <input type="text" id="search-input" class="filter-input" placeholder="Search..." oninput="renderInventory()">
-            <select id="filter-branch" class="filter-input" onchange="fetchInventory(this.value)"></select>
-            <select id="filter-category" class="filter-input" onchange="renderInventory()"><option value="ALL">All Cats</option></select>
-            <button class="btn-action" style="background:var(--emerald); color:white;" onclick="exportToCSV()"><i class="bi bi-download"></i></button>
+            <div style="flex:2; position:relative;">
+                <i class="bi bi-search" style="position:absolute; left:16px; top:14px; color:var(--text-light);"></i>
+                <input type="text" id="search-input" class="filter-input" style="padding-left: 45px; width:100%;" placeholder="Search product name or barcode..." oninput="renderInventory()">
+            </div>
+            <select id="filter-branch" class="filter-input" onchange="fetchInventory()"></select>
+            <select id="filter-category" class="filter-input" onchange="handleCategoryFilter()"><option value="ALL">All Categories</option></select>
+            <button class="btn-action" style="background:var(--emerald); color:white; border-color:var(--emerald);" onclick="exportToCSV()"><i class="bi bi-download"></i> Export</button>
         </div>
-        <div id="inventory-list"></div>
+
+        <div id="inventory-list">
+            <div style="text-align: center; padding: 40px; color: var(--text-light);">
+                <i class="bi bi-hdd-network" style="font-size: 40px; color: #cbd5e1; display: block; margin-bottom: 10px;"></i>
+                Loading your database...
+            </div>
+        </div>
     </div>
-    <div class="modal-overlay" id="promo-modal">
+</div>
+
+<div class="modal-overlay" id="promo-modal">
     <div class="modal-card">
-        <button onclick="document.getElementById('promo-modal').style.display='none'"><i class="bi bi-x-lg"></i></button>
-        <h2 id="promo-item-name"></h2>
+        <button onclick="closePromoModal()" style="position:absolute; top:16px; right:16px; background:#f1f5f9; border:none; border-radius:50%; width:36px; height:36px; cursor:pointer;"><i class="bi bi-x-lg"></i></button>
+        <h2 style="margin:0 0 5px 0; font-size:24px; font-weight:900;">🎁 Item Offer</h2>
+        <p id="promo-item-name" style="margin:0 0 20px 0; color:var(--primary); font-weight:800;"></p>
+        <p style="font-size: 13px; font-weight: 800; color: var(--navy); margin-bottom: 15px; background: #e0f2fe; padding: 8px; border-radius: 8px;">Base MSP: <span id="promo-base-msp"></span></p>
+
+        <label>Offer Type</label>
         <select id="promo-type" class="modal-input" onchange="togglePromoFields()">
-            <option value="">No Offer</option><option value="discount">Discount</option><option value="volume">Volume</option><option value="bogo">BOGO</option>
+            <option value="">No Offer (Remove Promotion)</option>
+            <option value="discount">Direct Discount (% or Flat)</option>
+            <option value="volume">Volume Deal (Buy X for ₹Y)</option>
+            <option value="bogo">BOGO (Buy X Get Y Free)</option>
         </select>
+
         <div id="promo-dynamic-fields"></div>
-        <button class="btn-save" onclick="savePromo()">Apply Offer</button>
+
+        <div style="display:flex; gap:10px; margin-top: 5px;">
+            <div style="flex:1;">
+                <label>Valid From</label>
+                <input type="datetime-local" id="promo-start" class="modal-input">
+            </div>
+            <div style="flex:1;">
+                <label>Valid Until</label>
+                <input type="datetime-local" id="promo-end" class="modal-input">
+            </div>
+        </div>
+        
+        <button class="btn-save-modal" id="btn-save-promo" onclick="savePromo()">Apply Offer</button>
+    </div>
+</div>
+
+<div class="modal-overlay" id="global-modal">
+    <div class="modal-card">
+        <button onclick="closeGlobalDealsModal()" style="position:absolute; top:16px; right:16px; background:#f1f5f9; border:none; border-radius:50%; width:36px; height:36px; cursor:pointer;"><i class="bi bi-x-lg"></i></button>
+        <h2 style="margin:0 0 5px 0; font-size:24px; font-weight:900; color:var(--warning);">📢 Store Deals</h2>
+        <p style="margin:0 0 20px 0; color:var(--text-light); font-size:13px; font-weight:600;">These rules apply to the entire customer bill automatically.</p>
+
+        <label>Deal Type</label>
+        <select id="global-type" class="modal-input" onchange="toggleGlobalFields()">
+            <option value="">No Global Deals</option>
+            <option value="cart_min">Cart Minimum Discount (e.g. Spend ₹1000 Get 10% Off)</option>
+        </select>
+
+        <div id="global-dynamic-fields"></div>
+        
+        <button class="btn-save-modal" style="background:var(--warning); box-shadow: 0 4px 6px rgba(245, 158, 11, 0.3);" onclick="saveGlobalDeals()">Save Store Deal</button>
     </div>
 </div>
 
 <div class="modal-overlay" id="move-modal">
     <div class="modal-card">
-        <h2>🚚 Move Stock</h2>
-        <p id="move-item-name"></p>
-        <input type="number" id="move-qty" class="modal-input" placeholder="Qty">
+        <button onclick="closeMoveModal()" style="position:absolute; top:16px; right:16px; background:#f1f5f9; border:none; border-radius:50%; width:36px; height:36px; cursor:pointer;"><i class="bi bi-x-lg"></i></button>
+        <h2 style="margin:0 0 5px 0; font-size:24px; font-weight:900;">🚚 Move Stock</h2>
+        <p id="move-item-name" style="margin:0 0 15px 0; color:var(--primary); font-weight:800;"></p>
+
+        <label>Quantity to Move <span id="move-max-qty" style="color: var(--danger);"></span></label>
+        <input type="number" id="move-qty" class="modal-input" min="1" oninput="validateMoveQty()">
+
+        <label>Destination Branch</label>
         <select id="move-target-branch" class="modal-input"></select>
-        <button class="btn-save" id="btn-save-move" onclick="saveMove()">Confirm Transfer</button>
+        
+        <button class="btn-save-modal" id="btn-save-move" onclick="saveMove()">Confirm Transfer</button>
+    </div>
+</div>
+
+<div class="modal-overlay" id="settings-modal">
+    <div class="modal-card">
+        <button onclick="closeSettingsModal()" style="position:absolute; top:16px; right:16px; background:#f1f5f9; border:none; border-radius:50%; width:36px; height:36px; cursor:pointer;"><i class="bi bi-x-lg"></i></button>
+        <h2 style="margin:0 0 5px 0; font-size:24px; font-weight:900;">⚙️ Stock Alerts</h2>
+        <p id="set-item-name" style="margin:0 0 20px 0; color:var(--primary); font-weight:800;"></p>
+
+        <label>Low Stock Warning Level</label>
+        <input type="number" id="set-min-stock" class="modal-input" min="0">
+        <p style="font-size: 11px; color: var(--text-light); text-align:left; font-weight:700;">Stock pills turn red if count falls below this number.</p>
+        
+        <button class="btn-save-modal" style="background:var(--navy);" id="btn-save-settings" onclick="saveSettings()">Save Alert Level</button>
     </div>
 </div>
 
@@ -92,72 +229,436 @@
     let activeUserPhone = localStorage.getItem("activeUserPhone");
     let assignedBranch = localStorage.getItem("assignedBranch");
     const activeStaffId = localStorage.getItem("activeStaffId");
-    let rawInventory = [], globalBranches = [], currentPromoDocId = null, currentMoveItem = null;
+
+    let shopTaxonomy = {};
+    let rawInventory = []; 
+    let globalBranches = []; 
+    
+    let currentMoveItem = null;
+    let currentSettingsDocId = null;
+    let currentPromoDocId = null;
+    let currentMspForMath = 0; // Needed for Auto-Calculations
+
+    const bgGradients = [
+        'linear-gradient(135deg, #3b82f6, #8b5cf6)', 'linear-gradient(135deg, #10b981, #0ea5e9)',
+        'linear-gradient(135deg, #f43f5e, #f97316)', 'linear-gradient(135deg, #8b5cf6, #d946ef)',
+        'linear-gradient(135deg, #14b8a6, #eab308)', 'linear-gradient(135deg, #6366f1, #3b82f6)'
+    ];
 
     document.addEventListener('DOMContentLoaded', () => {
         firebase.auth().onAuthStateChanged(async () => {
-            if (!activeUserPhone) return;
+            if (!activeUserPhone) return; 
             try { if(assignedBranch && assignedBranch.startsWith('[')) assignedBranch = JSON.parse(assignedBranch); } catch(e){}
+            await loadShopTaxonomy(); 
             await loadBranches();
         });
     });
 
-    async function loadBranches() {
-        const db = firebase.firestore();
-        const bSelect = document.getElementById('filter-branch');
+    async function loadShopTaxonomy() {
         try {
-            const snap = await db.collection('companies').doc(activeUserPhone).collection('branches').get();
-            globalBranches = [];
-            snap.forEach(doc => {
-                globalBranches.push({ id: doc.data().branchId, name: doc.data().branchName });
-                if (!activeStaffId || assignedBranch === "admin" || assignedBranch === doc.data().branchId) {
-                    bSelect.innerHTML += `<option value="${doc.data().branchId}">${doc.data().branchName}</option>`;
-                }
-            });
-            if (bSelect.options.length > 0) fetchInventory(bSelect.value);
+            const doc = await firebase.firestore().collection('companies').doc(activeUserPhone).collection('settings').doc('params').get();
+            if (doc.exists && doc.data().shopTaxonomy) {
+                shopTaxonomy = doc.data().shopTaxonomy;
+                const catFilter = document.getElementById('filter-category');
+                for (const cat in shopTaxonomy) { catFilter.innerHTML += `<option value="${cat}">${cat}</option>`; }
+            }
         } catch(e) { console.error(e); }
     }
 
-    async function fetchInventory(branchId) {
-        if (!branchId) return;
-        const snap = await firebase.firestore().collection('companies').doc(activeUserPhone).collection('branches').doc(branchId).collection('inventory').get();
-        rawInventory = []; snap.forEach(doc => rawInventory.push({ docId: doc.id, ...doc.data() }));
-        renderInventory();
+    async function loadBranches() {
+        const db = firebase.firestore();
+        const bSelect = document.getElementById('filter-branch');
+        bSelect.innerHTML = '<option value="">Select Branch...</option>';
+        globalBranches = [];
+        
+        try {
+            const snap = await db.collection('companies').doc(activeUserPhone).collection('branches').get();
+            snap.forEach(doc => {
+                const bId = doc.data().branchId; const bName = doc.data().branchName;
+                globalBranches.push({ id: bId, name: bName });
+                const isAdmin = !activeStaffId || assignedBranch === "admin";
+                const isAssigned = Array.isArray(assignedBranch) ? assignedBranch.includes(bId) : assignedBranch === bId;
+                if (isAdmin || isAssigned) bSelect.innerHTML += `<option value="${bId}">${bName}</option>`;
+            });
+
+            if (bSelect.options.length === 2) { bSelect.selectedIndex = 1; fetchInventory(); }
+        } catch(e) { alert("Error: " + e.message); }
     }
+
+    async function fetchInventory() {
+        const branchId = document.getElementById('filter-branch').value;
+        if (!branchId) return;
+
+        document.getElementById('inventory-list').innerHTML = `<div style="text-align:center; padding:40px; font-weight:900; color:var(--primary);">Loading database...</div>`;
+        
+        try {
+            const snap = await firebase.firestore().collection('companies').doc(activeUserPhone).collection('branches').doc(branchId).collection('inventory').get();
+            rawInventory = [];
+            snap.forEach(doc => { rawInventory.push({ docId: doc.id, ...doc.data() }); });
+            renderInventory();
+        } catch(e) { alert("Error: " + e.message); }
+    }
+
+    function handleCategoryFilter() { renderInventory(); }
+    function isExpiringSoon(dateString) {
+        if(!dateString) return false;
+        const diffDays = Math.ceil((new Date(dateString) - new Date()) / (1000 * 60 * 60 * 24));
+        return diffDays > 0 && diffDays <= 30;
+    }
+
+    // Toggle Privacy Mask
+    window.togglePrice = function(docId) {
+        const el = document.getElementById(`price-${docId}`);
+        const icon = document.getElementById(`eye-${docId}`);
+        if(el.innerText === '₹ ***') {
+            el.innerText = el.getAttribute('data-price');
+            icon.classList.replace('bi-eye-fill', 'bi-eye-slash-fill'); icon.style.color = 'var(--danger)';
+        } else {
+            el.innerText = '₹ ***';
+            icon.classList.replace('bi-eye-slash-fill', 'bi-eye-fill'); icon.style.color = 'var(--text-light)';
+        }
+    };
+
+    // Accordion Toggle
+    window.toggleAccordion = function(catId) {
+        const content = document.getElementById(catId);
+        const icon = document.getElementById('icon-' + catId);
+        if (content.classList.contains('open')) {
+            content.classList.remove('open');
+            icon.classList.replace('bi-chevron-up', 'bi-chevron-down');
+        } else {
+            content.classList.add('open');
+            icon.classList.replace('bi-chevron-down', 'bi-chevron-up');
+        }
+    };
 
     function renderInventory() {
         const list = document.getElementById('inventory-list');
+        const query = document.getElementById('search-input').value.toLowerCase().trim();
+        const fCat = document.getElementById('filter-category').value;
+
+        let totalItems = 0; let lowStock = 0; let expAlert = 0;
         list.innerHTML = "";
-        const grouped = rawInventory.reduce((acc, item) => { (acc[item.category || "General"] = acc[item.category || "General"] || []).push(item); return acc; }, {});
-        
-        for (const [cat, items] of Object.entries(grouped)) {
-            list.innerHTML += `
-                <div class="category-accordion">
-                    <div class="cat-header" onclick="this.nextElementSibling.classList.toggle('open')">${cat} <span class="cat-count">${items.length}</span></div>
-                    <div id="cat-${cat}" class="cat-content open">${items.map(item => `
-                        <div class="item-row">
-                            <div class="item-avatar" style="background:#3b82f6">${item.name[0]}</div>
-                            <div class="item-details"><h4 class="item-name">${item.name}</h4><span class="item-sku">${item.barcode}</span></div>
-                            <div class="item-finance"><span style="font-weight:900;">₹${item.msp}</span></div>
-                            <div class="item-actions">
-                                <button class="btn-icon" onclick="openMoveModal('${item.docId}')"><i class="bi bi-truck"></i></button>
-                                <button class="btn-icon" onclick="openPromoModal('${item.docId}')"><i class="bi bi-gift"></i></button>
+
+        const filtered = rawInventory.filter(item => {
+            const textMatch = (item.name && item.name.toLowerCase().includes(query)) || (item.barcode && item.barcode.toLowerCase().includes(query));
+            if(!textMatch) return false;
+            if(fCat !== 'ALL' && item.category !== fCat) return false;
+            return true;
+        });
+
+        if(filtered.length === 0) {
+            list.innerHTML = `<div style="text-align:center; padding:60px; color:var(--text-light);"><i class="bi bi-box" style="font-size:48px;"></i><h3>No items found.</h3></div>`;
+            return;
+        }
+
+        const grouped = {};
+        filtered.forEach(item => {
+            totalItems++;
+            const cat = item.category || 'Uncategorized';
+            if(!grouped[cat]) grouped[cat] = [];
+            grouped[cat].push(item);
+        });
+
+        let colorIndex = 0;
+
+        for (const [categoryName, items] of Object.entries(grouped)) {
+            const safeCatId = 'cat-' + categoryName.replace(/[^a-zA-Z0-9]/g, '');
+            // Auto-open if searching, otherwise closed
+            const isOpen = query.length > 0 || Object.keys(grouped).length === 1 ? 'open' : '';
+            const iconClass = isOpen ? 'bi-chevron-up' : 'bi-chevron-down';
+
+            let sectionHTML = `
+            <div class="category-accordion">
+                <div class="cat-header" onclick="toggleAccordion('${safeCatId}')">
+                    <div style="display:flex; align-items:center; gap:10px;">
+                        ${categoryName} <span class="cat-count">${items.length}</span>
+                    </div>
+                    <i id="icon-${safeCatId}" class="bi ${iconClass}"></i>
+                </div>
+                <div id="${safeCatId}" class="cat-content ${isOpen}">`;
+
+            items.forEach((item, index) => {
+                const costPrice = parseFloat(item.costPer || 0).toFixed(2);
+                const mspPrice = parseFloat(item.msp || 0).toFixed(2);
+                const minStockLevel = item.minStock !== undefined ? parseFloat(item.minStock) : 5;
+                const isLow = parseFloat(item.qty) < minStockLevel; 
+                const isExp = isExpiringSoon(item.expiryDate);
+                
+                if(isLow) lowStock++; if(isExp) expAlert++;
+
+                const firstLetter = item.name ? item.name.charAt(0).toUpperCase() : 'B';
+                const bgGrad = bgGradients[index % bgGradients.length];
+                
+                // Active Promo Check
+                let promoBadge = '';
+                if(item.offer && item.offer.type) {
+                    // Quick check if promo is currently valid based on dates
+                    let isValid = true;
+                    const now = new Date();
+                    if(item.offer.validFrom && new Date(item.offer.validFrom) > now) isValid = false;
+                    if(item.offer.validUntil && new Date(item.offer.validUntil) < now) isValid = false;
+                    
+                    if(isValid) promoBadge = `<span class="promo-badge"><i class="bi bi-fire"></i> OFFER ACTIVE</span>`;
+                }
+
+                sectionHTML += `
+                    <div class="item-row">
+                        <div class="item-avatar" style="background: ${bgGrad};">${firstLetter}</div>
+                        
+                        <div class="item-details">
+                            <h4 class="item-name">${item.name} ${promoBadge}</h4>
+                            <span class="item-sku">SKU: ${item.barcode}</span>
+                        </div>
+
+                        <div class="item-finance">
+                            <span class="item-msp">₹${mspPrice}</span>
+                            <span class="item-wholesale">Buy: <span id="price-${item.docId}" data-price="₹${costPrice}">₹ ***</span> <i id="eye-${item.docId}" class="bi bi-eye-fill" onclick="togglePrice('${item.docId}')" style="cursor:pointer; font-size:14px; margin-left:4px;"></i></span>
+                        </div>
+
+                        <div class="item-stock">
+                            <div class="stock-pill ${isLow ? 'stock-low' : 'stock-good'}">
+                                ${item.qty} ${item.unit}
                             </div>
                         </div>
-                    `).join('')}</div>
-                </div>`;
+
+                        <div class="item-actions">
+                            <button class="btn-icon btn-move" onclick="openMoveModal('${item.docId}')" title="Move Stock"><i class="bi bi-truck"></i></button>
+                            <button class="btn-icon btn-offer" onclick="openPromoModal('${item.docId}', '${item.name.replace(/'/g, "\\'")}', ${mspPrice})" title="Set Offer"><i class="bi bi-gift-fill"></i></button>
+                            <button class="btn-icon btn-set" onclick="openSettingsModal('${item.docId}', '${item.name.replace(/'/g, "\\'")}', ${minStockLevel})" title="Settings"><i class="bi bi-gear-fill"></i></button>
+                        </div>
+                    </div>
+                `;
+            });
+
+            sectionHTML += `</div></div>`;
+            list.innerHTML += sectionHTML;
         }
-        document.getElementById('dash-total').innerText = rawInventory.length;
+
+        document.getElementById('dash-total').innerText = totalItems;
+        document.getElementById('dash-low').innerText = lowStock;
+        document.getElementById('dash-exp').innerText = expAlert;
     }
 
-    function openMoveModal(docId) { 
-        currentMoveItem = rawInventory.find(i => i.docId === docId);
-        document.getElementById('move-modal').style.display = 'flex'; 
+    // --- PROMO ENGINE (AUTO-MATH) LOGIC ---
+    function openPromoModal(docId, name, msp) {
+        currentPromoDocId = docId;
+        currentMspForMath = parseFloat(msp);
+        const item = rawInventory.find(i => i.docId === docId);
+        
+        document.getElementById('promo-item-name').innerText = name;
+        document.getElementById('promo-base-msp').innerText = `₹${currentMspForMath.toFixed(2)}`;
+        
+        const typeSelect = document.getElementById('promo-type');
+        if(item.offer && item.offer.type) {
+            typeSelect.value = item.offer.type;
+        } else { typeSelect.value = ""; }
+        
+        togglePromoFields(item.offer);
+        
+        // Load Dates
+        document.getElementById('promo-start').value = item.offer?.validFrom || "";
+        document.getElementById('promo-end').value = item.offer?.validUntil || "";
+        
+        document.getElementById('promo-modal').style.display = 'flex';
     }
-    function openPromoModal(docId) { currentPromoDocId = docId; document.getElementById('promo-modal').style.display = 'flex'; }
-    async function saveMove() { /* Batch update logic here */ alert("Moved!"); }
-    async function savePromo() { /* Update offer logic here */ alert("Saved!"); }
-    function exportToCSV() { /* CSV Logic */ }
+
+    function closePromoModal() { document.getElementById('promo-modal').style.display = 'none'; }
+
+    function togglePromoFields(existingOffer = null) {
+        const type = document.getElementById('promo-type').value;
+        const container = document.getElementById('promo-dynamic-fields');
+        container.innerHTML = "";
+
+        if (type === "discount") {
+            const pctVal = existingOffer?.pctOff || '';
+            const flatVal = existingOffer?.flatOff || '';
+            container.innerHTML = `
+                <div class="math-box">
+                    <div><label>Discount (%)</label><input type="number" id="promo-pct" class="modal-input" placeholder="10" value="${pctVal}" oninput="calcPromoMath('pct')"></div>
+                    <i class="bi bi-arrow-left-right"></i>
+                    <div><label>Flat Off (₹)</label><input type="number" id="promo-flat" class="modal-input" placeholder="₹50" value="${flatVal}" oninput="calcPromoMath('flat')"></div>
+                </div>`;
+        } else if (type === "volume") {
+            container.innerHTML = `
+                <div style="display:flex; gap:10px;">
+                    <div style="flex:1;"><label>Buy Quantity</label><input type="number" id="promo-req" class="modal-input" placeholder="e.g. 3" value="${existingOffer?.reqQty||''}"></div>
+                    <div style="flex:1;"><label>For Total Price (₹)</label><input type="number" id="promo-price" class="modal-input" placeholder="e.g. 100" value="${existingOffer?.targetPrice||''}"></div>
+                </div>`;
+        } else if (type === "bogo") {
+            container.innerHTML = `
+                <div style="display:flex; gap:10px;">
+                    <div style="flex:1;"><label>Buy Quantity</label><input type="number" id="promo-req" class="modal-input" placeholder="e.g. 2" value="${existingOffer?.reqQty||''}"></div>
+                    <div style="flex:1;"><label>Get Free Qty</label><input type="number" id="promo-free" class="modal-input" placeholder="e.g. 1" value="${existingOffer?.freeQty||''}"></div>
+                </div>`;
+        }
+    }
+
+    // The Magic Calculator
+    window.calcPromoMath = function(source) {
+        const pctInput = document.getElementById('promo-pct');
+        const flatInput = document.getElementById('promo-flat');
+        
+        if(source === 'pct') {
+            const pct = parseFloat(pctInput.value) || 0;
+            if(pct >= 0 && pct <= 100) { flatInput.value = (currentMspForMath * (pct / 100)).toFixed(2); }
+        } else if(source === 'flat') {
+            const flat = parseFloat(flatInput.value) || 0;
+            if(flat >= 0 && flat <= currentMspForMath) { pctInput.value = ((flat / currentMspForMath) * 100).toFixed(2); }
+        }
+    };
+
+    async function savePromo() {
+        const type = document.getElementById('promo-type').value;
+        let offerObj = null;
+
+        if (type !== "") {
+            offerObj = { 
+                type: type,
+                validFrom: document.getElementById('promo-start').value || null,
+                validUntil: document.getElementById('promo-end').value || null
+            };
+
+            if (type === "discount") {
+                const pct = parseFloat(document.getElementById('promo-pct').value);
+                const flat = parseFloat(document.getElementById('promo-flat').value);
+                if(isNaN(pct) || isNaN(flat)) return alert("Invalid discount numbers.");
+                offerObj.pctOff = pct; offerObj.flatOff = flat;
+            } else if (type === "volume") {
+                const req = parseFloat(document.getElementById('promo-req').value);
+                const price = parseFloat(document.getElementById('promo-price').value);
+                if(isNaN(req) || isNaN(price)) return alert("Invalid volume deal.");
+                offerObj.reqQty = req; offerObj.targetPrice = price;
+            } else if (type === "bogo") {
+                const req = parseFloat(document.getElementById('promo-req').value);
+                const free = parseFloat(document.getElementById('promo-free').value);
+                if(isNaN(req) || isNaN(free)) return alert("Invalid BOGO deal.");
+                offerObj.reqQty = req; offerObj.freeQty = free;
+            }
+        }
+
+        const branchId = document.getElementById('filter-branch').value;
+        const btn = document.getElementById('btn-save-promo');
+        btn.innerText = "SAVING..."; btn.disabled = true;
+
+        try {
+            const db = firebase.firestore();
+            const ref = db.collection('companies').doc(activeUserPhone).collection('branches').doc(branchId).collection('inventory').doc(currentPromoDocId);
+            
+            if (offerObj) { await ref.update({ offer: offerObj }); } 
+            else { await ref.update({ offer: firebase.firestore.FieldValue.delete() }); }
+
+            const index = rawInventory.findIndex(i => i.docId === currentPromoDocId);
+            if(index !== -1) {
+                if(offerObj) rawInventory[index].offer = offerObj;
+                else delete rawInventory[index].offer;
+            }
+            closePromoModal(); renderInventory();
+        } catch(e) { alert("Error saving promotion: " + e.message); }
+        btn.innerText = "Apply Offer"; btn.disabled = false;
+    }
+
+    // --- GLOBAL DEALS LOGIC ---
+    function openGlobalDealsModal() {
+        document.getElementById('global-modal').style.display = 'flex';
+        // In a full implementation, you would load existing Global rules from Firestore here
+    }
+    function closeGlobalDealsModal() { document.getElementById('global-modal').style.display = 'none'; }
+    function toggleGlobalFields() {
+        const type = document.getElementById('global-type').value;
+        const container = document.getElementById('global-dynamic-fields');
+        container.innerHTML = "";
+        
+        if (type === "cart_min") {
+            container.innerHTML = `
+                <label>If Customer Spends Over (₹)</label>
+                <input type="number" id="global-min-spend" class="modal-input" placeholder="e.g. 1000">
+                
+                <div class="math-box">
+                    <div><label>Give Discount (%)</label><input type="number" id="global-pct" class="modal-input" placeholder="10"></div>
+                    <i class="bi bi-arrow-left-right"></i>
+                    <div><label>OR Flat Off (₹)</label><input type="number" id="global-flat" class="modal-input" placeholder="₹100"></div>
+                </div>`;
+        }
+    }
+    async function saveGlobalDeals() {
+        // Future Connection: Save to `companies/{phone}/settings/storeDeals`
+        alert("Global Deals Engine saved! (Connection to Billing POS pending)");
+        closeGlobalDealsModal();
+    }
+
+    // --- MOVE STOCK LOGIC ---
+    function openMoveModal(docId) {
+        currentMoveItem = rawInventory.find(i => i.docId === docId);
+        const currentBranchId = document.getElementById('filter-branch').value;
+        const targetSelect = document.getElementById('move-target-branch');
+        targetSelect.innerHTML = '<option value="">Select Destination...</option>';
+        globalBranches.forEach(b => { if (b.id !== currentBranchId) targetSelect.innerHTML += `<option value="${b.id}">${b.name}</option>`; });
+        
+        if(targetSelect.options.length <= 1) return alert("You need another branch to move stock to.");
+        document.getElementById('move-item-name').innerText = currentMoveItem.name;
+        document.getElementById('move-max-qty').innerText = `(Max: ${currentMoveItem.qty})`;
+        document.getElementById('move-qty').value = 1; document.getElementById('move-qty').max = currentMoveItem.qty;
+        document.getElementById('move-modal').style.display = 'flex';
+    }
+    function closeMoveModal() { document.getElementById('move-modal').style.display = 'none'; currentMoveItem = null; }
+    function validateMoveQty() {
+        const input = document.getElementById('move-qty'); let val = parseFloat(input.value);
+        if (isNaN(val) || val <= 0) input.value = 1;
+        if (val > currentMoveItem.qty) input.value = currentMoveItem.qty;
+    }
+    async function saveMove() {
+        const moveQty = parseFloat(document.getElementById('move-qty').value);
+        const targetBranchId = document.getElementById('move-target-branch').value;
+        const currentBranchId = document.getElementById('filter-branch').value;
+        if(!targetBranchId) return alert("Select a destination.");
+        
+        const btn = document.getElementById('btn-save-move'); btn.innerText = "MOVING..."; btn.disabled = true;
+
+        try {
+            const db = firebase.firestore(); const batch = db.batch();
+            const sourceRef = db.collection('companies').doc(activeUserPhone).collection('branches').doc(currentBranchId).collection('inventory').doc(currentMoveItem.docId);
+            const targetInvRef = db.collection('companies').doc(activeUserPhone).collection('branches').doc(targetBranchId).collection('inventory');
+            const existingSnap = await targetInvRef.where('barcode', '==', currentMoveItem.barcode).get();
+
+            batch.update(sourceRef, { qty: firebase.firestore.FieldValue.increment(-moveQty) });
+            if (!existingSnap.empty) { batch.update(targetInvRef.doc(existingSnap.docs[0].id), { qty: firebase.firestore.FieldValue.increment(moveQty) }); } 
+            else {
+                const newDoc = targetInvRef.doc(); const newItemData = { ...currentMoveItem, qty: moveQty }; delete newItemData.docId; 
+                batch.set(newDoc, newItemData);
+            }
+            await batch.commit();
+
+            const unitName = currentMoveItem.unit;
+            currentMoveItem.qty -= moveQty;
+            if(currentMoveItem.qty <= 0) rawInventory = rawInventory.filter(i => i.docId !== currentMoveItem.docId);
+            renderInventory(); closeMoveModal();
+            alert(`✅ Moved ${moveQty} ${unitName} successfully.`);
+        } catch(e) { alert("Error: " + e.message); }
+        btn.innerText = "Confirm Transfer"; btn.disabled = false;
+    }
+
+    // --- SETTINGS (MINIMUM STOCK) LOGIC ---
+    function openSettingsModal(docId, name, currentMinStock) {
+        currentSettingsDocId = docId; document.getElementById('set-item-name').innerText = name;
+        document.getElementById('set-min-stock').value = currentMinStock;
+        document.getElementById('settings-modal').style.display = 'flex';
+    }
+    function closeSettingsModal() { document.getElementById('settings-modal').style.display = 'none'; currentSettingsDocId = null; }
+    async function saveSettings() {
+        let newMinStock = parseFloat(document.getElementById('set-min-stock').value);
+        if (isNaN(newMinStock) || newMinStock < 0) newMinStock = 0;
+        const currentBranchId = document.getElementById('filter-branch').value;
+        const btn = document.getElementById('btn-save-settings'); btn.innerText = "SAVING..."; btn.disabled = true;
+
+        try {
+            await firebase.firestore().collection('companies').doc(activeUserPhone).collection('branches').doc(currentBranchId).collection('inventory').doc(currentSettingsDocId).update({ minStock: newMinStock });
+            const index = rawInventory.findIndex(i => i.docId === currentSettingsDocId);
+            if(index !== -1) rawInventory[index].minStock = newMinStock;
+            closeSettingsModal(); renderInventory(); 
+        } catch(e) { alert("Error: " + e.message); }
+        btn.innerText = "Save Alert Level"; btn.disabled = false;
+    }
 </script>
 </body>
 </html>
