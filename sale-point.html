@@ -135,10 +135,11 @@
 <div class="pos-layout">
     <div class="cart-panel">
         <div class="cart-items-container" id="cart-container"></div>
-        <div class="cart-footer">
+    <div class="cart-footer">
             <input type="tel" id="customer-phone" class="customer-input" placeholder="📱 Customer Mobile Number (Optional)">
             <div class="summary-row"><span>Subtotal:</span> <span id="cart-subtotal">₹0.00</span></div>
             <div class="summary-row" style="color:var(--danger);"><span>Discounts:</span> <span id="cart-discount">- ₹0.00</span></div>
+            <div class="summary-row" style="color:var(--text-light); font-size: 11px;"><span>Includes GST:</span> <span id="cart-gst">₹0.00</span></div>
             <div class="summary-total"><span>Total:</span> <span id="cart-total">₹0.00</span></div>
             <div class="checkout-btns">
                 <button class="btn-checkout btn-cash" onclick="openCashModal()"><i class="bi bi-cash-coin"></i> CASH</button>
@@ -249,6 +250,7 @@
     <div class="r-line"></div>
     <div class="r-flex"><span>Subtotal:</span><span id="r-sub"></span></div>
     <div class="r-flex"><span>Discount:</span><span id="r-disc"></span></div>
+    <div class="r-flex"><span>Incl. GST:</span><span id="r-gst"></span></div>
     <div class="r-line"></div>
     <div class="r-flex r-bold" style="font-size:14px;"><span>Total:</span><span id="r-tot"></span></div>
     <div class="r-line"></div>
@@ -404,10 +406,10 @@
         const item = liveInventory.find(i => i.docId === docId);
         if (!item || item.qty <= 0) return;
         const exist = cart.find(c => c.docId === docId);
-        if (exist) {
+       if (exist) {
             if (exist.cartQty < item.qty) exist.cartQty++;
-    } else {
-            cart.push({ docId: item.docId, name: item.name, msp: parseFloat(item.msp||0), costPer: parseFloat(item.costPer||0), maxQty: parseFloat(item.qty), offer: item.offer || null, cartQty: 1, isCustom: false });
+        } else {
+            cart.push({ docId: item.docId, name: item.name, msp: parseFloat(item.msp||0), costPer: parseFloat(item.costPer||0), gstRate: parseFloat(item.gstRate||0), maxQty: parseFloat(item.qty), offer: item.offer || null, cartQty: 1, isCustom: false });
         }
         renderCart();
     }
@@ -423,23 +425,23 @@
 
     // Custom Ad-hoc Item
     function openCustomItemModal() { document.getElementById('custom-modal').style.display = 'flex'; }
-    function addCustomItem() {
+   function addCustomItem() {
         const name = document.getElementById('custom-name').value || "Misc Item";
         const price = parseFloat(document.getElementById('custom-price').value);
         if(isNaN(price) || price <= 0) return alert("Enter a valid price");
-        cart.push({ docId: 'custom_' + Date.now(), name: name, msp: price, costPer: 0, cartQty: 1, isCustom: true });
+        cart.push({ docId: 'custom_' + Date.now(), name: name, msp: price, costPer: 0, gstRate: 0, cartQty: 1, isCustom: true });
         document.getElementById('custom-modal').style.display = 'none';
         document.getElementById('custom-name').value = ""; document.getElementById('custom-price').value = "";
         renderCart();
     }
 
-    function renderCart() {
+function renderCart() {
         const container = document.getElementById('cart-container');
-        let subtotal = 0; let totalDisc = 0;
+        let subtotal = 0; let totalDisc = 0; let totalGst = 0;
         
         if (cart.length === 0) {
             container.innerHTML = `<div class="empty-cart"><i class="bi bi-basket" style="font-size:40px; opacity:0.3; display:block;"></i>Cart is empty.</div>`;
-            document.getElementById('cart-subtotal').innerText = '₹0'; document.getElementById('cart-discount').innerText = '- ₹0'; document.getElementById('cart-total').innerText = '₹0';
+            document.getElementById('cart-subtotal').innerText = '₹0'; document.getElementById('cart-discount').innerText = '- ₹0'; document.getElementById('cart-gst').innerText = '₹0'; document.getElementById('cart-total').innerText = '₹0';
             return;
         }
 
@@ -455,6 +457,10 @@
             }
             subtotal += base; totalDisc += disc;
             let finalPrice = base - disc;
+            
+            let gstRate = item.gstRate || 0;
+            let itemGst = finalPrice - (finalPrice / (1 + (gstRate / 100)));
+            totalGst += itemGst;
 
             container.innerHTML += `
                 <div class="cart-item">
@@ -474,10 +480,11 @@
                 </div>`;
         });
         
-        document.getElementById('cart-subtotal').innerText = `₹${subtotal.toFixed(2)}`;
+    document.getElementById('cart-subtotal').innerText = `₹${subtotal.toFixed(2)}`;
         document.getElementById('cart-discount').innerText = `- ₹${totalDisc.toFixed(2)}`;
+        document.getElementById('cart-gst').innerText = `₹${totalGst.toFixed(2)}`;
         document.getElementById('cart-total').innerText = `₹${(subtotal - totalDisc).toFixed(2)}`;
-        finalSaleData.sub = subtotal; finalSaleData.disc = totalDisc; finalSaleData.tot = subtotal - totalDisc;
+        finalSaleData.sub = subtotal; finalSaleData.disc = totalDisc; finalSaleData.gst = totalGst; finalSaleData.tot = subtotal - totalDisc;
     }
 
     // --- HOLD BILL (DRAFTS) ---
@@ -550,10 +557,10 @@
             }
         });
 
-        const saleRef = db.collection('companies').doc(activeUserPhone).collection('branches').doc(activeBranchId).collection('sales').doc();
+     const saleRef = db.collection('companies').doc(activeUserPhone).collection('branches').doc(activeBranchId).collection('sales').doc();
         batch.set(saleRef, {
             timestamp: firebase.firestore.FieldValue.serverTimestamp(),
-            items: cart, totalAmount: finalSaleData.tot, totalCost: saleCost, profit: finalSaleData.tot - saleCost,
+            items: cart, totalAmount: finalSaleData.tot, totalCost: saleCost, totalGst: finalSaleData.gst, profit: finalSaleData.tot - saleCost,
             paymentMode: mode, customerPhone: finalSaleData.phone
         });
 
@@ -564,10 +571,11 @@
             
             // Build Thermal Receipt HTML
             document.getElementById('r-date').innerText = finalSaleData.date;
-            document.getElementById('r-sub').innerText = finalSaleData.sub.toFixed(0);
-            document.getElementById('r-disc').innerText = finalSaleData.disc.toFixed(0);
-            document.getElementById('r-tot').innerText = finalSaleData.tot.toFixed(0);
-            document.getElementById('r-items').innerHTML = finalSaleData.items.map(i => `<div class="r-flex"><span>${i.cartQty}x ${i.name.substring(0,12)}</span><span>${(i.msp * i.cartQty).toFixed(0)}</span></div>`).join('');
+            document.getElementById('r-sub').innerText = finalSaleData.sub.toFixed(2);
+            document.getElementById('r-disc').innerText = finalSaleData.disc.toFixed(2);
+            document.getElementById('r-gst').innerText = finalSaleData.gst.toFixed(2);
+            document.getElementById('r-tot').innerText = finalSaleData.tot.toFixed(2);
+            document.getElementById('r-items').innerHTML = finalSaleData.items.map(i => `<div class="r-flex"><span>${i.cartQty}x ${i.name.substring(0,12)}</span><span>${(i.msp * i.cartQty).toFixed(2)}</span></div>`).join('');
             
             // Print Command
             window.print();
