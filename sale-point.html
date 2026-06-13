@@ -124,7 +124,7 @@
 <div id="loading-overlay"><i class="bi bi-arrow-repeat bi-spin" style="font-size: 40px; margin-bottom: 15px;"></i> Loading Register...</div>
 
 <div class="pos-header">
-    <h1>Sarandipity <span style="font-size:12px; color:var(--text-light); font-weight:600;" id="active-branch-name"></span></h1>
+    <h1><span id="top-shop-name">Store</span> <span style="font-size:12px; color:var(--text-light); font-weight:600;" id="active-branch-name"></span></h1>
     <div class="header-actions">
         <button class="btn-nav btn-hold" onclick="holdCart()"><i class="bi bi-pause-circle-fill"></i> Hold</button>
         <button class="btn-nav" onclick="showDrafts()"><i class="bi bi-list-ul"></i> Drafts</button>
@@ -240,7 +240,7 @@
 </div>
 
 <div id="thermal-receipt">
-    <div class="r-center r-bold" style="font-size:16px;">SARANDIPITY</div>
+    <div class="r-center r-bold" style="font-size:16px;" id="r-shop-name">STORE</div>
     <div class="r-center" id="r-date"></div>
     <div class="r-line"></div>
     <div class="r-flex r-bold"><span>Item</span><span>Amt</span></div>
@@ -262,6 +262,7 @@
     let activeBranchId = null;
 
     let shopUpiId = ""; // Will be fetched dynamically from Firebase
+    let shopName = "Store"; // Will be fetched dynamically from Firebase
 
     let liveInventory = [];
     let shopTaxonomy = {};
@@ -314,11 +315,18 @@
         } catch(e) { console.error("Branch Error", e); }
     }
 
-    async function loadBusinessDetails() {
+   async function loadBusinessDetails() {
         try {
             const doc = await firebase.firestore().collection('companies').doc(activeUserPhone).get();
             if (doc.exists) {
                 const data = doc.data();
+                
+                if (data.businessName) {
+                    shopName = data.businessName;
+                    document.getElementById('top-shop-name').innerText = shopName;
+                    document.getElementById('r-shop-name').innerText = shopName.toUpperCase();
+                }
+
                 // Grab the first UPI ID from the array if the shopkeeper has saved one
                 if (data.upiIds && data.upiIds.length > 0) {
                     shopUpiId = data.upiIds[0];
@@ -516,8 +524,8 @@
 
         document.getElementById('upi-bill-amt').innerText = `₹${finalSaleData.tot.toFixed(0)}`;
         
-        // Use dynamic shopUpiId variable
-        const upiString = encodeURIComponent(`upi://pay?pa=${shopUpiId}&pn=Store&am=${finalSaleData.tot.toFixed(2)}`);
+      // Use dynamic shopUpiId variable and Shop Name
+        const upiString = encodeURIComponent(`upi://pay?pa=${shopUpiId}&pn=${shopName}&am=${finalSaleData.tot.toFixed(2)}`);
         
         document.getElementById('upi-qr-img').src = `https://api.qrserver.com/v1/create-qr-code/?size=200x200&data=${upiString}`;
         document.getElementById('upi-modal').style.display = 'flex';
@@ -570,9 +578,9 @@
         } catch(e) { alert("Checkout Failed: " + e.message); }
     }
 
-    // --- WHATSAPP ENGINE ---
+   // --- WHATSAPP ENGINE ---
     function sendWhatsApp() {
-        let text = `*SARANDIPITY RECEIPT*\nDate: ${finalSaleData.date}\n-------------------\n`;
+        let text = `*${shopName.toUpperCase()} RECEIPT*\nDate: ${finalSaleData.date}\n-------------------\n`;
         finalSaleData.items.forEach(i => { text += `${i.cartQty}x ${i.name} - Rs.${(i.msp * i.cartQty).toFixed(0)}\n`; });
         text += `-------------------\n*Total: Rs.${finalSaleData.tot.toFixed(0)}*\nThank you for shopping with us!`;
         const url = `https://wa.me/91${finalSaleData.phone}?text=${encodeURIComponent(text)}`;
