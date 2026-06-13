@@ -149,10 +149,9 @@
 
     <div class="grid-panel">
         <div class="search-header">
-           <div class="search-box">
+       <div class="search-box">
                 <i class="bi bi-upc-scan search-icon" style="cursor: pointer; color: var(--primary); z-index: 10; pointer-events: auto;" onclick="openCameraScanner()" title="Open Camera Scanner"></i>
-                <input type="text" id="pos-search" class="search-input" placeholder="Tap icon for Camera or Type..." oninput="filterGrid()" autofocus autocomplete="off">
-                <button class="btn-custom-item" onclick="openCustomItemModal()"><i class="bi bi-plus-lg"></i> Misc</button>
+                <input type="text" id="pos-search" class="search-input" placeholder="Tap icon for Camera or Type..." oninput="filterGrid()" autocomplete="off">
             </div>
             <div class="cat-scroll" id="cat-tabs">
                 <button class="cat-pill active" onclick="setCategory('ALL')">All Items</button>
@@ -214,8 +213,8 @@
         <h2 style="margin:0 0 5px 0; font-size:22px; font-weight:900;">Sale Successful!</h2>
         <p style="margin:0 0 20px 0; font-size:14px; font-weight:800; color:var(--text-light);">Inventory updated safely.</p>
         
-        <button class="btn-modal-action" style="background:#25D366;" id="btn-whatsapp" onclick="sendWhatsApp()"><i class="bi bi-whatsapp"></i> Send Digital Bill on WhatsApp</button>
-        <button class="btn-modal-action" onclick="document.getElementById('success-modal').style.display='none'; document.getElementById('pos-search').focus();">New Sale</button>
+     <button class="btn-modal-action" style="background:#25D366;" id="btn-whatsapp" onclick="sendWhatsApp()"><i class="bi bi-whatsapp"></i> Send Digital Bill on WhatsApp</button>
+        <button class="btn-modal-action" onclick="document.getElementById('success-modal').style.display='none';">New Sale</button>
     </div>
 </div>
 
@@ -399,10 +398,10 @@
         const exist = cart.find(c => c.docId === docId);
         if (exist) {
             if (exist.cartQty < item.qty) exist.cartQty++;
-        } else {
+    } else {
             cart.push({ docId: item.docId, name: item.name, msp: parseFloat(item.msp||0), costPer: parseFloat(item.costPer||0), maxQty: parseFloat(item.qty), offer: item.offer || null, cartQty: 1, isCustom: false });
         }
-        renderCart(); document.getElementById('pos-search').focus();
+        renderCart();
     }
 
     function updateCartQty(index, change) {
