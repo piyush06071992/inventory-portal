@@ -108,16 +108,33 @@
         .qr-container { background: #f8fafc; padding: 15px; border-radius: 12px; margin-bottom: 15px; border: 2px dashed #cbd5e1;}
         .qr-container img { width: 180px; height: 180px; border-radius: 8px;}
 
-        /* THERMAL PRINT STYLES (Hidden on screen, visible on print) */
-        #thermal-receipt { display: none; }
+       /* PDF/PRINT RECEIPT STYLES */
+        #print-receipt-container { display: none; }
         @media print {
             body * { visibility: hidden; }
-            #thermal-receipt, #thermal-receipt * { visibility: visible; }
-            #thermal-receipt { display: block; position: absolute; left: 0; top: 0; width: 58mm; /* 2-inch thermal standard */ font-family: monospace; font-size: 12px; color: black; padding: 0; margin: 0;}
-            .r-center { text-align: center; } .r-bold { font-weight: bold; }
-            .r-line { border-bottom: 1px dashed black; margin: 5px 0; }
-            .r-flex { display: flex; justify-content: space-between; }
+            body { background: white; margin: 0; padding: 0; }
+            #print-receipt-container, #print-receipt-container * { visibility: visible; }
+            #print-receipt-container { display: flex; justify-content: center; position: absolute; left: 0; top: 0; width: 100%; padding: 20px; box-sizing: border-box; }
+            
+            .receipt-card { background: white; width: 100%; max-width: 400px; border-radius: 16px; padding: 25px; box-shadow: none; position: relative; overflow: hidden; font-family: 'Inter', sans-serif; color: var(--navy); }
+            .r-header { text-align: center; margin-bottom: 20px; border-bottom: 2px dashed var(--border); padding-bottom: 15px; }
+            .r-shop-name { font-size: 24px; font-weight: 900; margin: 0 0 5px 0; letter-spacing: -0.5px; }
+            .r-date { font-size: 12px; font-weight: 700; color: var(--text-light); margin: 0; }
+            .r-customer { background: #f8fafc; padding: 12px; border-radius: 8px; margin-bottom: 20px; border: 1px solid var(--border); }
+            .r-customer p { margin: 2px 0; font-size: 13px; font-weight: 700; }
+            .r-items { margin-bottom: 20px; }
+            .item-row { display: flex; justify-content: space-between; margin-bottom: 10px; font-size: 14px; font-weight: 700; }
+            .item-name { flex: 1; padding-right: 10px; }
+            .item-qty { width: 40px; text-align: center; color: var(--text-light); }
+            .item-total { width: 70px; text-align: right; }
+            .r-summary { border-top: 2px dashed var(--border); padding-top: 15px; margin-bottom: 20px; }
+            .summary-row { display: flex; justify-content: space-between; margin-bottom: 5px; font-size: 13px; font-weight: 700; color: var(--text-light); }
+            .summary-total { display: flex; justify-content: space-between; margin-top: 10px; padding-top: 10px; border-top: 1px solid var(--border); font-size: 20px; font-weight: 900; color: var(--navy); }
+            .r-khata { background: #fffbeb; border: 1px solid #fde68a; padding: 15px; border-radius: 8px; margin-bottom: 20px; }
+            .r-khata-title { font-size: 12px; font-weight: 900; color: #d97706; text-transform: uppercase; margin: 0 0 10px 0; letter-spacing: 0.5px; }
+            .thank-you { text-align: center; font-size: 14px; font-weight: 800; color: var(--text-light); margin-top: 20px; }
         }
+    </style>
     </style>
 </head>
 <body>
@@ -297,23 +314,7 @@
     </div>
 </div>
 
-<div id="thermal-receipt">
-    <div class="r-center r-bold" style="font-size:16px;" id="r-shop-name">STORE</div>
-    <div class="r-center" id="r-date"></div>
-    <div id="r-customer-info" style="text-align: center; font-size: 11px; margin-top: 3px; display: none;"></div>
-    <div class="r-line"></div>
-    <div class="r-flex r-bold"><span>Item</span><span>Amt</span></div>
-    <div class="r-line"></div>
-    <div id="r-items"></div>
-    <div class="r-line"></div>
-    <div class="r-flex"><span>Subtotal:</span><span id="r-sub"></span></div>
-    <div class="r-flex"><span>Discount:</span><span id="r-disc"></span></div>
-    <div class="r-flex"><span>Incl. GST:</span><span id="r-gst"></span></div>
-    <div class="r-line"></div>
-    <div class="r-flex r-bold" style="font-size:14px;"><span>Total:</span><span id="r-tot"></span></div>
-    <div class="r-line"></div>
-    <div class="r-center r-bold">Thank You!</div>
-</div>
+<div id="print-receipt-container"></div>
 <script>
     // --- APP STATE ---
     let activeUserPhone = localStorage.getItem("activeUserPhone");
@@ -937,21 +938,71 @@ document.getElementById('udhaar-modal').style.display = 'none';
            // Background sync successful. Show Success UI.
             cart = []; clearCustomerSelection(true); renderCart();
             
-            // Build Thermal Receipt HTML
-            document.getElementById('r-date').innerText = finalSaleData.date;
-            
-          const rCust = document.getElementById('r-customer-info');
-            if (finalSaleData.name || finalSaleData.phone) {
-                let kStr = finalSaleData.khataNumber ? ` [Khata #${finalSaleData.khataNumber}]` : ``;
-                rCust.innerText = `Customer: ${finalSaleData.name} ${finalSaleData.phone}${kStr}`.trim();
-                rCust.style.display = 'block';
-            } else { rCust.style.display = 'none'; }
+         // Build PDF-Style Receipt HTML for Printing
+            let rHtml = `
+                <div class="receipt-card">
+                    <div class="r-header">
+                        <h1 class="r-shop-name">${shopName.toUpperCase()}</h1>
+                        <p class="r-date">${finalSaleData.date}</p>
+                        <p style="margin:5px 0 0 0; font-size:11px; font-weight:700; color:var(--text-light);">Receipt ID: ${finalSaleData.receiptId.substring(0,8).toUpperCase()}</p>
+                    </div>
+            `;
 
-            document.getElementById('r-sub').innerText = finalSaleData.sub.toFixed(2);
-            document.getElementById('r-disc').innerText = finalSaleData.disc.toFixed(2);
-            document.getElementById('r-gst').innerText = finalSaleData.gst.toFixed(2);
-            document.getElementById('r-tot').innerText = finalSaleData.tot.toFixed(2);
-            document.getElementById('r-items').innerHTML = finalSaleData.items.map(i => `<div class="r-flex"><span>${i.cartQty}x ${i.name.substring(0,12)}</span><span>${(i.msp * i.cartQty).toFixed(2)}</span></div>`).join('');
+            if (finalSaleData.name || finalSaleData.phone) {
+                rHtml += `<div class="r-customer">`;
+                if (finalSaleData.name) rHtml += `<p>👤 ${finalSaleData.name.toUpperCase()}</p>`;
+                if (finalSaleData.phone) rHtml += `<p>📱 ${finalSaleData.phone}</p>`;
+                if (finalSaleData.khataNumber) rHtml += `<p style="color:var(--primary);">🏷️ Khata #${finalSaleData.khataNumber}</p>`;
+                rHtml += `</div>`;
+            }
+
+            rHtml += `<div class="r-items">`;
+            finalSaleData.items.forEach(item => {
+                let itemTot = item.msp * item.cartQty;
+                rHtml += `
+                    <div class="item-row">
+                        <div class="item-name">${item.name}</div>
+                        <div class="item-qty">x${item.cartQty}</div>
+                        <div class="item-total">₹${itemTot.toFixed(2)}</div>
+                    </div>
+                `;
+            });
+            rHtml += `</div>`;
+
+            let gstAmt = finalSaleData.gst || 0;
+            let subtotal = finalSaleData.tot - gstAmt;
+
+            rHtml += `
+                <div class="r-summary">
+                    <div class="summary-row"><span>Subtotal</span> <span>₹${subtotal.toFixed(2)}</span></div>
+                    ${gstAmt > 0 ? `<div class="summary-row"><span>Tax/GST</span> <span>₹${gstAmt.toFixed(2)}</span></div>` : ''}
+                    <div class="summary-row"><span>Payment Mode</span> <span style="color:var(--navy); background:#f1f5f9; padding:2px 6px; border-radius:4px;">${finalSaleData.paymentMode || 'N/A'}</span></div>
+                    <div class="summary-total"><span>Total Paid</span> <span>₹${finalSaleData.tot.toFixed(2)}</span></div>
+                </div>
+            `;
+
+            if (finalSaleData.paymentMode === 'UDHAAR') {
+                rHtml += `
+                    <div class="r-khata">
+                        <h4 class="r-khata-title">Khata / Udhaar Details</h4>
+                        <div class="summary-row"><span>Bill Amount:</span> <span>₹${finalSaleData.tot.toFixed(2)}</span></div>
+                        <div class="summary-row" style="color:var(--emerald);"><span>Cash Paid Now:</span> <span>₹${(finalSaleData.cashPaid || 0).toFixed(2)}</span></div>
+                        <div class="summary-row" style="color:#d97706;"><span>Added to Khata:</span> <span>₹${(finalSaleData.udhaarAdded || 0).toFixed(2)}</span></div>
+                        <div style="border-top:1px dashed #fcd34d; margin:8px 0;"></div>
+                        <div style="display:flex; justify-content:space-between; font-size:14px; font-weight:900; color:#b45309;">
+                            <span>Total Khata Pending:</span>
+                            <span>Check with Store</span>
+                        </div>
+                    </div>
+                `;
+            }
+
+            rHtml += `
+                    <div class="thank-you">Thank you for shopping with us!</div>
+                </div>
+            `;
+
+            document.getElementById('print-receipt-container').innerHTML = rHtml;
             
             // Show WhatsApp Prompt
             document.getElementById('btn-whatsapp').style.display = finalSaleData.phone ? 'block' : 'none';
