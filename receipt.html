@@ -7,8 +7,6 @@
     
     <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-firestore-compat.js"></script>
-    
-    <script src="/auth.js"></script>
 
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;800;900&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.1/font/bootstrap-icons.css">
@@ -18,12 +16,9 @@
         body { font-family: 'Inter', sans-serif; background-color: #cbd5e1; margin: 0; padding: 20px; display: flex; justify-content: center; align-items: flex-start; min-height: 100vh; color: var(--navy); }
         
         .receipt-card { background: white; width: 100%; max-width: 400px; border-radius: 16px; padding: 25px; box-shadow: 0 10px 25px rgba(0,0,0,0.1); position: relative; overflow: hidden; }
-        
-        /* The zigzag edge at the bottom of the receipt */
         .receipt-card::after { content: ""; position: absolute; bottom: -8px; left: 0; right: 0; height: 16px; background-size: 16px 16px; background-image: radial-gradient(circle at 8px 16px, transparent 10px, white 11px); }
 
         .loader { text-align: center; padding: 40px 0; font-weight: 800; color: var(--primary); }
-        
         .r-header { text-align: center; margin-bottom: 20px; border-bottom: 2px dashed var(--border); padding-bottom: 15px; }
         .r-shop-name { font-size: 24px; font-weight: 900; margin: 0 0 5px 0; letter-spacing: -0.5px; }
         .r-date { font-size: 12px; font-weight: 700; color: var(--text-light); margin: 0; }
@@ -66,122 +61,128 @@
 </div>
 
 <script>
+    // Your exact Firebase keys injected for independent public access
+    const firebaseConfig = {
+        apiKey: "AIzaSyBuYDgbmycHMjHGupeoZV2lvv_Z0n7WyoY",
+        authDomain: "business-saarthi.firebaseapp.com",
+        databaseURL: "https://business-saarthi-default-rtdb.firebaseio.com",
+        projectId: "business-saarthi",
+        storageBucket: "business-saarthi.firebasestorage.app",
+        messagingSenderId: "556256084111",
+        appId: "1:556256084111:web:14e841b0e7bfff653170fa"
+    };
+
+    if (!firebase.apps.length) {
+        firebase.initializeApp(firebaseConfig);
+    }
+
     document.addEventListener('DOMContentLoaded', async () => {
-        // Wait a tiny bit to ensure auth.js has initialized Firebase
-        setTimeout(async () => {
-            const urlParams = new URLSearchParams(window.location.search);
-            const receiptId = urlParams.get('id');
-            const companyPhone = urlParams.get('phone');
-            const branchId = urlParams.get('branch');
+        const urlParams = new URLSearchParams(window.location.search);
+        const receiptId = urlParams.get('id');
+        const companyPhone = urlParams.get('phone');
+        const branchId = urlParams.get('branch');
 
-            const container = document.getElementById('receipt-container');
+        const container = document.getElementById('receipt-container');
 
-            if (!receiptId || !companyPhone || !branchId) {
-                container.innerHTML = `<div class="error-msg"><i class="bi bi-exclamation-triangle" style="font-size:40px; display:block; margin-bottom:10px;"></i>Invalid Receipt Link.</div>`;
+        if (!receiptId || !companyPhone || !branchId) {
+            container.innerHTML = `<div class="error-msg"><i class="bi bi-exclamation-triangle" style="font-size:40px; display:block; margin-bottom:10px;"></i>Invalid Receipt Link.</div>`;
+            return;
+        }
+
+        try {
+            const db = firebase.firestore();
+
+            // Fetch Shop Info
+            const compDoc = await db.collection('companies').doc(companyPhone).get();
+            let shopName = "Store";
+            if (compDoc.exists && compDoc.data().businessName) {
+                shopName = compDoc.data().businessName;
+            }
+
+            // Fetch Sale Info
+            const saleDoc = await db.collection('companies').doc(companyPhone).collection('branches').doc(branchId).collection('sales').doc(receiptId).get();
+            
+            if (!saleDoc.exists) {
+                container.innerHTML = `<div class="error-msg"><i class="bi bi-search" style="font-size:40px; display:block; margin-bottom:10px;"></i>Receipt not found. It may have been deleted.</div>`;
                 return;
             }
 
-            try {
-                const db = firebase.firestore();
+            const sale = saleDoc.data();
+            const dateObj = sale.timestamp ? sale.timestamp.toDate() : new Date();
+            const dateString = dateObj.toLocaleString('en-IN', { day:'2-digit', month:'short', year:'numeric', hour:'2-digit', minute:'2-digit' });
 
-                // Fetch Shop Info
-                const compDoc = await db.collection('companies').doc(companyPhone).get();
-                let shopName = "Store";
-                if (compDoc.exists && compDoc.data().businessName) {
-                    shopName = compDoc.data().businessName;
-                }
+            // Build the HTML dynamically
+            let html = `
+                <div class="r-header">
+                    <h1 class="r-shop-name">${shopName.toUpperCase()}</h1>
+                    <p class="r-date">${dateString}</p>
+                    <p style="margin:5px 0 0 0; font-size:11px; font-weight:700; color:var(--text-light);">Receipt ID: ${receiptId.substring(0,8).toUpperCase()}</p>
+                </div>
+            `;
 
-                // Fetch Sale Info
-                const saleDoc = await db.collection('companies').doc(companyPhone).collection('branches').doc(branchId).collection('sales').doc(receiptId).get();
-                
-                if (!saleDoc.exists) {
-                    container.innerHTML = `<div class="error-msg"><i class="bi bi-search" style="font-size:40px; display:block; margin-bottom:10px;"></i>Receipt not found. It may have been deleted.</div>`;
-                    return;
-                }
-
-                const sale = saleDoc.data();
-                const dateObj = sale.timestamp ? sale.timestamp.toDate() : new Date();
-                const dateString = dateObj.toLocaleString('en-IN', { day:'2-digit', month:'short', year:'numeric', hour:'2-digit', minute:'2-digit' });
-
-                // Build the HTML dynamically
-                let html = `
-                    <div class="r-header">
-                        <h1 class="r-shop-name">${shopName.toUpperCase()}</h1>
-                        <p class="r-date">${dateString}</p>
-                        <p style="margin:5px 0 0 0; font-size:11px; font-weight:700; color:var(--text-light);">Receipt ID: ${receiptId.substring(0,8).toUpperCase()}</p>
-                    </div>
-                `;
-
-                // Customer Info Box
-                if (sale.customerName || sale.customerPhone) {
-                    html += `<div class="r-customer">`;
-                    if (sale.customerName) html += `<p>👤 ${sale.customerName.toUpperCase()}</p>`;
-                    if (sale.customerPhone) html += `<p>📱 ${sale.customerPhone}</p>`;
-                    if (sale.khataNumber) html += `<p style="color:var(--primary);">🏷️ Khata #${sale.khataNumber}</p>`;
-                    html += `</div>`;
-                }
-
-                // Items List
-                html += `<div class="r-items">`;
-                sale.items.forEach(item => {
-                    let itemTot = item.msp * item.cartQty;
-                    html += `
-                        <div class="item-row">
-                            <div class="item-name">${item.name}</div>
-                            <div class="item-qty">x${item.cartQty}</div>
-                            <div class="item-total">₹${itemTot.toFixed(2)}</div>
-                        </div>
-                    `;
-                });
+            if (sale.customerName || sale.customerPhone) {
+                html += `<div class="r-customer">`;
+                if (sale.customerName) html += `<p>👤 ${sale.customerName.toUpperCase()}</p>`;
+                if (sale.customerPhone) html += `<p>📱 ${sale.customerPhone}</p>`;
+                if (sale.khataNumber) html += `<p style="color:var(--primary);">🏷️ Khata #${sale.khataNumber}</p>`;
                 html += `</div>`;
-
-                // Subtotal & GST Summary
-                let finalTot = sale.totalAmount || 0;
-                let gstAmt = sale.totalGst || 0;
-                let subtotal = finalTot - gstAmt;
-
-                html += `
-                    <div class="r-summary">
-                        <div class="summary-row"><span>Subtotal</span> <span>₹${subtotal.toFixed(2)}</span></div>
-                        ${gstAmt > 0 ? `<div class="summary-row"><span>Tax/GST</span> <span>₹${gstAmt.toFixed(2)}</span></div>` : ''}
-                        <div class="summary-row"><span>Payment Mode</span> <span style="color:var(--navy); background:#f1f5f9; padding:2px 6px; border-radius:4px;">${sale.paymentMode || 'N/A'}</span></div>
-                        
-                        <div class="summary-total"><span>Total Paid</span> <span>₹${finalTot.toFixed(2)}</span></div>
-                    </div>
-                `;
-
-                // Khata/Udhaar Box (If Applicable)
-                if (sale.paymentMode === 'UDHAAR') {
-                    html += `
-                        <div class="r-khata">
-                            <h4 class="r-khata-title">Khata / Udhaar Details</h4>
-                            <div class="summary-row"><span>Bill Amount:</span> <span>₹${finalTot.toFixed(2)}</span></div>
-                            <div class="summary-row" style="color:var(--emerald);"><span>Cash Paid Now:</span> <span>₹${(sale.cashPaid || 0).toFixed(2)}</span></div>
-                            <div class="summary-row" style="color:#d97706;"><span>Added to Khata:</span> <span>₹${(sale.udhaarAdded || 0).toFixed(2)}</span></div>
-                            <div style="border-top:1px dashed #fcd34d; margin:8px 0;"></div>
-                            <div style="display:flex; justify-content:space-between; font-size:14px; font-weight:900; color:#b45309;">
-                                <span>Total Khata Pending:</span>
-                                <span>Check with Store</span>
-                            </div>
-                        </div>
-                    `;
-                }
-
-                // Footer & Print Button
-                html += `
-                    <div style="text-align:center; margin-top:20px;">
-                        <p style="font-size:14px; font-weight:800; color:var(--text-light); margin-bottom:20px;">Thank you for shopping with us!</p>
-                    </div>
-                    <button class="btn-print" onclick="window.print()"><i class="bi bi-file-earmark-pdf"></i> Download PDF / Print</button>
-                `;
-
-                container.innerHTML = html;
-
-            } catch (error) {
-                console.error("Error loading receipt:", error);
-                container.innerHTML = `<div class="error-msg"><i class="bi bi-exclamation-triangle" style="font-size:40px; display:block; margin-bottom:10px;"></i>Could not load receipt.</div>`;
             }
-        }, 300); // 300ms delay guarantees auth.js has loaded
+
+            html += `<div class="r-items">`;
+            sale.items.forEach(item => {
+                let itemTot = item.msp * item.cartQty;
+                html += `
+                    <div class="item-row">
+                        <div class="item-name">${item.name}</div>
+                        <div class="item-qty">x${item.cartQty}</div>
+                        <div class="item-total">₹${itemTot.toFixed(2)}</div>
+                    </div>
+                `;
+            });
+            html += `</div>`;
+
+            let finalTot = sale.totalAmount || 0;
+            let gstAmt = sale.totalGst || 0;
+            let subtotal = finalTot - gstAmt;
+
+            html += `
+                <div class="r-summary">
+                    <div class="summary-row"><span>Subtotal</span> <span>₹${subtotal.toFixed(2)}</span></div>
+                    ${gstAmt > 0 ? `<div class="summary-row"><span>Tax/GST</span> <span>₹${gstAmt.toFixed(2)}</span></div>` : ''}
+                    <div class="summary-row"><span>Payment Mode</span> <span style="color:var(--navy); background:#f1f5f9; padding:2px 6px; border-radius:4px;">${sale.paymentMode || 'N/A'}</span></div>
+                    <div class="summary-total"><span>Total Paid</span> <span>₹${finalTot.toFixed(2)}</span></div>
+                </div>
+            `;
+
+            if (sale.paymentMode === 'UDHAAR') {
+                html += `
+                    <div class="r-khata">
+                        <h4 class="r-khata-title">Khata / Udhaar Details</h4>
+                        <div class="summary-row"><span>Bill Amount:</span> <span>₹${finalTot.toFixed(2)}</span></div>
+                        <div class="summary-row" style="color:var(--emerald);"><span>Cash Paid Now:</span> <span>₹${(sale.cashPaid || 0).toFixed(2)}</span></div>
+                        <div class="summary-row" style="color:#d97706;"><span>Added to Khata:</span> <span>₹${(sale.udhaarAdded || 0).toFixed(2)}</span></div>
+                        <div style="border-top:1px dashed #fcd34d; margin:8px 0;"></div>
+                        <div style="display:flex; justify-content:space-between; font-size:14px; font-weight:900; color:#b45309;">
+                            <span>Total Khata Pending:</span>
+                            <span>Check with Store</span>
+                        </div>
+                    </div>
+                `;
+            }
+
+            html += `
+                <div style="text-align:center; margin-top:20px;">
+                    <p style="font-size:14px; font-weight:800; color:var(--text-light); margin-bottom:20px;">Thank you for shopping with us!</p>
+                </div>
+                <button class="btn-print" onclick="window.print()"><i class="bi bi-file-earmark-pdf"></i> Download PDF / Print</button>
+            `;
+
+            container.innerHTML = html;
+
+        } catch (error) {
+            console.error("Error loading receipt:", error);
+            container.innerHTML = `<div class="error-msg"><i class="bi bi-exclamation-triangle" style="font-size:40px; display:block; margin-bottom:10px;"></i>Could not load receipt. Permissions issue.</div>`;
+        }
     });
 </script>
 
