@@ -81,8 +81,16 @@
         .btn-edit { background: #f1f5f9; color: #475569; }
         .btn-delete { background: #fee2e2; color: #ef4444; }
 
-       @media (max-width: 480px) { .grid-2 { grid-template-columns: 1fr; gap: 10px; } }
+      @media (max-width: 480px) { .grid-2 { grid-template-columns: 1fr; gap: 10px; } }
         .btn-add-role { background-color: #1e3a8a; color: white; border: none; padding: 12px; border-radius: 10px; cursor: pointer; display: flex; align-items: center; justify-content: center; min-width: 50px; }
+        
+        /* Modern iOS-Style Toggle Switch */
+        .switch { position: relative; display: inline-block; width: 44px; height: 24px; flex-shrink: 0;}
+        .switch input { opacity: 0; width: 0; height: 0; }
+        .slider { position: absolute; cursor: pointer; top: 0; left: 0; right: 0; bottom: 0; background-color: #cbd5e1; transition: .3s; border-radius: 24px; }
+        .slider:before { position: absolute; content: ""; height: 18px; width: 18px; left: 3px; bottom: 3px; background-color: white; transition: .3s; border-radius: 50%; box-shadow: 0 2px 4px rgba(0,0,0,0.2);}
+        input:checked + .slider { background-color: #10b981; }
+        input:checked + .slider:before { transform: translateX(20px); }
     </style>
 </head>
 <body>
@@ -201,11 +209,25 @@
         <input type="date" id="sal-start" class="form-control-custom" placeholder="Period Start">
         <input type="date" id="sal-end" class="form-control-custom" style="margin-top:10px;" placeholder="Period End">
         <input type="number" id="sal-amt" class="form-control-custom" style="margin-top:10px;" placeholder="Amount (₹)">
-        <div class="action-row">
+     <div class="action-row">
             <button class="btn-cancel" onclick="document.getElementById('salary-modal').style.display='none'">Cancel</button>
             <button class="btn-sc btn-pay" style="flex:2" onclick="processPayment('UPI')">Pay via UPI</button>
             <button class="btn-sc btn-attn" style="flex:1" onclick="processPayment('Cash')">Cash</button>
         </div>
+    </div>
+</div>
+
+<div id="permission-modal" style="display:none; position:fixed; top:0; left:0; width:100%; height:100%; background:rgba(15,23,42,0.8); z-index:2000; align-items:center; justify-content:center; backdrop-filter:blur(4px); padding:20px; box-sizing:border-box;">
+    <div style="background:white; padding:24px; border-radius:20px; width:100%; max-width:450px; max-height:85vh; display:flex; flex-direction:column;">
+        <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:15px; border-bottom:2px solid #f1f5f9; padding-bottom:12px;">
+            <h3 id="perm-modal-title" style="margin:0; color:#1e3a8a; font-size:18px;"><i class="bi bi-shield-lock-fill"></i> Access Matrix</h3>
+            <button onclick="document.getElementById('permission-modal').style.display='none'" style="background:none; border:none; font-size:22px; color:#64748b; cursor:pointer;"><i class="bi bi-x-lg"></i></button>
+        </div>
+        
+        <div id="perm-branches-container" style="flex:1; overflow-y:auto; padding-right:5px; margin-bottom:15px;">
+            </div>
+        
+        <button class="btn-save" id="btn-save-perms" onclick="savePermissions()" style="width:100%;"><i class="bi bi-check2-circle"></i> Save Permissions</button>
     </div>
 </div>
 
@@ -502,12 +524,16 @@ if (selectedBranch) {
         <i class="bi bi-key-fill"></i> Send Login PIN
     </button>
 
-    <button class="btn-sc btn-attn" onclick="alert('Attendance Module Opening...')">
+<button class="btn-sc btn-attn" onclick="alert('Attendance Module Opening...')">
         <i class="bi bi-calendar-check"></i> Attendance
     </button>
 
     <button class="btn-sc btn-pay" onclick="payStaff('${stf.upiId || ''}', '${stf.name}', '${stf.id}')">
         <i class="bi bi-currency-rupee"></i> Pay Salary
+    </button>
+
+    <button class="btn-sc" style="background:#0f172a; grid-column: span 2; margin-top:4px;" onclick="openPermissionModal('${stf.id}')">
+        <i class="bi bi-ui-checks"></i> Manage Dashboard Access
     </button>
 
 </div>
@@ -630,10 +656,94 @@ if (selectedBranch) {
         document.getElementById('salary-modal').style.display = 'none';
     }
 
-    function sendPinWA(name, phone, pin) {
+  function sendPinWA(name, phone, pin) {
         const shopName = document.getElementById('display-shop-name') ? document.getElementById('display-shop-name').innerText : "Our Business";
         const msg = `Hello ${name}, welcome to ${shopName}!%0A%0AHere are your login details for the staff portal:%0A*Login ID:* ${phone}%0A*Secure PIN:* ${pin}%0A%0APlease do not share this PIN with anyone.`;
         window.open(`https://wa.me/91${phone}?text=${msg}`, '_blank');
+    }
+
+    // --- PERMISSION MATRIX LOGIC ---
+    let currentPermissionStaffId = null;
+
+    function openPermissionModal(staffId) {
+        currentPermissionStaffId = staffId;
+        const staff = globalStaffData[staffId];
+        document.getElementById('perm-modal-title').innerHTML = `<i class="bi bi-shield-lock-fill text-primary"></i> Permissions: ${staff.name}`;
+
+        const container = document.getElementById('perm-branches-container');
+        container.innerHTML = "";
+
+        const branches = Array.isArray(staff.assignedBranch) ? staff.assignedBranch : [staff.assignedBranch];
+        const perms = staff.permissions || {}; // Existing permissions
+
+        if (branches.length === 0 || !branches[0]) {
+            container.innerHTML = "<p style='color:#64748b; font-size:14px; text-align:center;'>No branches assigned to this staff. Please edit their profile to assign a branch first.</p>";
+        } else {
+            branches.forEach(bId => {
+                const bName = globalBranchesData[bId] || "Unknown Branch";
+                const bPerms = perms[bId] || {}; // Get existing permissions for THIS specific branch
+
+                container.innerHTML += `
+                    <div style="background:#f8fafc; border:1px solid #cbd5e1; border-radius:12px; padding:16px; margin-bottom:15px;">
+                        <h4 style="margin:0 0 12px 0; color:#1e3a8a; font-size:15px; border-bottom:1px solid #e2e8f0; padding-bottom:8px;"><i class="bi bi-shop"></i> ${bName}</h4>
+                        
+                        ${createToggle(bId, 'manageStock', '📦 Manage Stock', bPerms.manageStock)}
+                        ${createToggle(bId, 'salesBilling', '🧾 POS / Billing', bPerms.salesBilling)}
+                        ${createToggle(bId, 'manageKhata', '📓 Manage Khata / Udhaar', bPerms.manageKhata)}
+                        ${createToggle(bId, 'viewReports', '📊 View Reports', bPerms.viewReports)}
+                    </div>
+                `;
+            });
+        }
+        document.getElementById('permission-modal').style.display = 'flex';
+    }
+
+    function createToggle(branchId, key, label, isChecked) {
+        const checkedAttr = isChecked ? 'checked' : '';
+        return `
+            <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:10px;">
+                <span style="font-size:14px; font-weight:700; color:#334155;">${label}</span>
+                <label class="switch">
+                    <input type="checkbox" class="perm-toggle" data-branch="${branchId}" data-key="${key}" ${checkedAttr}>
+                    <span class="slider"></span>
+                </label>
+            </div>
+        `;
+    }
+
+    async function savePermissions() {
+        if (!currentPermissionStaffId) return;
+        
+        const btn = document.getElementById('btn-save-perms');
+        btn.innerHTML = "<i class='bi bi-arrow-repeat bi-spin'></i> Saving..."; 
+        btn.disabled = true;
+
+        // Build the new permission map from the toggles
+        const newPerms = {};
+        document.querySelectorAll('.perm-toggle').forEach(toggle => {
+            const bId = toggle.getAttribute('data-branch');
+            const key = toggle.getAttribute('data-key');
+            if (!newPerms[bId]) newPerms[bId] = {};
+            newPerms[bId][key] = toggle.checked; // true or false
+        });
+
+        try {
+            const db = firebase.firestore();
+            const activeUserPhone = localStorage.getItem("activeUserPhone");
+            
+            await db.collection('companies').doc(activeUserPhone)
+                    .collection('staff').doc(currentPermissionStaffId)
+                    .set({ permissions: newPerms }, { merge: true });
+                    
+            document.getElementById('permission-modal').style.display = 'none';
+            // Note: The onSnapshot listener will silently update the local array in the background!
+        } catch(e) {
+            console.error("Error saving permissions:", e);
+            alert("Database Error: " + e.message);
+        } finally {
+            btn.innerHTML = `<i class="bi bi-check2-circle"></i> Save Permissions`; 
+            btn.disabled = false;
+        }
     }
 </script>
 
