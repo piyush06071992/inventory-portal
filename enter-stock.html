@@ -609,10 +609,19 @@ function handleDropdownAdd(elemId) {
         }
     }
 
-    // --- SMART SEARCH LOGIC ---
+  // --- SMART SEARCH LOGIC ---
     function handleSmartSearch() {
         const query = document.getElementById('barcode').value.trim().toLowerCase();
         const suggestionsBox = document.getElementById('search-suggestions');
+        
+        // Instantly clear the form so old item data doesn't mix with a new scan/search
+        ['item-name', 'expiry-date', 'qty', 'cost-per', 'total-cost', 'profit-pct', 'msp'].forEach(id => document.getElementById(id).value = "");
+        document.getElementById('category').selectedIndex = 0;
+        document.getElementById('subcategory').innerHTML = '<option value="">Select Category First</option>';
+        document.getElementById('unit').selectedIndex = 0;
+        document.getElementById('dynamic-params').innerHTML = "";
+        document.getElementById('tax-split').style.display = 'none';
+        for (const key of Object.keys(savedShopParams)) { addParam(key, ""); }
         
         if (query.length < 2) { suggestionsBox.style.display = 'none'; return; }
         
