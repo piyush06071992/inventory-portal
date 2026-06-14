@@ -780,7 +780,7 @@ document.getElementById('category').selectedIndex = 0;
     }
 
     // --- 5. CART & FIREBASE SAVING ---
- function addItemToBill() {
+ async function addItemToBill() {
         // Collect Dynamic Parameters & Train Global Memory Instantly
         let customData = {};
         let paramsChanged = false; // Track if we learned a new parameter
@@ -799,16 +799,39 @@ document.getElementById('category').selectedIndex = 0;
             }
         });
 
-        // FORCE SAVE TO FIREBASE IMMEDIATELY SO IT'S NOT LOST ON PAGE REFRESH
+        // ENTERPRISE CONCURRENCY: THE "TRAFFIC LIGHT" TRANSACTION
         if (paramsChanged || taxonomyChanged) {
-            let updatePayload = {};
-            if (paramsChanged) updatePayload.customParams = savedShopParams;
-            if (taxonomyChanged) updatePayload.shopTaxonomy = shopTaxonomy;
+            const db = firebase.firestore();
+            const settingsRef = db.collection('companies').doc(activeUserPhone).collection('settings').doc('params');
             
-            firebase.firestore().collection('companies').doc(activeUserPhone).collection('settings').doc('params').set(
-                updatePayload, { merge: true }
-            );
-            taxonomyChanged = false; // Reset trigger
+            try {
+                await db.runTransaction(async (t) => {
+                    const doc = await t.get(settingsRef);
+                    let dbParams = doc.exists && doc.data().customParams ? doc.data().customParams : {};
+                    let dbTaxonomy = doc.exists && doc.data().shopTaxonomy ? doc.data().shopTaxonomy : {};
+
+                    // Safely merge local staff changes INTO the master database memory
+                    for (const [k, arr] of Object.entries(savedShopParams)) {
+                        if (!dbParams[k]) dbParams[k] = [];
+                        arr.forEach(val => { if (!dbParams[k].includes(val)) dbParams[k].push(val); });
+                    }
+                    
+                    for (const [cat, subArr] of Object.entries(shopTaxonomy)) {
+                        if (!dbTaxonomy[cat]) dbTaxonomy[cat] = [];
+                        subArr.forEach(sub => { if (!dbTaxonomy[cat].includes(sub)) dbTaxonomy[cat].push(sub); });
+                    }
+
+                    t.set(settingsRef, { customParams: dbParams, shopTaxonomy: dbTaxonomy }, { merge: true });
+                    
+                    // Update this device's local memory to match the perfectly merged server
+                    savedShopParams = dbParams;
+                    shopTaxonomy = dbTaxonomy;
+                });
+                taxonomyChanged = false;
+                paramsChanged = false;
+            } catch (err) {
+                console.error("Transaction failed: ", err);
+            }
         }
 
         // AUTO-SKU GENERATOR
@@ -919,11 +942,9 @@ function clearItemForm() {
                 billNum: billNum, amount: grandTotal, type: 'Purchase', billImageUrl: imageUrl, date: new Date().toISOString()
             });
 
-           const batch = db.batch();
+          const batch = db.batch();
             
-            // Save newly learned custom parameters to shop settings
-            const settingsRef = db.collection('companies').doc(activeUserPhone).collection('settings').doc('params');
-            batch.set(settingsRef, { customParams: savedShopParams }, { merge: true });
+            // (Settings are already safely merged via Transactions in addItemToBill, skipping here to prevent blind overwrites!)
             
             // Save Inventory to Branch
             for (const item of currentBillItems) {
