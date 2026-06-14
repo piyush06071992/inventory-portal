@@ -318,9 +318,10 @@
    let shopName = "Store"; // Will be fetched dynamically from Firebase
 
     let liveInventory = [];
-    let currentCustomerPending = 0;
+ let currentCustomerPending = 0;
     let udhaarPaidNow = 0;
     let searchTimeout = null;
+    let currentKhataNumber = null;
     let shopTaxonomy = {};
     let cart = [];
     let heldDrafts = [];
@@ -642,9 +643,9 @@ function renderCart() {
 
 // --- CUSTOMER SEARCH & KHATA LOGIC ---
     function searchCustomer(type) {
-        // Instantly hide the pending udhaar badge as soon as the user clears or edits the fields
         document.getElementById('udhaar-badge').style.display = 'none';
         currentCustomerPending = 0;
+        currentKhataNumber = null;
 
         clearTimeout(searchTimeout);
         searchTimeout = setTimeout(async () => {
@@ -652,55 +653,66 @@ function renderCart() {
             const phoneVal = document.getElementById('customer-phone').value.trim();
             const dropdown = document.getElementById('customer-dropdown');
             
-            if (nameVal.length < 3 && phoneVal.length < 4) {
+            // Allow search if name is 3+ chars, phone is 4+ chars, OR Khata Number is 1+ chars (in phone field)
+            if (nameVal.length < 3 && phoneVal.length < 1) {
                 dropdown.style.display = 'none'; return;
             }
 
             try {
                 const db = firebase.firestore();
                 let query = db.collection('companies').doc(activeUserPhone).collection('customers');
+                let snap;
                 
-                // AUTO-FILL ENGINE: If they typed exactly 10 digits, do an exact search instantly
                 if (type === 'phone' && phoneVal.length === 10) {
                     const exactSnap = await query.where('phone', '==', phoneVal).get();
                     if (!exactSnap.empty) {
                         const c = exactSnap.docs[0].data();
-                        selectCustomer(c.name, c.phone, c.totalUdhaar || 0);
-                        return; // Auto-fill successful, skip the dropdown entirely!
+                        selectCustomer(c.name, c.phone, c.totalUdhaar || 0, c.khataNumber || null);
+                        return; 
                     }
                 }
                 
-                if (type === 'phone' && phoneVal.length >= 4) {
-                    query = query.where('phone', '>=', phoneVal).where('phone', '<=', phoneVal + '\uf8ff');
-                } else if (type === 'name' && nameVal.length >= 3) {
-                    query = query.where('name', '>=', nameVal).where('name', '<=', nameVal + '\uf8ff');
+                // KHATA NUMBER SEARCH: If they type 1 to 4 digits in phone field, search Khata first
+                if (type === 'phone' && phoneVal.length > 0 && phoneVal.length <= 5) {
+                    snap = await query.where('khataNumber', '==', phoneVal).limit(5).get();
+                    if (snap.empty && phoneVal.length >= 4) {
+                        snap = await query.where('phone', '>=', phoneVal).where('phone', '<=', phoneVal + '\uf8ff').limit(5).get();
+                    }
+                } 
+                else if (type === 'phone' && phoneVal.length >= 4) {
+                    snap = await query.where('phone', '>=', phoneVal).where('phone', '<=', phoneVal + '\uf8ff').limit(5).get();
+                } 
+                else if (type === 'name' && nameVal.length >= 3) {
+                    snap = await query.where('name', '>=', nameVal).where('name', '<=', nameVal + '\uf8ff').limit(5).get();
                 }
-                
-                const snap = await query.limit(5).get();
-                if (snap.empty) { dropdown.style.display = 'none'; return; }
+
+                if (!snap || snap.empty) { dropdown.style.display = 'none'; return; }
                 
                 dropdown.innerHTML = "";
                 snap.forEach(doc => {
                     const c = doc.data();
+                    const kNumStr = c.khataNumber ? `[Khata #${c.khataNumber}] ` : ``;
                     dropdown.innerHTML += `
-                        <div style="padding:10px; border-bottom:1px solid var(--border); cursor:pointer; text-align:left;" onclick="selectCustomer('${c.name}', '${c.phone}', ${c.totalUdhaar || 0})">
-                            <div style="font-weight:900; font-size:14px; color:var(--navy);">${c.name}</div>
-                            <div style="font-size:12px; color:var(--text-light); font-weight:700;">${c.phone} | Khata: ₹${(c.totalUdhaar || 0).toFixed(2)}</div>
+                        <div style="padding:10px; border-bottom:1px solid var(--border); cursor:pointer; text-align:left;" onclick="selectCustomer('${c.name}', '${c.phone}', ${c.totalUdhaar || 0}, '${c.khataNumber || ''}')">
+                            <div style="font-weight:900; font-size:14px; color:var(--navy);">${kNumStr}${c.name}</div>
+                            <div style="font-size:12px; color:var(--text-light); font-weight:700;">${c.phone} | Due: ₹${(c.totalUdhaar || 0).toFixed(2)}</div>
                         </div>`;
                 });
                 dropdown.style.display = 'block';
             } catch (e) { console.error("Search error:", e); }
-        }, 400); // 400ms delay to prevent spamming Firebase while typing
+        }, 400);
     }
 
-    function selectCustomer(name, phone, pending) {
+    function selectCustomer(name, phone, pending, khataNum) {
         document.getElementById('customer-name').value = name;
         document.getElementById('customer-phone').value = phone;
         document.getElementById('customer-dropdown').style.display = 'none';
         
+        currentKhataNumber = khataNum || null;
         currentCustomerPending = parseFloat(pending) || 0;
-        if (currentCustomerPending > 0) {
-            document.getElementById('pending-udhaar-amt').innerText = `₹${currentCustomerPending.toFixed(2)}`;
+        
+        if (currentCustomerPending > 0 || currentKhataNumber) {
+            document.getElementById('udhaar-badge').innerHTML = currentKhataNumber ? `Khata <span style="color:var(--navy);">#${currentKhataNumber}</span> | Due: <span id="pending-udhaar-amt" style="color:var(--danger);">₹${currentCustomerPending.toFixed(2)}</span>` : `Pending Udhaar: <span id="pending-udhaar-amt" style="color:var(--danger);">₹${currentCustomerPending.toFixed(2)}</span>`;
             document.getElementById('udhaar-badge').style.display = 'block';
         } else { document.getElementById('udhaar-badge').style.display = 'none'; }
     }
@@ -806,44 +818,77 @@ document.getElementById('udhaar-modal').style.display = 'none';
             paymentMode: mode, customerName: finalSaleData.name, customerPhone: finalSaleData.phone
         };
 
-        // IF UDHAAR: Update Customer Ledger & Master Record
-        if (mode === 'UDHAAR') {
-            finalSaleData.cashPaid = udhaarPaidNow;
-            finalSaleData.udhaarAdded = finalSaleData.tot - udhaarPaidNow;
-            finalSaleData.newTotalKhata = currentCustomerPending + finalSaleData.udhaarAdded;
-            
-            saleObj.cashPaid = finalSaleData.cashPaid;
-            saleObj.udhaarAdded = finalSaleData.udhaarAdded;
-
-            const custRef = db.collection('companies').doc(activeUserPhone).collection('customers').doc(finalSaleData.phone);
-            batch.set(custRef, {
-                name: finalSaleData.name, phone: finalSaleData.phone,
-                totalUdhaar: firebase.firestore.FieldValue.increment(finalSaleData.udhaarAdded),
-                lastUpdated: firebase.firestore.FieldValue.serverTimestamp()
-            }, { merge: true });
-
-            const ledgerRef = custRef.collection('ledger').doc();
-            batch.set(ledgerRef, {
-                timestamp: firebase.firestore.FieldValue.serverTimestamp(),
-                type: 'PURCHASE', billAmount: finalSaleData.tot,
-                amountPaid: finalSaleData.cashPaid, udhaarAdded: finalSaleData.udhaarAdded,
-                note: `Bill generated at POS`
-            });
-        }
-
-        batch.set(saleRef, saleObj);
-
         try {
+            // KHATA NUMBER AUTO-ASSIGN ENGINE
+            if (finalSaleData.name && finalSaleData.phone && finalSaleData.phone.length === 10) {
+                const custRef = db.collection('companies').doc(activeUserPhone).collection('customers').doc(finalSaleData.phone);
+                
+                // If they don't have a Khata number (New Customer OR Old Customer upgrading)
+                if (!currentKhataNumber) {
+                    const cDoc = await custRef.get();
+                    if (cDoc.exists && cDoc.data().khataNumber) {
+                        currentKhataNumber = cDoc.data().khataNumber;
+                    } else {
+                        // Generate the next Khata Number sequentially
+                        const kSettingsRef = db.collection('companies').doc(activeUserPhone).collection('settings').doc('khata');
+                        currentKhataNumber = await db.runTransaction(async (t) => {
+                            const kDoc = await t.get(kSettingsRef);
+                            let nextNum = 1001;
+                            if (kDoc.exists && kDoc.data().lastNumber) nextNum = kDoc.data().lastNumber + 1;
+                            t.set(kSettingsRef, { lastNumber: nextNum }, { merge: true });
+                            return nextNum.toString();
+                        });
+                    }
+                }
+
+                saleObj.khataNumber = currentKhataNumber;
+                finalSaleData.khataNumber = currentKhataNumber; // Save for receipts
+
+                let custUpdate = {
+                    name: finalSaleData.name, phone: finalSaleData.phone,
+                    khataNumber: currentKhataNumber,
+                    lastUpdated: firebase.firestore.FieldValue.serverTimestamp()
+                };
+
+                // IF UDHAAR: Process the Ledger Math
+                if (mode === 'UDHAAR') {
+                    finalSaleData.cashPaid = udhaarPaidNow;
+                    finalSaleData.udhaarAdded = finalSaleData.tot - udhaarPaidNow;
+                    finalSaleData.newTotalKhata = currentCustomerPending + finalSaleData.udhaarAdded;
+                    
+                    saleObj.cashPaid = finalSaleData.cashPaid;
+                    saleObj.udhaarAdded = finalSaleData.udhaarAdded;
+
+                    custUpdate.totalUdhaar = firebase.firestore.FieldValue.increment(finalSaleData.udhaarAdded);
+
+                    const ledgerRef = custRef.collection('ledger').doc();
+                    batch.set(ledgerRef, {
+                        timestamp: firebase.firestore.FieldValue.serverTimestamp(),
+                        type: 'PURCHASE', billAmount: finalSaleData.tot,
+                        amountPaid: finalSaleData.cashPaid, udhaarAdded: finalSaleData.udhaarAdded,
+                        note: `Bill generated at POS`
+                    });
+                }
+                
+                batch.set(custRef, custUpdate, { merge: true });
+            } else if (mode === 'UDHAAR') {
+                throw new Error("Udhaar requires a valid Name and 10-digit Phone Number.");
+            }
+
+            batch.set(saleRef, saleObj);
             await batch.commit();
+            
+            // Background sync successful. Show Success UI.
             cart = []; document.getElementById('customer-name').value = ""; document.getElementById('customer-phone').value = ""; 
-            document.getElementById('udhaar-badge').style.display = 'none'; currentCustomerPending = 0; renderCart();
+            document.getElementById('udhaar-badge').style.display = 'none'; currentCustomerPending = 0; currentKhataNumber = null; renderCart();
             
             // Build Thermal Receipt HTML
             document.getElementById('r-date').innerText = finalSaleData.date;
             
-            const rCust = document.getElementById('r-customer-info');
+          const rCust = document.getElementById('r-customer-info');
             if (finalSaleData.name || finalSaleData.phone) {
-                rCust.innerText = `Customer: ${finalSaleData.name} ${finalSaleData.phone}`.trim();
+                let kStr = finalSaleData.khataNumber ? ` [Khata #${finalSaleData.khataNumber}]` : ``;
+                rCust.innerText = `Customer: ${finalSaleData.name} ${finalSaleData.phone}${kStr}`.trim();
                 rCust.style.display = 'block';
             } else { rCust.style.display = 'none'; }
 
@@ -863,6 +908,7 @@ document.getElementById('udhaar-modal').style.display = 'none';
     function sendWhatsApp() {
         let text = `*${shopName.toUpperCase()} RECEIPT*\nDate: ${finalSaleData.date}\n`;
         if (finalSaleData.name) text += `Customer: ${finalSaleData.name}\n`;
+        if (finalSaleData.khataNumber) text += `Khata No: ${finalSaleData.khataNumber}\n`;
         text += `-------------------\n`;
         finalSaleData.items.forEach(i => { text += `${i.cartQty}x ${i.name} - Rs.${(i.msp * i.cartQty).toFixed(0)}\n`; });
         text += `-------------------\n*Bill Total: Rs.${finalSaleData.tot.toFixed(0)}*\n`;
