@@ -125,9 +125,10 @@
 
 <div class="pos-header">
     <h1><span id="top-shop-name">Store</span> <span style="font-size:12px; color:var(--text-light); font-weight:600;" id="active-branch-name"></span></h1>
-    <div class="header-actions">
+ <div class="header-actions">
         <button class="btn-nav btn-hold" onclick="holdCart()"><i class="bi bi-pause-circle-fill"></i> Hold</button>
         <button class="btn-nav" onclick="showDrafts()"><i class="bi bi-list-ul"></i> Drafts</button>
+        <button class="btn-nav" onclick="showRecentSales()" style="background:#e0f2fe; color:#0284c7; border-color:#bae6fd;"><i class="bi bi-clock-history"></i> Sales</button>
         <a href="javascript:history.back()" class="btn-nav"><i class="bi bi-x-lg"></i> Exit</a>
     </div>
 </div>
@@ -225,6 +226,14 @@
         <h2 style="margin:0 0 15px 0; font-size:20px; font-weight:900;">Held Bills</h2>
         <div id="draft-list" style="text-align:left; max-height:200px; overflow-y:auto; margin-bottom:15px;"></div>
         <button class="btn-modal-action" onclick="document.getElementById('drafts-modal').style.display='none'">Close</button>
+    </div>
+</div>
+
+<div class="modal-overlay" id="sales-history-modal">
+    <div class="modal-card" style="max-width: 600px;">
+        <button onclick="document.getElementById('sales-history-modal').style.display='none'" style="position:absolute; top:15px; right:15px; background:none; border:none; font-size:20px; cursor:pointer;"><i class="bi bi-x-lg"></i></button>
+        <h2 style="margin:0 0 15px 0; font-size:20px; font-weight:900;">Recent Sales</h2>
+        <div id="sales-history-list" style="text-align:left; max-height:400px; overflow-y:auto; margin-bottom:15px; padding-right:5px;"></div>
     </div>
 </div>
 
@@ -505,7 +514,46 @@ function renderCart() {
         });
         document.getElementById('drafts-modal').style.display = 'flex';
     }
-    function restoreDraft(i) { cart = [...heldDrafts[i].items]; heldDrafts.splice(i, 1); renderCart(); document.getElementById('drafts-modal').style.display = 'none'; }
+  function restoreDraft(i) { cart = [...heldDrafts[i].items]; heldDrafts.splice(i, 1); renderCart(); document.getElementById('drafts-modal').style.display = 'none'; }
+
+    // --- SALES HISTORY ---
+    async function showRecentSales() {
+        const list = document.getElementById('sales-history-list');
+        list.innerHTML = "<p style='text-align:center; color:var(--text-light);'>Fetching recent sales...</p>";
+        document.getElementById('sales-history-modal').style.display = 'flex';
+        
+        try {
+            const db = firebase.firestore();
+            const snap = await db.collection('companies').doc(activeUserPhone).collection('branches').doc(activeBranchId).collection('sales')
+                .orderBy('timestamp', 'desc').limit(20).get();
+            
+            if (snap.empty) {
+                list.innerHTML = "<p style='text-align:center; color:var(--text-light);'>No recent sales found.</p>";
+                return;
+            }
+            
+            list.innerHTML = "";
+            snap.forEach(doc => {
+                const data = doc.data();
+                const dateObj = data.timestamp ? data.timestamp.toDate() : new Date();
+                const timeString = dateObj.toLocaleString('en-IN', { hour: '2-digit', minute: '2-digit', day: '2-digit', month: 'short' });
+                const itemsText = data.items.map(i => `${i.cartQty}x ${i.name}`).join(', ');
+                
+                list.innerHTML += `
+                    <div style="background:#f8fafc; padding:12px; border:1px solid var(--border); border-radius:10px; margin-bottom:10px;">
+                        <div style="display:flex; justify-content:space-between; margin-bottom:5px;">
+                            <span style="font-weight:900; color:var(--navy);">₹${(data.totalAmount || 0).toFixed(2)}</span>
+                            <span style="font-size:11px; font-weight:700; background:var(--border); padding:2px 6px; border-radius:4px;">${data.paymentMode || 'N/A'}</span>
+                        </div>
+                        <div style="font-size:12px; color:var(--text-light); margin-bottom:5px; white-space:nowrap; overflow:hidden; text-overflow:ellipsis;">${itemsText}</div>
+                        <div style="font-size:10px; font-weight:800; color:#94a3b8;">${timeString}</div>
+                    </div>`;
+            });
+        } catch (e) {
+            console.error("Error fetching sales:", e);
+            list.innerHTML = "<p style='color:red; text-align:center;'>Failed to load sales.</p>";
+        }
+    }
 
     // --- PAYMENT MODALS ---
     function openCashModal() {
