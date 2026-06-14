@@ -16,19 +16,28 @@
     <style>
         body { font-family: 'Inter', sans-serif; background-color: #f1f5f9; margin: 0; padding: 0; }
         .dashboard-layout { display: flex; flex-direction: column; align-items: center; justify-content: flex-start; min-height: 100vh; width: 100%; padding: 20px 10px; box-sizing: border-box; }
-        
         .shop-header-card { width: 100%; max-width: 650px; background: linear-gradient(135deg, #1e3a8a, #0f172a); color: #ffffff; padding: 25px 20px; border-radius: 16px; text-align: center; box-shadow: 0 10px 25px rgba(30, 58, 138, 0.15); margin-bottom: 20px; box-sizing: border-box; }
         .shop-header-card h1 { margin: 0; font-size: 24px; font-weight: 700; letter-spacing: 0.5px; text-transform: uppercase; }
         .shop-header-card p { margin: 5px 0 0 0; font-size: 15px; color: #93c5fd; font-weight: 600; }
-        
         .menu-grid-container { width: 100%; max-width: 650px; background: #ffffff; border-radius: 16px; padding: 24px; box-shadow: 0 4px 20px rgba(0, 0, 0, 0.03); box-sizing: border-box; }
         
-        .grid-row { display: grid; grid-template-columns: 1fr; gap: 16px; margin-bottom: 24px; }
+        .btn-pos-huge { width: 100%; background: linear-gradient(135deg, #10b981, #059669); color: #ffffff; border: none; border-radius: 14px; padding: 22px; font-size: 20px; font-weight: 700; letter-spacing: 0.5px; cursor: pointer; display: flex; align-items: center; justify-content: center; gap: 12px; box-shadow: 0 8px 20px rgba(16, 185, 129, 0.3); transition: all 0.2s ease; margin-bottom: 20px; }
+        .btn-pos-huge:hover { transform: translateY(-2px); box-shadow: 0 12px 24px rgba(16, 185, 129, 0.4); }
+        .grid-row { display: grid; grid-template-columns: repeat(2, 1fr); gap: 16px; margin-bottom: 24px; }
+        @media (max-width: 480px) { .grid-row { grid-template-columns: 1fr; gap: 12px; } }
         
-        .btn-dashboard-item { border: none; border-radius: 16px; padding: 20px; font-size: 16px; font-weight: 700; cursor: pointer; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 10px; color: #ffffff; transition: all 0.2s ease; box-shadow: 0 4px 12px rgba(0, 0, 0, 0.05); }
-        .btn-dashboard-item i { font-size: 28px; }
-        .btn-dashboard-item:hover { transform: translateY(-2px); filter: brightness(1.05); box-shadow: 0 8px 15px rgba(0, 0, 0, 0.1); }
+        .btn-dashboard-item { border: none; border-radius: 12px; padding: 16px; font-size: 15px; font-weight: 600; cursor: pointer; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 8px; color: #ffffff; transition: all 0.2s ease; box-shadow: 0 4px 12px rgba(0, 0, 0, 0.05); }
+        .btn-dashboard-item i { font-size: 24px; }
+        .btn-dashboard-item:hover { transform: translateY(-2px); filter: brightness(1.05); }
+        
+        .color-blue { background: linear-gradient(135deg, #3b82f6, #1d4ed8); }
         .color-indigo { background: linear-gradient(135deg, #6366f1, #4338ca); }
+        .color-purple { background: linear-gradient(135deg, #a855f7, #7e22ce); }
+        .color-orange { background: linear-gradient(135deg, #f97316, #c2410c); }
+        .color-teal { background: linear-gradient(135deg, #14b8a6, #0f766e); }
+        .color-red { background: linear-gradient(135deg, #ef4444, #b91c1c); }
+        .color-emerald { background: linear-gradient(135deg, #10b981, #047857); }
+        .color-slate { background: linear-gradient(135deg, #64748b, #334155); }
         
         .btn-logout-panel { width: 100%; background-color: #f1f5f9; color: #64748b; border: 1px solid #e2e8f0; border-radius: 10px; padding: 14px; font-size: 15px; font-weight: 600; cursor: pointer; display: flex; align-items: center; justify-content: center; gap: 8px; transition: all 0.2s ease; }
         .btn-logout-panel:hover { background-color: #fee2e2; color: #ef4444; border-color: #fca5a5; }
@@ -42,8 +51,6 @@
         .submenu-btn { width: 100%; background: #ffffff; border: 2px solid #e2e8f0; color: #1e293b; padding: 18px; border-radius: 16px; font-size: 16px; font-weight: 700; text-align: left; margin-bottom: 12px; cursor: pointer; display: flex; align-items: center; gap: 15px; transition: all 0.2s; box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.05);}
         .submenu-btn:hover { border-color: #3b82f6; background: #f8fafc; transform: translateY(-2px); box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1); }
         .submenu-btn i { font-size: 24px; color: #3b82f6; }
-        .submenu-btn.disabled { opacity: 0.6; border-color: #e2e8f0; background: #f8fafc; cursor: not-allowed; }
-        .submenu-btn.disabled i { color: #94a3b8; }
     </style>
 </head>
 <body>
@@ -55,11 +62,8 @@
     </div>
 
     <div class="menu-grid-container">
-        <div class="grid-row">
-            <button class="btn-dashboard-item color-indigo" onclick="openStockMenu()">
-                <i class="bi bi-box-seam-fill"></i><span>Manage Stock</span>
-            </button>
-        </div>
+        <div id="pos-container"></div>
+        <div class="grid-row" id="dynamic-grid"></div>
 
         <button class="btn-logout-panel" onclick="handleLogout()">
             <i class="bi bi-box-arrow-left"></i> Logout Securely
@@ -69,22 +73,20 @@
 
 <div class="modal-overlay" id="stock-menu-modal">
     <div class="modal-card">
-        <button class="modal-close" onclick="closeStockMenu()"><i class="bi bi-x-lg"></i></button>
+        <button class="modal-close" onclick="closeModal('stock-menu-modal')"><i class="bi bi-x-lg"></i></button>
         <h2 style="margin-top:0; color:#1e3a8a; font-size:20px; margin-bottom: 20px;"><i class="bi bi-box-seam-fill"></i> Manage Stock</h2>
-        
-        <button class="submenu-btn" id="btn-enter-stock" onclick="goToEnterStock()">
+        <button class="submenu-btn" id="btn-enter-stock" onclick="window.location.href='/enter-stock.html'">
             <i class="bi bi-plus-circle-fill"></i> Enter New Stock
-            <span id="lock-icon" style="margin-left:auto; display:none; color:#ef4444;"><i class="bi bi-lock-fill"></i></span>
         </button>
-        
-      <button class="submenu-btn" onclick="window.location.href='/viewstock.html'">
+        <button class="submenu-btn" onclick="window.location.href='/viewstock.html'">
             <i class="bi bi-eye-fill"></i> View Stock
         </button>
     </div>
 </div>
 
 <script>
- const firebaseConfig = {
+    // HARDCODED DB KEYS SO STAFF DASHBOARD LOADS INSTANTLY AND DOESNT BLINK OUT
+    const firebaseConfig = {
         apiKey: "AIzaSyBuYDgbmycHMjHGupeoZV2lvv_Z0n7WyoY",
         authDomain: "business-saarthi.firebaseapp.com",
         databaseURL: "https://business-saarthi-default-rtdb.firebaseio.com",
@@ -96,40 +98,64 @@
     if (!firebase.apps.length) {
         firebase.initializeApp(firebaseConfig);
     }
+</script>
 
-    let hasEnterStockPermission = false;
+<script src="/auth.js"></script>
 
-    // Secure Logout Function
+<script>
+    function openModal(id) { document.getElementById(id).style.display = 'flex'; }
+    function closeModal(id) { document.getElementById(id).style.display = 'none'; }
+
+    function renderStaffDashboard(aggregatedPerms) {
+        const grid = document.getElementById('dynamic-grid');
+        const posContainer = document.getElementById('pos-container');
+        grid.innerHTML = ""; posContainer.innerHTML = "";
+        let hasAnyPerms = false;
+
+        for (const [key, config] of Object.entries(DASHBOARD_REGISTRY)) {
+            // THE GATEKEEPER: Only draw the button if their permission is TRUE
+            if (!aggregatedPerms[key]) continue; 
+            
+            hasAnyPerms = true;
+            let action = config.isModal ? `openModal('${config.modalId}')` : `window.location.href='${config.url}'`;
+            
+            if (key === 'pos') {
+                posContainer.innerHTML = `<button class="btn-pos-huge" onclick="${action}">
+                    <i class="bi ${config.icon}"></i> ${config.label}
+                </button>`;
+            } else {
+                grid.innerHTML += `<button class="btn-dashboard-item ${config.color}" onclick="${action}">
+                    <i class="bi ${config.icon}"></i><span>${config.label}</span>
+                </button>`;
+            }
+        }
+
+        if (!hasAnyPerms) {
+            grid.innerHTML = `<p style="grid-column: 1 / -1; text-align: center; color: #64748b; font-size:14px; background:#f8fafc; padding:20px; border-radius:12px; border:1px dashed #cbd5e1;">You currently have no dashboard permissions enabled. Please ask the owner to grant access.</p>`;
+        }
+    }
+
     function handleLogout(customMessage = null) {
         if(customMessage) alert(customMessage);
         localStorage.clear();
         sessionStorage.clear();
-        firebase.auth().signOut().then(() => {
-            window.location.replace('/login.html'); 
-        }).catch(() => {
-            window.location.replace('/login.html');
-        });
+        firebase.auth().signOut().then(() => window.location.replace('/login.html'))
+            .catch(() => window.location.replace('/login.html'));
     }
 
-    // MASTER SECURITY & INITIALIZATION LISTENER
     firebase.auth().onAuthStateChanged((user) => {
-        
-        // LAYER 1: DIRECT URL BYPASS PROTECTION
         if (!user) return window.location.replace('/login.html');
 
-        const activeUserPhone = localStorage.getItem("activeUserPhone"); // Shop Owner ID
-        const activeStaffId = localStorage.getItem("activeStaffId");     // The logged-in Staff ID
-        const myLoginTime = localStorage.getItem("myLoginTime");         // Unique Session Timestamp
+        const activeUserPhone = localStorage.getItem("activeUserPhone");
+        const activeStaffId = localStorage.getItem("activeStaffId");
+        const myLoginTime = localStorage.getItem("myLoginTime");
 
-        // Failsafe if local storage was cleared manually
         if (!activeUserPhone || !activeStaffId || !myLoginTime) {
-            handleLogout();
-            return;
+            handleLogout(); return;
         }
 
         const db = firebase.firestore();
 
-        // 1. Fetch Shop Name
         db.collection('companies').doc(activeUserPhone).get().then((doc) => {
             if (doc.exists && doc.data().businessName) {
                 document.getElementById("display-shop-name").innerText = doc.data().businessName;
@@ -138,73 +164,44 @@
             }
         });
 
-        // 2. LAYER 2: MULTI-DEVICE & PERMISSION PROTECTION (Real-time Snapshot)
         db.collection('companies').doc(activeUserPhone).collection('staff').doc(activeStaffId)
         .onSnapshot((doc) => {
             if (doc.exists) {
                 const data = doc.data();
 
-                // Multi-Device Protection: IGNORING STALE CACHE BY USING ">" instead of "!=="
-                // This stops Firebase from kicking you out with old cached timestamps!
-            // New Logic: Only kick if the difference is greater than 5 seconds
-const dbTime = new Date(data.lastLoginTime).getTime();
-const localTime = new Date(myLoginTime).getTime();
+                // Multi-Device Protection with 5-Second Buffer to prevent false kick-outs!
+                const dbTime = new Date(data.lastLoginTime).getTime();
+                const localTime = new Date(myLoginTime).getTime();
+                if (data.lastLoginTime && (dbTime - localTime) > 5000) {
+                    handleLogout("SECURITY ALERT: New login detected. Session closed.");
+                    return;
+                }
 
-if (data.lastLoginTime && (dbTime - localTime) > 5000) {
-    handleLogout("SECURITY ALERT: New login detected. Session closed.");
-}
-
-                // Termination Protection: Auto-kick if Admin terminates them
                 if (data.status === 'Terminated') {
                     handleLogout("Your access has been revoked by the administrator.");
                     return;
                 }
 
-                // Update UI details
                 document.getElementById('display-staff-name').innerHTML = `<i class="bi bi-person-badge-fill"></i> Welcome, ${data.name}`;
 
-                // LIVE PERMISSION CHECK
-                hasEnterStockPermission = (data.permissions && data.permissions.canEnterStock === true);
-                
-                // Real-time UI unlock! If they are looking at the menu, unlock it instantly.
-                if (document.getElementById('stock-menu-modal').style.display === 'flex') {
-                    openStockMenu(); 
+                // Aggregate permissions across all branches assigned to this staff member
+                let aggregatedPerms = {};
+                if (data.permissions) {
+                    for (const branchId in data.permissions) {
+                        for (const [key, val] of Object.entries(data.permissions[branchId])) {
+                            if (val === true) aggregatedPerms[key] = true;
+                        }
+                    }
                 }
+
+                // Draw the dynamic dashboard based on their specific permissions!
+                renderStaffDashboard(aggregatedPerms);
 
             } else {
                 handleLogout("Staff record no longer exists. Contact Administrator.");
             }
         });
     });
-
-    // Modal Functions
-    function openStockMenu() {
-        document.getElementById('stock-menu-modal').style.display = 'flex';
-        
-        // Visually update the button based on real-time permissions
-        const btn = document.getElementById('btn-enter-stock');
-        const lock = document.getElementById('lock-icon');
-        
-        if (!hasEnterStockPermission) {
-            btn.classList.add('disabled');
-            lock.style.display = 'block';
-        } else {
-            btn.classList.remove('disabled');
-            lock.style.display = 'none';
-        }
-    }
-    
-    function closeStockMenu() {
-        document.getElementById('stock-menu-modal').style.display = 'none';
-    }
-
-    function goToEnterStock() {
-        if (hasEnterStockPermission) {
-            window.location.href = '/enter-stock.html';
-        } else {
-            alert("ACCESS DENIED: You are not authorized to enter new stock. Please contact your Administrator to request permission.");
-        }
-    }
 </script>
 
 </body>
