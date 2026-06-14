@@ -866,6 +866,8 @@ document.getElementById('udhaar-modal').style.display = 'none';
         const saleRef = db.collection('companies').doc(activeUserPhone).collection('branches').doc(activeBranchId).collection('sales').doc();
         
         finalSaleData.paymentMode = mode;
+        finalSaleData.receiptId = saleRef.id; // Save ID to generate the web link
+        
         let saleObj = {
             timestamp: firebase.firestore.FieldValue.serverTimestamp(),
             items: cart, totalAmount: finalSaleData.tot, totalCost: saleCost, totalGst: finalSaleData.gst, profit: finalSaleData.tot - saleCost,
@@ -959,21 +961,25 @@ document.getElementById('udhaar-modal').style.display = 'none';
 
 // --- WHATSAPP ENGINE ---
     function sendWhatsApp() {
-        let text = `*${shopName.toUpperCase()} RECEIPT*\nDate: ${finalSaleData.date}\n`;
-        if (finalSaleData.name) text += `Customer: ${finalSaleData.name}\n`;
-        if (finalSaleData.khataNumber) text += `Khata No: ${finalSaleData.khataNumber}\n`;
-        text += `-------------------\n`;
-        finalSaleData.items.forEach(i => { text += `${i.cartQty}x ${i.name} - Rs.${(i.msp * i.cartQty).toFixed(0)}\n`; });
-        text += `-------------------\n*Bill Total: Rs.${finalSaleData.tot.toFixed(0)}*\n`;
+        let text = `*${shopName.toUpperCase()}*\n`;
+        text += `Dear ${finalSaleData.name || 'Customer'},\n`;
+        text += `Your bill of Rs.${finalSaleData.tot.toFixed(0)} is ready.\n\n`;
         
         if (finalSaleData.paymentMode === 'UDHAAR') {
-            text += `\n*-- KHATA / UDHAAR --*\n`;
-            if (finalSaleData.cashPaid > 0) text += `Cash Paid Now: Rs.${finalSaleData.cashPaid.toFixed(0)}\n`;
+            text += `*-- KHATA DETAILS --*\n`;
+            if (finalSaleData.khataNumber) text += `Khata No: ${finalSaleData.khataNumber}\n`;
+            if (finalSaleData.cashPaid > 0) text += `Paid Now: Rs.${finalSaleData.cashPaid.toFixed(0)}\n`;
             text += `Added to Khata: Rs.${finalSaleData.udhaarAdded.toFixed(0)}\n`;
-            text += `*Total Pending: Rs.${finalSaleData.newTotalKhata.toFixed(0)}*\n`;
+            text += `*Total Pending: Rs.${finalSaleData.newTotalKhata.toFixed(0)}*\n\n`;
         }
         
-        text += `\nThank you for shopping with us!`;
+        // Generate the dynamic link using your actual domain
+        const domain = window.location.origin; 
+        const receiptLink = `${domain}/receipt.html?id=${finalSaleData.receiptId}&phone=${activeUserPhone}&branch=${activeBranchId}`;
+        
+        text += `📄 *View / Download your Digital Bill here:*\n${receiptLink}\n\n`;
+        text += `Thank you for shopping with us!`;
+        
         const url = `https://wa.me/91${finalSaleData.phone}?text=${encodeURIComponent(text)}`;
         window.open(url, '_blank');
         document.getElementById('success-modal').style.display = 'none';
