@@ -20,13 +20,16 @@
         .shop-header-card h1 { margin: 0; font-size: 24px; font-weight: 700; letter-spacing: 0.5px; text-transform: uppercase; }
         .shop-header-card p { margin: 5px 0 0 0; font-size: 14px; color: #93c5fd; font-weight: 500; }
         .menu-grid-container { width: 100%; max-width: 650px; background: #ffffff; border-radius: 16px; padding: 24px; box-shadow: 0 4px 20px rgba(0, 0, 0, 0.03); box-sizing: border-box; }
+        
         .btn-pos-huge { width: 100%; background: linear-gradient(135deg, #10b981, #059669); color: #ffffff; border: none; border-radius: 14px; padding: 22px; font-size: 20px; font-weight: 700; letter-spacing: 0.5px; cursor: pointer; display: flex; align-items: center; justify-content: center; gap: 12px; box-shadow: 0 8px 20px rgba(16, 185, 129, 0.3); transition: all 0.2s ease; margin-bottom: 20px; }
         .btn-pos-huge:hover { transform: translateY(-2px); box-shadow: 0 12px 24px rgba(16, 185, 129, 0.4); }
         .grid-row { display: grid; grid-template-columns: repeat(2, 1fr); gap: 16px; margin-bottom: 24px; }
         @media (max-width: 480px) { .grid-row { grid-template-columns: 1fr; gap: 12px; } }
+        
         .btn-dashboard-item { border: none; border-radius: 12px; padding: 16px; font-size: 15px; font-weight: 600; cursor: pointer; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 8px; color: #ffffff; transition: all 0.2s ease; box-shadow: 0 4px 12px rgba(0, 0, 0, 0.05); }
         .btn-dashboard-item i { font-size: 24px; }
         .btn-dashboard-item:hover { transform: translateY(-2px); filter: brightness(1.05); }
+        
         .color-blue { background: linear-gradient(135deg, #3b82f6, #1d4ed8); }
         .color-indigo { background: linear-gradient(135deg, #6366f1, #4338ca); }
         .color-purple { background: linear-gradient(135deg, #a855f7, #7e22ce); }
@@ -35,10 +38,11 @@
         .color-red { background: linear-gradient(135deg, #ef4444, #b91c1c); }
         .color-emerald { background: linear-gradient(135deg, #10b981, #047857); }
         .color-slate { background: linear-gradient(135deg, #64748b, #334155); }
-        .btn-logout-panel { width: 100%; background-color: #f1f5f9; color: #64748b; border: 1px solid #e2e8f0; border-radius: 10px; padding: 12px; font-size: 14px; font-weight: 600; cursor: pointer; display: flex; align-items: center; justify-content: center; gap: 8px; transition: all 0.2s ease; }
-       .btn-logout-panel:hover { background-color: #fee2e2; color: #ef4444; border-color: #fca5a5; }
         
-      /* Sub-menu Modal Styles */
+        .btn-logout-panel { width: 100%; background-color: #f1f5f9; color: #64748b; border: 1px solid #e2e8f0; border-radius: 10px; padding: 12px; font-size: 14px; font-weight: 600; cursor: pointer; display: flex; align-items: center; justify-content: center; gap: 8px; transition: all 0.2s ease; }
+        .btn-logout-panel:hover { background-color: #fee2e2; color: #ef4444; border-color: #fca5a5; }
+        
+        /* Sub-menu Modal Styles */
         .modal-overlay { display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(15, 23, 42, 0.7); z-index: 1000; justify-content: center; align-items: center; padding: 20px; box-sizing: border-box; backdrop-filter: blur(6px);}
         .modal-card { background: white; width: 100%; max-width: 380px; border-radius: 24px; padding: 30px 24px; position: relative; animation: popIn 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275); box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.25);}
         @keyframes popIn { from { transform: scale(0.9); opacity: 0; } to { transform: scale(1); opacity: 1; } }
@@ -58,54 +62,23 @@
     </div>
 
     <div class="menu-grid-container">
-        <button class="btn-pos-huge" onclick="window.location.href='/sale-point.html'">
-            <i class="bi bi-cart-dash-fill"></i> SALE POINT (POS)
-        </button>
+        <div id="pos-container"></div>
+        <div class="grid-row" id="dynamic-grid"></div>
 
-      <div class="grid-row">
-            <button class="btn-dashboard-item color-indigo" onclick="openStockMenu()">
-                <i class="bi bi-box-seam-fill"></i><span>Manage Stock</span>
-            </button>
-            <button class="btn-dashboard-item color-purple" onclick="window.location.href='/suppliers.html'">
-                <i class="bi bi-truck"></i><span>Suppliers</span>
-            </button>
-            <button class="btn-dashboard-item color-orange" onclick="window.location.href='/business-details.html'">
-                <i class="bi bi-gear-wide-connected"></i><span>Business Details</span>
-            </button>
-           <button class="btn-dashboard-item color-teal" onclick="window.location.href='/manage-branches.html'">
-                <i class="bi bi-diagram-3-fill"></i><span>Manage Branches</span>
-            </button>
-            <button class="btn-dashboard-item color-teal" onclick="window.location.href='/manage-staff.html'">
-                <i class="bi bi-people-fill"></i><span>Manage Staff</span>
-            </button>
-            <button class="btn-dashboard-item color-red" onclick="window.location.href='/expenses.html'">
-                <i class="bi bi-wallet2"></i><span>Expenses</span>
-            </button>
-            <button class="btn-dashboard-item color-emerald" onclick="window.location.href='/finance-reports.html'">
-                <i class="bi bi-bar-chart-line-fill"></i><span>Finance Reports</span>
-            </button>
-            <button class="btn-dashboard-item color-slate" onclick="window.location.href='/udhaar-khata.html'">
-                <i class="bi bi-journal-bookmark-fill"></i><span>Udhaar Khata</span>
-            </button>
-        </div>
-
-   <button class="btn-logout-panel" onclick="handleLogout()">
+        <button class="btn-logout-panel" onclick="handleLogout()">
             <i class="bi bi-box-arrow-left"></i> Logout From Portal
         </button>
     </div>
 </div>
 
-<!-- Stock Management Sub-Menu Modal -->
 <div class="modal-overlay" id="stock-menu-modal">
     <div class="modal-card">
-        <button class="modal-close" onclick="closeStockMenu()"><i class="bi bi-x-lg"></i></button>
+        <button class="modal-close" onclick="closeModal('stock-menu-modal')"><i class="bi bi-x-lg"></i></button>
         <h2 style="margin-top:0; color:#1e3a8a; font-size:20px; margin-bottom: 20px;"><i class="bi bi-box-seam-fill"></i> Manage Stock</h2>
-        
         <button class="submenu-btn" onclick="window.location.href='/enter-stock.html'">
             <i class="bi bi-plus-circle-fill"></i> Enter New Stock
         </button>
-        
-      <button class="submenu-btn" onclick="window.location.href='/viewstock.html'">
+        <button class="submenu-btn" onclick="window.location.href='/viewstock.html'">
             <i class="bi bi-eye-fill"></i> View Stock
         </button>
     </div>
@@ -114,56 +87,59 @@
 <script src="/auth.js"></script>
 
 <script>
-    // Modal Functions
-    function openStockMenu() {
-        document.getElementById('stock-menu-modal').style.display = 'flex';
-    }
-    
-    function closeStockMenu() {
-        document.getElementById('stock-menu-modal').style.display = 'none';
+    // Generic Modal Functions
+    function openModal(id) { document.getElementById(id).style.display = 'flex'; }
+    function closeModal(id) { document.getElementById(id).style.display = 'none'; }
+
+    // RENDER REGISTRY AUTOMATICALLY
+    function renderDashboard() {
+        const grid = document.getElementById('dynamic-grid');
+        const posContainer = document.getElementById('pos-container');
+        grid.innerHTML = ""; posContainer.innerHTML = "";
+
+        // DASHBOARD_REGISTRY is automatically available because we linked auth.js
+        for (const [key, config] of Object.entries(DASHBOARD_REGISTRY)) {
+            let action = config.isModal ? `openModal('${config.modalId}')` : `window.location.href='${config.url}'`;
+            
+            if (key === 'pos') {
+                posContainer.innerHTML = `<button class="btn-pos-huge" onclick="${action}">
+                    <i class="bi ${config.icon}"></i> ${config.label}
+                </button>`;
+            } else {
+                grid.innerHTML += `<button class="btn-dashboard-item ${config.color}" onclick="${action}">
+                    <i class="bi ${config.icon}"></i><span>${config.label}</span>
+                </button>`;
+            }
+        }
     }
 
-    // Force Cleanup of Old PWA Cache
     if ('serviceWorker' in navigator) {
         navigator.serviceWorker.getRegistrations().then(function(registrations) {
             for (let registration of registrations) { registration.unregister(); }
         });
     }
 
-    // Secure Logout Function
     function handleLogout(customMessage = null) {
-        if(customMessage) {
-            alert(customMessage);
-        }
+        if(customMessage) alert(customMessage);
         localStorage.clear();
         sessionStorage.clear();
-        firebase.auth().signOut().then(() => {
-            window.location.replace('/login.html'); 
-        }).catch(() => {
-            window.location.replace('/login.html');
-        });
+        firebase.auth().signOut().then(() => window.location.replace('/login.html'))
+            .catch(() => window.location.replace('/login.html'));
     }
 
-    // MASTER SECURITY & INITIALIZATION LISTENER
     firebase.auth().onAuthStateChanged((user) => {
-        // LAYER 1: DIRECT URL BYPASS PROTECTION
-        if (!user) {
-            window.location.replace('/login.html');
-            return;
-        }
+        if (!user) return window.location.replace('/login.html');
 
         const activeUserPhone = localStorage.getItem("activeUserPhone");
         const myLoginTime = localStorage.getItem("myLoginTime");
 
-        // Failsafe if local storage was cleared manually
         if (!activeUserPhone || !myLoginTime) {
-            handleLogout();
-            return;
+            handleLogout(); return;
         }
 
-        const db = firebase.firestore();
+        renderDashboard(); // Paint the buttons immediately!
 
-        // 1. Fetch the Company Name securely using Firestore
+        const db = firebase.firestore();
         db.collection('companies').doc(activeUserPhone).get()
             .then((doc) => {
                 if (doc.exists && doc.data().businessName) {
@@ -172,20 +148,12 @@
                     document.getElementById("display-shop-name").innerText = "MY SHOP DASHBOARD";
                 }
             })
-            .catch((err) => {
-                document.getElementById("display-shop-name").innerText = "MY SHOP DASHBOARD";
-                console.error("Error fetching name:", err);
-            });
+            .catch(() => document.getElementById("display-shop-name").innerText = "MY SHOP DASHBOARD");
 
-        // 2. LAYER 2: MULTI-DEVICE CONCURRENT LOGIN PROTECTION (Firestore Snapshot)
-        // The .onSnapshot() function continuously listens to the document in real-time
         db.collection('companies').doc(activeUserPhone).onSnapshot((doc) => {
             if (doc.exists) {
                 const currentDbLoginTime = doc.data().lastLoginTime;
-                
-                // If the time in the database exists and doesn't match the time saved in this browser...
                 if (currentDbLoginTime && currentDbLoginTime !== myLoginTime) {
-                    // It means another device just triggered the login script. Kick this session out.
                     handleLogout("SECURITY ALERT: Your account was just logged in from another device. For your security, this active session is being closed.");
                 }
             }
