@@ -134,10 +134,13 @@
 </div>
 
 <div class="pos-layout">
-    <div class="cart-panel">
+   <div class="cart-panel">
         <div class="cart-items-container" id="cart-container"></div>
-    <div class="cart-footer">
-            <input type="tel" id="customer-phone" class="customer-input" placeholder="📱 Customer Mobile Number (Optional)">
+        <div class="cart-footer">
+            <div style="display: flex; gap: 10px;">
+                <input type="text" id="customer-name" class="customer-input" placeholder="👤 Name (Optional)" style="flex: 1;">
+                <input type="tel" id="customer-phone" class="customer-input" placeholder="📱 Mobile (Optional)" style="flex: 1;">
+            </div>
             <div class="summary-row"><span>Subtotal:</span> <span id="cart-subtotal">₹0.00</span></div>
             <div class="summary-row" style="color:var(--danger);"><span>Discounts:</span> <span id="cart-discount">- ₹0.00</span></div>
             <div class="summary-row" style="color:var(--text-light); font-size: 11px;"><span>Includes GST:</span> <span id="cart-gst">₹0.00</span></div>
@@ -253,6 +256,7 @@
 <div id="thermal-receipt">
     <div class="r-center r-bold" style="font-size:16px;" id="r-shop-name">STORE</div>
     <div class="r-center" id="r-date"></div>
+    <div id="r-customer-info" style="text-align: center; font-size: 11px; margin-top: 3px; display: none;"></div>
     <div class="r-line"></div>
     <div class="r-flex r-bold"><span>Item</span><span>Amt</span></div>
     <div class="r-line"></div>
@@ -591,9 +595,10 @@ function renderCart() {
     async function processSale(mode) {
         document.getElementById('cash-modal').style.display = 'none'; document.getElementById('upi-modal').style.display = 'none';
         
-        // Prepare Receipt Data
+      // Prepare Receipt Data
         finalSaleData.items = [...cart];
-        finalSaleData.phone = document.getElementById('customer-phone').value;
+        finalSaleData.name = document.getElementById('customer-name').value.trim();
+        finalSaleData.phone = document.getElementById('customer-phone').value.trim();
         finalSaleData.date = new Date().toLocaleString();
         
         const db = firebase.firestore(); const batch = db.batch(); let saleCost = 0;
@@ -606,20 +611,27 @@ function renderCart() {
             }
         });
 
-     const saleRef = db.collection('companies').doc(activeUserPhone).collection('branches').doc(activeBranchId).collection('sales').doc();
+    const saleRef = db.collection('companies').doc(activeUserPhone).collection('branches').doc(activeBranchId).collection('sales').doc();
         batch.set(saleRef, {
             timestamp: firebase.firestore.FieldValue.serverTimestamp(),
             items: cart, totalAmount: finalSaleData.tot, totalCost: saleCost, totalGst: finalSaleData.gst, profit: finalSaleData.tot - saleCost,
-            paymentMode: mode, customerPhone: finalSaleData.phone
+            paymentMode: mode, customerName: finalSaleData.name, customerPhone: finalSaleData.phone
         });
 
         try {
             await batch.commit();
             // Background sync successful. Show Success UI.
-            cart = []; document.getElementById('customer-phone').value = ""; renderCart();
+            cart = []; document.getElementById('customer-name').value = ""; document.getElementById('customer-phone').value = ""; renderCart();
             
-           // Build Thermal Receipt HTML
+            // Build Thermal Receipt HTML
             document.getElementById('r-date').innerText = finalSaleData.date;
+            
+            const rCust = document.getElementById('r-customer-info');
+            if (finalSaleData.name || finalSaleData.phone) {
+                rCust.innerText = `Customer: ${finalSaleData.name} ${finalSaleData.phone}`.trim();
+                rCust.style.display = 'block';
+            } else { rCust.style.display = 'none'; }
+
             document.getElementById('r-sub').innerText = finalSaleData.sub.toFixed(2);
             document.getElementById('r-disc').innerText = finalSaleData.disc.toFixed(2);
             document.getElementById('r-gst').innerText = finalSaleData.gst.toFixed(2);
@@ -632,9 +644,11 @@ function renderCart() {
         } catch(e) { alert("Checkout Failed: " + e.message); }
     }
 
-   // --- WHATSAPP ENGINE ---
+// --- WHATSAPP ENGINE ---
     function sendWhatsApp() {
-        let text = `*${shopName.toUpperCase()} RECEIPT*\nDate: ${finalSaleData.date}\n-------------------\n`;
+        let text = `*${shopName.toUpperCase()} RECEIPT*\nDate: ${finalSaleData.date}\n`;
+        if (finalSaleData.name) text += `Customer: ${finalSaleData.name}\n`;
+        text += `-------------------\n`;
         finalSaleData.items.forEach(i => { text += `${i.cartQty}x ${i.name} - Rs.${(i.msp * i.cartQty).toFixed(0)}\n`; });
         text += `-------------------\n*Total: Rs.${finalSaleData.tot.toFixed(0)}*\nThank you for shopping with us!`;
         const url = `https://wa.me/91${finalSaleData.phone}?text=${encodeURIComponent(text)}`;
