@@ -106,7 +106,42 @@
         </button>
     </div>
 
-    <a href="/dashboard.html" class="btn-back">← Back to Dashboard</a>
+   <a href="/dashboard.html" class="btn-back">← Back to Dashboard</a>
+</div>
+
+<div id="edit-branch-modal" style="display:none; position:fixed; inset:0; background:rgba(15,23,42,0.7); z-index:3000; align-items:center; justify-content:center; padding:20px;">
+    <div class="form-card" style="margin:0; position:relative; width:100%; max-width:500px;">
+        <button onclick="document.getElementById('edit-branch-modal').style.display='none'" style="position:absolute; top:15px; right:15px; background:none; border:none; font-size:20px; cursor:pointer; color:#64748b;"><i class="bi bi-x-lg"></i></button>
+        
+        <div class="card-title" style="margin-top:10px;"><i class="bi bi-pencil-square text-primary"></i> Edit Branch</div>
+        
+        <input type="hidden" id="edit-branch-id">
+        
+        <div class="form-group">
+            <label>Branch Name</label>
+            <input type="text" id="edit-branch-name" class="form-control-custom">
+        </div>
+        
+        <div class="form-group">
+            <label>Location / City</label>
+            <input type="text" id="edit-branch-location" class="form-control-custom">
+        </div>
+        
+        <div style="display: flex; gap: 10px; margin-bottom: 20px;">
+            <div style="flex: 1;">
+                <label style="display: block; font-size: 13px; font-weight: 600; color: #475569; margin-bottom: 6px; text-transform: uppercase;">Bill Prefix</label>
+                <input type="text" id="edit-branch-prefix" class="form-control-custom">
+            </div>
+            <div style="flex: 1;">
+                <label style="display: block; font-size: 13px; font-weight: 600; color: #475569; margin-bottom: 6px; text-transform: uppercase;">Next Bill Number</label>
+                <input type="number" id="edit-branch-start-num" class="form-control-custom">
+            </div>
+        </div>
+        
+        <button class="btn-add" onclick="saveBranchChanges()" id="btn-save-edit" style="background:linear-gradient(135deg, #3b82f6, #2563eb); box-shadow:0 6px 18px rgba(59, 130, 246, 0.2);">
+            <i class="bi bi-save"></i> Save Changes
+        </button>
+    </div>
 </div>
 
 <script src="/auth.js"></script>
@@ -171,15 +206,19 @@
             const isInactive = branch.status === 'inactive';
             const badgeClass = isInactive ? 'badge-inactive' : 'badge-active';
             
-            // Main Branch Safety Check (Disable deactivate for branch_01)
+           // Main Branch Safety Check (Disable deactivate for branch_01)
             let actionHtml = "";
             if (branch.branchId === "branch_01") {
-                actionHtml = `<span style="font-size: 11px; color: #94a3b8;"><i class="bi bi-shield-lock-fill"></i> Main HQ (Cannot be deactivated)</span>`;
+                actionHtml = `<span style="font-size: 11px; color: #94a3b8; margin-left:auto;"><i class="bi bi-shield-lock-fill"></i> HQ (Cannot deactivate)</span>`;
             } else if (isInactive) {
-                actionHtml = `<button class="action-btn btn-activate" onclick="updateBranchStatus('${branch.branchId}', 'active')"><i class="bi bi-check-circle"></i> Reactivate Branch</button>`;
+                actionHtml = `<button class="action-btn btn-activate" onclick="updateBranchStatus('${branch.branchId}', 'active')"><i class="bi bi-check-circle"></i> Reactivate</button>`;
             } else {
-                actionHtml = `<button class="action-btn btn-deactivate" onclick="updateBranchStatus('${branch.branchId}', 'inactive')"><i class="bi bi-x-circle"></i> Deactivate Branch</button>`;
+                actionHtml = `<button class="action-btn btn-deactivate" onclick="updateBranchStatus('${branch.branchId}', 'inactive')"><i class="bi bi-x-circle"></i> Deactivate</button>`;
             }
+
+            // Add the Edit button to ALL branches
+            let editBtn = `<button class="action-btn" style="color:#3b82f6; border-color:#bfdbfe; background:#eff6ff; margin-right:auto;" onclick="openEditModal('${branch.branchId}')"><i class="bi bi-pencil-square"></i> Edit Details</button>`;
+            actionHtml = editBtn + actionHtml;
 
             const branchHTML = `
                 <div class="branch-item ${isInactive ? 'inactive-item' : ''}">
@@ -278,7 +317,61 @@
             console.error("Error creating branch:", error);
             alert("Database Error: Could not create branch.");
         } finally {
-            btn.innerHTML = `<i class="bi bi-building-add"></i> Create Branch`;
+          btn.innerHTML = `<i class="bi bi-building-add"></i> Create Branch`;
+            btn.disabled = false;
+        }
+    }
+
+    // 5. Open Edit Modal & Populate Data
+    function openEditModal(branchId) {
+        const branch = allBranches.find(b => b.branchId === branchId);
+        if (!branch) return;
+        
+        document.getElementById('edit-branch-id').value = branch.branchId;
+        document.getElementById('edit-branch-name').value = branch.branchName || '';
+        document.getElementById('edit-branch-location').value = branch.location || '';
+        document.getElementById('edit-branch-prefix').value = branch.billPrefix || 'BILL-';
+        
+        // If they haven't set a number yet, default to 1
+        const nextNum = branch.lastBillNumber !== undefined ? branch.lastBillNumber + 1 : 1;
+        document.getElementById('edit-branch-start-num').value = nextNum;
+        
+        document.getElementById('edit-branch-modal').style.display = 'flex';
+    }
+
+    // 6. Save Branch Edits
+    async function saveBranchChanges() {
+        if (!activeUserPhone) return;
+        
+        const branchId = document.getElementById('edit-branch-id').value;
+        const name = document.getElementById('edit-branch-name').value.trim();
+        const location = document.getElementById('edit-branch-location').value.trim();
+        const prefix = document.getElementById('edit-branch-prefix').value.trim();
+        
+        const startNumRaw = parseInt(document.getElementById('edit-branch-start-num').value);
+        const startNum = isNaN(startNumRaw) || startNumRaw < 1 ? 1 : startNumRaw;
+
+        if (!name) return alert("Branch Name is required.");
+
+        const btn = document.getElementById('btn-save-edit');
+        btn.innerHTML = `<i class="bi bi-arrow-repeat bi-spin"></i> Saving...`;
+        btn.disabled = true;
+
+        try {
+            const db = firebase.firestore();
+            await db.collection('companies').doc(activeUserPhone).collection('branches').doc(branchId).update({
+                branchName: name,
+                location: location,
+                billPrefix: prefix,
+                lastBillNumber: startNum - 1 // Save as N-1 so the next bill generated is exactly N
+            });
+            
+            document.getElementById('edit-branch-modal').style.display = 'none';
+        } catch (error) {
+            console.error("Error updating branch:", error);
+            alert("Database Error: Could not save changes.");
+        } finally {
+            btn.innerHTML = `<i class="bi bi-save"></i> Save Changes`;
             btn.disabled = false;
         }
     }
