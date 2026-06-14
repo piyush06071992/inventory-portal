@@ -1,0 +1,485 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>Khata Book - Business Saarthi</title>
+    
+    <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-firestore-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-auth-compat.js"></script>
+    <script src="/auth.js"></script>
+    
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;800;900&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.1/font/bootstrap-icons.css">
+
+    <style>
+        :root { --navy: #0f172a; --primary: #3b82f6; --emerald: #10b981; --danger: #ef4444; --warning: #f59e0b; --text-light: #64748b; --border: #e2e8f0; --bg: #f8fafc; }
+        body { font-family: 'Inter', sans-serif; background-color: var(--bg); margin: 0; padding: 0; color: var(--navy); padding-bottom: 80px;}
+        
+        /* Top Navigation */
+        .header { background: white; padding: 15px 20px; display: flex; justify-content: space-between; align-items: center; border-bottom: 2px solid var(--border); position: sticky; top: 0; z-index: 100;}
+        .header h1 { margin: 0; font-size: 22px; font-weight: 900;}
+        .btn-back { background: #f1f5f9; border: 1px solid var(--border); padding: 8px 12px; border-radius: 8px; cursor: pointer; font-weight: 800; color: var(--navy); text-decoration: none; font-size: 13px;}
+
+        /* Financial Dashboard */
+        .finance-dash { display: flex; padding: 15px; gap: 10px; background: white; border-bottom: 1px solid var(--border);}
+        .dash-card { flex: 1; border-radius: 12px; padding: 12px; text-align: center; color: white; display: flex; flex-direction: column; justify-content: center; box-shadow: 0 4px 6px rgba(0,0,0,0.1);}
+        .dash-card h3 { margin: 0; font-size: 11px; font-weight: 900; text-transform: uppercase; opacity: 0.9; letter-spacing: 0.5px;}
+        .dash-card p { margin: 5px 0 0 0; font-size: 18px; font-weight: 900;}
+        .card-lendaari { background: linear-gradient(135deg, #10b981, #059669); }
+        .card-net { background: linear-gradient(135deg, #3b82f6, #2563eb); }
+        .card-dendaari { background: linear-gradient(135deg, #ef4444, #dc2626); }
+
+        /* Controls: Search & Tabs */
+        .controls-section { padding: 15px; background: white; border-bottom: 1px solid var(--border); position: sticky; top: 62px; z-index: 90;}
+        .tab-row { display: flex; gap: 10px; margin-bottom: 15px; background: #f1f5f9; padding: 5px; border-radius: 10px;}
+        .tab-btn { flex: 1; padding: 10px; border: none; border-radius: 8px; font-weight: 800; font-size: 14px; cursor: pointer; background: transparent; color: var(--text-light); transition: 0.2s;}
+        .tab-btn.active { background: white; color: var(--navy); box-shadow: 0 2px 4px rgba(0,0,0,0.05);}
+        
+        .search-box { display: flex; background: #f8fafc; border: 2px solid var(--border); border-radius: 10px; padding: 0 12px; align-items: center;}
+        .search-box input { flex: 1; border: none; background: transparent; padding: 12px 0; font-size: 14px; font-weight: 700; outline: none;}
+        .search-box i { color: var(--text-light); font-size: 16px; }
+
+        /* List Items */
+        .list-container { padding: 15px; }
+        .khata-card { background: white; border: 1px solid var(--border); border-radius: 12px; padding: 15px; margin-bottom: 10px; display: flex; justify-content: space-between; align-items: center; box-shadow: 0 2px 4px rgba(0,0,0,0.02); cursor: pointer; transition: 0.1s;}
+        .khata-card:active { transform: scale(0.98); border-color: var(--primary);}
+        .card-info h4 { margin: 0 0 4px 0; font-size: 15px; font-weight: 900; color: var(--navy);}
+        .card-info p { margin: 0; font-size: 12px; font-weight: 700; color: var(--text-light);}
+        .card-amt { text-align: right; }
+        .card-amt h3 { margin: 0; font-size: 18px; font-weight: 900;}
+        .amt-red { color: var(--danger); }
+        .amt-green { color: var(--emerald); }
+        .amt-zero { color: #94a3b8; }
+
+        /* Ledger Modal */
+        .modal-overlay { display: none; position: fixed; inset: 0; background: rgba(15,23,42,0.8); z-index: 2000; align-items: flex-end; justify-content: center; backdrop-filter: blur(4px); }
+        .modal-sheet { background: var(--bg); width: 100%; max-width: 600px; height: 90vh; border-radius: 24px 24px 0 0; display: flex; flex-direction: column; overflow: hidden; animation: slideUp 0.3s ease-out;}
+        @keyframes slideUp { from { transform: translateY(100%); } to { transform: translateY(0); } }
+        
+        .sheet-header { background: white; padding: 20px; border-bottom: 1px solid var(--border); display: flex; justify-content: space-between; align-items: flex-start;}
+        .sheet-body { flex: 1; overflow-y: auto; padding: 15px; background: white;}
+        .sheet-footer { background: white; padding: 15px; border-top: 1px solid var(--border); display: flex; gap: 10px;}
+        
+        .btn-main { flex: 1; padding: 14px; border: none; border-radius: 10px; font-weight: 900; font-size: 14px; cursor: pointer; color: white; display: flex; align-items: center; justify-content: center; gap: 8px;}
+        .btn-pay { background: var(--emerald); }
+        .btn-remind { background: #25D366; }
+
+        /* Ledger Entries */
+        .entry-row { display: flex; justify-content: space-between; padding: 15px 0; border-bottom: 1px solid var(--border); align-items: center;}
+        .entry-row.cleared { opacity: 0.5; background: #f8fafc; padding: 10px; border-radius: 8px; margin-bottom: 5px;}
+        .entry-date { font-size: 10px; font-weight: 800; color: var(--text-light); text-transform: uppercase; margin-bottom: 4px;}
+        .entry-desc { font-size: 13px; font-weight: 800; color: var(--navy);}
+        .entry-amt { font-size: 15px; font-weight: 900;}
+
+        /* Payment Mini Modal */
+        #pay-modal { z-index: 3000; align-items: center; }
+        .pay-card { background: white; width: 100%; max-width: 350px; border-radius: 20px; padding: 20px; text-align: center; }
+        .pay-input { width: 100%; padding: 15px; font-size: 24px; font-weight: 900; text-align: center; border: 2px solid var(--border); border-radius: 12px; outline: none; margin-bottom: 15px; box-sizing: border-box;}
+        .pay-input:focus { border-color: var(--emerald); }
+    </style>
+</head>
+<body>
+
+<div class="header">
+    <h1>Khata Book</h1>
+    <a href="javascript:history.back()" class="btn-back"><i class="bi bi-x-lg"></i> Exit</a>
+</div>
+
+<div class="finance-dash">
+    <div class="dash-card card-lendaari">
+        <h3>Lendaari (Receive)</h3>
+        <p id="total-lendaari">₹0</p>
+    </div>
+    <div class="dash-card card-net">
+        <h3>Net Liquidity</h3>
+        <p id="total-net">₹0</p>
+    </div>
+    <div class="dash-card card-dendaari">
+        <h3>Dendaari (Pay)</h3>
+        <p id="total-dendaari">₹0</p>
+    </div>
+</div>
+
+<div class="controls-section">
+    <div class="tab-row">
+        <button class="tab-btn active" id="tab-cust" onclick="switchTab('customers')">Customers</button>
+        <button class="tab-btn" id="tab-supp" onclick="switchTab('suppliers')">Suppliers</button>
+    </div>
+    <div class="search-box">
+        <i class="bi bi-search"></i>
+        <input type="text" id="search-input" placeholder="Search Name, Mobile, or Khata #" oninput="renderList()">
+    </div>
+</div>
+
+<div class="list-container" id="main-list">
+    <div style="text-align:center; padding:40px; color:var(--text-light); font-weight:800;">
+        <i class="bi bi-arrow-repeat bi-spin" style="font-size:30px;"></i><br>Loading Ledgers...
+    </div>
+</div>
+
+<div class="modal-overlay" id="ledger-modal">
+    <div class="modal-sheet">
+        <div class="sheet-header">
+            <div>
+                <h2 style="margin:0 0 5px 0; font-size:22px; font-weight:900;" id="sheet-name">Name</h2>
+                <p style="margin:0; font-size:13px; font-weight:700; color:var(--text-light);" id="sheet-details">Phone | Khata #</p>
+            </div>
+            <button onclick="closeLedger()" style="background:#f1f5f9; border:none; width:36px; height:36px; border-radius:50%; font-size:18px; cursor:pointer;"><i class="bi bi-x-lg"></i></button>
+        </div>
+        
+        <div style="padding:15px; background:#f8fafc; border-bottom:1px solid var(--border); display:flex; justify-content:space-between; align-items:center;">
+            <div>
+                <p style="margin:0; font-size:11px; font-weight:800; color:var(--text-light); text-transform:uppercase;">Total Pending</p>
+                <h3 style="margin:0; font-size:24px; font-weight:900; color:var(--danger);" id="sheet-pending">₹0.00</h3>
+            </div>
+            <input type="date" id="ledger-date-filter" style="padding:8px; border:1px solid var(--border); border-radius:8px; font-weight:700; outline:none;" onchange="renderLedgerEntries()">
+        </div>
+
+        <div class="sheet-body" id="ledger-entries">
+            </div>
+
+        <div class="sheet-footer">
+            <button class="btn-main btn-pay" onclick="openPaymentModal()"><i class="bi bi-wallet2"></i> Record Payment</button>
+            <button class="btn-main btn-remind" onclick="sendWhatsAppReminder()"><i class="bi bi-whatsapp"></i> Send Statement</button>
+        </div>
+    </div>
+</div>
+
+<div class="modal-overlay" id="pay-modal">
+    <div class="pay-card">
+        <h2 style="margin:0 0 5px 0; font-size:20px; font-weight:900;">Record Payment</h2>
+        <p style="margin:0 0 20px 0; font-size:13px; font-weight:700; color:var(--text-light);" id="pay-subtitle">Receiving from Customer</p>
+        
+        <input type="number" id="pay-amt" class="pay-input" placeholder="₹ Amount">
+        
+        <select id="pay-mode" style="width:100%; padding:14px; border:2px solid var(--border); border-radius:12px; font-weight:800; margin-bottom:20px; outline:none; font-size:14px;">
+            <option value="Cash">Cash</option>
+            <option value="UPI">UPI / Online</option>
+            <option value="Bank">Bank Transfer</option>
+        </select>
+
+        <div style="display:flex; gap:10px;">
+            <button class="btn-main" style="background:#f1f5f9; color:var(--navy);" onclick="document.getElementById('pay-modal').style.display='none'">Cancel</button>
+            <button class="btn-main btn-pay" id="btn-confirm-pay" onclick="confirmPayment()">Save Payment</button>
+        </div>
+    </div>
+</div>
+
+<script>
+    let activeUserPhone = localStorage.getItem("activeUserPhone");
+    let currentTab = 'customers'; // 'customers' or 'suppliers'
+    
+    let allCustomers = [];
+    let allSuppliers = [];
+    
+    let activeProfile = null; // Holds the currently opened customer/supplier data
+    let activeLedger = []; // Holds their specific transactions
+
+    document.addEventListener('DOMContentLoaded', () => {
+        firebase.auth().onAuthStateChanged(async (user) => {
+            if (!activeUserPhone) return window.location.replace('/login.html');
+            await loadAllData();
+        });
+    });
+
+    async function loadAllData() {
+        const db = firebase.firestore();
+        
+        // 1. Fetch Customers (Lendaari)
+        try {
+            const custSnap = await db.collection('companies').doc(activeUserPhone).collection('customers').get();
+            allCustomers = [];
+            custSnap.forEach(doc => allCustomers.push({ id: doc.id, ...doc.data() }));
+        } catch(e) { console.error("Customer fetch error", e); }
+
+        // 2. Fetch Suppliers (Dendaari)
+        try {
+            const suppSnap = await db.collection('companies').doc(activeUserPhone).collection('suppliers').get();
+            allSuppliers = [];
+            suppSnap.forEach(doc => allSuppliers.push({ id: doc.id, ...doc.data() }));
+        } catch(e) { console.error("Supplier fetch error", e); }
+
+        updateFinancialDashboard();
+        renderList();
+    }
+
+    function updateFinancialDashboard() {
+        let lendaari = 0;
+        let dendaari = 0;
+
+        allCustomers.forEach(c => { if(c.totalUdhaar > 0) lendaari += c.totalUdhaar; });
+        // Assuming suppliers have a totalPending field based on earlier architecture
+        allSuppliers.forEach(s => { if(s.totalPending > 0) dendaari += s.totalPending; });
+
+        let net = lendaari - dendaari;
+
+        document.getElementById('total-lendaari').innerText = `₹${lendaari.toFixed(0)}`;
+        document.getElementById('total-dendaari').innerText = `₹${dendaari.toFixed(0)}`;
+        document.getElementById('total-net').innerText = net >= 0 ? `+ ₹${net.toFixed(0)}` : `- ₹${Math.abs(net).toFixed(0)}`;
+    }
+
+    function switchTab(tab) {
+        currentTab = tab;
+        document.getElementById('tab-cust').classList.toggle('active', tab === 'customers');
+        document.getElementById('tab-supp').classList.toggle('active', tab === 'suppliers');
+        document.getElementById('search-input').value = ""; // Clear search on tab switch
+        renderList();
+    }
+
+    function renderList() {
+        const list = document.getElementById('main-list');
+        const query = document.getElementById('search-input').value.trim().toLowerCase();
+        let data = currentTab === 'customers' ? allCustomers : allSuppliers;
+
+        // Fuzzy Search Filter
+        if (query) {
+            data = data.filter(item => {
+                const name = (item.name || item.businessName || "").toLowerCase();
+                const phone = (item.phone || item.id || "").toLowerCase();
+                const khata = (item.khataNumber || "").toString().toLowerCase();
+                return name.includes(query) || phone.includes(query) || khata === query;
+            });
+        }
+
+        // Sort by highest pending amount first
+        data.sort((a, b) => {
+            let pendingA = currentTab === 'customers' ? (a.totalUdhaar || 0) : (a.totalPending || 0);
+            let pendingB = currentTab === 'customers' ? (b.totalUdhaar || 0) : (b.totalPending || 0);
+            return pendingB - pendingA;
+        });
+
+        list.innerHTML = "";
+        
+        if (data.length === 0) {
+            list.innerHTML = `<div style="text-align:center; padding:40px; color:var(--text-light); font-weight:800;">No records found.</div>`;
+            return;
+        }
+
+        data.forEach(item => {
+            const name = currentTab === 'customers' ? item.name : item.businessName;
+            const phone = item.phone || item.id;
+            const pending = currentTab === 'customers' ? (item.totalUdhaar || 0) : (item.totalPending || 0);
+            const khataStr = item.khataNumber ? ` | Khata #${item.khataNumber}` : ``;
+            
+            let amtClass = pending > 0 ? (currentTab === 'customers' ? 'amt-red' : 'amt-red') : 'amt-zero';
+            if (pending === 0) amtClass = 'amt-zero';
+
+            list.innerHTML += `
+                <div class="khata-card" onclick="openLedger('${item.id}', '${name}', '${phone}', ${pending}, '${item.khataNumber || ''}')">
+                    <div class="card-info">
+                        <h4>${name}</h4>
+                        <p>📱 ${phone}${khataStr}</p>
+                    </div>
+                    <div class="card-amt">
+                        <p style="font-size:10px; font-weight:800; color:var(--text-light); margin-bottom:2px;">${pending > 0 ? 'DUE' : 'CLEARED'}</p>
+                        <h3 class="${amtClass}">₹${pending.toFixed(2)}</h3>
+                    </div>
+                </div>
+            `;
+        });
+    }
+
+    // --- DETAILED LEDGER LOGIC ---
+    async function openLedger(id, name, phone, pending, khata) {
+        activeProfile = { id, name, phone, pending, khata, type: currentTab };
+        
+        document.getElementById('sheet-name').innerText = name;
+        document.getElementById('sheet-details').innerText = `${phone} ${khata ? `| Khata #${khata}` : ''}`;
+        
+        // Update Sheet Header Color based on tab (Customers owe us = Red, We owe Suppliers = Red)
+        const pendingEl = document.getElementById('sheet-pending');
+        pendingEl.innerText = `₹${pending.toFixed(2)}`;
+        pendingEl.style.color = pending > 0 ? 'var(--danger)' : 'var(--emerald)';
+
+        document.getElementById('ledger-modal').style.display = 'flex';
+        document.getElementById('ledger-entries').innerHTML = `<div style="text-align:center; padding:30px; font-weight:800; color:var(--text-light);"><i class="bi bi-arrow-repeat bi-spin"></i> Fetching records...</div>`;
+        document.getElementById('ledger-date-filter').value = ""; // Reset date
+
+        // Fetch Ledger
+        const db = firebase.firestore();
+        const collectionName = currentTab === 'customers' ? 'customers' : 'suppliers';
+        const subCollection = currentTab === 'customers' ? 'ledger' : 'transactions'; // Aligning with your supplier structure
+        
+        try {
+            const snap = await db.collection('companies').doc(activeUserPhone)
+                .collection(collectionName).doc(id).collection(subCollection)
+                .orderBy('timestamp', 'desc').get();
+            
+            activeLedger = [];
+            snap.forEach(doc => activeLedger.push({ docId: doc.id, ...doc.data() }));
+            renderLedgerEntries();
+        } catch(e) {
+            console.error("Ledger Fetch Error", e);
+            document.getElementById('ledger-entries').innerHTML = `<div style="color:red; text-align:center;">Failed to load data.</div>`;
+        }
+    }
+
+    function closeLedger() {
+        document.getElementById('ledger-modal').style.display = 'none';
+        activeProfile = null; activeLedger = [];
+    }
+
+    function renderLedgerEntries() {
+        const container = document.getElementById('ledger-entries');
+        const dateFilter = document.getElementById('ledger-date-filter').value;
+        container.innerHTML = "";
+
+        let filtered = activeLedger;
+        if (dateFilter) {
+            filtered = activeLedger.filter(entry => {
+                if (!entry.timestamp) return false;
+                const d = entry.timestamp.toDate();
+                const filterD = new Date(dateFilter);
+                return d.getDate() === filterD.getDate() && d.getMonth() === filterD.getMonth() && d.getFullYear() === filterD.getFullYear();
+            });
+        }
+
+        if (filtered.length === 0) {
+            container.innerHTML = `<div style="text-align:center; padding:30px; color:var(--text-light); font-weight:800;">No transactions found.</div>`;
+            return;
+        }
+
+        filtered.forEach(entry => {
+            const dateObj = entry.timestamp ? entry.timestamp.toDate() : new Date();
+            const timeStr = dateObj.toLocaleString('en-IN', { day:'2-digit', month:'short', year:'numeric', hour:'2-digit', minute:'2-digit' });
+            
+            // Logic differs slightly between Customer (Udhaar) and Supplier (Purchase/Payment)
+            let isPayment = false;
+            let title = "";
+            let amt = 0;
+            
+            if (activeProfile.type === 'customers') {
+                isPayment = entry.type === 'PAYMENT';
+                title = isPayment ? `Payment Received (${entry.mode || 'Cash'})` : `Bill Generated`;
+                amt = isPayment ? (entry.amountPaid || 0) : (entry.udhaarAdded || 0);
+            } else {
+                isPayment = entry.type === 'Payment';
+                title = isPayment ? `Paid to Supplier (${entry.mode || 'Cash'})` : `Stock Purchase (Bill #${entry.billNum || 'N/A'})`;
+                amt = entry.amount || 0;
+            }
+
+            // If it's a payment, it shows as green. If it's a bill adding to udhaar, it shows red.
+            const amtColor = isPayment ? 'var(--emerald)' : 'var(--danger)';
+            const sign = isPayment ? '-' : '+';
+            const isCleared = amt === 0; // Edge cases where bill was fully paid instantly
+
+            container.innerHTML += `
+                <div class="entry-row ${isCleared ? 'cleared' : ''}">
+                    <div>
+                        <div class="entry-date">${timeStr}</div>
+                        <div class="entry-desc">${title}</div>
+                        ${entry.note && !isPayment ? `<div style="font-size:11px; color:var(--text-light);">${entry.note}</div>` : ''}
+                    </div>
+                    <div class="entry-amt" style="color:${amtColor};">${sign} ₹${amt.toFixed(2)}</div>
+                </div>
+            `;
+        });
+    }
+
+    // --- PAYMENT RECORDING LOGIC ---
+    function openPaymentModal() {
+        if (!activeProfile) return;
+        document.getElementById('pay-amt').value = "";
+        document.getElementById('pay-subtitle').innerText = activeProfile.type === 'customers' ? `Receiving from ${activeProfile.name}` : `Paying to ${activeProfile.name}`;
+        
+        // Auto-fill max pending amount
+        if (activeProfile.pending > 0) document.getElementById('pay-amt').value = activeProfile.pending;
+        
+        document.getElementById('pay-modal').style.display = 'flex';
+    }
+
+    async function confirmPayment() {
+        const amt = parseFloat(document.getElementById('pay-amt').value);
+        const mode = document.getElementById('pay-mode').value;
+        const btn = document.getElementById('btn-confirm-pay');
+
+        if (isNaN(amt) || amt <= 0) return alert("Enter a valid amount.");
+        if (amt > activeProfile.pending) return alert(`Amount cannot exceed pending balance of ₹${activeProfile.pending}`);
+
+        btn.innerText = "Saving..."; btn.disabled = true;
+
+        const db = firebase.firestore();
+        const batch = db.batch();
+        const collectionName = activeProfile.type === 'customers' ? 'customers' : 'suppliers';
+        const subCollection = activeProfile.type === 'customers' ? 'ledger' : 'transactions';
+        const pendingField = activeProfile.type === 'customers' ? 'totalUdhaar' : 'totalPending';
+
+        const mainRef = db.collection('companies').doc(activeUserPhone).collection(collectionName).doc(activeProfile.id);
+        const ledgerRef = mainRef.collection(subCollection).doc();
+
+        try {
+            // 1. Update Master Balance (Decrement)
+            batch.update(mainRef, { 
+                [pendingField]: firebase.firestore.FieldValue.increment(-amt),
+                lastUpdated: firebase.firestore.FieldValue.serverTimestamp()
+            });
+
+            // 2. Add Ledger Entry
+            const ledgerData = {
+                timestamp: firebase.firestore.FieldValue.serverTimestamp(),
+                amountPaid: amt, amount: amt, // Keep both fields to support mixed schemas
+                mode: mode,
+                note: `Manual Payment Record`
+            };
+            
+            if(activeProfile.type === 'customers') {
+                ledgerData.type = 'PAYMENT';
+            } else {
+                ledgerData.type = 'Payment';
+            }
+
+            batch.set(ledgerRef, ledgerData);
+
+            await batch.commit();
+
+            // UI Updates
+            activeProfile.pending -= amt;
+            document.getElementById('sheet-pending').innerText = `₹${activeProfile.pending.toFixed(2)}`;
+            if(activeProfile.pending === 0) document.getElementById('sheet-pending').style.color = 'var(--emerald)';
+            
+            // Instantly inject the new payment into the UI list so we don't have to fetch again
+            const tempDate = firebase.firestore.Timestamp.now();
+            activeLedger.unshift({
+                timestamp: tempDate, type: activeProfile.type === 'customers' ? 'PAYMENT' : 'Payment', amountPaid: amt, amount: amt, mode: mode
+            });
+            renderLedgerEntries();
+            
+            // Update Background Master Lists
+            if(activeProfile.type === 'customers') {
+                const idx = allCustomers.findIndex(c => c.id === activeProfile.id);
+                if(idx > -1) allCustomers[idx].totalUdhaar = activeProfile.pending;
+            } else {
+                const idx = allSuppliers.findIndex(s => s.id === activeProfile.id);
+                if(idx > -1) allSuppliers[idx].totalPending = activeProfile.pending;
+            }
+            updateFinancialDashboard(); renderList();
+
+            document.getElementById('pay-modal').style.display = 'none';
+        } catch (e) {
+            console.error("Payment Error", e);
+            alert("Error saving payment.");
+        }
+        btn.innerText = "Save Payment"; btn.disabled = false;
+    }
+
+    // --- WHATSAPP REMINDER ENGINE ---
+    function sendWhatsAppReminder() {
+        if (!activeProfile || activeProfile.pending <= 0) return alert("Balance is clear. Nothing to remind!");
+        
+        let text = `*SARANDIPITY KHATA STATEMENT*\n`;
+        text += `Dear ${activeProfile.name},\n\n`;
+        text += `Your current outstanding balance is *Rs. ${activeProfile.pending.toFixed(2)}*.\n`;
+        
+        if (activeProfile.khata) text += `Your Khata Number is: ${activeProfile.khata}\n`;
+        
+        text += `\nPlease clear your dues at your earliest convenience. You can pay via Cash or UPI at the store.\n\nThank you!`;
+        
+        const url = `https://wa.me/91${activeProfile.phone}?text=${encodeURIComponent(text)}`;
+        window.open(url, '_blank');
+    }
+
+</script>
+</body>
+</html>
