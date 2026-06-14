@@ -137,14 +137,15 @@
 <div class="pos-layout">
    <div class="cart-panel">
         <div class="cart-items-container" id="cart-container"></div>
-    <div class="cart-footer">
-            <div style="display: flex; gap: 10px; position: relative;">
-                <input type="text" id="customer-name" class="customer-input" placeholder="👤 Name" style="flex: 1; text-transform: uppercase;" autocomplete="off" oninput="searchCustomer('name')">
-                <input type="tel" id="customer-phone" class="customer-input" placeholder="📱 Mobile" style="flex: 1;" autocomplete="off" oninput="searchCustomer('phone')">
-                
+   <div class="cart-footer">
+            <div style="position: relative; margin-bottom: 10px;">
+                <div style="display:flex; align-items:center; background:#f8fafc; border:1px solid var(--border); border-radius:8px; padding-right:10px;">
+                    <input type="text" id="customer-search" class="customer-input" placeholder="🔍 Search Name, Mobile, or Khata #" style="border:none; background:transparent; margin-bottom:0; flex:1;" autocomplete="off" oninput="handleCustomerSearch()">
+                    <i class="bi bi-x-circle-fill" id="clear-cust-btn" style="color:var(--text-light); cursor:pointer; display:none; font-size:16px;" onclick="clearCustomerSelection()"></i>
+                </div>
                 <div id="customer-dropdown" style="display:none; position:absolute; bottom:100%; left:0; width:100%; background:white; border:2px solid var(--primary); border-radius:8px; box-shadow:0 -4px 15px rgba(0,0,0,0.1); max-height:180px; overflow-y:auto; z-index:100;"></div>
             </div>
-            <div id="udhaar-badge" style="display:none; font-size:12px; font-weight:900; color:var(--danger); text-align:right; margin-bottom:8px;">Pending Udhaar: <span id="pending-udhaar-amt">₹0</span></div>
+            <div id="udhaar-badge" style="display:none; font-size:12px; font-weight:900; color:var(--danger); text-align:right; margin-bottom:8px;"></div>
 
             <div class="summary-row"><span>Subtotal:</span> <span id="cart-subtotal">₹0.00</span></div>
             <div class="summary-row" style="color:var(--danger);"><span>Discounts:</span> <span id="cart-discount">- ₹0.00</span></div>
@@ -233,8 +234,14 @@
 <div class="modal-overlay" id="udhaar-modal">
     <div class="modal-card">
         <button onclick="document.getElementById('udhaar-modal').style.display='none'" style="position:absolute; top:15px; right:15px; background:none; border:none; font-size:20px; cursor:pointer;"><i class="bi bi-x-lg"></i></button>
-        <h2 style="margin:0 0 5px 0; font-size:20px; font-weight:900; color:var(--warning);">Khata / Udhaar</h2>
+       <h2 style="margin:0 0 5px 0; font-size:20px; font-weight:900; color:var(--warning);">Khata / Udhaar</h2>
         <p style="margin:0 0 15px 0; font-size:13px; font-weight:800; color:var(--navy);" id="udhaar-customer-name">Customer Name</p>
+        
+        <div id="new-cust-fields" style="display:none; margin-bottom:15px; background:#f8fafc; padding:12px; border-radius:10px; border:1px dashed var(--primary); text-align:left;">
+            <label style="color:var(--primary); font-size:11px; margin-bottom:8px; display:block;"><i class="bi bi-person-plus-fill"></i> New Udhaar Customer Details</label>
+            <input type="text" id="new-cust-name" class="modal-input" placeholder="👤 Customer Name" style="margin-bottom:8px; padding:10px; text-transform:uppercase;">
+            <input type="tel" id="new-cust-phone" class="modal-input" placeholder="📱 10-Digit Mobile Number" style="margin-bottom:0; padding:10px;">
+        </div>
         
         <div style="background:#fffbeb; border:1px solid #fde68a; padding:12px; border-radius:10px; margin-bottom:15px; text-align:left;">
             <div style="display:flex; justify-content:space-between; margin-bottom:5px; font-size:13px; font-weight:700; color:var(--text-light);"><span>Current Bill:</span> <span id="u-bill-amt">₹0</span></div>
@@ -318,10 +325,11 @@
    let shopName = "Store"; // Will be fetched dynamically from Firebase
 
     let liveInventory = [];
- let currentCustomerPending = 0;
+let currentCustomerPending = 0;
     let udhaarPaidNow = 0;
     let searchTimeout = null;
     let currentKhataNumber = null;
+    let selectedCustomer = null;
     let shopTaxonomy = {};
     let cart = [];
     let heldDrafts = [];
@@ -642,29 +650,31 @@ function renderCart() {
     }
 
 // --- CUSTOMER SEARCH & KHATA LOGIC ---
-    function searchCustomer(type) {
-        document.getElementById('udhaar-badge').style.display = 'none';
-        currentCustomerPending = 0;
-        currentKhataNumber = null;
+    function handleCustomerSearch() {
+        let val = document.getElementById('customer-search').value.trim();
+        const clearBtn = document.getElementById('clear-cust-btn');
+        clearBtn.style.display = val.length > 0 ? 'block' : 'none';
+        
+        // If user modifies the text after selecting a customer, unlock the selection
+        if (selectedCustomer && val !== `${selectedCustomer.name} (${selectedCustomer.phone})`) {
+            clearCustomerSelection(false); 
+        }
 
         clearTimeout(searchTimeout);
         searchTimeout = setTimeout(async () => {
-            const nameVal = document.getElementById('customer-name').value.trim().toUpperCase();
-            const phoneVal = document.getElementById('customer-phone').value.trim();
             const dropdown = document.getElementById('customer-dropdown');
-            
-            // Allow search if name is 3+ chars, phone is 4+ chars, OR Khata Number is 1+ chars (in phone field)
-            if (nameVal.length < 3 && phoneVal.length < 1) {
-                dropdown.style.display = 'none'; return;
-            }
+            if (val.length < 1) { dropdown.style.display = 'none'; return; }
+            if (selectedCustomer) return; // Don't search if a customer is already locked in
 
             try {
                 const db = firebase.firestore();
                 let query = db.collection('companies').doc(activeUserPhone).collection('customers');
                 let snap;
-                
-                if (type === 'phone' && phoneVal.length === 10) {
-                    const exactSnap = await query.where('phone', '==', phoneVal).get();
+                let isNumeric = /^\d+$/.test(val);
+
+                // 10 Digits -> Exact Phone Match
+                if (isNumeric && val.length === 10) {
+                    const exactSnap = await query.where('phone', '==', val).get();
                     if (!exactSnap.empty) {
                         const c = exactSnap.docs[0].data();
                         selectCustomer(c.name, c.phone, c.totalUdhaar || 0, c.khataNumber || null);
@@ -672,18 +682,18 @@ function renderCart() {
                     }
                 }
                 
-                // KHATA NUMBER SEARCH: If they type 1 to 4 digits in phone field, search Khata first
-                if (type === 'phone' && phoneVal.length > 0 && phoneVal.length <= 5) {
-                    snap = await query.where('khataNumber', '==', phoneVal).limit(5).get();
-                    if (snap.empty && phoneVal.length >= 4) {
-                        snap = await query.where('phone', '>=', phoneVal).where('phone', '<=', phoneVal + '\uf8ff').limit(5).get();
+                // Khata Number / Phone Substring Search
+                if (isNumeric && val.length <= 5) {
+                    snap = await query.where('khataNumber', '==', val).limit(5).get();
+                    if (snap.empty && val.length >= 4) {
+                        snap = await query.where('phone', '>=', val).where('phone', '<=', val + '\uf8ff').limit(5).get();
                     }
-                } 
-                else if (type === 'phone' && phoneVal.length >= 4) {
-                    snap = await query.where('phone', '>=', phoneVal).where('phone', '<=', phoneVal + '\uf8ff').limit(5).get();
-                } 
-                else if (type === 'name' && nameVal.length >= 3) {
-                    snap = await query.where('name', '>=', nameVal).where('name', '<=', nameVal + '\uf8ff').limit(5).get();
+                } else if (isNumeric && val.length >= 4) {
+                    snap = await query.where('phone', '>=', val).where('phone', '<=', val + '\uf8ff').limit(5).get();
+                } else if (!isNumeric && val.length >= 3) {
+                    // Name search
+                    let upperVal = val.toUpperCase();
+                    snap = await query.where('name', '>=', upperVal).where('name', '<=', upperVal + '\uf8ff').limit(5).get();
                 }
 
                 if (!snap || snap.empty) { dropdown.style.display = 'none'; return; }
@@ -704,18 +714,40 @@ function renderCart() {
     }
 
     function selectCustomer(name, phone, pending, khataNum) {
-        document.getElementById('customer-name').value = name;
-        document.getElementById('customer-phone').value = phone;
+        selectedCustomer = { name, phone, pending: parseFloat(pending) || 0, khataNum: khataNum || null };
+        document.getElementById('customer-search').value = `${name} (${phone})`;
+        document.getElementById('clear-cust-btn').style.display = 'block';
         document.getElementById('customer-dropdown').style.display = 'none';
         
-        currentKhataNumber = khataNum || null;
-        currentCustomerPending = parseFloat(pending) || 0;
+        currentKhataNumber = selectedCustomer.khataNum;
+        currentCustomerPending = selectedCustomer.pending;
         
         if (currentCustomerPending > 0 || currentKhataNumber) {
             document.getElementById('udhaar-badge').innerHTML = currentKhataNumber ? `Khata <span style="color:var(--navy);">#${currentKhataNumber}</span> | Due: <span id="pending-udhaar-amt" style="color:var(--danger);">₹${currentCustomerPending.toFixed(2)}</span>` : `Pending Udhaar: <span id="pending-udhaar-amt" style="color:var(--danger);">₹${currentCustomerPending.toFixed(2)}</span>`;
             document.getElementById('udhaar-badge').style.display = 'block';
         } else { document.getElementById('udhaar-badge').style.display = 'none'; }
     }
+
+    function clearCustomerSelection(clearInput = true) {
+        selectedCustomer = null;
+        currentCustomerPending = 0;
+        currentKhataNumber = null;
+        document.getElementById('udhaar-badge').style.display = 'none';
+        document.getElementById('customer-dropdown').style.display = 'none';
+        if (clearInput) {
+            document.getElementById('customer-search').value = "";
+            document.getElementById('clear-cust-btn').style.display = 'none';
+            document.getElementById('customer-search').focus();
+        }
+    }
+
+    // Hide dropdown if clicked outside
+    document.addEventListener('click', (e) => {
+        if (!e.target.closest('#customer-dropdown') && e.target.id !== 'customer-search') {
+            const dp = document.getElementById('customer-dropdown');
+            if(dp) dp.style.display = 'none';
+        }
+    });
 
     // Hide dropdown if clicked outside
     document.addEventListener('click', (e) => {
@@ -725,21 +757,32 @@ function renderCart() {
         }
     });
 
-    function openUdhaarModal() {
+function openUdhaarModal() {
         if (cart.length === 0) return;
-        const cName = document.getElementById('customer-name').value.trim();
-        const cPhone = document.getElementById('customer-phone').value.trim();
         
-        if (!cName || cPhone.length !== 10) {
-            alert("Customer Name and a valid 10-digit Mobile Number are required for Udhaar!");
-            document.getElementById('customer-name').style.borderColor = 'var(--danger)';
-            document.getElementById('customer-phone').style.borderColor = 'var(--danger)';
-            return;
-        }
-        document.getElementById('customer-name').style.borderColor = 'var(--border)';
-        document.getElementById('customer-phone').style.borderColor = 'var(--border)';
+        const newCustFields = document.getElementById('new-cust-fields');
+        const rawSearch = document.getElementById('customer-search').value.trim();
 
-        document.getElementById('udhaar-customer-name').innerText = `${cName.toUpperCase()} (${cPhone})`;
+        if (selectedCustomer) {
+            newCustFields.style.display = 'none';
+            document.getElementById('udhaar-customer-name').innerText = `${selectedCustomer.name} (${selectedCustomer.phone})`;
+        } else {
+            // New Customer Mode: Open the fields and smartly pre-fill based on what they typed
+            newCustFields.style.display = 'block';
+            document.getElementById('udhaar-customer-name').innerText = `Adding New Customer...`;
+            
+            if (/^\d+$/.test(rawSearch) && rawSearch.length === 10) {
+                document.getElementById('new-cust-phone').value = rawSearch;
+                document.getElementById('new-cust-name').value = "";
+            } else if (!/^\d+$/.test(rawSearch) && rawSearch.length > 0) {
+                document.getElementById('new-cust-name').value = rawSearch.toUpperCase();
+                document.getElementById('new-cust-phone').value = "";
+            } else {
+                document.getElementById('new-cust-name').value = "";
+                document.getElementById('new-cust-phone').value = "";
+            }
+        }
+
         document.getElementById('u-bill-amt').innerText = `₹${finalSaleData.tot.toFixed(2)}`;
         document.getElementById('u-prev-amt').innerText = `₹${currentCustomerPending.toFixed(2)}`;
         document.getElementById('u-total-khata').innerText = `₹${(finalSaleData.tot + currentCustomerPending).toFixed(2)}`;
@@ -794,9 +837,20 @@ function renderCart() {
         
 // Prepare Receipt Data
         finalSaleData.items = [...cart];
-        finalSaleData.name = document.getElementById('customer-name').value.trim().toUpperCase();
-        finalSaleData.phone = document.getElementById('customer-phone').value.trim();
         finalSaleData.date = new Date().toLocaleString();
+        
+        if (selectedCustomer) {
+            finalSaleData.name = selectedCustomer.name;
+            finalSaleData.phone = selectedCustomer.phone;
+        } else if (mode === 'UDHAAR') {
+            finalSaleData.name = document.getElementById('new-cust-name').value.trim().toUpperCase();
+            finalSaleData.phone = document.getElementById('new-cust-phone').value.trim();
+        } else {
+            // Guest Checkout for Cash/UPI
+            const rawSearch = document.getElementById('customer-search').value.trim();
+            if (/^\d{10}$/.test(rawSearch)) { finalSaleData.phone = rawSearch; finalSaleData.name = ""; }
+            else { finalSaleData.name = ""; finalSaleData.phone = ""; }
+        }
         
         const db = firebase.firestore(); const batch = db.batch(); let saleCost = 0;
         
@@ -878,9 +932,8 @@ document.getElementById('udhaar-modal').style.display = 'none';
             batch.set(saleRef, saleObj);
             await batch.commit();
             
-            // Background sync successful. Show Success UI.
-            cart = []; document.getElementById('customer-name').value = ""; document.getElementById('customer-phone').value = ""; 
-            document.getElementById('udhaar-badge').style.display = 'none'; currentCustomerPending = 0; currentKhataNumber = null; renderCart();
+           // Background sync successful. Show Success UI.
+            cart = []; clearCustomerSelection(true); renderCart();
             
             // Build Thermal Receipt HTML
             document.getElementById('r-date').innerText = finalSaleData.date;
