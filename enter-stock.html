@@ -124,16 +124,16 @@
         <label>Product Name</label>
         <input type="text" id="item-name" placeholder="Item Name">
         
-     <div class="grid-2">
+   <div class="grid-2">
             <div>
                 <label>Category</label>
-                <select id="category" onchange="handleCategoryChange()"><option value="">Loading...</option></select>
+                <input type="text" id="category" placeholder="e.g. Grocery">
             </div>
             <div>
                 <label>Sub-Category</label>
-                <select id="subcategory" onchange="handleSubcategoryChange()"><option value="">Select Category First</option></select>
+                <input type="text" id="subcategory" placeholder="e.g. Dal">
             </div>
-        </div>
+    </div>
         
         <div style="margin-bottom: 12px;">
             <label>Unit</label>
@@ -234,8 +234,7 @@
    let savedShopParams = {}; // Master memory for custom parameters
     let globalProductCatalog = []; // Memory for Smart Search
 
- let shopTaxonomy = {}; // Memory for Category -> Subcategory hierarchy
-    let taxonomyChanged = false; // Tracks if we learned a new category
+ // Taxonomy variables removed for flatter workflow
 
     async function loadShopSettings() {
         try {
@@ -719,16 +718,9 @@ document.getElementById('category').selectedIndex = 0;
                 const data = doc.data();
             document.getElementById('item-name').value = data.name || "";
                 
-                // Handle Smart Category & Subcategory Loading
-                if (data.category) {
-                    if(!shopTaxonomy[data.category]) { shopTaxonomy[data.category] = []; taxonomyChanged = true; populateCategoryDropdown(); }
-                    document.getElementById('category').value = data.category;
-                    handleCategoryChange(); // Triggers subcategory load
-                }
-                if (data.subcategory && data.category) {
-                    if(!shopTaxonomy[data.category].includes(data.subcategory)) { shopTaxonomy[data.category].push(data.subcategory); taxonomyChanged = true; handleCategoryChange(); }
-                    document.getElementById('subcategory').value = data.subcategory;
-                }
+              // Simple text field loading
+                document.getElementById('category').value = data.category || "";
+                document.getElementById('subcategory').value = data.subcategory || "";
                 if (data.unit) {
                     const uEl = document.getElementById('unit');
                     if(!Array.from(uEl.options).some(opt => opt.value === data.unit)) uEl.add(new Option(data.unit, data.unit), 1);
@@ -825,35 +817,24 @@ document.getElementById('category').selectedIndex = 0;
         });
 
         // ENTERPRISE CONCURRENCY: THE "TRAFFIC LIGHT" TRANSACTION
-        if (paramsChanged || taxonomyChanged) {
+     // FORCE SAVE TO FIREBASE IMMEDIATELY SO IT'S NOT LOST ON PAGE REFRESH
+        if (paramsChanged) {
             const db = firebase.firestore();
             const settingsRef = db.collection('companies').doc(activeUserPhone).collection('settings').doc('params');
-            
             try {
                 await db.runTransaction(async (t) => {
                     const doc = await t.get(settingsRef);
                     let dbParams = doc.exists && doc.data().customParams ? doc.data().customParams : {};
-                    let dbTaxonomy = doc.exists && doc.data().shopTaxonomy ? doc.data().shopTaxonomy : {};
-
-                    // Safely merge local staff changes INTO the master database memory
                     for (const [k, arr] of Object.entries(savedShopParams)) {
                         if (!dbParams[k]) dbParams[k] = [];
                         arr.forEach(val => { if (!dbParams[k].includes(val)) dbParams[k].push(val); });
                     }
-                    
-                    for (const [cat, subArr] of Object.entries(shopTaxonomy)) {
-                        if (!dbTaxonomy[cat]) dbTaxonomy[cat] = [];
-                        subArr.forEach(sub => { if (!dbTaxonomy[cat].includes(sub)) dbTaxonomy[cat].push(sub); });
-                    }
-
-                    t.set(settingsRef, { customParams: dbParams, shopTaxonomy: dbTaxonomy }, { merge: true });
-                    
-                    // Update this device's local memory to match the perfectly merged server
+                    t.set(settingsRef, { customParams: dbParams }, { merge: true });
                     savedShopParams = dbParams;
-                    shopTaxonomy = dbTaxonomy;
                 });
-                taxonomyChanged = false;
                 paramsChanged = false;
+            } catch (err) { console.error("Transaction failed: ", err); }
+        }
             } catch (err) {
                 console.error("Transaction failed: ", err);
             }
