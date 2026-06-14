@@ -233,9 +233,18 @@
 </div>
 
 <div class="modal-overlay" id="sales-history-modal">
-    <div class="modal-card" style="max-width: 600px;">
+    <div class="modal-card" style="max-width: 650px;">
         <button onclick="document.getElementById('sales-history-modal').style.display='none'" style="position:absolute; top:15px; right:15px; background:none; border:none; font-size:20px; cursor:pointer;"><i class="bi bi-x-lg"></i></button>
-        <h2 style="margin:0 0 15px 0; font-size:20px; font-weight:900;">Recent Sales</h2>
+        <h2 style="margin:0 0 15px 0; font-size:20px; font-weight:900;">Sales History</h2>
+        
+        <div style="display:flex; gap:10px; margin-bottom:10px; flex-wrap:wrap; text-align: left;">
+            <div style="flex:1; min-width:120px;"><label>Start Date</label><input type="date" id="filter-start-date" class="modal-input" style="padding:10px; margin-bottom:0;" onchange="fetchFilteredSales()"></div>
+            <div style="flex:1; min-width:120px;"><label>End Date</label><input type="date" id="filter-end-date" class="modal-input" style="padding:10px; margin-bottom:0;" onchange="fetchFilteredSales()"></div>
+        </div>
+        <div style="margin-bottom:15px;">
+            <input type="text" id="filter-customer" class="modal-input" placeholder="🔍 Search Customer Name or Phone..." style="padding:10px; margin-bottom:0;" oninput="applyLocalSalesFilter()">
+        </div>
+
         <div id="sales-history-list" style="text-align:left; max-height:400px; overflow-y:auto; margin-bottom:15px; padding-right:5px;"></div>
     </div>
 </div>
@@ -520,43 +529,84 @@ function renderCart() {
     }
   function restoreDraft(i) { cart = [...heldDrafts[i].items]; heldDrafts.splice(i, 1); renderCart(); document.getElementById('drafts-modal').style.display = 'none'; }
 
-    // --- SALES HISTORY ---
+ // --- SALES HISTORY ENGINE ---
+    let loadedSales = [];
+
     async function showRecentSales() {
-        const list = document.getElementById('sales-history-list');
-        list.innerHTML = "<p style='text-align:center; color:var(--text-light);'>Fetching recent sales...</p>";
         document.getElementById('sales-history-modal').style.display = 'flex';
+        // Reset filters on open
+        document.getElementById('filter-start-date').value = "";
+        document.getElementById('filter-end-date').value = "";
+        document.getElementById('filter-customer').value = "";
+        await fetchFilteredSales();
+    }
+
+    async function fetchFilteredSales() {
+        const list = document.getElementById('sales-history-list');
+        list.innerHTML = "<p style='text-align:center; color:var(--text-light); font-weight:700;'>Fetching sales...</p>";
         
         try {
             const db = firebase.firestore();
-            const snap = await db.collection('companies').doc(activeUserPhone).collection('branches').doc(activeBranchId).collection('sales')
-                .orderBy('timestamp', 'desc').limit(20).get();
+            let query = db.collection('companies').doc(activeUserPhone).collection('branches').doc(activeBranchId).collection('sales').orderBy('timestamp', 'desc');
             
-            if (snap.empty) {
-                list.innerHTML = "<p style='text-align:center; color:var(--text-light);'>No recent sales found.</p>";
-                return;
+            const startDate = document.getElementById('filter-start-date').value;
+            const endDate = document.getElementById('filter-end-date').value;
+            
+            if (startDate) {
+                let start = new Date(startDate); start.setHours(0,0,0,0);
+                query = query.where('timestamp', '>=', firebase.firestore.Timestamp.fromDate(start));
             }
+            if (endDate) {
+                let end = new Date(endDate); end.setHours(23,59,59,999);
+                query = query.where('timestamp', '<=', firebase.firestore.Timestamp.fromDate(end));
+            }
+            // Limit to last 50 if no dates provided to save data
+            if (!startDate && !endDate) { query = query.limit(50); }
             
-            list.innerHTML = "";
-            snap.forEach(doc => {
-                const data = doc.data();
-                const dateObj = data.timestamp ? data.timestamp.toDate() : new Date();
-                const timeString = dateObj.toLocaleString('en-IN', { hour: '2-digit', minute: '2-digit', day: '2-digit', month: 'short' });
-                const itemsText = data.items.map(i => `${i.cartQty}x ${i.name}`).join(', ');
-                
-                list.innerHTML += `
-                    <div style="background:#f8fafc; padding:12px; border:1px solid var(--border); border-radius:10px; margin-bottom:10px;">
-                        <div style="display:flex; justify-content:space-between; margin-bottom:5px;">
-                            <span style="font-weight:900; color:var(--navy);">₹${(data.totalAmount || 0).toFixed(2)}</span>
-                            <span style="font-size:11px; font-weight:700; background:var(--border); padding:2px 6px; border-radius:4px;">${data.paymentMode || 'N/A'}</span>
-                        </div>
-                        <div style="font-size:12px; color:var(--text-light); margin-bottom:5px; white-space:nowrap; overflow:hidden; text-overflow:ellipsis;">${itemsText}</div>
-                        <div style="font-size:10px; font-weight:800; color:#94a3b8;">${timeString}</div>
-                    </div>`;
-            });
+            const snap = await query.get();
+            loadedSales = [];
+            snap.forEach(doc => loadedSales.push({ id: doc.id, ...doc.data() }));
+            
+            applyLocalSalesFilter();
         } catch (e) {
             console.error("Error fetching sales:", e);
             list.innerHTML = "<p style='color:red; text-align:center;'>Failed to load sales.</p>";
         }
+    }
+
+    function applyLocalSalesFilter() {
+        const list = document.getElementById('sales-history-list');
+        const searchTxt = document.getElementById('filter-customer').value.trim().toLowerCase(); // Forces case-insensitive
+        
+        const filtered = loadedSales.filter(s => {
+            const cName = (s.customerName || "").toLowerCase();
+            const cPhone = (s.customerPhone || "").toLowerCase();
+            return cName.includes(searchTxt) || cPhone.includes(searchTxt);
+        });
+        
+        if (filtered.length === 0) {
+            list.innerHTML = "<p style='text-align:center; color:var(--text-light); font-weight:600;'>No matching sales found.</p>";
+            return;
+        }
+        
+        list.innerHTML = "";
+        filtered.forEach(data => {
+            const dateObj = data.timestamp ? data.timestamp.toDate() : new Date();
+            const timeString = dateObj.toLocaleString('en-IN', { hour: '2-digit', minute: '2-digit', day: '2-digit', month: 'short' });
+            const itemsText = data.items.map(i => `${i.cartQty}x ${i.name}`).join(', ');
+            const custText = (data.customerName || data.customerPhone) ? `👤 ${data.customerName || ''} 📱 ${data.customerPhone || ''}` : "👤 Guest Customer";
+            
+            list.innerHTML += `
+                <div style="background:#fff; padding:15px; border:1px solid var(--border); border-radius:12px; margin-bottom:12px; box-shadow: 0 2px 4px rgba(0,0,0,0.02);">
+                    <div style="display:flex; justify-content:space-between; margin-bottom:8px; align-items:center;">
+                        <span style="font-weight:900; color:var(--navy); font-size:16px;">₹${(data.totalAmount || 0).toFixed(2)}</span>
+                        <span style="font-size:11px; font-weight:800; background:#f1f5f9; color:var(--text-light); padding:4px 8px; border-radius:6px; border:1px solid #cbd5e1;">${data.paymentMode || 'N/A'}</span>
+                    </div>
+                    <div style="font-size:12px; font-weight:800; color:var(--primary); margin-bottom:6px;">${custText}</div>
+                    <div style="font-size:13px; color:var(--text-light); margin-bottom:8px; line-height:1.4;">${itemsText}</div>
+                    <div style="font-size:11px; font-weight:800; color:#94a3b8; border-top:1px dashed #e2e8f0; padding-top:8px;">${timeString}</div>
+                </div>`;
+        });
     }
 
     // --- PAYMENT MODALS ---
