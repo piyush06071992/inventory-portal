@@ -136,9 +136,9 @@
 <div class="pos-layout">
    <div class="cart-panel">
         <div class="cart-items-container" id="cart-container"></div>
-        <div class="cart-footer">
+       <div class="cart-footer">
             <div style="display: flex; gap: 10px;">
-                <input type="text" id="customer-name" class="customer-input" placeholder="👤 Name (Optional)" style="flex: 1;">
+                <input type="text" id="customer-name" class="customer-input" placeholder="👤 Name (Optional)" style="flex: 1; text-transform: uppercase;">
                 <input type="tel" id="customer-phone" class="customer-input" placeholder="📱 Mobile (Optional)" style="flex: 1;">
             </div>
             <div class="summary-row"><span>Subtotal:</span> <span id="cart-subtotal">₹0.00</span></div>
@@ -595,9 +595,9 @@ function renderCart() {
     async function processSale(mode) {
         document.getElementById('cash-modal').style.display = 'none'; document.getElementById('upi-modal').style.display = 'none';
         
-      // Prepare Receipt Data
+// Prepare Receipt Data
         finalSaleData.items = [...cart];
-        finalSaleData.name = document.getElementById('customer-name').value.trim();
+        finalSaleData.name = document.getElementById('customer-name').value.trim().toUpperCase();
         finalSaleData.phone = document.getElementById('customer-phone').value.trim();
         finalSaleData.date = new Date().toLocaleString();
         
