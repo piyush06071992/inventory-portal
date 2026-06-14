@@ -642,6 +642,10 @@ function renderCart() {
 
 // --- CUSTOMER SEARCH & KHATA LOGIC ---
     function searchCustomer(type) {
+        // Instantly hide the pending udhaar badge as soon as the user clears or edits the fields
+        document.getElementById('udhaar-badge').style.display = 'none';
+        currentCustomerPending = 0;
+
         clearTimeout(searchTimeout);
         searchTimeout = setTimeout(async () => {
             const nameVal = document.getElementById('customer-name').value.trim().toUpperCase();
