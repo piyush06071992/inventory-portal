@@ -44,8 +44,18 @@
         .cart-item p { margin: 0; font-size: 12px; color: #64748b; line-height: 1.4;}
         .btn-remove { background: #fee2e2; color: #ef4444; border: none; padding: 10px 14px; border-radius: 8px; font-weight: bold; cursor: pointer; }
         
-        .tax-split-box { background: #e0f2fe; border: 1px dashed #7dd3fc; padding: 10px; border-radius: 8px; font-size: 12px; font-weight: 600; color: #0369a1; text-align: center; margin-bottom: 12px; display: none;}
+    .tax-split-box { background: #e0f2fe; border: 1px dashed #7dd3fc; padding: 10px; border-radius: 8px; font-size: 12px; font-weight: 600; color: #0369a1; text-align: center; margin-bottom: 12px; display: none;}
         .param-row { display: flex; gap: 8px; margin-bottom: 10px; align-items: center; }
+        
+        /* Quick-Select Shelf */
+        .quick-shelf { display: flex; overflow-x: auto; gap: 10px; padding: 10px 0; margin-bottom: 15px; scroll-snap-type: x mandatory; }
+        .quick-shelf::-webkit-scrollbar { height: 4px; }
+        .quick-shelf::-webkit-scrollbar-thumb { background: #cbd5e1; border-radius: 4px; }
+        .quick-item { min-width: 110px; max-width: 110px; background: white; border: 1px solid #cbd5e1; border-radius: 10px; padding: 10px; text-align: center; cursor: pointer; transition: 0.1s; scroll-snap-align: start; flex-shrink: 0;}
+        .quick-item:active { transform: scale(0.95); border-color: var(--navy); }
+        .quick-avatar { height: 36px; width: 36px; border-radius: 8px; margin: 0 auto 8px auto; display: flex; align-items: center; justify-content: center; font-size: 16px; font-weight: 900; color: white; }
+        .quick-name { font-size: 11px; font-weight: 800; line-height: 1.2; color: var(--navy); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; margin: 0 0 4px 0;}
+        .quick-price { font-size: 10px; color: #64748b; font-weight: 700; margin: 0;}
     </style>
 </head>
 <body>
@@ -94,10 +104,14 @@
             <i class="bi bi-qr-code-scan"></i> SCAN BARCODE
         </button>
         
-  <label>Search Product / Barcode</label>
+ <label>Search Product / Barcode</label>
         <div style="position: relative;">
             <input type="text" id="barcode" placeholder="Scan Barcode or Type Name..." oninput="handleSmartSearch()" autocomplete="off">
             <div id="search-suggestions" style="display: none; position: absolute; top: 100%; left: 0; width: 100%; background: white; border: 1px solid #cbd5e1; border-radius: 8px; box-shadow: 0 10px 15px -3px rgba(0,0,0,0.1); max-height: 200px; overflow-y: auto; z-index: 50;"></div>
+        </div>
+        
+        <div class="quick-shelf" id="quick-shelf-container">
+            <!-- Frequent Items Populated by JS -->
         </div>
         
         <label>Product Name</label>
@@ -261,7 +275,7 @@ document.addEventListener('DOMContentLoaded', () => {
         });
     });
 
-    // --- SMART SEARCH CATALOG LOADER ---
+   // --- SMART SEARCH CATALOG LOADER ---
     async function loadProductCatalog() {
         try {
             const db = firebase.firestore();
@@ -270,7 +284,36 @@ document.addEventListener('DOMContentLoaded', () => {
             snap.forEach(doc => {
                 globalProductCatalog.push({ id: doc.id, ...doc.data() });
             });
+            renderQuickShelf(); // Build the shelf immediately
         } catch(e) { console.error("Error loading catalog for search", e); }
+    }
+
+    function renderQuickShelf() {
+        const shelf = document.getElementById('quick-shelf-container');
+        if (!shelf) return;
+        
+        if (globalProductCatalog.length === 0) {
+            shelf.innerHTML = '<p style="font-size: 11px; color: #94a3b8; width: 100%; text-align: center; margin:0;">Your saved items will appear here.</p>';
+            return;
+        }
+
+        shelf.innerHTML = '';
+        const colors = ['#3b82f6', '#10b981', '#f43f5e', '#8b5cf6', '#eab308'];
+        
+        // Sort items by Most Recently Updated so active inventory stays at the front
+        const sortedCatalog = [...globalProductCatalog].sort((a,b) => new Date(b.lastUpdated || 0) - new Date(a.lastUpdated || 0)).slice(0, 20);
+
+        sortedCatalog.forEach((p, i) => {
+            const firstLetter = p.name ? p.name.charAt(0).toUpperCase() : 'B';
+            const bg = colors[i % colors.length];
+            shelf.innerHTML += `
+                <div class="quick-item" onclick="lookupProduct('${p.id}')">
+                    <div class="quick-avatar" style="background: ${bg};">${firstLetter}</div>
+                    <h4 class="quick-name">${p.name}</h4>
+                    <p class="quick-price">MSP: ₹${parseFloat(p.currentMsp || 0).toFixed(0)}</p>
+                </div>
+            `;
+        });
     }
 
 // --- ADMIN AUTHORIZATION LOGIC ---
@@ -606,7 +649,12 @@ function handleDropdownAdd(elemId) {
         if (e.target.id !== 'barcode') document.getElementById('search-suggestions').style.display = 'none';
     });
 
-    async function lookupProduct() {
+ async function lookupProduct(passedBarcode = null) {
+        if (passedBarcode) {
+            document.getElementById('barcode').value = passedBarcode;
+            document.getElementById('search-suggestions').style.display = 'none';
+        }
+        
         const barcode = document.getElementById('barcode').value.trim();
         if (!barcode) return;
         
