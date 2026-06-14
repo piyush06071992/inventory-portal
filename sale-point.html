@@ -867,7 +867,7 @@ document.getElementById('udhaar-modal').style.display = 'none';
         const saleRef = db.collection('companies').doc(activeUserPhone).collection('branches').doc(activeBranchId).collection('sales').doc();
         
         finalSaleData.paymentMode = mode;
-        finalSaleData.receiptId = saleRef.id; // Save ID to generate the web link
+        finalSaleData.receiptId = saleRef.id; 
         
         let saleObj = {
             timestamp: firebase.firestore.FieldValue.serverTimestamp(),
@@ -876,6 +876,24 @@ document.getElementById('udhaar-modal').style.display = 'none';
         };
 
         try {
+            // BILL NUMBER GENERATOR (Safe Transaction)
+            const branchRef = db.collection('companies').doc(activeUserPhone).collection('branches').doc(activeBranchId);
+            const generatedBillString = await db.runTransaction(async (t) => {
+                const bDoc = await t.get(branchRef);
+                let prefix = "BILL-";
+                let nextNum = 1;
+                if (bDoc.exists) {
+                    const bData = bDoc.data();
+                    if (bData.billPrefix) prefix = bData.billPrefix;
+                    if (bData.lastBillNumber !== undefined) nextNum = bData.lastBillNumber + 1;
+                }
+                t.update(branchRef, { lastBillNumber: nextNum });
+                return prefix + nextNum;
+            });
+            
+            saleObj.billNumber = generatedBillString;
+            finalSaleData.billNumber = generatedBillString; // Keep for print preview
+
             // KHATA NUMBER AUTO-ASSIGN ENGINE
             if (finalSaleData.name && finalSaleData.phone && finalSaleData.phone.length === 10) {
                 const custRef = db.collection('companies').doc(activeUserPhone).collection('customers').doc(finalSaleData.phone);
@@ -938,13 +956,13 @@ document.getElementById('udhaar-modal').style.display = 'none';
            // Background sync successful. Show Success UI.
             cart = []; clearCustomerSelection(true); renderCart();
             
-         // Build PDF-Style Receipt HTML for Printing
+        // Build PDF-Style Receipt HTML for Printing
             let rHtml = `
                 <div class="receipt-card">
                     <div class="r-header">
                         <h1 class="r-shop-name">${shopName.toUpperCase()}</h1>
                         <p class="r-date">${finalSaleData.date}</p>
-                        <p style="margin:5px 0 0 0; font-size:11px; font-weight:700; color:var(--text-light);">Receipt ID: ${finalSaleData.receiptId.substring(0,8).toUpperCase()}</p>
+                        <p style="margin:8px 0 0 0; font-size:14px; font-weight:900; color:var(--navy); padding:4px 8px; background:#f1f5f9; border-radius:6px; display:inline-block; border:1px solid var(--border);">Invoice No: ${finalSaleData.billNumber}</p>
                     </div>
             `;
 
@@ -1014,7 +1032,7 @@ document.getElementById('udhaar-modal').style.display = 'none';
     function sendWhatsApp() {
         let text = `*${shopName.toUpperCase()}*\n`;
         text += `Dear ${finalSaleData.name || 'Customer'},\n`;
-        text += `Your bill of Rs.${finalSaleData.tot.toFixed(0)} is ready.\n\n`;
+        text += `Your bill (*${finalSaleData.billNumber}*) of Rs.${finalSaleData.tot.toFixed(0)} is ready.\n\n`;
         
         if (finalSaleData.paymentMode === 'UDHAAR') {
             text += `*-- KHATA DETAILS --*\n`;
