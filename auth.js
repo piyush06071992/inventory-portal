@@ -12,10 +12,12 @@ const DASHBOARD_REGISTRY = {
     udhaarKhata: { label: "Udhaar Khata", icon: "bi-journal-bookmark-fill", color: "color-slate", url: "/udhaar-khata.html" }
 };// auth.js - CENTRAL CONFIG AND SECURITY ENFORCER
 
-// 0. Security Enforcer: Hide page only if NOT on login, registration, OR billing page
+// 0. Security Enforcer: Bypass Owner Security on Public & Staff pages
 const isPublicPage = window.location.pathname.includes("login.html") || 
                      window.location.pathname.includes("index.html") || 
                      window.location.pathname.includes("billing.html") ||
+                     window.location.pathname.includes("staff-") || 
+                     window.location.pathname.includes("receipt.html") ||
                      window.location.pathname === "/";
 
 if (!isPublicPage) {
