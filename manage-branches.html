@@ -85,9 +85,20 @@
             <input type="text" id="new-branch-name" class="form-control-custom" placeholder="e.g., Mall Road Branch">
         </div>
 
-        <div class="form-group">
+       <div class="form-group">
             <label>Branch Location / City</label>
             <input type="text" id="new-branch-location" class="form-control-custom" placeholder="e.g., Shimla">
+        </div>
+
+        <div style="display: flex; gap: 10px; margin-bottom: 18px;">
+            <div style="flex: 1;">
+                <label style="display: block; font-size: 13px; font-weight: 600; color: #475569; margin-bottom: 6px; text-transform: uppercase;">Bill Prefix</label>
+                <input type="text" id="new-branch-prefix" class="form-control-custom" placeholder="e.g., GST/26-27/">
+            </div>
+            <div style="flex: 1;">
+                <label style="display: block; font-size: 13px; font-weight: 600; color: #475569; margin-bottom: 6px; text-transform: uppercase;">Start Number</label>
+                <input type="number" id="new-branch-start-num" class="form-control-custom" placeholder="e.g., 100">
+            </div>
         </div>
 
         <button class="btn-add" onclick="createNewBranch()" id="btn-create">
@@ -173,9 +184,10 @@
             const branchHTML = `
                 <div class="branch-item ${isInactive ? 'inactive-item' : ''}">
                     <div class="branch-top-row">
-                        <div class="branch-info">
+                       <div class="branch-info">
                             <h3>${branch.branchName}</h3>
-                            <p>ID: ${branch.branchId} | Loc: ${branch.location || 'HQ'}</p>
+                            <p style="margin-bottom:4px;">ID: ${branch.branchId} | Loc: ${branch.location || 'HQ'}</p>
+                            <p style="font-weight:700; color:#3b82f6;"><i class="bi bi-receipt"></i> Bill Format: ${branch.billPrefix || 'BILL-'}${branch.lastBillNumber !== undefined ? branch.lastBillNumber + 1 : '1'}</p>
                         </div>
                         <div class="status-badge ${badgeClass}">${branch.status}</div>
                     </div>
@@ -218,8 +230,11 @@
     async function createNewBranch() {
         if (!activeUserPhone) return;
         
-        const branchName = document.getElementById('new-branch-name').value.trim();
+      const branchName = document.getElementById('new-branch-name').value.trim();
         const branchLocation = document.getElementById('new-branch-location').value.trim();
+        const billPrefix = document.getElementById('new-branch-prefix').value.trim() || "BILL-";
+        const startNumRaw = parseInt(document.getElementById('new-branch-start-num').value);
+        const startNum = isNaN(startNumRaw) || startNumRaw < 1 ? 1 : startNumRaw;
         const btn = document.getElementById('btn-create');
 
         if (!branchName) {
@@ -237,10 +252,12 @@
             const uniqueTimestamp = Date.now();
             const newBranchId = 'branch_' + uniqueTimestamp;
 
-            const newBranchData = {
+           const newBranchData = {
                 branchName: branchName,
                 location: branchLocation,
                 branchId: newBranchId,
+                billPrefix: billPrefix,
+                lastBillNumber: startNum - 1, // Subtract 1 because the POS increments before generating
                 createdAt: new Date().toISOString(),
                 status: "active"
             };
@@ -249,6 +266,8 @@
 
             document.getElementById('new-branch-name').value = "";
             document.getElementById('new-branch-location').value = "";
+            document.getElementById('new-branch-prefix').value = "";
+            document.getElementById('new-branch-start-num').value = "";
             
             // Briefly show inactive branches if they just added a new one to make sure they see everything
             if(showingInactive === false && allBranches.some(b => b.status === 'inactive')) {
