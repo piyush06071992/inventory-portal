@@ -58,10 +58,11 @@
         .summary-row { display: flex; justify-content: space-between; margin-bottom: 5px; font-size: 12px; font-weight: 700; color: var(--text-light);}
         .summary-total { display: flex; justify-content: space-between; margin-bottom: 10px; font-size: 20px; font-weight: 900; color: var(--navy); border-top: 1px dashed var(--border); padding-top: 8px;}
         
-        .checkout-btns { display: grid; grid-template-columns: 1fr 1fr; gap: 8px;}
+      .checkout-btns { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 8px;}
         .btn-checkout { padding: 12px; border: none; border-radius: 10px; font-size: 14px; font-weight: 900; color: white; cursor: pointer; display: flex; align-items: center; justify-content: center; gap: 6px;}
         .btn-cash { background: var(--emerald); }
         .btn-upi { background: #8b5cf6; }
+        .btn-udhaar { background: var(--warning); }
         
         /* --- RIGHT PANEL: SEARCH & GRID --- */
         .grid-panel { flex: 1; display: flex; flex-direction: column; background: var(--bg); overflow: hidden;}
@@ -136,11 +137,15 @@
 <div class="pos-layout">
    <div class="cart-panel">
         <div class="cart-items-container" id="cart-container"></div>
-       <div class="cart-footer">
-            <div style="display: flex; gap: 10px;">
-                <input type="text" id="customer-name" class="customer-input" placeholder="👤 Name (Optional)" style="flex: 1; text-transform: uppercase;">
-                <input type="tel" id="customer-phone" class="customer-input" placeholder="📱 Mobile (Optional)" style="flex: 1;">
+    <div class="cart-footer">
+            <div style="display: flex; gap: 10px; position: relative;">
+                <input type="text" id="customer-name" class="customer-input" placeholder="👤 Name" style="flex: 1; text-transform: uppercase;" autocomplete="off" oninput="searchCustomer('name')">
+                <input type="tel" id="customer-phone" class="customer-input" placeholder="📱 Mobile" style="flex: 1;" autocomplete="off" oninput="searchCustomer('phone')">
+                
+                <div id="customer-dropdown" style="display:none; position:absolute; bottom:100%; left:0; width:100%; background:white; border:2px solid var(--primary); border-radius:8px; box-shadow:0 -4px 15px rgba(0,0,0,0.1); max-height:180px; overflow-y:auto; z-index:100;"></div>
             </div>
+            <div id="udhaar-badge" style="display:none; font-size:12px; font-weight:900; color:var(--danger); text-align:right; margin-bottom:8px;">Pending Udhaar: <span id="pending-udhaar-amt">₹0</span></div>
+
             <div class="summary-row"><span>Subtotal:</span> <span id="cart-subtotal">₹0.00</span></div>
             <div class="summary-row" style="color:var(--danger);"><span>Discounts:</span> <span id="cart-discount">- ₹0.00</span></div>
             <div class="summary-row" style="color:var(--text-light); font-size: 11px;"><span>Includes GST:</span> <span id="cart-gst">₹0.00</span></div>
@@ -148,6 +153,7 @@
             <div class="checkout-btns">
                 <button class="btn-checkout btn-cash" onclick="openCashModal()"><i class="bi bi-cash-coin"></i> CASH</button>
                 <button class="btn-checkout btn-upi" onclick="openUpiModal()"><i class="bi bi-qr-code-scan"></i> UPI</button>
+                <button class="btn-checkout btn-udhaar" onclick="openUdhaarModal()"><i class="bi bi-journal-text"></i> UDHAAR</button>
             </div>
         </div>
     </div>
@@ -224,6 +230,28 @@
     </div>
 </div>
 
+<div class="modal-overlay" id="udhaar-modal">
+    <div class="modal-card">
+        <button onclick="document.getElementById('udhaar-modal').style.display='none'" style="position:absolute; top:15px; right:15px; background:none; border:none; font-size:20px; cursor:pointer;"><i class="bi bi-x-lg"></i></button>
+        <h2 style="margin:0 0 5px 0; font-size:20px; font-weight:900; color:var(--warning);">Khata / Udhaar</h2>
+        <p style="margin:0 0 15px 0; font-size:13px; font-weight:800; color:var(--navy);" id="udhaar-customer-name">Customer Name</p>
+        
+        <div style="background:#fffbeb; border:1px solid #fde68a; padding:12px; border-radius:10px; margin-bottom:15px; text-align:left;">
+            <div style="display:flex; justify-content:space-between; margin-bottom:5px; font-size:13px; font-weight:700; color:var(--text-light);"><span>Current Bill:</span> <span id="u-bill-amt">₹0</span></div>
+            <div style="display:flex; justify-content:space-between; margin-bottom:5px; font-size:13px; font-weight:700; color:var(--danger);"><span>Previous Pending:</span> <span id="u-prev-amt">₹0</span></div>
+            <div style="border-top:1px dashed #fcd34d; margin:8px 0;"></div>
+            <div style="display:flex; justify-content:space-between; font-size:16px; font-weight:900; color:var(--warning);"><span>Total Khata:</span> <span id="u-total-khata">₹0</span></div>
+        </div>
+        
+        <label style="text-align:left; color:var(--emerald);">Cash Paid Now (Partial Payment)</label>
+        <input type="number" id="udhaar-paid-now" class="modal-input" placeholder="₹0" oninput="calcUdhaarMath()">
+        
+        <div style="display:flex; justify-content:space-between; font-size:16px; font-weight:900; color:var(--danger); margin-bottom:15px; padding:0 10px;"><span>Final Pending:</span> <span id="u-final-pending">₹0</span></div>
+        
+        <button class="btn-modal-action" style="background:var(--warning); color:white;" onclick="processSale('UDHAAR')">Confirm Udhaar & Print</button>
+    </div>
+</div>
+
 <div class="modal-overlay" id="drafts-modal">
     <div class="modal-card">
         <h2 style="margin:0 0 15px 0; font-size:20px; font-weight:900;">Held Bills</h2>
@@ -287,9 +315,12 @@
     let activeBranchId = null;
 
     let shopUpiId = ""; // Will be fetched dynamically from Firebase
-    let shopName = "Store"; // Will be fetched dynamically from Firebase
+   let shopName = "Store"; // Will be fetched dynamically from Firebase
 
     let liveInventory = [];
+    let currentCustomerPending = 0;
+    let udhaarPaidNow = 0;
+    let searchTimeout = null;
     let shopTaxonomy = {};
     let cart = [];
     let heldDrafts = [];
@@ -609,6 +640,96 @@ function renderCart() {
         });
     }
 
+   // --- CUSTOMER SEARCH & KHATA LOGIC ---
+    function searchCustomer(type) {
+        clearTimeout(searchTimeout);
+        searchTimeout = setTimeout(async () => {
+            const nameVal = document.getElementById('customer-name').value.trim().toUpperCase();
+            const phoneVal = document.getElementById('customer-phone').value.trim();
+            const dropdown = document.getElementById('customer-dropdown');
+            
+            if (nameVal.length < 3 && phoneVal.length < 4) {
+                dropdown.style.display = 'none'; return;
+            }
+
+            try {
+                const db = firebase.firestore();
+                let query = db.collection('companies').doc(activeUserPhone).collection('customers');
+                
+                if (type === 'phone' && phoneVal.length >= 4) {
+                    query = query.where('phone', '>=', phoneVal).where('phone', '<=', phoneVal + '\uf8ff');
+                } else if (type === 'name' && nameVal.length >= 3) {
+                    query = query.where('name', '>=', nameVal).where('name', '<=', nameVal + '\uf8ff');
+                }
+                
+                const snap = await query.limit(5).get();
+                if (snap.empty) { dropdown.style.display = 'none'; return; }
+                
+                dropdown.innerHTML = "";
+                snap.forEach(doc => {
+                    const c = doc.data();
+                    dropdown.innerHTML += `
+                        <div style="padding:10px; border-bottom:1px solid var(--border); cursor:pointer; text-align:left;" onclick="selectCustomer('${c.name}', '${c.phone}', ${c.totalUdhaar || 0})">
+                            <div style="font-weight:900; font-size:14px; color:var(--navy);">${c.name}</div>
+                            <div style="font-size:12px; color:var(--text-light); font-weight:700;">${c.phone} | Khata: ₹${(c.totalUdhaar || 0).toFixed(2)}</div>
+                        </div>`;
+                });
+                dropdown.style.display = 'block';
+            } catch (e) { console.error("Search error:", e); }
+        }, 400); // 400ms delay to prevent spamming Firebase while typing
+    }
+
+    function selectCustomer(name, phone, pending) {
+        document.getElementById('customer-name').value = name;
+        document.getElementById('customer-phone').value = phone;
+        document.getElementById('customer-dropdown').style.display = 'none';
+        
+        currentCustomerPending = parseFloat(pending) || 0;
+        if (currentCustomerPending > 0) {
+            document.getElementById('pending-udhaar-amt').innerText = `₹${currentCustomerPending.toFixed(2)}`;
+            document.getElementById('udhaar-badge').style.display = 'block';
+        } else { document.getElementById('udhaar-badge').style.display = 'none'; }
+    }
+
+    // Hide dropdown if clicked outside
+    document.addEventListener('click', (e) => {
+        if (!e.target.closest('#customer-dropdown') && e.target.id !== 'customer-name' && e.target.id !== 'customer-phone') {
+            const dp = document.getElementById('customer-dropdown');
+            if(dp) dp.style.display = 'none';
+        }
+    });
+
+    function openUdhaarModal() {
+        if (cart.length === 0) return;
+        const cName = document.getElementById('customer-name').value.trim();
+        const cPhone = document.getElementById('customer-phone').value.trim();
+        
+        if (!cName || cPhone.length !== 10) {
+            alert("Customer Name and a valid 10-digit Mobile Number are required for Udhaar!");
+            document.getElementById('customer-name').style.borderColor = 'var(--danger)';
+            document.getElementById('customer-phone').style.borderColor = 'var(--danger)';
+            return;
+        }
+        document.getElementById('customer-name').style.borderColor = 'var(--border)';
+        document.getElementById('customer-phone').style.borderColor = 'var(--border)';
+
+        document.getElementById('udhaar-customer-name').innerText = `${cName.toUpperCase()} (${cPhone})`;
+        document.getElementById('u-bill-amt').innerText = `₹${finalSaleData.tot.toFixed(2)}`;
+        document.getElementById('u-prev-amt').innerText = `₹${currentCustomerPending.toFixed(2)}`;
+        document.getElementById('u-total-khata').innerText = `₹${(finalSaleData.tot + currentCustomerPending).toFixed(2)}`;
+        
+        document.getElementById('udhaar-paid-now').value = "";
+        calcUdhaarMath();
+        document.getElementById('udhaar-modal').style.display = 'flex';
+    }
+
+    function calcUdhaarMath() {
+        udhaarPaidNow = parseFloat(document.getElementById('udhaar-paid-now').value) || 0;
+        if (udhaarPaidNow > finalSaleData.tot) udhaarPaidNow = finalSaleData.tot; // Can't pay more than bill amount
+        const finalPending = (finalSaleData.tot + currentCustomerPending) - udhaarPaidNow;
+        document.getElementById('u-final-pending').innerText = `₹${finalPending.toFixed(2)}`;
+    }
+
     // --- PAYMENT MODALS ---
     function openCashModal() {
         if(cart.length === 0) return;
@@ -661,17 +782,47 @@ function renderCart() {
             }
         });
 
-    const saleRef = db.collection('companies').doc(activeUserPhone).collection('branches').doc(activeBranchId).collection('sales').doc();
-        batch.set(saleRef, {
+document.getElementById('udhaar-modal').style.display = 'none';
+        const saleRef = db.collection('companies').doc(activeUserPhone).collection('branches').doc(activeBranchId).collection('sales').doc();
+        
+        finalSaleData.paymentMode = mode;
+        let saleObj = {
             timestamp: firebase.firestore.FieldValue.serverTimestamp(),
             items: cart, totalAmount: finalSaleData.tot, totalCost: saleCost, totalGst: finalSaleData.gst, profit: finalSaleData.tot - saleCost,
             paymentMode: mode, customerName: finalSaleData.name, customerPhone: finalSaleData.phone
-        });
+        };
+
+        // IF UDHAAR: Update Customer Ledger & Master Record
+        if (mode === 'UDHAAR') {
+            finalSaleData.cashPaid = udhaarPaidNow;
+            finalSaleData.udhaarAdded = finalSaleData.tot - udhaarPaidNow;
+            finalSaleData.newTotalKhata = currentCustomerPending + finalSaleData.udhaarAdded;
+            
+            saleObj.cashPaid = finalSaleData.cashPaid;
+            saleObj.udhaarAdded = finalSaleData.udhaarAdded;
+
+            const custRef = db.collection('companies').doc(activeUserPhone).collection('customers').doc(finalSaleData.phone);
+            batch.set(custRef, {
+                name: finalSaleData.name, phone: finalSaleData.phone,
+                totalUdhaar: firebase.firestore.FieldValue.increment(finalSaleData.udhaarAdded),
+                lastUpdated: firebase.firestore.FieldValue.serverTimestamp()
+            }, { merge: true });
+
+            const ledgerRef = custRef.collection('ledger').doc();
+            batch.set(ledgerRef, {
+                timestamp: firebase.firestore.FieldValue.serverTimestamp(),
+                type: 'PURCHASE', billAmount: finalSaleData.tot,
+                amountPaid: finalSaleData.cashPaid, udhaarAdded: finalSaleData.udhaarAdded,
+                note: `Bill generated at POS`
+            });
+        }
+
+        batch.set(saleRef, saleObj);
 
         try {
             await batch.commit();
-            // Background sync successful. Show Success UI.
-            cart = []; document.getElementById('customer-name').value = ""; document.getElementById('customer-phone').value = ""; renderCart();
+            cart = []; document.getElementById('customer-name').value = ""; document.getElementById('customer-phone').value = ""; 
+            document.getElementById('udhaar-badge').style.display = 'none'; currentCustomerPending = 0; renderCart();
             
             // Build Thermal Receipt HTML
             document.getElementById('r-date').innerText = finalSaleData.date;
@@ -700,7 +851,16 @@ function renderCart() {
         if (finalSaleData.name) text += `Customer: ${finalSaleData.name}\n`;
         text += `-------------------\n`;
         finalSaleData.items.forEach(i => { text += `${i.cartQty}x ${i.name} - Rs.${(i.msp * i.cartQty).toFixed(0)}\n`; });
-        text += `-------------------\n*Total: Rs.${finalSaleData.tot.toFixed(0)}*\nThank you for shopping with us!`;
+        text += `-------------------\n*Bill Total: Rs.${finalSaleData.tot.toFixed(0)}*\n`;
+        
+        if (finalSaleData.paymentMode === 'UDHAAR') {
+            text += `\n*-- KHATA / UDHAAR --*\n`;
+            if (finalSaleData.cashPaid > 0) text += `Cash Paid Now: Rs.${finalSaleData.cashPaid.toFixed(0)}\n`;
+            text += `Added to Khata: Rs.${finalSaleData.udhaarAdded.toFixed(0)}\n`;
+            text += `*Total Pending: Rs.${finalSaleData.newTotalKhata.toFixed(0)}*\n`;
+        }
+        
+        text += `\nThank you for shopping with us!`;
         const url = `https://wa.me/91${finalSaleData.phone}?text=${encodeURIComponent(text)}`;
         window.open(url, '_blank');
         document.getElementById('success-modal').style.display = 'none';
