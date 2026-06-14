@@ -1,4 +1,16 @@
-// auth.js - CENTRAL CONFIG AND SECURITY ENFORCER
+// MASTER DASHBOARD REGISTRY
+// Update this list to automatically change buttons across the Owner Dashboard, Staff Dashboard, and Permission Matrix.
+const DASHBOARD_REGISTRY = {
+    pos: { label: "SALE POINT (POS)", icon: "bi-cart-dash-fill", color: "color-emerald", url: "/sale-point.html" },
+    manageStock: { label: "Manage Stock", icon: "bi-box-seam-fill", color: "color-indigo", isModal: true, modalId: "stock-menu-modal" },
+    suppliers: { label: "Suppliers", icon: "bi-truck", color: "color-purple", url: "/suppliers.html" },
+    businessDetails: { label: "Business Details", icon: "bi-gear-wide-connected", color: "color-orange", url: "/business-details.html" },
+    manageBranches: { label: "Manage Branches", icon: "bi-diagram-3-fill", color: "color-teal", url: "/manage-branches.html" },
+    manageStaff: { label: "Manage Staff", icon: "bi-people-fill", color: "color-teal", url: "/manage-staff.html" },
+    expenses: { label: "Expenses", icon: "bi-wallet2", color: "color-red", url: "/expenses.html" },
+    financeReports: { label: "Finance Reports", icon: "bi-bar-chart-line-fill", color: "color-emerald", url: "/finance-reports.html" },
+    udhaarKhata: { label: "Udhaar Khata", icon: "bi-journal-bookmark-fill", color: "color-slate", url: "/udhaar-khata.html" }
+};// auth.js - CENTRAL CONFIG AND SECURITY ENFORCER
 
 // 0. Security Enforcer: Hide page only if NOT on login, registration, OR billing page
 const isPublicPage = window.location.pathname.includes("login.html") || 
