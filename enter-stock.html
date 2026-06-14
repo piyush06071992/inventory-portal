@@ -540,9 +540,34 @@ document.addEventListener('DOMContentLoaded', () => {
         const db = firebase.firestore();
         const select = document.getElementById('branch-select');
         select.innerHTML = '<option value="">Select Branch</option>';
+        
         const snap = await db.collection('companies').doc(activeUserPhone).collection('branches').get();
-        snap.forEach(doc => select.innerHTML += `<option value="${doc.data().branchId}">${doc.data().branchName}</option>`);
-        if (assignedBranch && assignedBranch !== "admin") { select.value = assignedBranch; select.disabled = true; }
+        
+        // 1. Determine allowed branches (Handle both single string and array/JSON string)
+        let allowedBranches = [];
+        if (assignedBranch && assignedBranch !== "admin") {
+            try {
+                // If it's a JSON array string, parse it; otherwise treat as single ID
+                allowedBranches = assignedBranch.startsWith('[') ? JSON.parse(assignedBranch) : [assignedBranch];
+            } catch(e) { allowedBranches = [assignedBranch]; }
+        }
+
+        // 2. Populate the dropdown
+        snap.forEach(doc => {
+            const bId = doc.data().branchId;
+            // Only add to dropdown if admin (no restrictions) OR if branch is in allowed list
+            if (allowedBranches.length === 0 || allowedBranches.includes(bId)) {
+                select.innerHTML += `<option value="${bId}">${doc.data().branchName}</option>`;
+            }
+        });
+
+        // 3. Smart Lock Logic: Disable ONLY if exactly one branch is assigned
+        if (assignedBranch && assignedBranch !== "admin" && allowedBranches.length === 1) {
+            select.value = allowedBranches[0];
+            select.disabled = true;
+        } else {
+            select.disabled = false;
+        }
     }
 
     async function loadSuppliers() {
