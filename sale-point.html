@@ -640,7 +640,7 @@ function renderCart() {
         });
     }
 
-   // --- CUSTOMER SEARCH & KHATA LOGIC ---
+// --- CUSTOMER SEARCH & KHATA LOGIC ---
     function searchCustomer(type) {
         clearTimeout(searchTimeout);
         searchTimeout = setTimeout(async () => {
@@ -655,6 +655,16 @@ function renderCart() {
             try {
                 const db = firebase.firestore();
                 let query = db.collection('companies').doc(activeUserPhone).collection('customers');
+                
+                // AUTO-FILL ENGINE: If they typed exactly 10 digits, do an exact search instantly
+                if (type === 'phone' && phoneVal.length === 10) {
+                    const exactSnap = await query.where('phone', '==', phoneVal).get();
+                    if (!exactSnap.empty) {
+                        const c = exactSnap.docs[0].data();
+                        selectCustomer(c.name, c.phone, c.totalUdhaar || 0);
+                        return; // Auto-fill successful, skip the dropdown entirely!
+                    }
+                }
                 
                 if (type === 'phone' && phoneVal.length >= 4) {
                     query = query.where('phone', '>=', phoneVal).where('phone', '<=', phoneVal + '\uf8ff');
