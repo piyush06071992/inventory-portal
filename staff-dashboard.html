@@ -146,10 +146,13 @@
 
                 // Multi-Device Protection: IGNORING STALE CACHE BY USING ">" instead of "!=="
                 // This stops Firebase from kicking you out with old cached timestamps!
-                if (data.lastLoginTime && data.lastLoginTime > myLoginTime) {
-                    handleLogout("SECURITY ALERT: Your account was just logged in from another device. This active session is being closed.");
-                    return;
-                }
+            // New Logic: Only kick if the difference is greater than 5 seconds
+const dbTime = new Date(data.lastLoginTime).getTime();
+const localTime = new Date(myLoginTime).getTime();
+
+if (data.lastLoginTime && (dbTime - localTime) > 5000) {
+    handleLogout("SECURITY ALERT: New login detected. Session closed.");
+}
 
                 // Termination Protection: Auto-kick if Admin terminates them
                 if (data.status === 'Terminated') {
