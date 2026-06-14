@@ -676,21 +676,23 @@ if (selectedBranch) {
         const branches = Array.isArray(staff.assignedBranch) ? staff.assignedBranch : [staff.assignedBranch];
         const perms = staff.permissions || {}; // Existing permissions
 
-        if (branches.length === 0 || !branches[0]) {
+       if (branches.length === 0 || !branches[0]) {
             container.innerHTML = "<p style='color:#64748b; font-size:14px; text-align:center;'>No branches assigned to this staff. Please edit their profile to assign a branch first.</p>";
         } else {
             branches.forEach(bId => {
                 const bName = globalBranchesData[bId] || "Unknown Branch";
                 const bPerms = perms[bId] || {}; // Get existing permissions for THIS specific branch
 
+                let togglesHtml = "";
+                // Loop through the Master Registry defined in auth.js!
+                for (const [key, config] of Object.entries(DASHBOARD_REGISTRY)) {
+                    togglesHtml += createToggle(bId, key, `<i class="bi ${config.icon}"></i> ${config.label}`, bPerms[key]);
+                }
+
                 container.innerHTML += `
                     <div style="background:#f8fafc; border:1px solid #cbd5e1; border-radius:12px; padding:16px; margin-bottom:15px;">
                         <h4 style="margin:0 0 12px 0; color:#1e3a8a; font-size:15px; border-bottom:1px solid #e2e8f0; padding-bottom:8px;"><i class="bi bi-shop"></i> ${bName}</h4>
-                        
-                        ${createToggle(bId, 'manageStock', '📦 Manage Stock', bPerms.manageStock)}
-                        ${createToggle(bId, 'salesBilling', '🧾 POS / Billing', bPerms.salesBilling)}
-                        ${createToggle(bId, 'manageKhata', '📓 Manage Khata / Udhaar', bPerms.manageKhata)}
-                        ${createToggle(bId, 'viewReports', '📊 View Reports', bPerms.viewReports)}
+                        ${togglesHtml}
                     </div>
                 `;
             });
