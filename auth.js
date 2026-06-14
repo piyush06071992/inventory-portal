@@ -47,6 +47,16 @@ if (typeof firebase !== 'undefined' && !firebase.apps.length) {
 function initializeSecurityMonitor() {
     if (isPublicPage) return;
 
+    // STAFF BYPASS: If a staff badge is detected, let them through!
+    // Individual pages (like enter-stock) will handle their specific permissions.
+    const isStaffSession = localStorage.getItem("activeStaffId");
+    if (isStaffSession) {
+        const styleTag = document.getElementById('security-style-tag');
+        if (styleTag) styleTag.remove(); 
+        document.body.style.display = 'block';
+        return;
+    }
+
     const activePhone = localStorage.getItem("activeUserPhone");
     const myLoginTime = localStorage.getItem("myLoginTime");
 
