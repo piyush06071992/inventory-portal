@@ -10,184 +10,198 @@
     <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-auth-compat.js"></script>
     <script src="/auth.js"></script>
     
-    <!-- Scanners and Printers -->
     <script src="https://unpkg.com/html5-qrcode"></script>
     <script src="https://cdn.jsdelivr.net/npm/jsbarcode@3.11.5/dist/JsBarcode.all.min.js"></script>
     
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;800;900&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700;800;900&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.1/font/bootstrap-icons.css">
 
     <style>
         :root { 
             --navy: #0f172a; --primary: #3b82f6; 
             --emerald: #10b981; --danger: #ef4444; --warning: #f59e0b;
-            --text-light: #64748b; --border: #e2e8f0; --bg: #f1f5f9;
+            --text-light: #64748b; --border: #cbd5e1; --bg: #f8fafc;
         }
-        body { font-family: 'Inter', sans-serif; background-color: var(--bg); margin: 0; padding: 0; color: var(--navy); }
-        .wrapper { padding: 20px; max-width: 1400px; margin: auto; padding-bottom: 80px; }
+        body { font-family: 'Inter', sans-serif; background-color: var(--bg); margin: 0; padding: 0; color: var(--navy); font-size: 13px; }
+        .wrapper { padding: 15px; max-width: 1600px; margin: auto; padding-bottom: 80px; }
         
-        .header-bar { display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px; flex-wrap: wrap; gap: 10px;}
-        .header-bar h1 { margin: 0; font-size: 26px; font-weight: 900; letter-spacing: -0.5px;}
+        .header-bar { display: flex; justify-content: space-between; align-items: center; margin-bottom: 15px; flex-wrap: wrap; gap: 10px;}
+        .header-bar h1 { margin: 0; font-size: 22px; font-weight: 900; letter-spacing: -0.5px;}
         
-        .btn-action { background: white; border: 2px solid var(--border); padding: 10px 16px; border-radius: 10px; cursor: pointer; font-weight: 800; color: var(--navy); display: flex; align-items: center; gap: 8px; transition: 0.2s;}
-        .btn-action:hover { background: #f8fafc; transform: translateY(-2px); }
+        .btn-action { background: white; border: 1px solid var(--border); padding: 6px 12px; border-radius: 6px; cursor: pointer; font-weight: 700; font-size: 12px; color: var(--navy); display: flex; align-items: center; gap: 6px; transition: 0.2s;}
+        .btn-action:hover { background: #f1f5f9; }
 
-        .top-master-row { display: flex; gap: 20px; margin-bottom: 20px; flex-wrap: wrap; align-items: stretch; }
-        .dashboard-grid { display: flex; gap: 10px; flex: 1; min-width: 250px; }
-        .dash-pill { flex: 1; padding: 12px 16px; border-radius: 12px; color: white; display: flex; align-items: center; justify-content: space-between; box-shadow: 0 4px 6px rgba(0,0,0,0.1); }
-        .dash-pill h3 { margin: 0; font-size: 22px; font-weight: 900; }
-        .dash-pill p { margin: 0; font-size: 10px; font-weight: 900; text-transform: uppercase; opacity: 0.9;}
+        .top-master-row { display: flex; gap: 10px; margin-bottom: 15px; flex-wrap: wrap; align-items: center; }
+        .dash-pill { padding: 8px 12px; border-radius: 8px; color: white; display: flex; align-items: center; gap: 15px; box-shadow: 0 2px 4px rgba(0,0,0,0.1); min-width: 150px;}
+        .dash-pill h3 { margin: 0; font-size: 18px; font-weight: 900; }
+        .dash-pill p { margin: 0; font-size: 10px; font-weight: 800; text-transform: uppercase; opacity: 0.9;}
         .pill-total { background: linear-gradient(135deg, #0ea5e9, #10b981); }
         .pill-danger { background: linear-gradient(135deg, #f43f5e, #f97316); }
         
-        .filter-row { display: flex; gap: 10px; background: white; padding: 10px; border-radius: 12px; border: 1px solid var(--border); flex: 2; min-width: 300px; align-items: center; flex-wrap: wrap;}
-        .filter-input { padding: 10px 14px; border: 1px solid var(--border); border-radius: 8px; font-size: 13px; font-weight: 700; background: #f8fafc; flex: 1; min-width: 120px; outline: none;}
+        .filter-row { display: flex; gap: 8px; background: white; padding: 8px; border-radius: 8px; border: 1px solid var(--border); flex: 1; align-items: center; flex-wrap: wrap;}
+        .filter-input { padding: 6px 10px; border: 1px solid var(--border); border-radius: 6px; font-size: 12px; font-weight: 600; background: #f8fafc; flex: 1; min-width: 110px; outline: none;}
 
-        .rack-section { background: white; border-radius: 16px; padding: 20px 20px 10px 20px; margin-bottom: 25px; box-shadow: 0 4px 10px rgba(0,0,0,0.03); border: 1px solid var(--border); }
-        .rack-title { font-size: 20px; font-weight: 900; margin: 0 0 15px 0; color: var(--navy); display: flex; align-items: center; justify-content: space-between; border-bottom: 3px solid var(--border); padding-bottom: 10px;}
-        .cat-count { background: var(--primary); color: white; padding: 4px 10px; border-radius: 12px; font-size: 12px; }
+        /* Compact Table Layout (Excel Style) */
+        .table-container { background: white; border-radius: 8px; border: 1px solid var(--border); overflow-x: auto; box-shadow: 0 2px 8px rgba(0,0,0,0.05); }
+        .data-table { width: 100%; border-collapse: collapse; text-align: left; white-space: nowrap; }
+        .data-table th { background: #f1f5f9; padding: 10px; font-size: 11px; font-weight: 800; color: var(--text-light); text-transform: uppercase; border-bottom: 2px solid var(--border); position: sticky; top: 0; z-index: 10;}
+        .data-table td { padding: 8px 10px; border-bottom: 1px solid #e2e8f0; vertical-align: middle; }
+        .data-table tr:hover { background: #f8fafc; }
         
-        .shelf-track { display: flex; overflow-x: auto; gap: 15px; padding-bottom: 20px; scroll-snap-type: x mandatory;}
-        .shelf-track::-webkit-scrollbar { height: 8px; }
-        .shelf-track::-webkit-scrollbar-thumb { background: #cbd5e1; border-radius: 4px; }
+        .cell-product { display: flex; align-items: center; gap: 10px; min-width: 200px; }
+        .cell-product-name { font-weight: 800; font-size: 13px; color: var(--navy); text-overflow: ellipsis; overflow: hidden; }
+        .cell-product-sku { font-size: 10px; color: var(--text-light); font-family: monospace; font-weight: 600; display: block; }
         
-        .shelf-base { height: 10px; background: linear-gradient(to bottom, #e2e8f0, #cbd5e1); border-radius: 4px; box-shadow: inset 0 2px 4px rgba(0,0,0,0.1); margin-top: -10px; margin-bottom: 10px; }
-
-        .product-card { min-width: 250px; max-width: 250px; border: 1px solid var(--border); border-radius: 12px; padding: 15px; background: #fff; display: flex; flex-direction: column; position: relative; transition: 0.2s; scroll-snap-align: start;}
-        .product-card:hover { transform: translateY(-5px); box-shadow: 0 10px 20px rgba(0,0,0,0.08); border-color: #cbd5e1;}
-        
-        .card-avatar { height: 110px; border-radius: 8px; margin-bottom: 12px; display: flex; align-items: center; justify-content: center; font-size: 40px; font-weight: 900; color: white; position: relative; overflow: hidden;}
-        .promo-badge { position: absolute; top: 8px; left: -4px; background: var(--danger); color: white; font-size: 10px; font-weight: 900; padding: 4px 8px; border-radius: 0 4px 4px 0; box-shadow: 0 2px 5px rgba(239,68,68,0.4); text-transform: uppercase;}
-        
-        .card-title { font-size: 16px; font-weight: 900; line-height: 1.2; margin: 0 0 4px 0; color: var(--navy); white-space: nowrap; overflow: hidden; text-overflow: ellipsis;}
-        .card-sku { font-size: 11px; color: var(--text-light); font-family: monospace; display: block; margin-bottom: 8px; font-weight: 600;}
-        .card-params { font-size: 10px; color: #475569; font-weight: 700; display: flex; flex-wrap: wrap; gap: 4px; margin-bottom: 12px; }
-        .param-tag { background: #e2e8f0; padding: 2px 6px; border-radius: 4px; }
-        
-        .card-price-row { display: flex; justify-content: space-between; align-items: baseline; margin-bottom: 10px; }
-        .card-price { font-size: 22px; font-weight: 900; color: var(--navy); }
-        
-        .card-wholesale { font-size: 11px; color: var(--text-light); font-weight: 700; background: #f8fafc; padding: 6px; border-radius: 6px; border: 1px solid var(--border); display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px;}
-        
-        .stock-pill { padding: 4px 10px; border-radius: 6px; font-size: 12px; font-weight: 900; border: 2px solid; display: inline-block;}
-        .stock-good { background: #dcfce7; color: #065f46; border-color: #86efac; }
-        .stock-low { background: #fee2e2; color: #b91c1c; border-color: #fca5a5; animation: pulse 2s infinite; }
+        .badge { padding: 2px 6px; border-radius: 4px; font-size: 10px; font-weight: 800; }
+        .badge-cat { background: #e0e7ff; color: #3730a3; }
+        .badge-subcat { background: #fef3c7; color: #92400e; }
+        .badge-promo { background: #fee2e2; color: #b91c1c; animation: pulse 2s infinite; }
         @keyframes pulse { 0% { opacity: 1; } 50% { opacity: 0.7; } 100% { opacity: 1; } }
 
-        .card-actions { display: flex; gap: 6px; margin-top: auto; padding-top: 15px; border-top: 1px dashed var(--border);}
-        .btn-icon { flex: 1; border: none; background: #f1f5f9; padding: 10px 0; border-radius: 8px; cursor: pointer; font-size: 15px; font-weight: 900; transition: transform 0.1s; display: flex; align-items: center; justify-content: center;}
-        .btn-icon:hover { transform: scale(1.05); }
+        .stock-good { color: #059669; font-weight: 900; font-size: 14px;}
+        .stock-low { color: #dc2626; font-weight: 900; font-size: 14px;}
+
+        .money-text { font-family: monospace; font-weight: 800; font-size: 13px; }
+        .margin-positive { color: #059669; font-weight: 800; font-size: 12px;}
+        .margin-negative { color: #dc2626; font-weight: 800; font-size: 12px;}
+
+        .table-actions { display: flex; gap: 4px; }
+        .btn-icon-sm { border: none; background: #f1f5f9; width: 28px; height: 28px; border-radius: 6px; cursor: pointer; font-size: 13px; display: flex; align-items: center; justify-content: center; transition: 0.1s;}
+        .btn-icon-sm:hover { transform: scale(1.1); }
         .btn-edit { color: #4f46e5; background: #e0e7ff; }
         .btn-move { color: #0284c7; background: #e0f2fe; }
         .btn-offer { color: #a16207; background: #fef08a; }
         .btn-print { color: #10b981; background: #dcfce7; }
+        .btn-waste { color: #dc2626; background: #fee2e2; }
 
-        .modal-overlay { display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(15,23,42,0.7); z-index: 3000; align-items: center; justify-content: center; padding: 20px; box-sizing: border-box; backdrop-filter: blur(4px); }
-        .modal-card { background: white; width: 100%; max-width: 500px; border-radius: 20px; padding: 24px; position: relative; box-shadow: 0 25px 50px -12px rgba(0,0,0,0.25); max-height: 90vh; overflow-y: auto;}
-        .modal-input { width: 100%; padding: 12px; border: 2px solid var(--border); border-radius: 10px; font-size: 14px; font-weight: 700; color: var(--navy); outline: none; margin-bottom: 12px; box-sizing: border-box; background: var(--bg-light); transition: 0.2s;}
+        /* Modals */
+        .modal-overlay { display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(15,23,42,0.7); z-index: 3000; align-items: center; justify-content: center; padding: 15px; box-sizing: border-box; backdrop-filter: blur(4px); }
+        .modal-card { background: white; width: 100%; max-width: 550px; border-radius: 16px; padding: 20px; position: relative; box-shadow: 0 25px 50px -12px rgba(0,0,0,0.25); max-height: 95vh; overflow-y: auto;}
+        .modal-input { width: 100%; padding: 10px; border: 1px solid var(--border); border-radius: 8px; font-size: 13px; font-weight: 600; color: var(--navy); outline: none; margin-bottom: 12px; box-sizing: border-box; background: var(--bg); transition: 0.2s;}
         .modal-input:focus { border-color: var(--primary); background: white; }
-        .modal-input:disabled { background: #f1f5f9; cursor: not-allowed; opacity: 0.7;}
-        .btn-save-modal { width: 100%; padding: 16px; background: var(--primary); color: white; border: none; border-radius: 12px; font-weight: 800; font-size: 16px; cursor: pointer; box-shadow: 0 4px 6px rgba(59, 130, 246, 0.3); margin-top: 10px;}
-        
-        label { display: block; font-size: 11px; font-weight: 900; color: var(--text-light); text-transform: uppercase; margin-bottom: 4px; text-align: left;}
+        .modal-input:disabled { background: #e2e8f0; cursor: not-allowed; opacity: 0.8; color: var(--text-light);}
+        .btn-save-modal { width: 100%; padding: 14px; background: var(--primary); color: white; border: none; border-radius: 8px; font-weight: 800; font-size: 14px; cursor: pointer; margin-top: 5px;}
+        label { display: block; font-size: 10px; font-weight: 800; color: var(--text-light); text-transform: uppercase; margin-bottom: 4px; text-align: left;}
         .grid-2 { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
+        .grid-3 { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 10px; }
+        
+        .profit-preview-box { padding: 10px; border-radius: 8px; margin-bottom: 12px; border: 1px dashed var(--border); background: #f8fafc; font-size: 12px; font-weight: 700; display: flex; justify-content: space-between; align-items: center;}
     </style>
 </head>
 <body>
 
-<!-- Hidden container for our Auto-Learning Dropdowns -->
 <div id="dynamic-datalists" style="display: none;"></div>
 
 <div class="wrapper">
     <div class="header-bar">
-        <h1>Inventory Showroom</h1>
-        <div style="display: flex; gap: 10px; flex-wrap: wrap;">
-            <button class="btn-action" style="background:var(--navy); color:white; border-color:var(--navy);" onclick="openBlueprintModal()"><i class="bi bi-plus-circle-fill"></i> New Blueprint</button>
-            <button class="btn-action" style="background:var(--warning); color:white; border-color:var(--warning);" onclick="openGlobalDealsModal()"><i class="bi bi-megaphone-fill"></i> Deals</button>
+        <h1>Inventory Master</h1>
+        <div style="display: flex; gap: 8px; flex-wrap: wrap;">
+            <button class="btn-action" style="background:var(--navy); color:white; border-color:var(--navy);" onclick="openBlueprintModal()"><i class="bi bi-plus-circle-fill"></i> New Item</button>
+            <button class="btn-action" style="background:var(--warning); color:white; border-color:var(--warning);" onclick="openGlobalDealsModal()"><i class="bi bi-megaphone-fill"></i> Store Deals</button>
             <a href="javascript:history.back()" class="btn-action"><i class="bi bi-arrow-left"></i></a>
         </div>
     </div>
 
-    <div id="main-content">
-        <div class="top-master-row">
-            <div class="dashboard-grid">
-                <div class="dash-pill pill-total">
-                    <div><p>Total Varieties</p><h3 id="dash-total">0</h3></div>
-                    <i class="bi bi-box-seam" style="font-size:28px; opacity:0.5;"></i>
-                </div>
-                <div class="dash-pill pill-danger">
-                    <div><p>Low Stock</p><h3 id="dash-low">0</h3></div>
-                    <i class="bi bi-exclamation-triangle" style="font-size:28px; opacity:0.5;"></i>
-                </div>
-            </div>
-            
-            <div class="filter-row">
-                <input type="text" id="search-input" class="filter-input" placeholder="Search barcode/name..." oninput="renderInventory()">
-                <select id="filter-branch" class="filter-input" onchange="fetchInventory()"></select>
-                <select id="filter-category" class="filter-input" onchange="renderInventory()">
-                    <option value="ALL">All Categories</option>
-                </select>
-            </div>
+    <div class="top-master-row">
+        <div class="dash-pill pill-total">
+            <div><p>Varieties</p><h3 id="dash-total">0</h3></div>
+            <i class="bi bi-box-seam" style="font-size:24px; opacity:0.5;"></i>
         </div>
+        <div class="dash-pill pill-danger">
+            <div><p>Low Stock</p><h3 id="dash-low">0</h3></div>
+            <i class="bi bi-exclamation-triangle" style="font-size:24px; opacity:0.5;"></i>
+        </div>
+        
+        <div class="filter-row">
+            <input type="text" id="search-input" class="filter-input" placeholder="Search barcode/name..." oninput="renderInventory()">
+            <select id="filter-branch" class="filter-input" onchange="fetchInventory()"></select>
+            <select id="filter-main-dept" class="filter-input" onchange="updateMainFilters('dept')">
+                <option value="ALL">All Departments</option>
+            </select>
+            <select id="filter-main-cat" class="filter-input" onchange="updateMainFilters('cat')" disabled>
+                <option value="ALL">All Categories</option>
+            </select>
+            <select id="filter-main-subcat" class="filter-input" onchange="renderInventory()" disabled>
+                <option value="ALL">All Sub-Categories</option>
+            </select>
+        </div>
+    </div>
 
-        <div id="inventory-list">
-            <div style="text-align: center; padding: 40px; color: var(--text-light);">
-                <i class="bi bi-hdd-network" style="font-size: 40px; color: #cbd5e1; display: block; margin-bottom: 10px;"></i>
-                Building Store Racks...
-            </div>
-        </div>
+    <div class="table-container">
+        <table class="data-table">
+            <thead>
+                <tr>
+                    <th>Item Details</th>
+                    <th>Classification</th>
+                    <th>Stock</th>
+                    <th>Financials (₹)</th>
+                    <th>Profit/Margin</th>
+                    <th>Actions</th>
+                </tr>
+            </thead>
+            <tbody id="inventory-list-body">
+                <tr><td colspan="6" style="text-align: center; padding: 40px; color: var(--text-light);">Loading Racks...</td></tr>
+            </tbody>
+        </table>
     </div>
 </div>
 
 <div class="modal-overlay" id="blueprint-modal">
     <div class="modal-card">
-        <button onclick="closeBlueprintModal()" style="position:absolute; top:16px; right:16px; background:#f1f5f9; border:none; border-radius:50%; width:36px; height:36px; cursor:pointer;"><i class="bi bi-x-lg"></i></button>
-        <h2 style="margin:0 0 5px 0; font-size:22px; font-weight:900; color:var(--navy);"><i class="bi bi-pencil-square"></i> Product Blueprint</h2>
-        <p style="margin:0 0 20px 0; color:var(--text-light); font-size:12px; font-weight:600;">Build your product profile. Stock is added via Enter Stock.</p>
-
-        <label>SKU / Barcode <span style="color:var(--text-light); font-weight:600; text-transform:none;">(Leave empty to Auto-Generate)</span></label>
-        <div style="display: flex; gap: 8px; margin-bottom: 12px;">
-            <input type="text" id="bp-barcode" class="modal-input" placeholder="Scan packet or leave empty for loose items" style="margin-bottom: 0;">
-            <button onclick="startBlueprintScanner()" style="background:#e0f2fe; color:var(--primary); border:none; border-radius:10px; padding:0 16px; cursor:pointer; font-size:18px;" title="Scan Barcode"><i class="bi bi-qr-code-scan"></i></button>
+        <button onclick="closeBlueprintModal()" style="position:absolute; top:12px; right:12px; background:#f1f5f9; border:none; border-radius:50%; width:30px; height:30px; cursor:pointer;"><i class="bi bi-x-lg"></i></button>
+        <h2 style="margin:0 0 15px 0; font-size:18px; font-weight:900;"><i class="bi bi-pencil-square"></i> Item Blueprint</h2>
+        
+        <div class="grid-2" style="margin-bottom: 10px;">
+            <div>
+                <label>SKU / Barcode <span style="text-transform:none;">(Auto-Gen if empty)</span></label>
+                <div style="display: flex; gap: 4px;">
+                    <input type="text" id="bp-barcode" class="modal-input" placeholder="Scan or empty" style="margin-bottom: 0;">
+                    <button onclick="startBlueprintScanner()" style="background:#e0f2fe; color:var(--primary); border:none; border-radius:6px; padding:0 12px; cursor:pointer;"><i class="bi bi-qr-code-scan"></i></button>
+                </div>
+            </div>
+            <div>
+                <label>Display Name</label>
+                <input type="text" id="bp-name" class="modal-input" style="margin-bottom:0;" placeholder="ITEM NAME" oninput="forceUppercase(this)">
+            </div>
         </div>
 
-        <div id="bp-scanner-container" style="display: none; margin-bottom: 15px;">
-            <div id="bp-reader" style="width: 100%; border-radius: 12px; overflow: hidden; border: 2px solid var(--primary);"></div>
-            <div class="grid-2" style="margin-top: 10px;">
+        <div id="bp-scanner-container" style="display: none; margin-bottom: 10px;">
+            <div id="bp-reader" style="width: 100%; border-radius: 8px; overflow: hidden; border: 2px solid var(--primary);"></div>
+            <div class="grid-2" style="margin-top: 5px;">
                 <button class="btn-action" style="justify-content: center;" onclick="switchBlueprintCamera()"><i class="bi bi-camera-reverse"></i> Switch</button>
                 <button class="btn-action" style="justify-content: center; color: var(--danger); border-color: #fca5a5; background: #fee2e2;" onclick="stopBlueprintScanner()"><i class="bi bi-x-circle"></i> Stop</button>
             </div>
         </div>
 
-        <label>Product Display Name <span style="color:var(--text-light); font-weight:600; text-transform:none;">(Auto-Capitalized)</span></label>
-        <input type="text" id="bp-name" class="modal-input" placeholder="e.g. INDIA GATE BASMATI RICE" oninput="forceUppercase(this)">
-
-        <div style="background: #f8fafc; padding: 12px; border-radius: 10px; border: 1px solid var(--border); margin-bottom: 15px;">
-            <label>Department (Parent)</label>
-            <select id="bp-dept" class="modal-input" onchange="updateCatDropdown()">
-                <option value="">Select Department...</option>
-            </select>
-
-            <label>Category</label>
-            <select id="bp-cat" class="modal-input" onchange="updateSubcatDropdown()" disabled>
-                <option value="">Select Category...</option>
-            </select>
-
-            <label>Sub-Category (Item Type)</label>
-            <select id="bp-subcat" class="modal-input" style="margin-bottom: 0;" onchange="renderSmartTemplate()" disabled>
-                <option value="">Select Sub-Category...</option>
-            </select>
+        <div style="background: #f8fafc; padding: 10px; border-radius: 8px; border: 1px solid var(--border); margin-bottom: 10px;">
+            <div class="grid-3">
+                <div>
+                    <label>Department</label>
+                    <select id="bp-dept" class="modal-input" style="margin-bottom:0;" onchange="updateCatDropdown()">
+                        <option value="">Select...</option>
+                    </select>
+                </div>
+                <div>
+                    <label>Category</label>
+                    <select id="bp-cat" class="modal-input" style="margin-bottom:0;" onchange="updateSubcatDropdown()" disabled>
+                        <option value="">Select...</option>
+                    </select>
+                </div>
+                <div>
+                    <label>Sub-Category</label>
+                    <select id="bp-subcat" class="modal-input" style="margin-bottom:0;" onchange="renderSmartTemplate()" disabled>
+                        <option value="">Select...</option>
+                    </select>
+                </div>
+            </div>
         </div>
 
-        <!-- SMART AI PARAMETERS INJECTED HERE -->
-        <div id="bp-dynamic-params" style="background:#e0f2fe; padding:12px; border-radius:10px; border:1px dashed #7dd3fc; margin-bottom:15px; display:none;">
-            <!-- Generated dynamically based on Sub-Category -->
-        </div>
+        <div id="bp-dynamic-params" style="background:#e0f2fe; padding:10px; border-radius:8px; border:1px dashed #7dd3fc; margin-bottom:10px; display:none;"></div>
 
-        <div class="grid-2">
+        <div class="grid-3">
             <div>
-                <label>GST Rate</label>
-                <select id="bp-gst" class="modal-input">
+                <label>GST Rate (%)</label>
+                <select id="bp-gst" class="modal-input" onchange="updateProfitCalculations()">
                     <option value="0">0% (Exempt)</option>
                     <option value="5">5%</option>
                     <option value="12">12%</option>
@@ -198,33 +212,43 @@
             <div>
                 <label>Unit Base</label>
                 <select id="bp-unit" class="modal-input">
-                    <option value="PIECES">Pieces / Pkt</option>
-                    <option value="KG">Kg / Gms</option>
-                    <option value="LITRES">Litres / Ml</option>
+                    <option value="PIECES">Pieces/Pkt</option>
+                    <option value="KG">Kg/Gms</option>
+                    <option value="LITRES">Litres/Ml</option>
                     <option value="METERS">Meters</option>
                     <option value="BOX">Box</option>
                 </select>
             </div>
-        </div>
-
-      <div class="grid-2">
-            <div><label>Cost Price (₹)</label><input type="number" id="bp-cost" class="modal-input" placeholder="0.00" oninput="updateProfitCalculations()"></div>
-            <div><label>Sell Price / MRP (₹)</label><input type="number" id="bp-msp" class="modal-input" placeholder="0.00" oninput="updateProfitCalculations()"></div>
-        </div>
-
-        <div id="calc-preview" style="display:flex; justify-content: space-between; padding: 12px; background: #f8fafc; border-radius: 8px; margin-bottom: 15px; border: 1px dashed var(--border);">
-            <div style="text-align: center;">
-                <label style="color:var(--primary);">Margin %</label>
-                <div id="disp-margin" style="font-weight: 900; color: var(--primary);">0%</div>
-            </div>
-            <div style="text-align: center;">
-                <label style="color:var(--emerald);">Profit %</label>
-                <div id="disp-markup" style="font-weight: 900; color: var(--emerald);">0%</div>
+             <div>
+                <label>Min Stock Lvl</label>
+                <input type="number" id="bp-min" class="modal-input" value="5">
             </div>
         </div>
-        
-        <div style="text-align:center; padding:10px; background:#e0f2fe; border-radius:8px; margin-bottom:10px;">
-            <p style="margin:0; font-size:12px; font-weight:800; color:#0284c7;">Current Stock: <span id="bp-display-qty" style="font-size:16px;">0</span></p>
+
+        <div class="grid-2">
+            <div>
+                <label>Cost Price (CP) <span style="color:var(--danger); text-transform:none;">(Via Enter Stock)</span></label>
+                <input type="number" id="bp-cost" class="modal-input" disabled title="Update via Enter Stock module">
+            </div>
+            <div>
+                <label>Sell Price (MRP) <span style="text-transform:none;">(Inclusive of GST)</span></label>
+                <input type="number" id="bp-msp" class="modal-input" placeholder="0.00" oninput="updateProfitCalculations()">
+            </div>
+        </div>
+
+        <div class="profit-preview-box">
+            <div>
+                <span style="display:block; font-size:10px; color:var(--text-light); text-transform:uppercase;">Pre-Tax Base MRP</span>
+                <strong id="disp-base-mrp" style="color:var(--navy);">₹0.00</strong>
+            </div>
+            <div style="text-align: center;">
+                <span style="display:block; font-size:10px; color:var(--text-light); text-transform:uppercase;">Gross Profit</span>
+                <strong id="disp-profit" style="color:var(--primary);">₹0.00</strong>
+            </div>
+            <div style="text-align: right;">
+                <span style="display:block; font-size:10px; color:var(--text-light); text-transform:uppercase;">Margin / Markup</span>
+                <strong id="disp-margin" style="color:var(--emerald);">0% / 0%</strong>
+            </div>
         </div>
 
         <button class="btn-save-modal" id="btn-save-blueprint" onclick="saveBlueprint()">Save Blueprint</button>
@@ -232,21 +256,33 @@
 </div>
 
 <div class="modal-overlay" id="promo-modal">
-    <div class="modal-card">
-        <button onclick="closePromoModal()" style="position:absolute; top:16px; right:16px; background:#f1f5f9; border:none; border-radius:50%; width:36px; height:36px; cursor:pointer;"><i class="bi bi-x-lg"></i></button>
-        <h2 style="margin:0 0 5px 0; font-size:24px; font-weight:900;">🎁 Item Offer</h2>
-        <p id="promo-item-name" style="margin:0 0 20px 0; color:var(--primary); font-weight:800;"></p>
-        <p style="font-size: 13px; font-weight: 800; color: var(--navy); margin-bottom: 15px; background: #e0f2fe; padding: 8px; border-radius: 8px;">Base MSP: <span id="promo-base-msp"></span></p>
+    <div class="modal-card" style="max-width: 450px;">
+        <button onclick="closePromoModal()" style="position:absolute; top:12px; right:12px; background:#f1f5f9; border:none; border-radius:50%; width:30px; height:30px; cursor:pointer;"><i class="bi bi-x-lg"></i></button>
+        <h2 style="margin:0 0 10px 0; font-size:20px; font-weight:900;">🎁 Item Discount</h2>
+        <p id="promo-item-name" style="margin:0 0 15px 0; color:var(--primary); font-weight:800; font-size:14px;"></p>
+        
+        <div class="grid-3" style="margin-bottom: 15px; background: #f8fafc; padding: 10px; border-radius: 8px; border: 1px solid var(--border);">
+            <div><label>CP</label><span id="promo-base-cp" class="money-text"></span></div>
+            <div><label>GST</label><span id="promo-base-gst" class="money-text"></span></div>
+            <div><label>Base MRP</label><span id="promo-base-msp" class="money-text"></span></div>
+        </div>
 
         <label>Offer Type</label>
         <select id="promo-type" class="modal-input" onchange="togglePromoFields()">
             <option value="">No Offer (Remove Promotion)</option>
             <option value="discount">Direct Discount (% or Flat)</option>
             <option value="volume">Volume Deal (Buy X for ₹Y)</option>
-            <option value="bogo">Same Item BOGO (Buy X Get Y Free)</option>
-            <option value="cross_bogo">Cross-Item (Buy this, Get something else)</option>
+            <option value="bogo">Same Item BOGO</option>
+            <option value="cross_bogo">Cross-Item BOGO</option>
         </select>
+        
         <div id="promo-dynamic-fields"></div>
+        
+        <div id="promo-profit-impact" class="profit-preview-box" style="display:none; background:#e0f2fe; border-color:#7dd3fc;">
+            <div><label>New Sell Price</label><strong id="impact-sell" style="font-size:14px; color:var(--navy);">₹0.00</strong></div>
+            <div style="text-align:right;"><label>New Profit</label><strong id="impact-profit" style="font-size:14px;">₹0.00 (0%)</strong></div>
+        </div>
+
         <div style="display:flex; gap:10px; margin-top: 5px;">
             <div style="flex:1;"><label>Valid From</label><input type="datetime-local" id="promo-start" class="modal-input"></div>
             <div style="flex:1;"><label>Valid Until</label><input type="datetime-local" id="promo-end" class="modal-input"></div>
@@ -255,13 +291,35 @@
     </div>
 </div>
 
+<div class="modal-overlay" id="wastage-modal">
+    <div class="modal-card" style="max-width: 400px;">
+        <button onclick="closeWastageModal()" style="position:absolute; top:12px; right:12px; background:#f1f5f9; border:none; border-radius:50%; width:30px; height:30px; cursor:pointer;"><i class="bi bi-x-lg"></i></button>
+        <h2 style="margin:0 0 5px 0; font-size:20px; font-weight:900; color:var(--danger);"><i class="bi bi-trash-fill"></i> Mark Wastage</h2>
+        <p id="waste-item-name" style="margin:0 0 15px 0; font-weight:700; font-size:13px;"></p>
+        
+        <label>Quantity to Write-Off <span id="waste-max-qty" style="color: var(--danger);"></span></label>
+        <input type="number" id="waste-qty" class="modal-input" min="0.01" step="0.01" oninput="validateWasteQty()">
+        
+        <label>Reason for Wastage</label>
+        <select id="waste-reason" class="modal-input">
+            <option value="Expired">Expired / Past Date</option>
+            <option value="Damaged">Damaged / Broken</option>
+            <option value="Lost/Theft">Lost / Theft</option>
+            <option value="Internal Use">Internal Store Use</option>
+            <option value="Other">Other</option>
+        </select>
+        
+        <button class="btn-save-modal" style="background:var(--danger);" id="btn-save-waste" onclick="saveWastage()">Confirm Write-Off</button>
+    </div>
+</div>
+
 <div class="modal-overlay" id="move-modal">
-    <div class="modal-card">
-        <button onclick="closeMoveModal()" style="position:absolute; top:16px; right:16px; background:#f1f5f9; border:none; border-radius:50%; width:36px; height:36px; cursor:pointer;"><i class="bi bi-x-lg"></i></button>
-        <h2 style="margin:0 0 5px 0; font-size:24px; font-weight:900;">🚚 Move Stock</h2>
+    <div class="modal-card" style="max-width: 400px;">
+        <button onclick="closeMoveModal()" style="position:absolute; top:12px; right:12px; background:#f1f5f9; border:none; border-radius:50%; width:30px; height:30px; cursor:pointer;"><i class="bi bi-x-lg"></i></button>
+        <h2 style="margin:0 0 5px 0; font-size:20px; font-weight:900;"><i class="bi bi-truck"></i> Transfer Stock</h2>
         <p id="move-item-name" style="margin:0 0 15px 0; color:var(--primary); font-weight:800;"></p>
         <label>Quantity to Move <span id="move-max-qty" style="color: var(--danger);"></span></label>
-        <input type="number" id="move-qty" class="modal-input" min="1" oninput="validateMoveQty()">
+        <input type="number" id="move-qty" class="modal-input" min="1" step="0.01" oninput="validateMoveQty()">
         <label>Destination Branch</label>
         <select id="move-target-branch" class="modal-input"></select>
         <button class="btn-save-modal" id="btn-save-move" onclick="saveMove()">Confirm Transfer</button>
@@ -270,42 +328,35 @@
 
 <div class="modal-overlay" id="global-modal">
     <div class="modal-card">
-        <button onclick="closeGlobalDealsModal()" style="position:absolute; top:16px; right:16px; background:#f1f5f9; border:none; border-radius:50%; width:36px; height:36px; cursor:pointer;"><i class="bi bi-x-lg"></i></button>
-        <h2 style="margin:0 0 5px 0; font-size:24px; font-weight:900; color:var(--warning);">📢 Store Deals</h2>
-        <p style="margin:0 0 20px 0; color:var(--text-light); font-size:13px; font-weight:600;">These rules apply to the entire customer bill automatically.</p>
+        <button onclick="closeGlobalDealsModal()" style="position:absolute; top:12px; right:12px; background:#f1f5f9; border:none; border-radius:50%; width:30px; height:30px; cursor:pointer;"><i class="bi bi-x-lg"></i></button>
+        <h2 style="margin:0 0 5px 0; font-size:20px; font-weight:900; color:var(--warning);">📢 Store Deals</h2>
+        <p style="margin:0 0 15px 0; color:var(--text-light); font-size:12px;">Rules applied automatically to the customer bill.</p>
         <label>Deal Type</label>
         <select id="global-type" class="modal-input" onchange="toggleGlobalFields()">
             <option value="">No Global Deals</option>
             <option value="cart_min">Cart Minimum Discount (Spend ₹X Get Y% Off)</option>
         </select>
         <div id="global-dynamic-fields"></div>
-        <button class="btn-save-modal" style="background:var(--warning); box-shadow: 0 4px 6px rgba(245, 158, 11, 0.3);" onclick="saveGlobalDeals()">Save Store Deal</button>
+        <button class="btn-save-modal" style="background:var(--warning); color:#fff;" onclick="saveGlobalDeals()">Save Store Deal</button>
     </div>
 </div>
 
 <script>
-    // --- CORE VARIABLES ---
     let activeUserPhone = localStorage.getItem("activeUserPhone");
     let assignedBranch = localStorage.getItem("assignedBranch");
     const activeStaffId = localStorage.getItem("activeStaffId");
 
     let rawInventory = []; let globalBranches = []; 
-    let currentMoveItem = null; let currentPromoDocId = null; let currentMspForMath = 0;
+    let currentMoveItem = null; let currentWasteItem = null; 
+    let currentPromoDocId = null; let currentMspForMath = 0; let currentCpForMath = 0; let currentGstForMath = 0;
     let editingBlueprintId = null; 
     let savedShopParams = {}; 
     let masterTaxonomyList = []; 
-
-    const bgGradients = [
-        'linear-gradient(135deg, #3b82f6, #8b5cf6)', 'linear-gradient(135deg, #10b981, #0ea5e9)',
-        'linear-gradient(135deg, #f43f5e, #f97316)', 'linear-gradient(135deg, #8b5cf6, #d946ef)',
-        'linear-gradient(135deg, #14b8a6, #eab308)', 'linear-gradient(135deg, #6366f1, #3b82f6)'
-    ];
 
     document.addEventListener('DOMContentLoaded', () => {
         firebase.auth().onAuthStateChanged(async () => {
             if (!activeUserPhone) return; 
             try { if(assignedBranch && assignedBranch.startsWith('[')) assignedBranch = JSON.parse(assignedBranch); } catch(e){}
-            
             await loadMasterTaxonomy();
             await loadShopParams(); 
             await loadBranches();
@@ -316,14 +367,11 @@
         inputElem.value = inputElem.value.toUpperCase().replace(/\s{2,}/g, ' ');
     }
 
-    // --- FIREBASE LOADERS ---
     async function loadMasterTaxonomy() {
         try {
             const doc = await firebase.firestore().collection('admin_settings').doc('master_taxonomy').get();
-            if(doc.exists && doc.data().dictionary) {
-                masterTaxonomyList = doc.data().dictionary;
-            }
-        } catch(e) { console.error("Error loading master taxonomy", e); }
+            if(doc.exists && doc.data().dictionary) masterTaxonomyList = doc.data().dictionary;
+        } catch(e) { console.error("Error loading taxonomy", e); }
     }
 
     async function loadShopParams() {
@@ -336,7 +384,6 @@
         } catch(e) { console.error("Error loading params", e); }
     }
 
-    // Builds the dynamic HTML <datalist> for auto-complete dropdowns
     function rebuildDatalists() {
         const container = document.getElementById('dynamic-datalists');
         container.innerHTML = "";
@@ -344,9 +391,7 @@
             const cleanKeyId = key.replace(/[^a-zA-Z0-9]/g, '_');
             const dl = document.createElement('datalist');
             dl.id = `dl-${cleanKeyId}`;
-            values.forEach(val => {
-                dl.innerHTML += `<option value="${val}">`;
-            });
+            values.forEach(val => { dl.innerHTML += `<option value="${val}">`; });
             container.appendChild(dl);
         }
     }
@@ -378,287 +423,238 @@
     async function fetchInventory() {
         const branchId = document.getElementById('filter-branch').value;
         if (!branchId) return;
-        document.getElementById('inventory-list').innerHTML = `<div style="text-align:center; padding:40px; font-weight:900; color:var(--primary);">Arranging Store Racks...</div>`;
+        document.getElementById('inventory-list-body').innerHTML = `<tr><td colspan="6" style="text-align:center; padding:40px;">Fetching records...</td></tr>`;
         try {
             const snap = await firebase.firestore().collection('companies').doc(activeUserPhone).collection('branches').doc(branchId).collection('inventory').get();
             rawInventory = [];
             snap.forEach(doc => { rawInventory.push({ docId: doc.id, ...doc.data() }); });
-            
-            populateMainCategoryFilter();
+            initMainFilters();
             renderInventory();
         } catch(e) { alert("Error: " + e.message); }
     }
 
-    function populateMainCategoryFilter() {
-        const catFilter = document.getElementById('filter-category');
-        catFilter.innerHTML = '<option value="ALL">All Categories</option>';
-        const uniqueCats = [...new Set(rawInventory.map(item => item.category).filter(Boolean))];
-        uniqueCats.forEach(c => { catFilter.innerHTML += `<option value="${c}">${c}</option>`; });
+    function initMainFilters() {
+        const deptSelect = document.getElementById('filter-main-dept');
+        deptSelect.innerHTML = '<option value="ALL">All Departments</option>';
+        const uniqueDepts = [...new Set(rawInventory.map(item => item.department).filter(Boolean))];
+        uniqueDepts.sort().forEach(d => { deptSelect.innerHTML += `<option value="${d}">${d}</option>`; });
+        updateMainFilters('dept');
     }
 
-    // --- BARCODE PRINTER LOGIC ---
-    window.printBarcode = function(docId) {
-        const item = rawInventory.find(i => i.docId === docId);
-        if(!item) return;
+    function updateMainFilters(source) {
+        const dept = document.getElementById('filter-main-dept').value;
+        const catSelect = document.getElementById('filter-main-cat');
+        const subcatSelect = document.getElementById('filter-main-subcat');
 
-        // Extract brand or primary parameter for the label
-        let subTitle = item.subCategory || item.category || "";
-        if(item.customParams) {
-            subTitle = Object.values(item.customParams).join(' | ');
+        if(source === 'dept') {
+            catSelect.innerHTML = '<option value="ALL">All Categories</option>';
+            subcatSelect.innerHTML = '<option value="ALL">All Sub-Categories</option>';
+            if(dept === 'ALL') { catSelect.disabled = true; subcatSelect.disabled = true; } 
+            else {
+                catSelect.disabled = false;
+                const uniqueCats = [...new Set(rawInventory.filter(i => i.department === dept).map(i => i.category).filter(Boolean))];
+                uniqueCats.sort().forEach(c => { catSelect.innerHTML += `<option value="${c}">${c}</option>`; });
+            }
         }
-
-        const printWindow = window.open('', '_blank', 'width=400,height=400');
-        printWindow.document.write(`
-            <html>
-            <head>
-                <title>Print Label</title>
-                <script src="https://cdn.jsdelivr.net/npm/jsbarcode@3.11.5/dist/JsBarcode.all.min.js"><\/script>
-                <style>
-                    body { text-align: center; font-family: 'Arial', sans-serif; margin: 0; padding: 20px; background: #fff;}
-                    .label-container { border: 2px dashed #000; padding: 15px; display: inline-block; width: 60mm; min-height: 40mm;}
-                    .name { font-weight: 900; font-size: 14px; margin-bottom: 2px; text-transform: uppercase;}
-                    .subtitle { font-size: 10px; color: #333; margin-bottom: 8px; font-weight: bold;}
-                    .price { font-size: 18px; font-weight: 900; margin-top: 5px; }
-                    svg { width: 100%; max-height: 60px; }
-                </style>
-            </head>
-            <body>
-                <div class="label-container">
-                    <div class="name">${item.name}</div>
-                    <div class="subtitle">${subTitle}</div>
-                    <svg id="barcode"></svg>
-                    <div class="price">MRP: ₹${item.msp}</div>
-                </div>
-                <script>
-                    JsBarcode("#barcode", "${item.barcode}", {
-                        format: "CODE128",
-                        width: 2,
-                        height: 40,
-                        displayValue: true,
-                        fontSize: 12,
-                        margin: 0
-                    });
-                    // Wait for barcode to render before printing
-                    setTimeout(() => { window.print(); window.close(); }, 500);
-                <\/script>
-            </body>
-            </html>
-        `);
-        printWindow.document.close();
+        if(source === 'cat') {
+            subcatSelect.innerHTML = '<option value="ALL">All Sub-Categories</option>';
+            const cat = catSelect.value;
+            if(cat === 'ALL') { subcatSelect.disabled = true; } 
+            else {
+                subcatSelect.disabled = false;
+                const uniqueSubcats = [...new Set(rawInventory.filter(i => i.department === dept && i.category === cat).map(i => i.subCategory).filter(Boolean))];
+                uniqueSubcats.sort().forEach(sc => { subcatSelect.innerHTML += `<option value="${sc}">${sc}</option>`; });
+            }
+        }
+        renderInventory();
     }
-
-    // --- UI RENDERER ---
-    window.togglePrice = function(docId) {
-        const el = document.getElementById(`price-${docId}`); const icon = document.getElementById(`eye-${docId}`);
-        if(el.innerText === '₹ ***') {
-            el.innerText = el.getAttribute('data-price');
-            icon.classList.replace('bi-eye-fill', 'bi-eye-slash-fill'); icon.style.color = 'var(--danger)';
-        } else {
-            el.innerText = '₹ ***';
-            icon.classList.replace('bi-eye-slash-fill', 'bi-eye-fill'); icon.style.color = 'var(--text-light)';
-        }
-    };
 
     function renderInventory() {
-        const list = document.getElementById('inventory-list');
+        const tbody = document.getElementById('inventory-list-body');
         const query = document.getElementById('search-input').value.toLowerCase().trim();
-        const fCat = document.getElementById('filter-category').value;
-        let totalItems = 0; let lowStock = 0; list.innerHTML = "";
+        const fDept = document.getElementById('filter-main-dept').value;
+        const fCat = document.getElementById('filter-main-cat').value;
+        const fSubcat = document.getElementById('filter-main-subcat').value;
+        
+        let totalItems = 0; let lowStock = 0; tbody.innerHTML = "";
 
-        const filtered = rawInventory.filter(item => {
+        let filtered = rawInventory.filter(item => {
             const textMatch = (item.name && item.name.toLowerCase().includes(query)) || (item.barcode && item.barcode.toLowerCase().includes(query));
-            return textMatch && (fCat === 'ALL' || item.category === fCat);
+            const deptMatch = fDept === 'ALL' || item.department === fDept;
+            const catMatch = fCat === 'ALL' || item.category === fCat;
+            const subcatMatch = fSubcat === 'ALL' || item.subCategory === fSubcat;
+            return textMatch && deptMatch && catMatch && subcatMatch;
         });
 
-        if(filtered.length === 0) return list.innerHTML = `<div style="text-align:center; padding:60px; color:var(--text-light);"><i class="bi bi-box" style="font-size:48px;"></i><h3>No items found on racks.</h3></div>`;
+        // Sort by Dept -> Cat -> Subcat -> Name
+        filtered.sort((a, b) => {
+            if((a.department||"") !== (b.department||"")) return (a.department||"").localeCompare(b.department||"");
+            if((a.category||"") !== (b.category||"")) return (a.category||"").localeCompare(b.category||"");
+            if((a.subCategory||"") !== (b.subCategory||"")) return (a.subCategory||"").localeCompare(b.subCategory||"");
+            return (a.name||"").localeCompare(b.name||"");
+        });
 
-        const grouped = {};
-        filtered.forEach(item => { totalItems++; const cat = item.category || 'Uncategorized'; if(!grouped[cat]) grouped[cat] = []; grouped[cat].push(item); });
-
-        for (const [categoryName, items] of Object.entries(grouped)) {
-            let sectionHTML = `
-            <div class="rack-section">
-                <div class="rack-title">
-                    <div><i class="bi bi-grid-3x3-gap-fill" style="color:var(--primary); margin-right:8px;"></i> ${categoryName}</div>
-                    <span class="cat-count">${items.length} Items</span>
-                </div>
-                <div class="shelf-track">`;
-
-            items.forEach((item, index) => {
-                const costPrice = parseFloat(item.costPer || 0).toFixed(2);
-                const mspPrice = parseFloat(item.msp || 0).toFixed(2);
-                const minStockLevel = item.minStock !== undefined ? parseFloat(item.minStock) : 5;
-                const qty = parseFloat(item.qty || 0);
-                const isLow = qty < minStockLevel; 
-                if(isLow) lowStock++; 
-
-                const firstLetter = item.name ? item.name.charAt(0).toUpperCase() : 'B';
-                const bgGrad = bgGradients[index % bgGradients.length];
-                
-                let promoBadge = '';
-                if(item.offer && item.offer.type) promoBadge = `<div class="promo-badge"><i class="bi bi-fire"></i> Offer</div>`;
-
-                let paramTags = "";
-                if(item.customParams) {
-                    for(const [k, v] of Object.entries(item.customParams)) {
-                        paramTags += `<span class="param-tag">${k}: ${v}</span>`;
-                    }
-                }
-
-                // Show print button ONLY if system generated
-                let printBtnHTML = "";
-                if(item.isSystemBarcode) {
-                    printBtnHTML = `<button class="btn-icon btn-print" onclick="printBarcode('${item.docId}')" title="Print Label"><i class="bi bi-printer-fill"></i></button>`;
-                }
-
-                sectionHTML += `
-                    <div class="product-card">
-                        <div class="card-avatar" style="background: ${bgGrad};">
-                            ${promoBadge}
-                            ${firstLetter}
-                        </div>
-                        <h4 class="card-title">${item.name}</h4>
-                        <span class="card-sku">SKU: ${item.barcode}</span>
-                        <div class="card-params">${paramTags}</div>
-                        
-                        <div class="card-price-row">
-                            <span class="card-price">₹${mspPrice} <span style="font-size:10px; color:#94a3b8;">(${item.gstRate||0}% GST)</span></span>
-                            <span class="stock-pill ${isLow ? 'stock-low' : 'stock-good'}">${qty} ${item.unit||'Pcs'}</span>
-                        </div>
-                        
-                        <div class="card-wholesale">
-                            <span>Buy: <strong id="price-${item.docId}" data-price="₹${costPrice}">₹ ***</strong></span>
-                            <i id="eye-${item.docId}" class="bi bi-eye-fill" onclick="togglePrice('${item.docId}')" style="cursor:pointer; font-size:16px; color:var(--text-light);"></i>
-                        </div>
-
-                        <div class="card-actions">
-                            <button class="btn-icon btn-edit" onclick="openBlueprintModal('${item.docId}')" title="Edit Blueprint"><i class="bi bi-pencil-square"></i></button>
-                            <button class="btn-icon btn-move" onclick="openMoveModal('${item.docId}')" title="Move Stock"><i class="bi bi-truck"></i></button>
-                            <button class="btn-icon btn-offer" onclick="openPromoModal('${item.docId}', '${item.name.replace(/'/g, "\\'")}', ${mspPrice})" title="Set Offer"><i class="bi bi-gift-fill"></i></button>
-                            ${printBtnHTML}
-                        </div>
-                    </div>`;
-            });
-
-            sectionHTML += `</div><div class="shelf-base"></div></div>`;
-            list.innerHTML += sectionHTML;
+        if(filtered.length === 0) {
+            tbody.innerHTML = `<tr><td colspan="6" style="text-align:center; padding:30px; color:var(--text-light);">No items match criteria.</td></tr>`;
+            document.getElementById('dash-total').innerText = 0; document.getElementById('dash-low').innerText = 0;
+            return;
         }
+
+        filtered.forEach((item) => {
+            totalItems++;
+            const cp = parseFloat(item.costPer || 0);
+            const msp = parseFloat(item.msp || 0);
+            const gst = parseFloat(item.gstRate || 0);
+            const qty = parseFloat(item.qty || 0);
+            const minStock = parseFloat(item.minStock !== undefined ? item.minStock : 5);
+            const isLow = qty < minStock; 
+            if(isLow) lowStock++;
+
+            // Profit Math: Assuming MRP includes GST, and CP is net cost. 
+            // Pre-tax MRP = MRP / (1 + (GST/100)).
+            const preTaxMsp = msp / (1 + (gst/100));
+            const profit = preTaxMsp - cp;
+            const marginPct = preTaxMsp > 0 ? (profit / preTaxMsp) * 100 : 0;
+            const marginClass = profit >= 0 ? 'margin-positive' : 'margin-negative';
+
+            let promoBadge = item.offer?.type ? `<span class="badge badge-promo"><i class="bi bi-fire"></i> Offer</span>` : '';
+            let paramsStr = item.customParams ? Object.values(item.customParams).join(' | ') : '';
+            if(paramsStr) paramsStr = `<div style="font-size:9px; color:var(--text-light); margin-top:2px;">${paramsStr}</div>`;
+
+            let printBtn = item.isSystemBarcode ? `<button class="btn-icon-sm btn-print" onclick="printBarcode('${item.docId}')" title="Print Tag"><i class="bi bi-printer-fill"></i></button>` : '';
+
+            const tr = document.createElement('tr');
+            tr.innerHTML = `
+                <td>
+                    <div class="cell-product">
+                        <div>
+                            <span class="cell-product-sku">${item.barcode}</span>
+                            <div class="cell-product-name">${item.name} ${promoBadge}</div>
+                            ${paramsStr}
+                        </div>
+                    </div>
+                </td>
+                <td>
+                    <span class="badge badge-cat">${item.department||'-'} / ${item.category||'-'}</span><br>
+                    <span class="badge badge-subcat" style="margin-top:4px; display:inline-block;">${item.subCategory||'-'}</span>
+                </td>
+                <td>
+                    <span class="${isLow ? 'stock-low' : 'stock-good'}">${qty}</span> <span style="font-size:10px; color:var(--text-light);">${item.unit||'PCS'}</span>
+                </td>
+                <td>
+                    <div class="money-text" style="color:var(--text-light);">CP: ₹${cp.toFixed(2)}</div>
+                    <div class="money-text" style="color:var(--navy);">MRP: ₹${msp.toFixed(2)} <span style="font-size:9px;">(${gst}% GST)</span></div>
+                </td>
+                <td>
+                    <div class="${marginClass}">₹${profit.toFixed(2)}</div>
+                    <div style="font-size:10px; color:var(--text-light); font-weight:700;">${marginPct.toFixed(1)}% Mg</div>
+                </td>
+                <td>
+                    <div class="table-actions">
+                        <button class="btn-icon-sm btn-edit" onclick="openBlueprintModal('${item.docId}')" title="Edit"><i class="bi bi-pencil-fill"></i></button>
+                        <button class="btn-icon-sm btn-offer" onclick="openPromoModal('${item.docId}')" title="Discounts"><i class="bi bi-gift-fill"></i></button>
+                        <button class="btn-icon-sm btn-move" onclick="openMoveModal('${item.docId}')" title="Transfer"><i class="bi bi-arrow-left-right"></i></button>
+                        <button class="btn-icon-sm btn-waste" onclick="openWastageModal('${item.docId}')" title="Mark Wastage"><i class="bi bi-trash-fill"></i></button>
+                        ${printBtn}
+                    </div>
+                </td>
+            `;
+            tbody.appendChild(tr);
+        });
 
         document.getElementById('dash-total').innerText = totalItems;
         document.getElementById('dash-low').innerText = lowStock;
     }
 
-    // =======================================================
-    // DYNAMIC BLUEPRINT / TAXONOMY MAPPING ENGINE
-    // =======================================================
-    function populateDeptDropdown() {
-        const deptSelect = document.getElementById('bp-dept');
-        deptSelect.innerHTML = '<option value="">Select Department...</option>';
-        const uniqueDepts = [...new Set(masterTaxonomyList.map(item => item.dept).filter(Boolean))];
-        uniqueDepts.sort().forEach(d => { deptSelect.innerHTML += `<option value="${d}">${d}</option>`; });
-    }
-
+    // ==========================================
+    // BLUEPRINT LOGIC
+    // ==========================================
     function updateCatDropdown() {
         const dept = document.getElementById('bp-dept').value;
-        const catSelect = document.getElementById('bp-cat');
-        const subcatSelect = document.getElementById('bp-subcat');
-        const paramContainer = document.getElementById('bp-dynamic-params');
-        
-        catSelect.innerHTML = '<option value="">Select Category...</option>';
-        subcatSelect.innerHTML = '<option value="">Select Sub-Category...</option>';
-        paramContainer.style.display = 'none';
-
-        if(!dept) {
-            catSelect.disabled = true; subcatSelect.disabled = true; return;
-        }
-
+        const catSelect = document.getElementById('bp-cat'); const subcatSelect = document.getElementById('bp-subcat');
+        catSelect.innerHTML = '<option value="">Select...</option>'; subcatSelect.innerHTML = '<option value="">Select...</option>';
+        if(!dept) { catSelect.disabled = true; subcatSelect.disabled = true; return; }
         catSelect.disabled = false; subcatSelect.disabled = true;
-        const uniqueCats = [...new Set(masterTaxonomyList.filter(item => item.dept === dept).map(item => item.cat).filter(Boolean))];
+        const uniqueCats = [...new Set(masterTaxonomyList.filter(i => i.dept === dept).map(i => i.cat).filter(Boolean))];
         uniqueCats.sort().forEach(c => { catSelect.innerHTML += `<option value="${c}">${c}</option>`; });
     }
 
     function updateSubcatDropdown() {
-        const dept = document.getElementById('bp-dept').value;
-        const cat = document.getElementById('bp-cat').value;
+        const dept = document.getElementById('bp-dept').value; const cat = document.getElementById('bp-cat').value;
         const subcatSelect = document.getElementById('bp-subcat');
-        const paramContainer = document.getElementById('bp-dynamic-params');
-        
-        subcatSelect.innerHTML = '<option value="">Select Sub-Category...</option>';
-        paramContainer.style.display = 'none';
-
+        subcatSelect.innerHTML = '<option value="">Select...</option>';
         if(!cat) { subcatSelect.disabled = true; return; }
-
         subcatSelect.disabled = false;
-        const uniqueSubcats = [...new Set(masterTaxonomyList.filter(item => item.dept === dept && item.cat === cat).map(item => item.subcat).filter(Boolean))];
+        const uniqueSubcats = [...new Set(masterTaxonomyList.filter(i => i.dept === dept && i.cat === cat).map(i => i.subcat).filter(Boolean))];
         uniqueSubcats.sort().forEach(sc => { subcatSelect.innerHTML += `<option value="${sc}">${sc}</option>`; });
     }
 
     function renderSmartTemplate() {
-        const dept = document.getElementById('bp-dept').value;
-        const cat = document.getElementById('bp-cat').value;
-        const subcat = document.getElementById('bp-subcat').value;
-        const container = document.getElementById('bp-dynamic-params');
-        container.innerHTML = "";
-        
+        const dept = document.getElementById('bp-dept').value; const cat = document.getElementById('bp-cat').value; const subcat = document.getElementById('bp-subcat').value;
+        const container = document.getElementById('bp-dynamic-params'); container.innerHTML = "";
         if(!subcat) { container.style.display = 'none'; return; }
         
-        const rule = masterTaxonomyList.find(item => item.dept === dept && item.cat === cat && item.subcat === subcat);
+        const rule = masterTaxonomyList.find(i => i.dept === dept && i.cat === cat && i.subcat === subcat);
         if(!rule) return;
 
-        if(rule.unit) {
-            const unitSelect = document.getElementById('bp-unit');
-            let exists = false;
-            for(let i=0; i<unitSelect.options.length; i++) {
-                if(unitSelect.options[i].value.toUpperCase() === rule.unit.toUpperCase()) exists = true;
-            }
-            if(!exists) unitSelect.innerHTML += `<option value="${rule.unit.toUpperCase()}">${rule.unit.toUpperCase()}</option>`;
-            unitSelect.value = rule.unit.toUpperCase();
-        }
-
+        if(rule.unit) { document.getElementById('bp-unit').value = rule.unit.toUpperCase(); }
         if(!rule.param) { container.style.display = 'none'; return; }
         
         const params = rule.param.split(',').map(p => p.trim()).filter(p => p);
         if(params.length > 0) {
             container.style.display = 'block';
+            let html = '<div class="grid-2">';
             params.forEach(key => {
                 const cleanKeyId = key.replace(/[^a-zA-Z0-9]/g, '_');
-                
-                // EVERY parameter gets linked to a datalist for learning
-                let extraAttr = `list="dl-${cleanKeyId}" oninput="forceUppercase(this)"`;
-                
-                container.innerHTML += `
-                    <div style="margin-bottom:10px;">
-                        <label style="color:#0369a1;">${key}</label>
-                        <input type="text" id="bp-param-${cleanKeyId}" class="modal-input" placeholder="Enter ${key}" ${extraAttr} style="margin-bottom:0; padding:10px; border-color:#bae6fd;" data-key="${key}">
-                    </div>
-                `;
+                html += `<div><label style="color:#0369a1;">${key}</label><input type="text" id="bp-param-${cleanKeyId}" class="modal-input" list="dl-${cleanKeyId}" oninput="forceUppercase(this)" style="margin-bottom:0;" data-key="${key}"></div>`;
             });
+            html += '</div>';
+            container.innerHTML = html;
         }
+    }
+
+    function updateProfitCalculations() {
+        const cp = parseFloat(document.getElementById('bp-cost').value) || 0;
+        const msp = parseFloat(document.getElementById('bp-msp').value) || 0;
+        const gst = parseFloat(document.getElementById('bp-gst').value) || 0;
+        
+        const preTaxMsp = msp / (1 + (gst/100));
+        const profit = preTaxMsp - cp;
+        
+        document.getElementById('disp-base-mrp').innerText = `₹${preTaxMsp.toFixed(2)}`;
+        document.getElementById('disp-profit').innerText = `₹${profit.toFixed(2)}`;
+        document.getElementById('disp-profit').style.color = profit >= 0 ? "var(--primary)" : "var(--danger)";
+        
+        const margin = preTaxMsp > 0 ? (profit / preTaxMsp) * 100 : 0;
+        const markup = cp > 0 ? (profit / cp) * 100 : 0;
+        
+        document.getElementById('disp-margin').innerText = `${margin.toFixed(1)}% / ${markup.toFixed(1)}%`;
+        document.getElementById('disp-margin').style.color = profit >= 0 ? "var(--emerald)" : "var(--danger)";
     }
 
     function openBlueprintModal(docId = null) {
         editingBlueprintId = docId;
         const modal = document.getElementById('blueprint-modal');
-        const container = document.getElementById('bp-dynamic-params');
-        
-        populateDeptDropdown();
-        
+        const deptSelect = document.getElementById('bp-dept');
+        deptSelect.innerHTML = '<option value="">Select...</option>';
+        const uniqueDepts = [...new Set(masterTaxonomyList.map(i => i.dept).filter(Boolean))];
+        uniqueDepts.sort().forEach(d => { deptSelect.innerHTML += `<option value="${d}">${d}</option>`; });
+
         if (docId) {
             const item = rawInventory.find(i => i.docId === docId);
             document.getElementById('bp-barcode').value = item.barcode || "";
             document.getElementById('bp-name').value = item.name || "";
             document.getElementById('bp-gst').value = item.gstRate || "0";
+            document.getElementById('bp-cost').value = item.costPer || "0";
+            document.getElementById('bp-msp').value = item.msp || "0";
+            document.getElementById('bp-min').value = item.minStock !== undefined ? item.minStock : "5";
             
             if(item.department) {
-                document.getElementById('bp-dept').value = item.department;
-                updateCatDropdown();
+                deptSelect.value = item.department; updateCatDropdown();
                 if(item.category) {
-                    document.getElementById('bp-cat').value = item.category;
-                    updateSubcatDropdown();
+                    document.getElementById('bp-cat').value = item.category; updateSubcatDropdown();
                     if(item.subCategory) {
-                        document.getElementById('bp-subcat').value = item.subCategory;
-                        renderSmartTemplate();
-                        
+                        document.getElementById('bp-subcat').value = item.subCategory; renderSmartTemplate();
                         if(item.customParams) {
                             Object.keys(item.customParams).forEach(key => {
                                 const cleanKeyId = key.replace(/[^a-zA-Z0-9]/g, '_');
@@ -669,145 +665,101 @@
                     }
                 }
             }
-            
             setTimeout(() => { document.getElementById('bp-unit').value = item.unit || "PIECES"; }, 50);
-            
-            document.getElementById('bp-cost').value = item.costPer || "0";
-            document.getElementById('bp-msp').value = item.msp || "0";
-            document.getElementById('bp-display-qty').innerText = item.qty || "0";
-            
-            // Lock Barcode input if editing an existing item so they don't break stock links
             document.getElementById('bp-barcode').disabled = true;
-            
         } else {
             document.getElementById('bp-barcode').disabled = false;
-            document.getElementById('bp-barcode').value = "";
-            document.getElementById('bp-name').value = "";
-            document.getElementById('bp-dept').value = "";
-            updateCatDropdown(); 
-            document.getElementById('bp-gst').value = "0";
-            document.getElementById('bp-unit').value = "PIECES";
-            document.getElementById('bp-cost').value = "";
-            document.getElementById('bp-msp').value = "";
-            document.getElementById('bp-display-qty').innerText = "0";
-            container.style.display = 'none';
+            document.getElementById('bp-barcode').value = ""; document.getElementById('bp-name').value = "";
+            deptSelect.value = ""; updateCatDropdown();
+            document.getElementById('bp-gst').value = "0"; document.getElementById('bp-unit').value = "PIECES";
+            document.getElementById('bp-cost').value = "0"; document.getElementById('bp-msp').value = "";
+            document.getElementById('bp-min').value = "5";
+            document.getElementById('bp-dynamic-params').style.display = 'none';
         }
+        updateProfitCalculations();
         modal.style.display = 'flex';
     }
 
-    function closeBlueprintModal() { 
-        stopBlueprintScanner();
-        document.getElementById('blueprint-modal').style.display = 'none'; 
-        editingBlueprintId = null; 
-    }
+    function closeBlueprintModal() { stopBlueprintScanner(); document.getElementById('blueprint-modal').style.display = 'none'; editingBlueprintId = null; }
 
     async function saveBlueprint() {
         let inputBarcode = document.getElementById('bp-barcode').value.trim();
         let isSystemBarcode = false;
-        
-        // AUTO GENERATE BARCODE
-        if(!inputBarcode) {
-            inputBarcode = `SYS-${Date.now().toString().slice(-6)}${Math.floor(Math.random() * 99)}`;
-            isSystemBarcode = true;
-        }
+        if(!inputBarcode) { inputBarcode = `SYS-${Date.now().toString().slice(-6)}${Math.floor(Math.random() * 99)}`; isSystemBarcode = true; }
 
         const name = document.getElementById('bp-name').value.trim();
-        const department = document.getElementById('bp-dept').value;
-        const category = document.getElementById('bp-cat').value;
-        const subCategory = document.getElementById('bp-subcat').value;
+        const department = document.getElementById('bp-dept').value; const category = document.getElementById('bp-cat').value; const subCategory = document.getElementById('bp-subcat').value;
         const gstRate = parseFloat(document.getElementById('bp-gst').value) || 0;
         const unit = document.getElementById('bp-unit').value;
         const costPer = parseFloat(document.getElementById('bp-cost').value) || 0;
         const msp = parseFloat(document.getElementById('bp-msp').value) || 0;
+        const minStock = parseFloat(document.getElementById('bp-min').value) || 0;
         const branchId = document.getElementById('filter-branch').value;
 
         if(!name || !category || !subCategory) return alert("Name, Category, and Sub-Category are mandatory!");
 
-        const btn = document.getElementById('btn-save-blueprint');
-        btn.innerText = "SAVING..."; btn.disabled = true;
-
-        let customParams = {};
+        const btn = document.getElementById('btn-save-blueprint'); btn.innerText = "SAVING..."; btn.disabled = true;
+        let customParams = {}; let needToUpdateGlobalParams = false;
         const paramInputs = document.querySelectorAll('#bp-dynamic-params input');
-        
-        let needToUpdateGlobalParams = false;
-
         paramInputs.forEach(input => {
-            const realKey = input.getAttribute('data-key');
-            const val = input.value.trim();
+            const realKey = input.getAttribute('data-key'); const val = input.value.trim();
             if(val && realKey) {
                 customParams[realKey] = val;
-                
-                // AUTO-LEARN ANY PARAMETER (Size, Color, Brand, etc.)
                 if(!savedShopParams[realKey]) savedShopParams[realKey] = [];
-                if(!savedShopParams[realKey].includes(val)) {
-                    savedShopParams[realKey].push(val);
-                    needToUpdateGlobalParams = true;
-                }
+                if(!savedShopParams[realKey].includes(val)) { savedShopParams[realKey].push(val); needToUpdateGlobalParams = true; }
             }
         });
 
-        // Ensure we preserve the isSystemBarcode flag if we are just editing it
         if(editingBlueprintId) {
             const existingItem = rawInventory.find(i => i.docId === editingBlueprintId);
             if(existingItem && existingItem.isSystemBarcode) isSystemBarcode = true;
         }
 
-        const itemData = {
-            barcode: inputBarcode, name, department, category, subCategory, gstRate, unit, costPer, msp, customParams,
-            isSystemBarcode: isSystemBarcode,
-            lastUpdated: new Date().toISOString()
-        };
+        const itemData = { barcode: inputBarcode, name, department, category, subCategory, gstRate, unit, minStock, costPer, msp, customParams, isSystemBarcode, lastUpdated: new Date().toISOString() };
 
         try {
             const db = firebase.firestore();
             const invRef = db.collection('companies').doc(activeUserPhone).collection('branches').doc(branchId).collection('inventory');
-            
-            if (editingBlueprintId) {
-                await invRef.doc(editingBlueprintId).update(itemData);
-            } else {
-                itemData.qty = 0;
-                await invRef.add(itemData);
-            }
+            if (editingBlueprintId) { await invRef.doc(editingBlueprintId).update(itemData); } 
+            else { itemData.qty = 0; await invRef.add(itemData); }
 
-            // Sync new learned parameters to cloud
             if(needToUpdateGlobalParams) {
-                await db.collection('companies').doc(activeUserPhone).collection('settings').doc('params').set({
-                    customParams: savedShopParams
-                }, { merge: true });
-                rebuildDatalists(); // update UI instantly
+                await db.collection('companies').doc(activeUserPhone).collection('settings').doc('params').set({ customParams: savedShopParams }, { merge: true });
+                rebuildDatalists();
             }
-
-            alert("Blueprint Saved Successfully!");
-            closeBlueprintModal();
-            fetchInventory(); 
-        } catch(e) {
-            alert("Error saving: " + e.message);
-        }
+            closeBlueprintModal(); fetchInventory(); 
+        } catch(e) { alert("Error saving: " + e.message); }
         btn.innerText = "Save Blueprint"; btn.disabled = false;
     }
 
-    // =======================================================
-    // EXISTING MODAL LOGIC (Promo, Move, Global Deals)
-    // =======================================================
-    function openPromoModal(docId, name, msp) {
-        currentPromoDocId = docId; currentMspForMath = parseFloat(msp);
+    // ==========================================
+    // PROMO LOGIC & PROFIT IMPACT
+    // ==========================================
+    function openPromoModal(docId) {
         const item = rawInventory.find(i => i.docId === docId);
-        document.getElementById('promo-item-name').innerText = name;
+        currentPromoDocId = docId; currentMspForMath = parseFloat(item.msp||0); currentCpForMath = parseFloat(item.costPer||0); currentGstForMath = parseFloat(item.gstRate||0);
+        
+        document.getElementById('promo-item-name').innerText = item.name;
+        document.getElementById('promo-base-cp').innerText = `₹${currentCpForMath.toFixed(2)}`;
+        document.getElementById('promo-base-gst').innerText = `${currentGstForMath}%`;
         document.getElementById('promo-base-msp').innerText = `₹${currentMspForMath.toFixed(2)}`;
         
         const typeSelect = document.getElementById('promo-type');
-        if(item.offer && item.offer.type) typeSelect.value = item.offer.type; else typeSelect.value = "";
-        
+        typeSelect.value = item.offer?.type || "";
         togglePromoFields(item.offer);
-        document.getElementById('promo-start').value = item.offer?.validFrom || "";
-        document.getElementById('promo-end').value = item.offer?.validUntil || "";
+        document.getElementById('promo-start').value = item.offer?.validFrom || ""; document.getElementById('promo-end').value = item.offer?.validUntil || "";
         document.getElementById('promo-modal').style.display = 'flex';
+        calcPromoMath();
     }
     function closePromoModal() { document.getElementById('promo-modal').style.display = 'none'; }
+    
     function togglePromoFields(existingOffer = null) {
-        const type = document.getElementById('promo-type').value; const container = document.getElementById('promo-dynamic-fields'); container.innerHTML = "";
+        const type = document.getElementById('promo-type').value; const container = document.getElementById('promo-dynamic-fields'); 
+        const impactBox = document.getElementById('promo-profit-impact'); container.innerHTML = ""; impactBox.style.display = 'none';
+        
         if (type === "discount") {
             container.innerHTML = `<div class="grid-2"><div><label>Discount (%)</label><input type="number" id="promo-pct" class="modal-input" value="${existingOffer?.pctOff||''}" oninput="calcPromoMath('pct')"></div><div><label>Flat Off (₹)</label><input type="number" id="promo-flat" class="modal-input" value="${existingOffer?.flatOff||''}" oninput="calcPromoMath('flat')"></div></div>`;
+            impactBox.style.display = 'flex';
         } else if (type === "volume") {
             container.innerHTML = `<div class="grid-2"><div><label>Buy Quantity</label><input type="number" id="promo-req" class="modal-input" value="${existingOffer?.reqQty||''}"></div><div><label>For Total Price (₹)</label><input type="number" id="promo-price" class="modal-input" value="${existingOffer?.targetPrice||''}"></div></div>`;
         } else if (type === "bogo") {
@@ -816,11 +768,33 @@
             container.innerHTML = `<div><label>Buy Qty of This</label><input type="number" id="promo-req" class="modal-input" value="${existingOffer?.reqQty||''}"></div><label>Get Target Item (Barcode)</label><input type="text" id="promo-target-bar" class="modal-input" placeholder="Barcode of Free Item" value="${existingOffer?.targetBarcode||''}"><div class="grid-2"><div><label>Free Qty</label><input type="number" id="promo-free" class="modal-input" value="${existingOffer?.freeQty||''}"></div><div><label>OR % Off Target</label><input type="number" id="promo-target-pct" class="modal-input" placeholder="100 for Free" value="${existingOffer?.targetPctOff||'100'}"></div></div>`;
         }
     }
-    window.calcPromoMath = function(source) {
+
+    window.calcPromoMath = function(source = null) {
+        const type = document.getElementById('promo-type').value;
+        if(type !== 'discount') return;
+
         const pctInput = document.getElementById('promo-pct'); const flatInput = document.getElementById('promo-flat');
-        if(source === 'pct') { const pct = parseFloat(pctInput.value) || 0; if(pct >= 0 && pct <= 100) { flatInput.value = (currentMspForMath * (pct / 100)).toFixed(2); } }
-        else if(source === 'flat') { const flat = parseFloat(flatInput.value) || 0; if(flat >= 0 && flat <= currentMspForMath) { pctInput.value = ((flat / currentMspForMath) * 100).toFixed(2); } }
+        if(!pctInput || !flatInput) return;
+
+        if(source === 'pct') { 
+            const pct = parseFloat(pctInput.value) || 0; 
+            if(pct >= 0 && pct <= 100) flatInput.value = (currentMspForMath * (pct / 100)).toFixed(2); 
+        } else if(source === 'flat') { 
+            const flat = parseFloat(flatInput.value) || 0; 
+            if(flat >= 0 && flat <= currentMspForMath) pctInput.value = ((flat / currentMspForMath) * 100).toFixed(2); 
+        }
+
+        const effectiveMsp = currentMspForMath - (parseFloat(flatInput.value) || 0);
+        const preTaxEffective = effectiveMsp / (1 + (currentGstForMath/100));
+        const effectiveProfit = preTaxEffective - currentCpForMath;
+        const effectiveMargin = preTaxEffective > 0 ? (effectiveProfit / preTaxEffective) * 100 : 0;
+
+        document.getElementById('impact-sell').innerText = `₹${effectiveMsp.toFixed(2)}`;
+        const profitEl = document.getElementById('impact-profit');
+        profitEl.innerText = `₹${effectiveProfit.toFixed(2)} (${effectiveMargin.toFixed(1)}%)`;
+        profitEl.style.color = effectiveProfit >= 0 ? "var(--emerald)" : "var(--danger)";
     };
+
     async function savePromo() {
         const type = document.getElementById('promo-type').value; let offerObj = null;
         if (type !== "") {
@@ -830,7 +804,8 @@
             else if (type === "bogo") { offerObj.reqQty = parseFloat(document.getElementById('promo-req').value) || 0; offerObj.freeQty = parseFloat(document.getElementById('promo-free').value) || 0; }
             else if (type === "cross_bogo") { offerObj.reqQty = parseFloat(document.getElementById('promo-req').value) || 0; offerObj.targetBarcode = document.getElementById('promo-target-bar').value; offerObj.freeQty = parseFloat(document.getElementById('promo-free').value) || 0; offerObj.targetPctOff = parseFloat(document.getElementById('promo-target-pct').value) || 100; }
         }
-        const branchId = document.getElementById('filter-branch').value; document.getElementById('btn-save-promo').innerText = "SAVING..."; document.getElementById('btn-save-promo').disabled = true;
+        const branchId = document.getElementById('filter-branch').value; 
+        document.getElementById('btn-save-promo').innerText = "SAVING..."; document.getElementById('btn-save-promo').disabled = true;
         try {
             const ref = firebase.firestore().collection('companies').doc(activeUserPhone).collection('branches').doc(branchId).collection('inventory').doc(currentPromoDocId);
             if (offerObj) { await ref.update({ offer: offerObj }); } else { await ref.update({ offer: firebase.firestore.FieldValue.delete() }); }
@@ -841,14 +816,50 @@
         document.getElementById('btn-save-promo').innerText = "Apply Offer"; document.getElementById('btn-save-promo').disabled = false;
     }
 
-    function openGlobalDealsModal() { document.getElementById('global-modal').style.display = 'flex'; }
-    function closeGlobalDealsModal() { document.getElementById('global-modal').style.display = 'none'; }
-    function toggleGlobalFields() {
-        const type = document.getElementById('global-type').value; const container = document.getElementById('global-dynamic-fields'); container.innerHTML = "";
-        if (type === "cart_min") { container.innerHTML = `<label>If Spends Over (₹)</label><input type="number" id="global-min-spend" class="modal-input" placeholder="e.g. 1000"><div class="grid-2"><div><label>Give Discount (%)</label><input type="number" id="global-pct" class="modal-input" placeholder="10"></div><div><label>OR Flat Off (₹)</label><input type="number" id="global-flat" class="modal-input" placeholder="₹100"></div></div>`; }
+    // ==========================================
+    // WASTAGE LOGIC
+    // ==========================================
+    function openWastageModal(docId) {
+        currentWasteItem = rawInventory.find(i => i.docId === docId);
+        document.getElementById('waste-item-name').innerText = currentWasteItem.name;
+        document.getElementById('waste-max-qty').innerText = `(Available: ${currentWasteItem.qty})`;
+        document.getElementById('waste-qty').value = ""; document.getElementById('waste-reason').value = "Expired";
+        document.getElementById('wastage-modal').style.display = 'flex';
     }
-    async function saveGlobalDeals() { alert("Global Deals Engine saved!"); closeGlobalDealsModal(); }
+    function closeWastageModal() { document.getElementById('wastage-modal').style.display = 'none'; currentWasteItem = null; }
+    function validateWasteQty() { 
+        const input = document.getElementById('waste-qty'); let val = parseFloat(input.value); 
+        if(val > currentWasteItem.qty) input.value = currentWasteItem.qty; 
+    }
+    async function saveWastage() {
+        const qty = parseFloat(document.getElementById('waste-qty').value);
+        const reason = document.getElementById('waste-reason').value;
+        const branchId = document.getElementById('filter-branch').value;
+        if(isNaN(qty) || qty <= 0) return alert("Enter valid quantity.");
 
+        const btn = document.getElementById('btn-save-waste'); btn.innerText = "Processing..."; btn.disabled = true;
+        try {
+            const db = firebase.firestore(); const batch = db.batch();
+            const invRef = db.collection('companies').doc(activeUserPhone).collection('branches').doc(branchId).collection('inventory').doc(currentWasteItem.docId);
+            const logRef = db.collection('companies').doc(activeUserPhone).collection('branches').doc(branchId).collection('wastage_logs').doc();
+            
+            batch.update(invRef, { qty: firebase.firestore.FieldValue.increment(-qty) });
+            batch.set(logRef, {
+                itemId: currentWasteItem.docId, barcode: currentWasteItem.barcode, name: currentWasteItem.name,
+                qtyWasted: qty, reason: reason, costLost: (currentWasteItem.costPer || 0) * qty,
+                timestamp: new Date().toISOString(), staffId: activeStaffId || 'admin'
+            });
+            await batch.commit();
+
+            currentWasteItem.qty -= qty;
+            renderInventory(); closeWastageModal();
+        } catch(e) { alert("Error: " + e.message); }
+        btn.innerText = "Confirm Write-Off"; btn.disabled = false;
+    }
+
+    // ==========================================
+    // MOVE LOGIC
+    // ==========================================
     function openMoveModal(docId) {
         currentMoveItem = rawInventory.find(i => i.docId === docId);
         const currentBranchId = document.getElementById('filter-branch').value; const targetSelect = document.getElementById('move-target-branch');
@@ -856,13 +867,13 @@
         globalBranches.forEach(b => { if (b.id !== currentBranchId) targetSelect.innerHTML += `<option value="${b.id}">${b.name}</option>`; });
         if(targetSelect.options.length <= 1) return alert("You need another branch to move stock to.");
         document.getElementById('move-item-name').innerText = currentMoveItem.name; document.getElementById('move-max-qty').innerText = `(Max: ${currentMoveItem.qty})`;
-        document.getElementById('move-qty').value = 1; document.getElementById('move-qty').max = currentMoveItem.qty; document.getElementById('move-modal').style.display = 'flex';
+        document.getElementById('move-qty').value = 1; document.getElementById('move-modal').style.display = 'flex';
     }
     function closeMoveModal() { document.getElementById('move-modal').style.display = 'none'; currentMoveItem = null; }
-    function validateMoveQty() { const input = document.getElementById('move-qty'); let val = parseFloat(input.value); if (isNaN(val) || val <= 0) input.value = 1; if (val > currentMoveItem.qty) input.value = currentMoveItem.qty; }
+    function validateMoveQty() { const input = document.getElementById('move-qty'); let val = parseFloat(input.value); if (val > currentMoveItem.qty) input.value = currentMoveItem.qty; }
     async function saveMove() {
         const moveQty = parseFloat(document.getElementById('move-qty').value); const targetBranchId = document.getElementById('move-target-branch').value; const currentBranchId = document.getElementById('filter-branch').value;
-        if(!targetBranchId) return alert("Select a destination.");
+        if(!targetBranchId || isNaN(moveQty) || moveQty <= 0) return alert("Select destination and valid quantity.");
         const btn = document.getElementById('btn-save-move'); btn.innerText = "MOVING..."; btn.disabled = true;
         try {
             const db = firebase.firestore(); const batch = db.batch();
@@ -875,85 +886,55 @@
             else { const newDoc = targetInvRef.doc(); const newItemData = { ...currentMoveItem, qty: moveQty }; delete newItemData.docId; batch.set(newDoc, newItemData); }
             await batch.commit();
 
-            const unitName = currentMoveItem.unit; currentMoveItem.qty -= moveQty;
-            if(currentMoveItem.qty <= 0) rawInventory = rawInventory.filter(i => i.docId !== currentMoveItem.docId);
-            renderInventory(); closeMoveModal(); alert(`✅ Moved ${moveQty} ${unitName} successfully.`);
+            currentMoveItem.qty -= moveQty;
+            renderInventory(); closeMoveModal(); alert(`Moved ${moveQty} successfully.`);
         } catch(e) { alert("Error: " + e.message); }
         btn.innerText = "Confirm Transfer"; btn.disabled = false;
     }
 
-    // =======================================================
-    // BARCODE SCANNER ENGINE (BLUEPRINT)
-    // =======================================================
-    let html5QrCodeBlueprint;
-    let currentFacingModeBlueprint = "environment";
+    // ==========================================
+    // OTHER UTILS (Global Deals, Print, Scanner)
+    // ==========================================
+    function openGlobalDealsModal() { document.getElementById('global-modal').style.display = 'flex'; }
+    function closeGlobalDealsModal() { document.getElementById('global-modal').style.display = 'none'; }
+    function toggleGlobalFields() {
+        const type = document.getElementById('global-type').value; const container = document.getElementById('global-dynamic-fields'); container.innerHTML = "";
+        if (type === "cart_min") { container.innerHTML = `<label>If Spends Over (₹)</label><input type="number" id="global-min-spend" class="modal-input" placeholder="e.g. 1000"><div class="grid-2"><div><label>Give Discount (%)</label><input type="number" id="global-pct" class="modal-input" placeholder="10"></div><div><label>OR Flat Off (₹)</label><input type="number" id="global-flat" class="modal-input" placeholder="₹100"></div></div>`; }
+    }
+    async function saveGlobalDeals() { alert("Global Deals Engine saved!"); closeGlobalDealsModal(); }
 
+    window.printBarcode = function(docId) {
+        const item = rawInventory.find(i => i.docId === docId);
+        if(!item) return;
+        let subTitle = item.subCategory || item.category || "";
+        if(item.customParams) subTitle = Object.values(item.customParams).join(' | ');
+        const printWindow = window.open('', '_blank', 'width=400,height=400');
+        printWindow.document.write(`
+            <html><head><title>Print Label</title><script src="https://cdn.jsdelivr.net/npm/jsbarcode@3.11.5/dist/JsBarcode.all.min.js"><\/script>
+            <style> body { text-align: center; font-family: 'Arial', sans-serif; margin: 0; padding: 20px; background: #fff;} .label-container { border: 2px dashed #000; padding: 15px; display: inline-block; width: 60mm; min-height: 40mm;} .name { font-weight: 900; font-size: 14px; margin-bottom: 2px; text-transform: uppercase;} .subtitle { font-size: 10px; color: #333; margin-bottom: 8px; font-weight: bold;} .price { font-size: 18px; font-weight: 900; margin-top: 5px; } svg { width: 100%; max-height: 60px; }</style></head>
+            <body><div class="label-container"><div class="name">${item.name}</div><div class="subtitle">${subTitle}</div><svg id="barcode"></svg><div class="price">MRP: ₹${item.msp}</div></div>
+            <script> JsBarcode("#barcode", "${item.barcode}", { format: "CODE128", width: 2, height: 40, displayValue: true, fontSize: 12, margin: 0 }); setTimeout(() => { window.print(); window.close(); }, 500); <\/script></body></html>
+        `);
+        printWindow.document.close();
+    }
+
+    let html5QrCodeBlueprint; let currentFacingModeBlueprint = "environment";
     function startBlueprintScanner() {
         document.getElementById('bp-scanner-container').style.display = 'block';
         if (!html5QrCodeBlueprint) html5QrCodeBlueprint = new Html5Qrcode("bp-reader");
-
-        const isMobile = window.innerWidth < 600;
-        const boxWidth = isMobile ? 250 : 250;
-        const boxHeight = isMobile ? 150 : 150;
-
-        html5QrCodeBlueprint.start(
-            { facingMode: currentFacingModeBlueprint },
-            { fps: 10, qrbox: { width: boxWidth, height: boxHeight } },
-            (decodedText) => {
-                document.getElementById('bp-barcode').value = decodedText;
-                stopBlueprintScanner();
-            },
-            (errorMessage) => { /* ignore normal stream noise */ }
+        html5QrCodeBlueprint.start( { facingMode: currentFacingModeBlueprint }, { fps: 10, qrbox: { width: 250, height: 150 } },
+            (decodedText) => { document.getElementById('bp-barcode').value = decodedText; stopBlueprintScanner(); }, (errorMessage) => { }
         ).catch(err => {
-            if (currentFacingModeBlueprint === "environment") {
-                console.warn("Back camera failed, trying front...");
-                currentFacingModeBlueprint = "user";
-                startBlueprintScanner();
-            } else {
-                alert("Camera Error: Ensure permissions are granted.");
-                stopBlueprintScanner();
-            }
+            if (currentFacingModeBlueprint === "environment") { currentFacingModeBlueprint = "user"; startBlueprintScanner(); } 
+            else { alert("Camera Error: Ensure permissions are granted."); stopBlueprintScanner(); }
         });
     }
-
     function stopBlueprintScanner() {
-        if (html5QrCodeBlueprint && html5QrCodeBlueprint.isScanning) {
-            html5QrCodeBlueprint.stop().then(() => {
-                document.getElementById('bp-scanner-container').style.display = 'none';
-            }).catch(err => console.error(err));
-        } else {
-            document.getElementById('bp-scanner-container').style.display = 'none';
-        }
+        if (html5QrCodeBlueprint && html5QrCodeBlueprint.isScanning) { html5QrCodeBlueprint.stop().then(() => { document.getElementById('bp-scanner-container').style.display = 'none'; }).catch(err => console.error(err)); } 
+        else { document.getElementById('bp-scanner-container').style.display = 'none'; }
     }
-
     function switchBlueprintCamera() {
-        if (html5QrCodeBlueprint && html5QrCodeBlueprint.isScanning) {
-            html5QrCodeBlueprint.stop().then(() => {
-                currentFacingModeBlueprint = (currentFacingModeBlueprint === "environment") ? "user" : "environment";
-                startBlueprintScanner();
-            });
-        }
-    }
-    function updateProfitCalculations() {
-        const cp = parseFloat(document.getElementById('bp-cost').value) || 0;
-        const msp = parseFloat(document.getElementById('bp-msp').value) || 0;
-        const profit = msp - cp;
-        
-        // Margin % (Calculated on Sales Price)
-        if (msp > 0) {
-            const margin = (profit / msp) * 100;
-            document.getElementById('disp-margin').innerText = isFinite(margin) ? margin.toFixed(1) + "%" : "0%";
-        } else {
-            document.getElementById('disp-margin').innerText = "0%";
-        }
-        
-        // Profit % (Calculated on Cost Price)
-        if (cp > 0) {
-            const markup = (profit / cp) * 100;
-            document.getElementById('disp-markup').innerText = isFinite(markup) ? markup.toFixed(1) + "%" : "0%";
-        } else {
-            document.getElementById('disp-markup').innerText = "0%";
-        }
+        if (html5QrCodeBlueprint && html5QrCodeBlueprint.isScanning) { html5QrCodeBlueprint.stop().then(() => { currentFacingModeBlueprint = (currentFacingModeBlueprint === "environment") ? "user" : "environment"; startBlueprintScanner(); }); }
     }
 </script>
 </body>
