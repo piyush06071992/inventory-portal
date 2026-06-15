@@ -934,6 +934,27 @@
             });
         }
     }
+    function updateProfitCalculations() {
+        const cp = parseFloat(document.getElementById('bp-cost').value) || 0;
+        const msp = parseFloat(document.getElementById('bp-msp').value) || 0;
+        const profit = msp - cp;
+        
+        // Margin % (Calculated on Sales Price)
+        if (msp > 0) {
+            const margin = (profit / msp) * 100;
+            document.getElementById('disp-margin').innerText = isFinite(margin) ? margin.toFixed(1) + "%" : "0%";
+        } else {
+            document.getElementById('disp-margin').innerText = "0%";
+        }
+        
+        // Profit % (Calculated on Cost Price)
+        if (cp > 0) {
+            const markup = (profit / cp) * 100;
+            document.getElementById('disp-markup').innerText = isFinite(markup) ? markup.toFixed(1) + "%" : "0%";
+        } else {
+            document.getElementById('disp-markup').innerText = "0%";
+        }
+    }
 </script>
 </body>
 </html>
