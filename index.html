@@ -23,6 +23,19 @@
         .view-btn-toggle { position: absolute; right: 18px; top: 50%; transform: translateY(-50%); color: var(--accent); cursor: pointer; font-size: 16px; user-select: none; -webkit-user-select: none; }
         .pin-wrapper input { margin-bottom: 0; padding-right: 85px; }
         @keyframes slideDown { from { transform: translateY(-20px); opacity: 0; } to { transform: translateY(0); opacity: 1; } }
+
+        /* Welcome Portal Elements */
+        .welcome-motto { font-size: 13px; font-weight: 700; color: #64748b; line-height: 1.5; text-align: center; margin-bottom: 25px; letter-spacing: 0.5px; text-transform: uppercase; }
+        .hub-menu-grid { display: flex; flex-direction: column; gap: 12px; width: 100%; box-sizing: border-box; }
+        
+        .btn-portal { width: 100%; padding: 15px 20px; font-size: 15px; font-weight: 800; border: none; border-radius: 12px; cursor: pointer; display: flex; align-items: center; justify-content: center; gap: 10px; color: white; transition: transform 0.2s, box-shadow 0.2s; box-sizing: border-box; text-align: center; text-transform: uppercase; letter-spacing: 0.5px;}
+        .btn-portal:active { transform: scale(0.98); }
+        
+        .color-reg { background: #10B981; box-shadow: 4px 4px 0px #064e3b; }
+        .color-shop { background: #1E3A8A; box-shadow: 4px 4px 0px #172554; }
+        .color-staff { background: #6366F1; box-shadow: 4px 4px 0px #312e81; }
+        .color-cust { background: #D97706; box-shadow: 4px 4px 0px #78350f; }
+        .color-dev { background: #475569; box-shadow: 4px 4px 0px #0f172a; }
     </style>
 </head>
 <body>
@@ -40,9 +53,33 @@
             </div>
 
             <div class="form-content">
-                <h2 id="form-title">SHOP REGISTRATION</h2>
+                <h2 id="form-title">WELCOME GATEWAY</h2>
                 
-                <div id="registration-fields">
+                <div id="welcome-portal-block">
+                    <p class="welcome-motto">
+                        Empowering Local Indian Retailers to Scale Digital, Manage Smart, and Grow Unlimited!
+                    </p>
+                    
+                    <div class="hub-menu-grid">
+                        <button class="btn-portal color-reg" onclick="showRegistrationForm()">
+                            <i class="bi bi-patch-plus-fill"></i> Register New Business
+                        </button>
+                        <button class="btn-portal color-shop" onclick="window.location.href='/login.html'">
+                            <i class="bi bi-shop"></i> Shop Owner Login
+                        </button>
+                        <button class="btn-portal color-staff" onclick="window.location.href='/staff-login.html'">
+                            <i class="bi bi-people-fill"></i> Staff Member Login
+                        </button>
+                        <button class="btn-portal color-cust" onclick="window.location.href='/customer-login.html'">
+                            <i class="bi bi-person-heart"></i> Customer Corner
+                        </button>
+                        <button class="btn-portal color-dev" onclick="window.location.href='/developer.html'">
+                            <i class="bi bi-code-slash"></i> Developer Desk
+                        </button>
+                    </div>
+                </div>
+
+                <div id="registration-fields" style="display: none;">
                     <input type="text" id="biz-name" placeholder="ENTER BUSINESS NAME">
                     <input type="email" id="email-id" placeholder="ENTER EMAIL ID">
                     <input type="text" id="phone-num" placeholder="ENTER PHONE NUMBER" inputmode="numeric" maxlength="10">
@@ -54,8 +91,8 @@
 
                     <button onclick="handleRegistration()" id="register-btn">REGISTER</button>
                     
-                   <div class="toggle-link" onclick="window.location.href='/login.html'">
-                        ALREADY REGISTERED? LOGIN
+                    <div class="toggle-link" onclick="showWelcomePortal()">
+                        ← BACK TO HUB OPTIONS
                     </div>
                     
                     <div class="text-center mt-3" style="text-align: center; margin-top: 15px;">
@@ -114,6 +151,23 @@
             }
         });
 
+        // VIEW STATE TRIGGERS
+        稳定: function showRegistrationForm() {
+            document.getElementById('welcome-portal-block').style.display = 'none';
+            document.getElementById('otp-fields').style.display = 'none';
+            document.getElementById('registration-fields').style.display = 'block';
+            document.getElementById('form-title').innerText = "SHOP REGISTRATION";
+            document.getElementById('msg').innerText = "";
+        }
+
+        function showWelcomePortal() {
+            document.getElementById('registration-fields').style.display = 'none';
+            document.getElementById('otp-fields').style.display = 'none';
+            document.getElementById('welcome-portal-block').style.display = 'block';
+            document.getElementById('form-title').innerText = "WELCOME GATEWAY";
+            document.getElementById('msg').innerText = "";
+        }
+
         function handleToggleView() {
             const field = document.getElementById('pin');
             const txt = document.getElementById('toggle-txt');
@@ -165,6 +219,7 @@
                 .then((confirmationResult) => {
                     confirmationResultObj = confirmationResult;
                     document.getElementById('registration-fields').style.display = 'none';
+                    document.getElementById('welcome-portal-block').style.display = 'none';
                     document.getElementById('otp-fields').style.display = 'block';
                     document.getElementById('form-title').innerText = "VERIFY OTP";
                     msg.style.color = "green";
@@ -200,27 +255,22 @@
             otpBtn.disabled = true;
 
             try {
-                // 1. Verify Phone OTP first
                 await confirmationResultObj.confirm(code);
                 msg.style.color = "green";
                 msg.innerText = "PHONE VERIFIED! CREATING ERP WORKSPACE...";
 
-                // 2. Create the proper Firebase Auth credential using the Master Key
                 const authEmail = phone + "@businesssaarthi.com";
                 const masterKey = phone + "@SAARTHI";
                 await firebase.auth().createUserWithEmailAndPassword(authEmail, masterKey);
 
-                // 3. Subscription Dates
                 const now = new Date();
                 const trialEnd = new Date();
                 trialEnd.setDate(now.getDate() + 30);
                 const lockoutEnd = new Date();
                 lockoutEnd.setDate(now.getDate() + 60); 
                 
-                // 4. NEW FIRESTORE ERP DATA STRUCTURE
                 const db = firebase.firestore();
                 
-                // Create the Company Profile
                 await db.collection('companies').doc(phone).set({
                     businessName: bizName,
                     emailId: email,
@@ -232,7 +282,6 @@
                     paymentStatus: "TRIAL"
                 });
 
-                // Create the default First Branch inside the Company
                 await db.collection('companies').doc(phone).collection('branches').doc('branch_01').set({
                     branchName: "Main Branch",
                     branchId: "branch_01",
@@ -259,6 +308,7 @@
 
         function cancelOtpView() {
             document.getElementById('otp-fields').style.display = 'none';
+            document.getElementById('welcome-portal-block').style.display = 'none';
             document.getElementById('registration-fields').style.display = 'block';
             document.getElementById('form-title').innerText = "SHOP REGISTRATION";
             document.getElementById('msg').innerText = "";
