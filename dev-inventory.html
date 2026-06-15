@@ -35,7 +35,7 @@
         }
         body { font-family: 'Inter', sans-serif; background-color: var(--navy); margin: 0; padding: 20px; color: var(--navy); }
         
-        .dashboard-container { background: white; border-radius: 16px; padding: 20px; max-width: 1350px; margin: 0 auto; box-shadow: 0 25px 50px -12px rgba(0,0,0,0.5); min-height: 85vh; display: flex; flex-direction: column; }
+        .dashboard-container { background: white; border-radius: 16px; padding: 20px; max-width: 1400px; margin: 0 auto; box-shadow: 0 25px 50px -12px rgba(0,0,0,0.5); min-height: 85vh; display: flex; flex-direction: column; }
         
         .header-bar { display: flex; justify-content: space-between; align-items: center; border-bottom: 2px solid var(--border); padding-bottom: 15px; margin-bottom: 20px; }
         .header-bar h1 { margin: 0; font-size: 24px; font-weight: 900; color: var(--navy); display: flex; align-items: center; gap: 10px; text-transform: uppercase;}
@@ -44,22 +44,25 @@
         .btn:active { transform: scale(0.95); }
         .btn-primary { background: var(--primary); color: white; }
         .btn-success { background: var(--emerald); color: white; }
-        .btn-danger { background: #fee2e2; color: var(--danger); padding: 8px; border: none; border-radius: 6px; cursor: pointer;}
         .btn-exit { background: var(--border); color: var(--navy); }
 
         /* Structural Grid Spreadsheet UI */
         .table-container { flex-grow: 1; overflow-x: auto; background: var(--bg); border-radius: 12px; border: 1px solid var(--border); }
-        table { width: 100%; border-collapse: collapse; min-width: 1000px; }
+        table { width: 100%; border-collapse: collapse; min-width: 1100px; }
         th { background: var(--navy); color: white; text-align: left; padding: 12px 15px; font-size: 12px; font-weight: 900; text-transform: uppercase; letter-spacing: 1px; position: sticky; top: 0; z-index: 10;}
         td { padding: 0; border-bottom: 1px solid var(--border); border-right: 1px solid var(--border); background: white; position: relative;}
         td:last-child { border-right: none; }
         
         /* Spread Sheet Inputs */
-        td input, td select { width: 100%; height: 100%; padding: 12px 15px; border: none; outline: none; box-sizing: border-box; font-size: 13px; font-weight: 700; color: var(--navy); background: transparent; font-family: 'Inter', sans-serif;}
-        td input:focus, td select:focus { background: #e0f2fe; box-shadow: inset 0 0 0 2px var(--primary); }
-        td select { appearance: none; cursor: pointer; }
+        td input { width: 100%; height: 100%; padding: 12px 15px; border: none; outline: none; box-sizing: border-box; font-size: 13px; font-weight: 700; color: var(--navy); background: transparent; font-family: 'Inter', sans-serif;}
+        td input:focus { background: #e0f2fe; box-shadow: inset 0 0 0 2px var(--primary); }
         
-        .action-cell { display: flex; align-items: center; justify-content: center; padding: 6px; }
+        .action-cell { display: flex; align-items: center; justify-content: center; gap: 8px; padding: 8px; background: #f8fafc;}
+        .btn-action { border: none; border-radius: 6px; padding: 8px; cursor: pointer; color: white; display: flex; align-items: center; justify-content: center; transition: 0.1s; }
+        .btn-action:active { transform: scale(0.9); }
+        .btn-add { background: var(--primary); }
+        .btn-delete { background: var(--danger); }
+        
         .translating { animation: pulse 1s infinite; background: #fef3c7 !important; }
         @keyframes pulse { 0% { opacity: 1; } 50% { opacity: 0.6; } 100% { opacity: 1; } }
     </style>
@@ -78,7 +81,7 @@
 
         <div style="background: #e0f2fe; padding: 12px 15px; border-radius: 8px; margin-bottom: 15px; font-size: 12px; font-weight: 700; color: #0284c7; display: flex; align-items: center; gap: 8px;">
             <i class="bi bi-info-circle-fill" style="font-size: 16px;"></i>
-            Type text in English and click out. Department, Category, and Sub-Category will auto-translate to Hindi. Everything updates in strict UPPERCASE.
+            Type text in English and click out. Dept, Category, and Sub-Category auto-translate to Hindi. Everything updates in strict UPPERCASE. Use the Blue '+' to insert rows.
         </div>
 
         <div class="table-container">
@@ -87,10 +90,10 @@
                     <tr>
                         <th style="width: 20%;">Department (Shop Type)</th>
                         <th style="width: 20%;">Category</th>
-                        <th style="width: 25%;">Sub-Category / Item</th>
+                        <th style="width: 20%;">Sub-Category / Item</th>
                         <th style="width: 20%;">Specific Parameter Name</th>
-                        <th style="width: 10%;">Measurement Unit</th>
-                        <th style="width: 5%; text-align: center;">X</th>
+                        <th style="width: 12%;">Measurement Unit</th>
+                        <th style="width: 8%; text-align: center;">Actions</th>
                     </tr>
                 </thead>
                 <tbody id="table-body">
@@ -146,23 +149,26 @@
             }
         }
 
-        function spawnBlankRow() {
-            if(tableData.length > 0) {
-                let tailRow = tableData[tableData.length - 1];
-                if(!tailRow.dept && !tailRow.cat && !tailRow.subcat && !tailRow.param) return;
-            }
+        // Insert a new blank row directly below the clicked row
+        function insertRowBelow(id) {
+            const idx = tableData.findIndex(r => r.id === id);
+            const newRow = {
+                id: "row_" + Date.now() + Math.floor(Math.random() * 1000),
+                dept: "", cat: "", subcat: "", param: "", unit: ""
+            };
             
-            tableData.push({
-                id: "row_" + Date.now() + Math.floor(Math.random() * 100),
-                dept: "", cat: "", subcat: "", param: "", unit: "PIECES"
-            });
+            if (idx !== -1) {
+                tableData.splice(idx + 1, 0, newRow);
+            } else {
+                tableData.push(newRow); // Fallback if id not found
+            }
             renderTableSpreadsheet();
         }
 
         function executeRowDeletion(id) {
             tableData = tableData.filter(r => r.id !== id);
             if(tableData.length === 0) {
-                tableData.push({ id: "row_" + Date.now(), dept: "", cat: "", subcat: "", param: "", unit: "PIECES" });
+                tableData.push({ id: "row_" + Date.now(), dept: "", cat: "", subcat: "", param: "", unit: "" });
             }
             renderTableSpreadsheet();
         }
@@ -171,27 +177,18 @@
             const container = document.getElementById('table-body');
             container.innerHTML = "";
 
-            tableData.forEach((row, idx) => {
+            tableData.forEach((row) => {
                 const tr = document.createElement('tr');
-                const isLast = idx === tableData.length - 1;
-                const dynamicTrigger = isLast ? `oninput="forceUpper(this); spawnBlankRow();"` : `oninput="forceUpper(this)"`;
 
                 tr.innerHTML = `
-                    <td><input type="text" placeholder="PANSARI" value="${row.dept}" ${dynamicTrigger} onchange="updateDataFields('${row.id}', 'dept', this.value)" onblur="runAutoTransliterate(this, '${row.id}', 'dept')"></td>
-                    <td><input type="text" placeholder="SPICES" value="${row.cat}" ${dynamicTrigger} onchange="updateDataFields('${row.id}', 'cat', this.value)" onblur="runAutoTransliterate(this, '${row.id}', 'cat')"></td>
-                    <td><input type="text" placeholder="HALDI" value="${row.subcat}" ${dynamicTrigger} onchange="updateDataFields('${row.id}', 'subcat', this.value)" onblur="runAutoTransliterate(this, '${row.id}', 'subcat')"></td>
-                    <td><input type="text" placeholder="e.g. FLAVOR / SIZE" value="${row.param}" ${dynamicTrigger} onchange="updateDataFields('${row.id}', 'param', this.value)"></td>
-                    <td>
-                        <select onchange="updateDataFields('${row.id}', 'unit', this.value)">
-                            <option value="PIECES" ${row.unit === 'PIECES' ? 'selected' : ''}>PIECES / PKT</option>
-                            <option value="KG" ${row.unit === 'KG' ? 'selected' : ''}>KG / GMS</option>
-                            <option value="LITRES" ${row.unit === 'LITRES' ? 'selected' : ''}>LITRES / ML</option>
-                            <option value="METERS" ${row.unit === 'METERS' ? 'selected' : ''}>METERS</option>
-                            <option value="BOX" ${row.unit === 'BOX' ? 'selected' : ''}>BOXES</option>
-                        </select>
-                    </td>
+                    <td><input type="text" placeholder="e.g. PANSARI" value="${row.dept}" oninput="forceUpper(this)" onchange="updateDataFields('${row.id}', 'dept', this.value)" onblur="runAutoTransliterate(this, '${row.id}', 'dept')"></td>
+                    <td><input type="text" placeholder="e.g. SPICES" value="${row.cat}" oninput="forceUpper(this)" onchange="updateDataFields('${row.id}', 'cat', this.value)" onblur="runAutoTransliterate(this, '${row.id}', 'cat')"></td>
+                    <td><input type="text" placeholder="e.g. HALDI" value="${row.subcat}" oninput="forceUpper(this)" onchange="updateDataFields('${row.id}', 'subcat', this.value)" onblur="runAutoTransliterate(this, '${row.id}', 'subcat')"></td>
+                    <td><input type="text" placeholder="e.g. BRAND" value="${row.param}" oninput="forceUpper(this)" onchange="updateDataFields('${row.id}', 'param', this.value)"></td>
+                    <td><input type="text" placeholder="e.g. KG" value="${row.unit}" oninput="forceUpper(this)" onchange="updateDataFields('${row.id}', 'unit', this.value)"></td>
                     <td class="action-cell">
-                        <button class="btn-danger" onclick="executeRowDeletion('${row.id}')"><i class="bi bi-trash3-fill"></i></button>
+                        <button class="btn-action btn-add" onclick="insertRowBelow('${row.id}')" title="Insert Row Below"><i class="bi bi-plus-lg"></i></button>
+                        <button class="btn-action btn-delete" onclick="executeRowDeletion('${row.id}')" title="Delete Row"><i class="bi bi-trash3-fill"></i></button>
                     </td>
                 `;
                 container.appendChild(tr);
@@ -203,7 +200,7 @@
             const db = firebase.firestore();
             const saveBtn = document.querySelector('.btn-success');
             
-            const sanitizedData = tableData.filter(r => r.dept || r.cat || r.subcat || r.param);
+            const sanitizedData = tableData.filter(r => r.dept || r.cat || r.subcat || r.param || r.unit);
             
             saveBtn.innerHTML = `<i class="bi bi-hourglass-split"></i> STORING...`;
             saveBtn.disabled = true;
@@ -235,7 +232,6 @@
                 if(snapshot.exists && snapshot.data().dictionary) {
                     tableData = snapshot.data().dictionary;
                     renderTableSpreadsheet();
-                    spawnBlankRow(); // Maintain empty line at base
                 } else {
                     alert("No cloud runtime found. Start entering fields manually.");
                 }
