@@ -207,9 +207,20 @@
             </div>
         </div>
 
-        <div class="grid-2">
-            <div><label>Cost Price (₹)</label><input type="number" id="bp-cost" class="modal-input" placeholder="0.00"></div>
-            <div><label>Sell Price / MRP (₹)</label><input type="number" id="bp-msp" class="modal-input" placeholder="0.00"></div>
+      <div class="grid-2">
+            <div><label>Cost Price (₹)</label><input type="number" id="bp-cost" class="modal-input" placeholder="0.00" oninput="updateProfitCalculations()"></div>
+            <div><label>Sell Price / MRP (₹)</label><input type="number" id="bp-msp" class="modal-input" placeholder="0.00" oninput="updateProfitCalculations()"></div>
+        </div>
+
+        <div id="calc-preview" style="display:flex; justify-content: space-between; padding: 12px; background: #f8fafc; border-radius: 8px; margin-bottom: 15px; border: 1px dashed var(--border);">
+            <div style="text-align: center;">
+                <label style="color:var(--primary);">Margin %</label>
+                <div id="disp-margin" style="font-weight: 900; color: var(--primary);">0%</div>
+            </div>
+            <div style="text-align: center;">
+                <label style="color:var(--emerald);">Profit %</label>
+                <div id="disp-markup" style="font-weight: 900; color: var(--emerald);">0%</div>
+            </div>
         </div>
         
         <div style="text-align:center; padding:10px; background:#e0f2fe; border-radius:8px; margin-bottom:10px;">
