@@ -8,7 +8,8 @@
     <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-firestore-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-auth-compat.js"></script>
-    <script src="/auth.js"></script>
+   <script src="/auth.js"></script>
+    <script src="https://unpkg.com/html5-qrcode"></script>
     
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;800;900&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.1/font/bootstrap-icons.css">
@@ -142,8 +143,19 @@
         <h2 style="margin:0 0 5px 0; font-size:22px; font-weight:900; color:var(--navy);"><i class="bi bi-pencil-square"></i> Product Blueprint</h2>
         <p style="margin:0 0 20px 0; color:var(--text-light); font-size:12px; font-weight:600;">Scan barcode or type ID. Quantity strictly managed via Enter Stock.</p>
 
-        <label>SKU / Barcode <span style="color:var(--text-light); font-weight:600; text-transform:none;">(Scan or Type)</span></label>
-        <input type="text" id="bp-barcode" class="modal-input" placeholder="e.g. 890123456789">
+      <label>SKU / Barcode <span style="color:var(--text-light); font-weight:600; text-transform:none;">(Scan or Type)</span></label>
+        <div style="display: flex; gap: 8px; margin-bottom: 12px;">
+            <input type="text" id="bp-barcode" class="modal-input" placeholder="e.g. 890123456789" style="margin-bottom: 0;">
+            <button onclick="startBlueprintScanner()" style="background:#e0f2fe; color:var(--primary); border:none; border-radius:10px; padding:0 16px; cursor:pointer; font-size:18px;"><i class="bi bi-qr-code-scan"></i></button>
+        </div>
+
+        <div id="bp-scanner-container" style="display: none; margin-bottom: 15px;">
+            <div id="bp-reader" style="width: 100%; border-radius: 12px; overflow: hidden; border: 2px solid var(--primary);"></div>
+            <div class="grid-2" style="margin-top: 10px;">
+                <button class="btn-action" style="justify-content: center;" onclick="switchBlueprintCamera()"><i class="bi bi-camera-reverse"></i> Switch</button>
+                <button class="btn-action" style="justify-content: center; color: var(--danger); border-color: #fca5a5; background: #fee2e2;" onclick="stopBlueprintScanner()"><i class="bi bi-x-circle"></i> Stop</button>
+            </div>
+        </div>
 
         <label>Product Name <span style="color:var(--text-light); font-weight:600; text-transform:none;">(Auto-Capitalized)</span></label>
         <input type="text" id="bp-name" class="modal-input" placeholder="e.g. MAGIC MASALA LAYS" oninput="forceUppercase(this)">
@@ -482,7 +494,11 @@
         modal.style.display = 'flex';
     }
 
-    function closeBlueprintModal() { document.getElementById('blueprint-modal').style.display = 'none'; editingBlueprintId = null; }
+  function closeBlueprintModal() { 
+    stopBlueprintScanner();
+    document.getElementById('blueprint-modal').style.display = 'none'; 
+    editingBlueprintId = null; 
+}
 
     function renderSmartTemplate() {
         const cat = document.getElementById('bp-category').value;
@@ -663,6 +679,59 @@
             renderInventory(); closeMoveModal(); alert(`✅ Moved ${moveQty} ${unitName} successfully.`);
         } catch(e) { alert("Error: " + e.message); }
         btn.innerText = "Confirm Transfer"; btn.disabled = false;
+    }
+    // =======================================================
+    // BARCODE SCANNER ENGINE (BLUEPRINT)
+    // =======================================================
+    let html5QrCodeBlueprint;
+    let currentFacingModeBlueprint = "environment";
+
+    function startBlueprintScanner() {
+        document.getElementById('bp-scanner-container').style.display = 'block';
+        if (!html5QrCodeBlueprint) html5QrCodeBlueprint = new Html5Qrcode("bp-reader");
+
+        const isMobile = window.innerWidth < 600;
+        const boxWidth = isMobile ? 250 : 250;
+        const boxHeight = isMobile ? 150 : 150;
+
+        html5QrCodeBlueprint.start(
+            { facingMode: currentFacingModeBlueprint },
+            { fps: 10, qrbox: { width: boxWidth, height: boxHeight } },
+            (decodedText) => {
+                document.getElementById('bp-barcode').value = decodedText;
+                stopBlueprintScanner();
+            },
+            (errorMessage) => { /* ignore normal stream noise */ }
+        ).catch(err => {
+            // Auto-fallback to front camera if back camera fails (useful for tablets/laptops)
+            if (currentFacingModeBlueprint === "environment") {
+                console.warn("Back camera failed, trying front...");
+                currentFacingModeBlueprint = "user";
+                startBlueprintScanner();
+            } else {
+                alert("Camera Error: Ensure permissions are granted.");
+                stopBlueprintScanner();
+            }
+        });
+    }
+
+    function stopBlueprintScanner() {
+        if (html5QrCodeBlueprint && html5QrCodeBlueprint.isScanning) {
+            html5QrCodeBlueprint.stop().then(() => {
+                document.getElementById('bp-scanner-container').style.display = 'none';
+            }).catch(err => console.error(err));
+        } else {
+            document.getElementById('bp-scanner-container').style.display = 'none';
+        }
+    }
+
+    function switchBlueprintCamera() {
+        if (html5QrCodeBlueprint && html5QrCodeBlueprint.isScanning) {
+            html5QrCodeBlueprint.stop().then(() => {
+                currentFacingModeBlueprint = (currentFacingModeBlueprint === "environment") ? "user" : "environment";
+                startBlueprintScanner();
+            });
+        }
     }
 </script>
 </body>
