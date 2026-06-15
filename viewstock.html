@@ -8,7 +8,7 @@
     <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-firestore-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-auth-compat.js"></script>
-   <script src="/auth.js"></script>
+    <script src="/auth.js"></script>
     <script src="https://unpkg.com/html5-qrcode"></script>
     
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;800;900&display=swap" rel="stylesheet">
@@ -80,8 +80,9 @@
 
         .modal-overlay { display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(15,23,42,0.7); z-index: 3000; align-items: center; justify-content: center; padding: 20px; box-sizing: border-box; backdrop-filter: blur(4px); }
         .modal-card { background: white; width: 100%; max-width: 500px; border-radius: 20px; padding: 24px; position: relative; box-shadow: 0 25px 50px -12px rgba(0,0,0,0.25); max-height: 90vh; overflow-y: auto;}
-        .modal-input { width: 100%; padding: 12px; border: 2px solid var(--border); border-radius: 10px; font-size: 14px; font-weight: 700; color: var(--navy); outline: none; margin-bottom: 12px; box-sizing: border-box; background: var(--bg-light);}
+        .modal-input { width: 100%; padding: 12px; border: 2px solid var(--border); border-radius: 10px; font-size: 14px; font-weight: 700; color: var(--navy); outline: none; margin-bottom: 12px; box-sizing: border-box; background: var(--bg-light); transition: 0.2s;}
         .modal-input:focus { border-color: var(--primary); background: white; }
+        .modal-input:disabled { background: #f1f5f9; cursor: not-allowed; opacity: 0.7;}
         .btn-save-modal { width: 100%; padding: 16px; background: var(--primary); color: white; border: none; border-radius: 12px; font-weight: 800; font-size: 16px; cursor: pointer; box-shadow: 0 4px 6px rgba(59, 130, 246, 0.3); margin-top: 10px;}
         
         label { display: block; font-size: 11px; font-weight: 900; color: var(--text-light); text-transform: uppercase; margin-bottom: 4px; text-align: left;}
@@ -118,13 +119,7 @@
                 <select id="filter-branch" class="filter-input" onchange="fetchInventory()"></select>
                 <select id="filter-category" class="filter-input" onchange="renderInventory()">
                     <option value="ALL">All Categories</option>
-                    <option value="Snacks & Namkeen">Snacks & Namkeen</option>
-                    <option value="Dairy & Beverages">Dairy & Beverages</option>
-                    <option value="Grocery & Staples">Grocery & Staples</option>
-                    <option value="Apparel & Fashion">Apparel & Fashion</option>
-                    <option value="Stationery & Gifts">Stationery & Gifts</option>
-                    <option value="Other">Other</option>
-                </select>
+                    </select>
             </div>
         </div>
 
@@ -141,9 +136,9 @@
     <div class="modal-card">
         <button onclick="closeBlueprintModal()" style="position:absolute; top:16px; right:16px; background:#f1f5f9; border:none; border-radius:50%; width:36px; height:36px; cursor:pointer;"><i class="bi bi-x-lg"></i></button>
         <h2 style="margin:0 0 5px 0; font-size:22px; font-weight:900; color:var(--navy);"><i class="bi bi-pencil-square"></i> Product Blueprint</h2>
-        <p style="margin:0 0 20px 0; color:var(--text-light); font-size:12px; font-weight:600;">Scan barcode or type ID. Quantity strictly managed via Enter Stock.</p>
+        <p style="margin:0 0 20px 0; color:var(--text-light); font-size:12px; font-weight:600;">Build your product profile. Stock is added via Enter Stock.</p>
 
-      <label>SKU / Barcode <span style="color:var(--text-light); font-weight:600; text-transform:none;">(Scan or Type)</span></label>
+        <label>SKU / Barcode <span style="color:var(--text-light); font-weight:600; text-transform:none;">(Scan or Type)</span></label>
         <div style="display: flex; gap: 8px; margin-bottom: 12px;">
             <input type="text" id="bp-barcode" class="modal-input" placeholder="e.g. 890123456789" style="margin-bottom: 0;">
             <button onclick="startBlueprintScanner()" style="background:#e0f2fe; color:var(--primary); border:none; border-radius:10px; padding:0 16px; cursor:pointer; font-size:18px;"><i class="bi bi-qr-code-scan"></i></button>
@@ -157,21 +152,27 @@
             </div>
         </div>
 
-        <label>Product Name <span style="color:var(--text-light); font-weight:600; text-transform:none;">(Auto-Capitalized)</span></label>
-        <input type="text" id="bp-name" class="modal-input" placeholder="e.g. MAGIC MASALA LAYS" oninput="forceUppercase(this)">
+        <label>Product Display Name <span style="color:var(--text-light); font-weight:600; text-transform:none;">(Auto-Capitalized)</span></label>
+        <input type="text" id="bp-name" class="modal-input" placeholder="e.g. INDIA GATE BASMATI RICE" oninput="forceUppercase(this)">
 
-        <label>Product Category</label>
-        <select id="bp-category" class="modal-input" onchange="renderSmartTemplate()">
-            <option value="">Select Category...</option>
-            <option value="Snacks & Namkeen">Snacks & Namkeen</option>
-            <option value="Dairy & Beverages">Dairy & Beverages</option>
-            <option value="Grocery & Staples">Grocery & Staples</option>
-            <option value="Apparel & Fashion">Apparel & Fashion</option>
-            <option value="Stationery & Gifts">Stationery & Gifts</option>
-            <option value="Other">Other</option>
-        </select>
+        <div style="background: #f8fafc; padding: 12px; border-radius: 10px; border: 1px solid var(--border); margin-bottom: 15px;">
+            <label>Department (Parent)</label>
+            <select id="bp-dept" class="modal-input" onchange="updateCatDropdown()">
+                <option value="">Select Department...</option>
+            </select>
 
-        <div id="bp-dynamic-params" style="background:#f8fafc; padding:12px; border-radius:10px; border:1px dashed #cbd5e1; margin-bottom:12px; display:none;">
+            <label>Category</label>
+            <select id="bp-cat" class="modal-input" onchange="updateSubcatDropdown()" disabled>
+                <option value="">Select Category...</option>
+            </select>
+
+            <label>Sub-Category (Item Type)</label>
+            <select id="bp-subcat" class="modal-input" style="margin-bottom: 0;" onchange="renderSmartTemplate()" disabled>
+                <option value="">Select Sub-Category...</option>
+            </select>
+        </div>
+
+        <div id="bp-dynamic-params" style="background:#e0f2fe; padding:12px; border-radius:10px; border:1px dashed #7dd3fc; margin-bottom:15px; display:none;">
             </div>
 
         <div class="grid-2">
@@ -188,9 +189,11 @@
             <div>
                 <label>Unit Base</label>
                 <select id="bp-unit" class="modal-input">
-                    <option value="Pieces">Pieces / Pkt</option>
-                    <option value="Kg">Kg</option>
-                    <option value="Litres">Litres</option>
+                    <option value="PIECES">Pieces / Pkt</option>
+                    <option value="KG">Kg / Gms</option>
+                    <option value="LITRES">Litres / Ml</option>
+                    <option value="METERS">Meters</option>
+                    <option value="BOX">Box</option>
                 </select>
             </div>
         </div>
@@ -202,7 +205,6 @@
         
         <div style="text-align:center; padding:10px; background:#e0f2fe; border-radius:8px; margin-bottom:10px;">
             <p style="margin:0; font-size:12px; font-weight:800; color:#0284c7;">Current Stock: <span id="bp-display-qty" style="font-size:16px;">0</span></p>
-            <p style="margin:0; font-size:10px; font-weight:600; color:#0ea5e9;">Update quantity via "Enter Stock" screen.</p>
         </div>
 
         <button class="btn-save-modal" id="btn-save-blueprint" onclick="saveBlueprint()">Save Blueprint</button>
@@ -272,17 +274,8 @@
     let rawInventory = []; let globalBranches = []; 
     let currentMoveItem = null; let currentPromoDocId = null; let currentMspForMath = 0;
     let editingBlueprintId = null; 
-    let savedShopParams = {}; // Will hold learned Brands, Flavors etc.
-
-    // SMART AI TEMPLATES LOGIC
-    const smartTemplates = {
-        "Snacks & Namkeen": ["Brand", "Flavor", "Weight"],
-        "Dairy & Beverages": ["Brand", "Volume", "Packaging"],
-        "Apparel & Fashion": ["Brand", "Size", "Color"],
-        "Grocery & Staples": ["Brand", "Quality", "Weight"],
-        "Stationery & Gifts": ["Brand", "Color", "Type"],
-        "Other": ["Brand"]
-    };
+    let savedShopParams = {}; 
+    let masterTaxonomyList = []; // New Global for the Master Taxonomy Engine
 
     const bgGradients = [
         'linear-gradient(135deg, #3b82f6, #8b5cf6)', 'linear-gradient(135deg, #10b981, #0ea5e9)',
@@ -294,23 +287,37 @@
         firebase.auth().onAuthStateChanged(async () => {
             if (!activeUserPhone) return; 
             try { if(assignedBranch && assignedBranch.startsWith('[')) assignedBranch = JSON.parse(assignedBranch); } catch(e){}
+            
+            // 1. Load the Master Taxonomy Engine
+            await loadMasterTaxonomy();
+            
+            // 2. Load Local Shop Params (Learned Brands)
             await loadShopParams(); 
+            
+            // 3. Load Branches and ultimately trigger fetchInventory()
             await loadBranches();
         });
     });
 
-    // DATA CLEANSING: Force Uppercase & remove double spaces
     function forceUppercase(inputElem) {
         inputElem.value = inputElem.value.toUpperCase().replace(/\s{2,}/g, ' ');
     }
 
     // --- FIREBASE LOADERS ---
+    async function loadMasterTaxonomy() {
+        try {
+            const doc = await firebase.firestore().collection('admin_settings').doc('master_taxonomy').get();
+            if(doc.exists && doc.data().dictionary) {
+                masterTaxonomyList = doc.data().dictionary;
+            }
+        } catch(e) { console.error("Error loading master taxonomy", e); }
+    }
+
     async function loadShopParams() {
         try {
             const doc = await firebase.firestore().collection('companies').doc(activeUserPhone).collection('settings').doc('params').get();
             if (doc.exists && doc.data().customParams) {
                 savedShopParams = doc.data().customParams;
-                // Populate datalists for auto-learning dropdowns
                 if(savedShopParams["Brand"]) {
                     const dl = document.getElementById('learned-brands');
                     dl.innerHTML = "";
@@ -352,8 +359,19 @@
             const snap = await firebase.firestore().collection('companies').doc(activeUserPhone).collection('branches').doc(branchId).collection('inventory').get();
             rawInventory = [];
             snap.forEach(doc => { rawInventory.push({ docId: doc.id, ...doc.data() }); });
+            
+            // Populate Dynamic Category Filter based on actual stock
+            populateMainCategoryFilter();
+            
             renderInventory();
         } catch(e) { alert("Error: " + e.message); }
+    }
+
+    function populateMainCategoryFilter() {
+        const catFilter = document.getElementById('filter-category');
+        catFilter.innerHTML = '<option value="ALL">All Categories</option>';
+        const uniqueCats = [...new Set(rawInventory.map(item => item.category).filter(Boolean))];
+        uniqueCats.forEach(c => { catFilter.innerHTML += `<option value="${c}">${c}</option>`; });
     }
 
     // --- UI RENDERER ---
@@ -381,8 +399,9 @@
 
         if(filtered.length === 0) return list.innerHTML = `<div style="text-align:center; padding:60px; color:var(--text-light);"><i class="bi bi-box" style="font-size:48px;"></i><h3>No items found on racks.</h3></div>`;
 
+        // Group by Category to build the Racks
         const grouped = {};
-        filtered.forEach(item => { totalItems++; const cat = item.category || 'Other'; if(!grouped[cat]) grouped[cat] = []; grouped[cat].push(item); });
+        filtered.forEach(item => { totalItems++; const cat = item.category || 'Uncategorized'; if(!grouped[cat]) grouped[cat] = []; grouped[cat].push(item); });
 
         for (const [categoryName, items] of Object.entries(grouped)) {
             let sectionHTML = `
@@ -407,7 +426,6 @@
                 let promoBadge = '';
                 if(item.offer && item.offer.type) promoBadge = `<div class="promo-badge"><i class="bi bi-fire"></i> Offer</div>`;
 
-                // Build Small Parameter Tags
                 let paramTags = "";
                 if(item.customParams) {
                     for(const [k, v] of Object.entries(item.customParams)) {
@@ -452,40 +470,146 @@
     }
 
     // =======================================================
-    // NEW: BLUEPRINT / SMART TEMPLATE ENGINE
+    // DYNAMIC BLUEPRINT / TAXONOMY MAPPING ENGINE
     // =======================================================
+    function populateDeptDropdown() {
+        const deptSelect = document.getElementById('bp-dept');
+        deptSelect.innerHTML = '<option value="">Select Department...</option>';
+        const uniqueDepts = [...new Set(masterTaxonomyList.map(item => item.dept).filter(Boolean))];
+        uniqueDepts.sort().forEach(d => { deptSelect.innerHTML += `<option value="${d}">${d}</option>`; });
+    }
+
+    function updateCatDropdown() {
+        const dept = document.getElementById('bp-dept').value;
+        const catSelect = document.getElementById('bp-cat');
+        const subcatSelect = document.getElementById('bp-subcat');
+        const paramContainer = document.getElementById('bp-dynamic-params');
+        
+        catSelect.innerHTML = '<option value="">Select Category...</option>';
+        subcatSelect.innerHTML = '<option value="">Select Sub-Category...</option>';
+        paramContainer.style.display = 'none';
+
+        if(!dept) {
+            catSelect.disabled = true; subcatSelect.disabled = true; return;
+        }
+
+        catSelect.disabled = false; subcatSelect.disabled = true;
+        const uniqueCats = [...new Set(masterTaxonomyList.filter(item => item.dept === dept).map(item => item.cat).filter(Boolean))];
+        uniqueCats.sort().forEach(c => { catSelect.innerHTML += `<option value="${c}">${c}</option>`; });
+    }
+
+    function updateSubcatDropdown() {
+        const dept = document.getElementById('bp-dept').value;
+        const cat = document.getElementById('bp-cat').value;
+        const subcatSelect = document.getElementById('bp-subcat');
+        const paramContainer = document.getElementById('bp-dynamic-params');
+        
+        subcatSelect.innerHTML = '<option value="">Select Sub-Category...</option>';
+        paramContainer.style.display = 'none';
+
+        if(!cat) { subcatSelect.disabled = true; return; }
+
+        subcatSelect.disabled = false;
+        const uniqueSubcats = [...new Set(masterTaxonomyList.filter(item => item.dept === dept && item.cat === cat).map(item => item.subcat).filter(Boolean))];
+        uniqueSubcats.sort().forEach(sc => { subcatSelect.innerHTML += `<option value="${sc}">${sc}</option>`; });
+    }
+
+    function renderSmartTemplate() {
+        const dept = document.getElementById('bp-dept').value;
+        const cat = document.getElementById('bp-cat').value;
+        const subcat = document.getElementById('bp-subcat').value;
+        const container = document.getElementById('bp-dynamic-params');
+        container.innerHTML = "";
+        
+        if(!subcat) { container.style.display = 'none'; return; }
+        
+        // Find the specific rule from the Master Taxonomy
+        const rule = masterTaxonomyList.find(item => item.dept === dept && item.cat === cat && item.subcat === subcat);
+        if(!rule) return;
+
+        // Auto-set the correct Measurement Unit
+        if(rule.unit) {
+            const unitSelect = document.getElementById('bp-unit');
+            let exists = false;
+            for(let i=0; i<unitSelect.options.length; i++) {
+                if(unitSelect.options[i].value.toUpperCase() === rule.unit.toUpperCase()) exists = true;
+            }
+            if(!exists) unitSelect.innerHTML += `<option value="${rule.unit.toUpperCase()}">${rule.unit.toUpperCase()}</option>`;
+            unitSelect.value = rule.unit.toUpperCase();
+        }
+
+        // Generate Smart Parameter Inputs
+        if(!rule.param) { container.style.display = 'none'; return; }
+        
+        const params = rule.param.split(',').map(p => p.trim()).filter(p => p);
+        if(params.length > 0) {
+            container.style.display = 'block';
+            params.forEach(key => {
+                let extraAttr = `oninput="forceUppercase(this)"`;
+                if(key.toUpperCase() === "BRAND") extraAttr = `list="learned-brands" oninput="forceUppercase(this)"`; 
+                
+                const cleanKeyId = key.replace(/[^a-zA-Z0-9]/g, '_'); // Safe HTML ID
+                container.innerHTML += `
+                    <div style="margin-bottom:10px;">
+                        <label style="color:#0369a1;">${key}</label>
+                        <input type="text" id="bp-param-${cleanKeyId}" class="modal-input" placeholder="Enter ${key}" ${extraAttr} style="margin-bottom:0; padding:10px; border-color:#bae6fd;" data-key="${key}">
+                    </div>
+                `;
+            });
+        }
+    }
+
     function openBlueprintModal(docId = null) {
         editingBlueprintId = docId;
         const modal = document.getElementById('blueprint-modal');
         const container = document.getElementById('bp-dynamic-params');
         
+        // Always populate Department list first
+        populateDeptDropdown();
+        
         if (docId) {
-            // EDIT EXISTING ITEM
             const item = rawInventory.find(i => i.docId === docId);
             document.getElementById('bp-barcode').value = item.barcode || "";
             document.getElementById('bp-name').value = item.name || "";
-            document.getElementById('bp-category').value = item.category || "Other";
             document.getElementById('bp-gst').value = item.gstRate || "0";
-            document.getElementById('bp-unit').value = item.unit || "Pieces";
+            
+            // Set Cascading Dropdowns sequentially
+            if(item.department) {
+                document.getElementById('bp-dept').value = item.department;
+                updateCatDropdown();
+                if(item.category) {
+                    document.getElementById('bp-cat').value = item.category;
+                    updateSubcatDropdown();
+                    if(item.subCategory) {
+                        document.getElementById('bp-subcat').value = item.subCategory;
+                        renderSmartTemplate();
+                        
+                        // Inject saved custom parameters
+                        if(item.customParams) {
+                            Object.keys(item.customParams).forEach(key => {
+                                const cleanKeyId = key.replace(/[^a-zA-Z0-9]/g, '_');
+                                const el = document.getElementById(`bp-param-${cleanKeyId}`);
+                                if(el) el.value = item.customParams[key];
+                            });
+                        }
+                    }
+                }
+            }
+            
+            // Do this after renderSmartTemplate to prevent override
+            setTimeout(() => { document.getElementById('bp-unit').value = item.unit || "PIECES"; }, 50);
+            
             document.getElementById('bp-cost').value = item.costPer || "0";
             document.getElementById('bp-msp').value = item.msp || "0";
             document.getElementById('bp-display-qty').innerText = item.qty || "0";
             
-            // Render Smart Template based on category, then inject saved values
-            renderSmartTemplate();
-            if(item.customParams) {
-                Object.keys(item.customParams).forEach(key => {
-                    const el = document.getElementById(`bp-param-${key}`);
-                    if(el) el.value = item.customParams[key];
-                });
-            }
         } else {
-            // NEW ITEM (Blank Slate)
             document.getElementById('bp-barcode').value = "";
             document.getElementById('bp-name').value = "";
-            document.getElementById('bp-category').value = "";
+            document.getElementById('bp-dept').value = "";
+            updateCatDropdown(); // Resets and disables child dropdowns
             document.getElementById('bp-gst').value = "0";
-            document.getElementById('bp-unit').value = "Pieces";
+            document.getElementById('bp-unit').value = "PIECES";
             document.getElementById('bp-cost').value = "";
             document.getElementById('bp-msp').value = "";
             document.getElementById('bp-display-qty').innerText = "0";
@@ -494,60 +618,41 @@
         modal.style.display = 'flex';
     }
 
-  function closeBlueprintModal() { 
-    stopBlueprintScanner();
-    document.getElementById('blueprint-modal').style.display = 'none'; 
-    editingBlueprintId = null; 
-}
-
-    function renderSmartTemplate() {
-        const cat = document.getElementById('bp-category').value;
-        const container = document.getElementById('bp-dynamic-params');
-        container.innerHTML = "";
-        
-        if(!cat) { container.style.display = 'none'; return; }
-        
-        const templateKeys = smartTemplates[cat] || ["Brand"];
-        container.style.display = 'block';
-        
-        templateKeys.forEach(key => {
-            let extraAttr = "";
-            if(key === "Brand") extraAttr = `list="learned-brands" oninput="forceUppercase(this)"`; // Auto-learn and uppercase
-            
-            container.innerHTML += `
-                <div style="margin-bottom:8px;">
-                    <label>${key}</label>
-                    <input type="text" id="bp-param-${key}" class="modal-input" placeholder="Enter ${key}" ${extraAttr} style="margin-bottom:0; padding:10px;">
-                </div>
-            `;
-        });
+    function closeBlueprintModal() { 
+        stopBlueprintScanner();
+        document.getElementById('blueprint-modal').style.display = 'none'; 
+        editingBlueprintId = null; 
     }
 
     async function saveBlueprint() {
         const barcode = document.getElementById('bp-barcode').value.trim() || `SKU-${Date.now()}`;
         const name = document.getElementById('bp-name').value.trim();
-        const category = document.getElementById('bp-category').value;
+        const department = document.getElementById('bp-dept').value;
+        const category = document.getElementById('bp-cat').value;
+        const subCategory = document.getElementById('bp-subcat').value;
         const gstRate = parseFloat(document.getElementById('bp-gst').value) || 0;
         const unit = document.getElementById('bp-unit').value;
         const costPer = parseFloat(document.getElementById('bp-cost').value) || 0;
         const msp = parseFloat(document.getElementById('bp-msp').value) || 0;
         const branchId = document.getElementById('filter-branch').value;
 
-        if(!name || !category) return alert("Product Name and Category are mandatory!");
+        if(!name || !category || !subCategory) return alert("Name, Category, and Sub-Category are mandatory!");
 
         const btn = document.getElementById('btn-save-blueprint');
         btn.innerText = "SAVING..."; btn.disabled = true;
 
-        // Gather Smart Parameters
+        // Gather Smart Parameters correctly mapping the safe ID back to the real Key
         let customParams = {};
-        const templateKeys = smartTemplates[category] || ["Brand"];
-        templateKeys.forEach(key => {
-            const val = document.getElementById(`bp-param-${key}`)?.value.trim();
-            if(val) customParams[key] = val;
+        const paramInputs = document.querySelectorAll('#bp-dynamic-params input');
+        paramInputs.forEach(input => {
+            const realKey = input.getAttribute('data-key');
+            if(input.value.trim() && realKey) {
+                customParams[realKey] = input.value.trim();
+            }
         });
 
         const itemData = {
-            barcode, name, category, gstRate, unit, costPer, msp, customParams,
+            barcode, name, department, category, subCategory, gstRate, unit, costPer, msp, customParams,
             lastUpdated: new Date().toISOString()
         };
 
@@ -556,17 +661,15 @@
             const invRef = db.collection('companies').doc(activeUserPhone).collection('branches').doc(branchId).collection('inventory');
             
             if (editingBlueprintId) {
-                // Update Existing
                 await invRef.doc(editingBlueprintId).update(itemData);
             } else {
-                // Add New (Initial Qty = 0)
                 itemData.qty = 0;
                 await invRef.add(itemData);
             }
 
-            // AUTO-LEARN: Save any new Brands to Master DB
-            if (customParams["Brand"]) {
-                const brandVal = customParams["Brand"];
+            // AUTO-LEARN: Save any new Brands to User Profile for autocomplete
+            if (customParams["BRAND"] || customParams["Brand"]) {
+                const brandVal = customParams["BRAND"] || customParams["Brand"];
                 if(!savedShopParams["Brand"]) savedShopParams["Brand"] = [];
                 if(!savedShopParams["Brand"].includes(brandVal)) {
                     savedShopParams["Brand"].push(brandVal);
@@ -578,7 +681,7 @@
 
             alert("Blueprint Saved Successfully!");
             closeBlueprintModal();
-            fetchInventory(); // Refresh grid
+            fetchInventory(); 
         } catch(e) {
             alert("Error saving: " + e.message);
         }
@@ -680,6 +783,7 @@
         } catch(e) { alert("Error: " + e.message); }
         btn.innerText = "Confirm Transfer"; btn.disabled = false;
     }
+
     // =======================================================
     // BARCODE SCANNER ENGINE (BLUEPRINT)
     // =======================================================
@@ -703,7 +807,6 @@
             },
             (errorMessage) => { /* ignore normal stream noise */ }
         ).catch(err => {
-            // Auto-fallback to front camera if back camera fails (useful for tablets/laptops)
             if (currentFacingModeBlueprint === "environment") {
                 console.warn("Back camera failed, trying front...");
                 currentFacingModeBlueprint = "user";
