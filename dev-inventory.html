@@ -65,13 +65,16 @@
         
         .translating { animation: pulse 1s infinite; background: #fef3c7 !important; }
         @keyframes pulse { 0% { opacity: 1; } 50% { opacity: 0.6; } 100% { opacity: 1; } }
+
+        .warning-banner { background: #fffbeb; border: 2px solid #fcd34d; padding: 15px; border-radius: 8px; margin-bottom: 15px; font-size: 13px; font-weight: 700; color: #b45309; display: flex; align-items: flex-start; gap: 10px; }
+        .warning-banner i { font-size: 20px; color: #f59e0b; margin-top: -2px; }
     </style>
 </head>
 <body>
 
     <div class="dashboard-container">
         <div class="header-bar">
-            <h1><i class="bi bi-database-fill-gear"></i> Master Taxonomy Engine</h1>
+            <h1><i class="bi bi-diagram-3-fill"></i> Taxonomy Mapping Engine</h1>
             <div style="display: flex; gap: 10px;">
                 <button class="btn btn-exit" onclick="window.location.href='/developer.html'"><i class="bi bi-arrow-left"></i> Exit</button>
                 <button class="btn btn-primary" onclick="loadFromCloud()"><i class="bi bi-cloud-arrow-down-fill"></i> Load DB</button>
@@ -79,19 +82,28 @@
             </div>
         </div>
 
-        <div style="background: #e0f2fe; padding: 12px 15px; border-radius: 8px; margin-bottom: 15px; font-size: 12px; font-weight: 700; color: #0284c7; display: flex; align-items: center; gap: 8px;">
-            <i class="bi bi-info-circle-fill" style="font-size: 16px;"></i>
-            Type text in English and click out. Dept, Category, and Sub-Category auto-translate to Hindi. Everything updates in strict UPPERCASE. Use the Blue '+' to insert rows.
+        <div class="warning-banner">
+            <i class="bi bi-exclamation-triangle-fill"></i>
+            <div>
+                <strong style="font-size: 15px; display: block; margin-bottom: 4px;">CRITICAL RULE: DO NOT ENTER BRANDS OR VARIANTS!</strong>
+                Define the <strong>Structure</strong>, not the specific products. The shopkeeper will type the Brand/Size themselves using the Smart Parameters you define here.<br>
+                <em>Example Correct: CLOTHING ➔ MEN ➔ SHIRT ➔ (Params: BRAND, SIZE, COLOR) ➔ PIECES</em>
+            </div>
+        </div>
+
+        <div style="background: #e0f2fe; padding: 10px 15px; border-radius: 8px; margin-bottom: 15px; font-size: 12px; font-weight: 700; color: #0284c7; display: flex; align-items: center; gap: 8px;">
+            <i class="bi bi-translate"></i>
+            Type in English and click out. Dept, Category, and Sub-Category auto-translate to Hindi. Use the Blue '+' to insert rows.
         </div>
 
         <div class="table-container">
             <table id="taxonomy-table">
                 <thead>
                     <tr>
-                        <th style="width: 20%;">Department (Shop Type)</th>
-                        <th style="width: 20%;">Category</th>
-                        <th style="width: 20%;">Sub-Category / Item</th>
-                        <th style="width: 20%;">Specific Parameter Name</th>
+                        <th style="width: 20%;">Department (Parent)</th>
+                        <th style="width: 20%;">Category (Child)</th>
+                        <th style="width: 20%;">Sub-Category (Item Type)</th>
+                        <th style="width: 20%;">Smart Parameters (Comma Sep)</th>
                         <th style="width: 12%;">Measurement Unit</th>
                         <th style="width: 8%; text-align: center;">Actions</th>
                     </tr>
@@ -108,9 +120,12 @@
             window.location.href = "/developer.html";
         }
 
-        // Complete Row-By-Row Schema
+        // Example Data showing exactly how the Parent-Child map should look
         let tableData = [
-            { id: "row_1", dept: "PANSARI (पंसारी)", cat: "SPICES (मसाले)", subcat: "HALDI (हल्दी)", param: "BRAND", unit: "KG" }
+            { id: "row_1", dept: "GROCERY (किराना)", cat: "RICE (चावल)", subcat: "BASMATI RICE (बासमती चावल)", param: "BRAND", unit: "KG" },
+            { id: "row_2", dept: "CLOTHING (कपड़े)", cat: "MEN (पुरुष)", subcat: "SHIRT (शर्ट)", param: "BRAND, SIZE, COLOR", unit: "PIECES" },
+            { id: "row_3", dept: "HARDWARE (हार्डवेयर)", cat: "FASTENERS (फास्टनरों)", subcat: "NAILS (नाखून)", param: "SIZE, MATERIAL", unit: "KG" },
+            { id: "row_4", dept: "MEDICAL (चिकित्सा)", cat: "OTC (ओटीसी)", subcat: "PARACETAMOL (पैरासिटामोल)", param: "BRAND, STRENGTH", unit: "STRIP" }
         ];
 
         function forceUpper(inputElem) {
@@ -122,7 +137,7 @@
         // Global Hindi Transliteration Engine
         async function runAutoTransliterate(inputElem, rowId, fieldKey) {
             let val = inputElem.value.trim().toUpperCase();
-            if(!val || val.includes('(')) return; // Don't re-translate if brackets exist
+            if(!val || val.includes('(')) return; 
 
             inputElem.classList.add('translating');
 
@@ -152,17 +167,28 @@
         // Insert a new blank row directly below the clicked row
         function insertRowBelow(id) {
             const idx = tableData.findIndex(r => r.id === id);
+            
+            // Auto-fill the Department and Category from the row above to save time!
+            const parentDept = idx !== -1 ? tableData[idx].dept : "";
+            const parentCat = idx !== -1 ? tableData[idx].cat : "";
+
             const newRow = {
                 id: "row_" + Date.now() + Math.floor(Math.random() * 1000),
-                dept: "", cat: "", subcat: "", param: "", unit: ""
+                dept: parentDept, cat: parentCat, subcat: "", param: "", unit: ""
             };
             
             if (idx !== -1) {
                 tableData.splice(idx + 1, 0, newRow);
             } else {
-                tableData.push(newRow); // Fallback if id not found
+                tableData.push(newRow);
             }
             renderTableSpreadsheet();
+            
+            // Auto-focus the Sub-Category input of the newly created row
+            setTimeout(() => {
+                const newInputs = document.querySelectorAll(`input[onchange*="${newRow.id}"]`);
+                if(newInputs && newInputs[2]) newInputs[2].focus();
+            }, 50);
         }
 
         function executeRowDeletion(id) {
@@ -181,11 +207,11 @@
                 const tr = document.createElement('tr');
 
                 tr.innerHTML = `
-                    <td><input type="text" placeholder="e.g. PANSARI" value="${row.dept}" oninput="forceUpper(this)" onchange="updateDataFields('${row.id}', 'dept', this.value)" onblur="runAutoTransliterate(this, '${row.id}', 'dept')"></td>
-                    <td><input type="text" placeholder="e.g. SPICES" value="${row.cat}" oninput="forceUpper(this)" onchange="updateDataFields('${row.id}', 'cat', this.value)" onblur="runAutoTransliterate(this, '${row.id}', 'cat')"></td>
-                    <td><input type="text" placeholder="e.g. HALDI" value="${row.subcat}" oninput="forceUpper(this)" onchange="updateDataFields('${row.id}', 'subcat', this.value)" onblur="runAutoTransliterate(this, '${row.id}', 'subcat')"></td>
-                    <td><input type="text" placeholder="e.g. BRAND" value="${row.param}" oninput="forceUpper(this)" onchange="updateDataFields('${row.id}', 'param', this.value)"></td>
-                    <td><input type="text" placeholder="e.g. KG" value="${row.unit}" oninput="forceUpper(this)" onchange="updateDataFields('${row.id}', 'unit', this.value)"></td>
+                    <td><input type="text" placeholder="e.g. CLOTHING" value="${row.dept}" oninput="forceUpper(this)" onchange="updateDataFields('${row.id}', 'dept', this.value)" onblur="runAutoTransliterate(this, '${row.id}', 'dept')"></td>
+                    <td><input type="text" placeholder="e.g. MEN" value="${row.cat}" oninput="forceUpper(this)" onchange="updateDataFields('${row.id}', 'cat', this.value)" onblur="runAutoTransliterate(this, '${row.id}', 'cat')"></td>
+                    <td><input type="text" placeholder="e.g. SHIRT" value="${row.subcat}" oninput="forceUpper(this)" onchange="updateDataFields('${row.id}', 'subcat', this.value)" onblur="runAutoTransliterate(this, '${row.id}', 'subcat')"></td>
+                    <td><input type="text" placeholder="e.g. BRAND, SIZE" value="${row.param}" oninput="forceUpper(this)" onchange="updateDataFields('${row.id}', 'param', this.value)"></td>
+                    <td><input type="text" placeholder="e.g. PIECES" value="${row.unit}" oninput="forceUpper(this)" onchange="updateDataFields('${row.id}', 'unit', this.value)"></td>
                     <td class="action-cell">
                         <button class="btn-action btn-add" onclick="insertRowBelow('${row.id}')" title="Insert Row Below"><i class="bi bi-plus-lg"></i></button>
                         <button class="btn-action btn-delete" onclick="executeRowDeletion('${row.id}')" title="Delete Row"><i class="bi bi-trash3-fill"></i></button>
@@ -233,7 +259,7 @@
                     tableData = snapshot.data().dictionary;
                     renderTableSpreadsheet();
                 } else {
-                    alert("No cloud runtime found. Start entering fields manually.");
+                    alert("No cloud runtime found. Using default template.");
                 }
             } catch(err) {
                 alert("Firestore Load Error: " + err.message);
