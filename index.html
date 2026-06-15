@@ -24,13 +24,25 @@
         .pin-wrapper input { margin-bottom: 0; padding-right: 85px; }
         @keyframes slideDown { from { transform: translateY(-20px); opacity: 0; } to { transform: translateY(0); opacity: 1; } }
 
-        /* Welcome Portal Elements */
+       /* Welcome Portal Elements (Dashboard Tile Grid) */
         .welcome-motto { font-size: 13px; font-weight: 700; color: #64748b; line-height: 1.5; text-align: center; margin-bottom: 25px; letter-spacing: 0.5px; text-transform: uppercase; }
-        .hub-menu-grid { display: flex; flex-direction: column; gap: 12px; width: 100%; box-sizing: border-box; }
         
-        .btn-portal { width: 100%; padding: 15px 20px; font-size: 15px; font-weight: 800; border: none; border-radius: 12px; cursor: pointer; display: flex; align-items: center; justify-content: center; gap: 10px; color: white; transition: transform 0.2s, box-shadow 0.2s; box-sizing: border-box; text-align: center; text-transform: uppercase; letter-spacing: 0.5px;}
-        .btn-portal:active { transform: scale(0.98); }
+        .hub-menu-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 15px; width: 100%; box-sizing: border-box; }
         
+        .btn-portal { border: none; border-radius: 16px; cursor: pointer; display: flex; color: white; transition: transform 0.1s, box-shadow 0.1s; box-sizing: border-box; text-transform: uppercase; letter-spacing: 0.5px; font-family: 'Inter', sans-serif; position: relative;}
+        
+        /* Realistic physical button press effect */
+        .btn-portal:active { transform: translate(4px, 4px); box-shadow: 0px 0px 0px transparent !important; }
+
+        /* Banner Style (Top Button) */
+        .tile-full { grid-column: span 2; padding: 20px; flex-direction: row; align-items: center; justify-content: flex-start; gap: 15px; font-size: 16px; font-weight: 900; }
+        .tile-full i { font-size: 32px; }
+
+        /* Square Tile Style (Bottom 4 Buttons) */
+        .tile-half { padding: 22px 10px; flex-direction: column; align-items: center; justify-content: center; gap: 10px; font-size: 13px; font-weight: 800; text-align: center; }
+        .tile-half i { font-size: 36px; display: block; margin-bottom: 2px; }
+
+        /* Colors & 3D Shadows */
         .color-reg { background: #10B981; box-shadow: 4px 4px 0px #064e3b; }
         .color-shop { background: #1E3A8A; box-shadow: 4px 4px 0px #172554; }
         .color-staff { background: #6366F1; box-shadow: 4px 4px 0px #312e81; }
@@ -60,21 +72,35 @@
                         Empowering Local Indian Retailers to Scale Digital, Manage Smart, and Grow Unlimited!
                     </p>
                     
-                    <div class="hub-menu-grid">
-                        <button class="btn-portal color-reg" onclick="showRegistrationForm()">
-                            <i class="bi bi-patch-plus-fill"></i> Register New Business
+          <div class="hub-menu-grid">
+                        <!-- Top Full-Width Banner -->
+                        <button class="btn-portal tile-full color-reg" onclick="showRegistrationForm()">
+                            <i class="bi bi-rocket-takeoff-fill"></i>
+                            <div style="text-align: left; line-height: 1.2;">
+                                <span style="display: block; font-size: 11px; opacity: 0.85; font-weight: 700; margin-bottom: 2px;">NEW HERE?</span>
+                                Register Business
+                            </div>
                         </button>
-                        <button class="btn-portal color-shop" onclick="window.location.href='/login.html'">
-                            <i class="bi bi-shop"></i> Shop Owner Login
+                        
+                        <!-- 2x2 Square Tiles -->
+                        <button class="btn-portal tile-half color-shop" onclick="window.location.href='/login.html'">
+                            <i class="bi bi-shop"></i>
+                            Owner Login
                         </button>
-                        <button class="btn-portal color-staff" onclick="window.location.href='/staff-login.html'">
-                            <i class="bi bi-people-fill"></i> Staff Member Login
+                        
+                        <button class="btn-portal tile-half color-staff" onclick="window.location.href='/staff-login.html'">
+                            <i class="bi bi-person-vcard-fill"></i>
+                            Staff Portal
                         </button>
-                        <button class="btn-portal color-cust" onclick="window.location.href='/customer-login.html'">
-                            <i class="bi bi-person-heart"></i> Customer Corner
+                        
+                        <button class="btn-portal tile-half color-cust" onclick="window.location.href='/customer-login.html'">
+                            <i class="bi bi-bag-heart-fill"></i>
+                            Customers
                         </button>
-                        <button class="btn-portal color-dev" onclick="window.location.href='/developer.html'">
-                            <i class="bi bi-code-slash"></i> Developer Desk
+                        
+                        <button class="btn-portal tile-half color-dev" onclick="window.location.href='/developer.html'">
+                            <i class="bi bi-terminal-dash"></i>
+                            Developer
                         </button>
                     </div>
                 </div>
