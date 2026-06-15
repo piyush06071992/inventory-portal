@@ -5,10 +5,11 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <title>Master Taxonomy DB - Developer Desk</title>
     
-<script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-firestore-compat.js"></script>
+    
     <script>
-        // Injected configurations directly to prevent auth.js multi-tenant safety kicks
+        // Directly integrated project credentials to bypass standard auth.js gating
         const firebaseConfig = {
             apiKey: "AIzaSyBuYDgbmycHMjHGupeoZV2lvv_Z0n7WyoY",
             authDomain: "business-saarthi.firebaseapp.com",
@@ -34,7 +35,7 @@
         }
         body { font-family: 'Inter', sans-serif; background-color: var(--navy); margin: 0; padding: 20px; color: var(--navy); }
         
-        .dashboard-container { background: white; border-radius: 16px; padding: 20px; max-width: 1200px; margin: 0 auto; box-shadow: 0 25px 50px -12px rgba(0,0,0,0.5); min-height: 80vh; display: flex; flex-direction: column; }
+        .dashboard-container { background: white; border-radius: 16px; padding: 20px; max-width: 1350px; margin: 0 auto; box-shadow: 0 25px 50px -12px rgba(0,0,0,0.5); min-height: 85vh; display: flex; flex-direction: column; }
         
         .header-bar { display: flex; justify-content: space-between; align-items: center; border-bottom: 2px solid var(--border); padding-bottom: 15px; margin-bottom: 20px; }
         .header-bar h1 { margin: 0; font-size: 24px; font-weight: 900; color: var(--navy); display: flex; align-items: center; gap: 10px; text-transform: uppercase;}
@@ -43,27 +44,24 @@
         .btn:active { transform: scale(0.95); }
         .btn-primary { background: var(--primary); color: white; }
         .btn-success { background: var(--emerald); color: white; }
-        .btn-danger { background: #fee2e2; color: var(--danger); padding: 8px; }
+        .btn-danger { background: #fee2e2; color: var(--danger); padding: 8px; border: none; border-radius: 6px; cursor: pointer;}
         .btn-exit { background: var(--border); color: var(--navy); }
 
-        /* Excel-Like Table Styles */
+        /* Structural Grid Spreadsheet UI */
         .table-container { flex-grow: 1; overflow-x: auto; background: var(--bg); border-radius: 12px; border: 1px solid var(--border); }
-        table { width: 100%; border-collapse: collapse; min-width: 800px; }
+        table { width: 100%; border-collapse: collapse; min-width: 1000px; }
         th { background: var(--navy); color: white; text-align: left; padding: 12px 15px; font-size: 12px; font-weight: 900; text-transform: uppercase; letter-spacing: 1px; position: sticky; top: 0; z-index: 10;}
         td { padding: 0; border-bottom: 1px solid var(--border); border-right: 1px solid var(--border); background: white; position: relative;}
         td:last-child { border-right: none; }
         
-        /* Input styling inside table */
-        td input { width: 100%; height: 100%; padding: 12px 15px; border: none; outline: none; box-sizing: border-box; font-size: 13px; font-weight: 700; color: var(--navy); background: transparent; font-family: 'Inter', sans-serif;}
-        td input:focus { background: #e0f2fe; box-shadow: inset 0 0 0 2px var(--primary); }
+        /* Spread Sheet Inputs */
+        td input, td select { width: 100%; height: 100%; padding: 12px 15px; border: none; outline: none; box-sizing: border-box; font-size: 13px; font-weight: 700; color: var(--navy); background: transparent; font-family: 'Inter', sans-serif;}
+        td input:focus, td select:focus { background: #e0f2fe; box-shadow: inset 0 0 0 2px var(--primary); }
+        td select { appearance: none; cursor: pointer; }
         
-        /* Placeholder styling */
-        td input::placeholder { color: #94a3b8; font-weight: 600; }
-        
-        .action-cell { display: flex; align-items: center; justify-content: center; padding: 8px; }
-
-        .translating { animation: pulse 1s infinite; color: var(--warning); }
-        @keyframes pulse { 0% { opacity: 1; } 50% { opacity: 0.5; } 100% { opacity: 1; } }
+        .action-cell { display: flex; align-items: center; justify-content: center; padding: 6px; }
+        .translating { animation: pulse 1s infinite; background: #fef3c7 !important; }
+        @keyframes pulse { 0% { opacity: 1; } 50% { opacity: 0.6; } 100% { opacity: 1; } }
     </style>
 </head>
 <body>
@@ -80,7 +78,7 @@
 
         <div style="background: #e0f2fe; padding: 12px 15px; border-radius: 8px; margin-bottom: 15px; font-size: 12px; font-weight: 700; color: #0284c7; display: flex; align-items: center; gap: 8px;">
             <i class="bi bi-info-circle-fill" style="font-size: 16px;"></i>
-            Type the Sub-Category (e.g., HALDI) and click away. The system will automatically fetch the Hindi translation. All text is forced to UPPERCASE.
+            Type text in English and click out. Department, Category, and Sub-Category will auto-translate to Hindi. Everything updates in strict UPPERCASE.
         </div>
 
         <div class="table-container">
@@ -89,8 +87,9 @@
                     <tr>
                         <th style="width: 20%;">Department (Shop Type)</th>
                         <th style="width: 20%;">Category</th>
-                        <th style="width: 30%;">Sub-Category / Item (Hindi)</th>
-                        <th style="width: 25%;">Smart Parameters (Comma separated)</th>
+                        <th style="width: 25%;">Sub-Category / Item</th>
+                        <th style="width: 20%;">Specific Parameter Name</th>
+                        <th style="width: 10%;">Measurement Unit</th>
                         <th style="width: 5%; text-align: center;">X</th>
                     </tr>
                 </thead>
@@ -101,165 +100,157 @@
     </div>
 
     <script>
-        // Check Developer Auth
+        // Enforce Developer Session Guard
         if (sessionStorage.getItem("devAccessGranted") !== "true") {
             window.location.href = "/developer.html";
         }
 
-        // Master Data Array
+        // Complete Row-By-Row Schema
         let tableData = [
-            { id: Date.now().toString(), dept: "PANSARI", cat: "SPICES", subcat: "HALDI (हल्दी)", params: "BRAND, WEIGHT, QUALITY" }
+            { id: "row_1", dept: "PANSARI (पंसारी)", cat: "SPICES (मसाले)", subcat: "HALDI (हल्दी)", param: "BRAND", unit: "KG" }
         ];
 
-        // Ensure text is always uppercase as they type
         function forceUpper(inputElem) {
-            let cursor = inputElem.selectionStart;
-            inputElem.value = inputElem.value.toUpperCase();
-            inputElem.setSelectionRange(cursor, cursor);
+            let start = inputElem.selectionStart;
+            inputElem.value = inputElem.value.toUpperCase().replace(/\s{2,}/g, ' ');
+            inputElem.setSelectionRange(start, start);
         }
 
-        // Real-time Hindi Transliteration using Google Input Tools API
-        async function applyHindi(inputElem, rowId) {
+        // Global Hindi Transliteration Engine
+        async function runAutoTransliterate(inputElem, rowId, fieldKey) {
             let val = inputElem.value.trim().toUpperCase();
-            
-            // If empty, or already contains a bracket (translation done), skip it.
-            if(!val || val.includes('(')) return;
+            if(!val || val.includes('(')) return; // Don't re-translate if brackets exist
 
-            // Optional: Show loading state
             inputElem.classList.add('translating');
 
             try {
-                // Fetch transliteration
-                let res = await fetch(`https://inputtools.google.com/request?text=${val.toLowerCase()}&itc=hi-t-i0-und&num=1`);
-                let data = await res.json();
+                let response = await fetch(`https://inputtools.google.com/request?text=${val.toLowerCase()}&itc=hi-t-i0-und&num=1`);
+                let parsed = await response.json();
                 
-                if(data[0] === 'SUCCESS' && data[1][0][1][0]) {
-                    let hindiText = data[1][0][1][0];
-                    inputElem.value = `${val} (${hindiText})`;
+                if(parsed[0] === 'SUCCESS' && parsed[1][0][1][0]) {
+                    let hindiTranslation = parsed[1][0][1][0].toUpperCase();
+                    inputElem.value = `${val} (${hindiTranslation})`;
                 }
-            } catch(e) {
-                console.error("Translation API failed", e);
+            } catch(error) {
+                console.error("Transliteration service error:", error);
             } finally {
                 inputElem.classList.remove('translating');
-                updateData(rowId, 'subcat', inputElem.value);
+                updateDataFields(rowId, fieldKey, inputElem.value);
             }
         }
 
-        // Update main data array when an input changes
-        function updateData(id, field, value) {
-            const index = tableData.findIndex(row => row.id === id);
-            if(index !== -1) {
-                tableData[index][field] = value.toUpperCase();
+        function updateDataFields(id, field, value) {
+            const idx = tableData.findIndex(r => r.id === id);
+            if(idx !== -1) {
+                tableData[idx][field] = value.toUpperCase();
             }
         }
 
-        // Add a blank row to the bottom
-        function addBlankRow() {
-            // Check if last row is empty to prevent infinite blank rows
+        function spawnBlankRow() {
             if(tableData.length > 0) {
-                let last = tableData[tableData.length - 1];
-                if(!last.dept && !last.cat && !last.subcat) return;
+                let tailRow = tableData[tableData.length - 1];
+                if(!tailRow.dept && !tailRow.cat && !tailRow.subcat && !tailRow.param) return;
             }
             
             tableData.push({
-                id: Date.now().toString(),
-                dept: "", cat: "", subcat: "", params: ""
+                id: "row_" + Date.now() + Math.floor(Math.random() * 100),
+                dept: "", cat: "", subcat: "", param: "", unit: "PIECES"
             });
-            renderTable();
+            renderTableSpreadsheet();
         }
 
-        // Delete a specific row
-        function deleteRow(id) {
-            tableData = tableData.filter(row => row.id !== id);
-            if(tableData.length === 0) addBlankRow(); // Keep at least one row
-            renderTable();
+        function executeRowDeletion(id) {
+            tableData = tableData.filter(r => r.id !== id);
+            if(tableData.length === 0) {
+                tableData.push({ id: "row_" + Date.now(), dept: "", cat: "", subcat: "", param: "", unit: "PIECES" });
+            }
+            renderTableSpreadsheet();
         }
 
-        // Render the HTML table based on the array
-        function renderTable() {
-            const tbody = document.getElementById('table-body');
-            tbody.innerHTML = "";
+        function renderTableSpreadsheet() {
+            const container = document.getElementById('table-body');
+            container.innerHTML = "";
 
-            tableData.forEach((row, index) => {
+            tableData.forEach((row, idx) => {
                 const tr = document.createElement('tr');
-                
-                // Add event listener to auto-add row when typing in the last row
-                const isLast = index === tableData.length - 1;
-                const onInputTrigger = isLast ? `oninput="forceUpper(this); addBlankRow();"` : `oninput="forceUpper(this)"`;
+                const isLast = idx === tableData.length - 1;
+                const dynamicTrigger = isLast ? `oninput="forceUpper(this); spawnBlankRow();"` : `oninput="forceUpper(this)"`;
 
                 tr.innerHTML = `
-                    <td><input type="text" placeholder="e.g. PANSARI" value="${row.dept}" ${onInputTrigger} onchange="updateData('${row.id}', 'dept', this.value)"></td>
-                    <td><input type="text" placeholder="e.g. SPICES" value="${row.cat}" ${onInputTrigger} onchange="updateData('${row.id}', 'cat', this.value)"></td>
-                    <td><input type="text" placeholder="e.g. HALDI" value="${row.subcat}" ${onInputTrigger} onchange="updateData('${row.id}', 'subcat', this.value)" onblur="applyHindi(this, '${row.id}')"></td>
-                    <td><input type="text" placeholder="BRAND, WEIGHT..." value="${row.params}" ${onInputTrigger} onchange="updateData('${row.id}', 'params', this.value)"></td>
+                    <td><input type="text" placeholder="PANSARI" value="${row.dept}" ${dynamicTrigger} onchange="updateDataFields('${row.id}', 'dept', this.value)" onblur="runAutoTransliterate(this, '${row.id}', 'dept')"></td>
+                    <td><input type="text" placeholder="SPICES" value="${row.cat}" ${dynamicTrigger} onchange="updateDataFields('${row.id}', 'cat', this.value)" onblur="runAutoTransliterate(this, '${row.id}', 'cat')"></td>
+                    <td><input type="text" placeholder="HALDI" value="${row.subcat}" ${dynamicTrigger} onchange="updateDataFields('${row.id}', 'subcat', this.value)" onblur="runAutoTransliterate(this, '${row.id}', 'subcat')"></td>
+                    <td><input type="text" placeholder="e.g. FLAVOR / SIZE" value="${row.param}" ${dynamicTrigger} onchange="updateDataFields('${row.id}', 'param', this.value)"></td>
+                    <td>
+                        <select onchange="updateDataFields('${row.id}', 'unit', this.value)">
+                            <option value="PIECES" ${row.unit === 'PIECES' ? 'selected' : ''}>PIECES / PKT</option>
+                            <option value="KG" ${row.unit === 'KG' ? 'selected' : ''}>KG / GMS</option>
+                            <option value="LITRES" ${row.unit === 'LITRES' ? 'selected' : ''}>LITRES / ML</option>
+                            <option value="METERS" ${row.unit === 'METERS' ? 'selected' : ''}>METERS</option>
+                            <option value="BOX" ${row.unit === 'BOX' ? 'selected' : ''}>BOXES</option>
+                        </select>
+                    </td>
                     <td class="action-cell">
-                        <button class="btn btn-danger" onclick="deleteRow('${row.id}')" title="Delete Row"><i class="bi bi-trash-fill"></i></button>
+                        <button class="btn-danger" onclick="executeRowDeletion('${row.id}')"><i class="bi bi-trash3-fill"></i></button>
                     </td>
                 `;
-                tbody.appendChild(tr);
+                container.appendChild(tr);
             });
-            
-            // Always ensure an empty row exists at the bottom for quick typing
-            const lastRow = tableData[tableData.length - 1];
-            if(lastRow.dept || lastRow.cat || lastRow.subcat) {
-                addBlankRow();
-            }
         }
 
-        // Firebase Operations (Developer Database)
+        // Firestore Synchronizations
         async function saveToCloud() {
             const db = firebase.firestore();
-            const btn = document.querySelector('.btn-success');
+            const saveBtn = document.querySelector('.btn-success');
             
-            // Filter out completely empty rows
-            const cleanData = tableData.filter(r => r.dept || r.cat || r.subcat);
+            const sanitizedData = tableData.filter(r => r.dept || r.cat || r.subcat || r.param);
             
-            btn.innerHTML = `<i class="bi bi-hourglass-split"></i> SAVING...`;
-            btn.disabled = true;
+            saveBtn.innerHTML = `<i class="bi bi-hourglass-split"></i> STORING...`;
+            saveBtn.disabled = true;
 
             try {
-                // Save to a central admin settings collection
                 await db.collection('admin_settings').doc('master_taxonomy').set({
-                    dictionary: cleanData,
-                    lastUpdated: new Date().toISOString()
+                    dictionary: sanitizedData,
+                    totalCount: sanitizedData.length,
+                    lastCompiled: new Date().toISOString()
                 });
-                alert("Master Taxonomy Saved to Cloud Successfully!");
-            } catch(e) {
-                alert("Cloud Save Error: " + e.message);
+                alert("Master Database Registry deployed to Cloud successfully!");
+            } catch(err) {
+                alert("Firestore Error: " + err.message);
+            } finally {
+                saveBtn.innerHTML = `<i class="bi bi-cloud-arrow-up-fill"></i> Save to Cloud`;
+                saveBtn.disabled = false;
             }
-            
-            btn.innerHTML = `<i class="bi bi-cloud-arrow-up-fill"></i> Save to Cloud`;
-            btn.disabled = false;
         }
 
         async function loadFromCloud() {
             const db = firebase.firestore();
-            const btn = document.querySelector('.btn-primary');
+            const loadBtn = document.querySelector('.btn-primary');
             
-            btn.innerHTML = `<i class="bi bi-hourglass-split"></i> LOADING...`;
-            btn.disabled = true;
+            loadBtn.innerHTML = `<i class="bi bi-hourglass-split"></i> FETCHING...`;
+            loadBtn.disabled = true;
 
             try {
-                const doc = await db.collection('admin_settings').doc('master_taxonomy').get();
-                if(doc.exists && doc.data().dictionary) {
-                    tableData = doc.data().dictionary;
-                    renderTable();
+                const snapshot = await db.collection('admin_settings').doc('master_taxonomy').get();
+                if(snapshot.exists && snapshot.data().dictionary) {
+                    tableData = snapshot.data().dictionary;
+                    renderTableSpreadsheet();
+                    spawnBlankRow(); // Maintain empty line at base
                 } else {
-                    alert("No taxonomy data found in cloud. Start typing below.");
+                    alert("No cloud runtime found. Start entering fields manually.");
                 }
-            } catch(e) {
-                alert("Cloud Load Error: " + e.message);
+            } catch(err) {
+                alert("Firestore Load Error: " + err.message);
+            } finally {
+                loadBtn.innerHTML = `<i class="bi bi-cloud-arrow-down-fill"></i> Load DB`;
+                loadBtn.disabled = false;
             }
-            
-            btn.innerHTML = `<i class="bi bi-cloud-arrow-down-fill"></i> Load DB`;
-            btn.disabled = false;
         }
 
-        // Initialize table on load
         window.onload = function() {
             if (sessionStorage.getItem("devAccessGranted") === "true") {
-                renderTable();
-                // Optionally auto-load from cloud here: loadFromCloud();
+                renderTableSpreadsheet();
+                loadFromCloud(); // Safely pulls existing configurations on mount
             }
         };
     </script>
