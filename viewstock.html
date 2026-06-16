@@ -102,6 +102,7 @@
         <h1>Inventory Master</h1>
         <div style="display: flex; gap: 8px; flex-wrap: wrap;">
             <button class="btn-action" style="background:var(--navy); color:white; border-color:var(--navy);" onclick="openBlueprintModal()"><i class="bi bi-plus-circle-fill"></i> New Item</button>
+            <button class="btn-action" style="background:var(--emerald); color:white; border-color:var(--emerald);" onclick="printWallCatalog()"><i class="bi bi-printer-fill"></i> Print Wall Catalog</button>
             <button class="btn-action" style="background:var(--warning); color:white; border-color:var(--warning);" onclick="openGlobalDealsModal()"><i class="bi bi-megaphone-fill"></i> Store Deals</button>
             <a href="javascript:history.back()" class="btn-action"><i class="bi bi-arrow-left"></i></a>
         </div>
@@ -132,13 +133,17 @@
         </div>
     </div>
 
-<div id="inventory-racks-container">
+    <div id="inventory-racks-container">
         <div style="text-align: center; padding: 60px; color: var(--text-light); font-weight: 800; font-size: 16px;">
             <i class="bi bi-box-seam" style="font-size: 40px; display: block; margin-bottom: 15px; opacity: 0.5;"></i>
             Loading Store Shelves...
         </div>
     </div>
 </div>
+
+<!-- MODALS SECTION -->
+
+<!-- Item Details Modal -->
 <div class="modal-overlay" id="item-details-modal">
     <div class="modal-card" style="max-width: 450px;">
         <button onclick="closeItemDetailsModal()" style="position:absolute; top:15px; right:15px; background:#f1f5f9; border:none; border-radius:50%; width:32px; height:32px; cursor:pointer;"><i class="bi bi-x-lg"></i></button>
@@ -162,9 +167,12 @@
 
         <label style="margin-bottom: 10px;">Store Actions</label>
         <div class="action-grid" id="detail-actions-container">
-            </div>
+            <!-- Buttons dynamically injected via JS -->
+        </div>
     </div>
 </div>
+
+<!-- Blueprint Modal -->
 <div class="modal-overlay" id="blueprint-modal">
     <div class="modal-card">
         <button onclick="closeBlueprintModal()" style="position:absolute; top:12px; right:12px; background:#f1f5f9; border:none; border-radius:50%; width:30px; height:30px; cursor:pointer;"><i class="bi bi-x-lg"></i></button>
@@ -200,15 +208,15 @@
             <div class="grid-3">
                 <div>
                     <label>Department</label>
-                    <input type="text" id="bp-dept" class="modal-input" list="dl-dept" placeholder="Select or Type New..." style="margin-bottom:0;" onchange="updateCatDropdown()" oninput="forceUppercase(this)">
+                    <input type="text" id="bp-dept" class="modal-input" list="dl-dept" placeholder="Select or Type..." style="margin-bottom:0;" onchange="updateCatDropdown()" oninput="forceUppercase(this)">
                 </div>
                 <div>
                     <label>Category</label>
-                    <input type="text" id="bp-cat" class="modal-input" list="dl-cat" placeholder="Select or Type New..." style="margin-bottom:0;" onchange="updateSubcatDropdown()" oninput="forceUppercase(this)" disabled>
+                    <input type="text" id="bp-cat" class="modal-input" list="dl-cat" placeholder="Select or Type..." style="margin-bottom:0;" onchange="updateSubcatDropdown()" oninput="forceUppercase(this)" disabled>
                 </div>
                 <div>
                     <label>Sub-Category</label>
-                    <input type="text" id="bp-subcat" class="modal-input" list="dl-subcat" placeholder="Select or Type New..." style="margin-bottom:0;" onchange="renderSmartTemplate()" oninput="forceUppercase(this)" disabled>
+                    <input type="text" id="bp-subcat" class="modal-input" list="dl-subcat" placeholder="Select or Type..." style="margin-bottom:0;" onchange="renderSmartTemplate()" oninput="forceUppercase(this)" disabled>
                 </div>
             </div>
         </div>
@@ -251,14 +259,14 @@
                 <input type="number" id="bp-cost" class="modal-input" disabled title="Update via Enter Stock module">
             </div>
             <div>
-                <label>Sell Price (MRP) <span style="text-transform:none;">(Inclusive of GST)</span></label>
+                <label>Sell Price (MRP) <span style="text-transform:none;">(Incl. GST)</span></label>
                 <input type="number" id="bp-msp" class="modal-input" placeholder="0.00" oninput="updateProfitCalculations()">
             </div>
         </div>
 
         <div class="profit-preview-box">
             <div>
-                <span style="display:block; font-size:10px; color:var(--text-light); text-transform:uppercase;">Pre-Tax Base MRP</span>
+                <span style="display:block; font-size:10px; color:var(--text-light); text-transform:uppercase;">Pre-Tax MRP</span>
                 <strong id="disp-base-mrp" style="color:var(--navy);">₹0.00</strong>
             </div>
             <div style="text-align: center;">
@@ -275,6 +283,7 @@
     </div>
 </div>
 
+<!-- Promo Modal -->
 <div class="modal-overlay" id="promo-modal">
     <div class="modal-card" style="max-width: 450px;">
         <button onclick="closePromoModal()" style="position:absolute; top:12px; right:12px; background:#f1f5f9; border:none; border-radius:50%; width:30px; height:30px; cursor:pointer;"><i class="bi bi-x-lg"></i></button>
@@ -282,9 +291,9 @@
         <p id="promo-item-name" style="margin:0 0 15px 0; color:var(--primary); font-weight:800; font-size:14px;"></p>
         
         <div class="grid-3" style="margin-bottom: 15px; background: #f8fafc; padding: 10px; border-radius: 8px; border: 1px solid var(--border);">
-            <div><label>CP</label><span id="promo-base-cp" class="money-text"></span></div>
-            <div><label>GST</label><span id="promo-base-gst" class="money-text"></span></div>
-            <div><label>Base MRP</label><span id="promo-base-msp" class="money-text"></span></div>
+            <div><label>CP</label><span id="promo-base-cp" style="font-family:monospace;font-weight:800;"></span></div>
+            <div><label>GST</label><span id="promo-base-gst" style="font-family:monospace;font-weight:800;"></span></div>
+            <div><label>Base MRP</label><span id="promo-base-msp" style="font-family:monospace;font-weight:800;"></span></div>
         </div>
 
         <label>Offer Type</label>
@@ -311,6 +320,7 @@
     </div>
 </div>
 
+<!-- Wastage Modal -->
 <div class="modal-overlay" id="wastage-modal">
     <div class="modal-card" style="max-width: 400px;">
         <button onclick="closeWastageModal()" style="position:absolute; top:12px; right:12px; background:#f1f5f9; border:none; border-radius:50%; width:30px; height:30px; cursor:pointer;"><i class="bi bi-x-lg"></i></button>
@@ -328,11 +338,11 @@
             <option value="Internal Use">Internal Store Use</option>
             <option value="Other">Other</option>
         </select>
-        
         <button class="btn-save-modal" style="background:var(--danger);" id="btn-save-waste" onclick="saveWastage()">Confirm Write-Off</button>
     </div>
 </div>
 
+<!-- Move Modal -->
 <div class="modal-overlay" id="move-modal">
     <div class="modal-card" style="max-width: 400px;">
         <button onclick="closeMoveModal()" style="position:absolute; top:12px; right:12px; background:#f1f5f9; border:none; border-radius:50%; width:30px; height:30px; cursor:pointer;"><i class="bi bi-x-lg"></i></button>
@@ -346,6 +356,7 @@
     </div>
 </div>
 
+<!-- Global Deals Modal -->
 <div class="modal-overlay" id="global-modal">
     <div class="modal-card">
         <button onclick="closeGlobalDealsModal()" style="position:absolute; top:12px; right:12px; background:#f1f5f9; border:none; border-radius:50%; width:30px; height:30px; cursor:pointer;"><i class="bi bi-x-lg"></i></button>
@@ -361,6 +372,7 @@
     </div>
 </div>
 
+<!-- JAVASCRIPT -->
 <script>
     let activeUserPhone = localStorage.getItem("activeUserPhone");
     let assignedBranch = localStorage.getItem("assignedBranch");
@@ -371,8 +383,8 @@
     let currentPromoDocId = null; let currentMspForMath = 0; let currentCpForMath = 0; let currentGstForMath = 0;
     let editingBlueprintId = null; 
     let savedShopParams = {}; 
-let masterTaxonomyList = []; 
-    let localShopTaxonomy = []; // Stores the shop's personal inventions
+    let masterTaxonomyList = []; 
+    let localShopTaxonomy = [];
 
     document.addEventListener('DOMContentLoaded', () => {
         firebase.auth().onAuthStateChanged(async () => {
@@ -388,13 +400,11 @@ let masterTaxonomyList = [];
         inputElem.value = inputElem.value.toUpperCase().replace(/\s{2,}/g, ' ');
     }
 
-  async function loadMasterTaxonomy() {
+    async function loadMasterTaxonomy() {
         try {
-            // Load Dev Master List
             const masterDoc = await firebase.firestore().collection('admin_settings').doc('master_taxonomy').get();
             if(masterDoc.exists && masterDoc.data().dictionary) masterTaxonomyList = masterDoc.data().dictionary;
             
-            // Load Shop's Personal List
             const localDoc = await firebase.firestore().collection('companies').doc(activeUserPhone).collection('settings').doc('local_taxonomy').get();
             if(localDoc.exists && localDoc.data().dictionary) localShopTaxonomy = localDoc.data().dictionary;
         } catch(e) { console.error("Error loading taxonomy", e); }
@@ -410,7 +420,7 @@ let masterTaxonomyList = [];
         } catch(e) { console.error("Error loading params", e); }
     }
 
-   function rebuildDatalists() {
+    function rebuildDatalists() {
         const container = document.getElementById('dynamic-datalists');
         container.innerHTML = "";
         for (const [key, values] of Object.entries(savedShopParams)) {
@@ -446,10 +456,197 @@ let masterTaxonomyList = [];
         } catch(e) { alert("Error: " + e.message); }
     }
 
-    // Helper to merge Master + Local for dropdowns
-    function getCombinedTaxonomy() {
-        return [...masterTaxonomyList, ...localShopTaxonomy];
+    async function fetchInventory() {
+        const branchId = document.getElementById('filter-branch').value;
+        if (!branchId) return;
+        
+        document.getElementById('inventory-racks-container').innerHTML = `<div style="text-align:center; padding:60px; color:var(--text-light); font-weight:800; font-size:16px;"><i class="bi bi-box-seam" style="font-size:40px; display:block; margin-bottom:15px; opacity:0.5;"></i>Fetching records...</div>`;
+        
+        try {
+            const snap = await firebase.firestore().collection('companies').doc(activeUserPhone).collection('branches').doc(branchId).collection('inventory').get();
+            rawInventory = [];
+            snap.forEach(doc => { rawInventory.push({ docId: doc.id, ...doc.data() }); });
+            
+            initMainFilters();
+            renderInventory();
+        } catch(e) { alert("Error: " + e.message); }
     }
+
+    // --- UI FILTERS & RENDER ---
+    function initMainFilters() {
+        const deptSelect = document.getElementById('filter-main-dept');
+        deptSelect.innerHTML = '<option value="ALL">All Departments</option>';
+        const uniqueDepts = [...new Set(rawInventory.map(item => item.department).filter(Boolean))];
+        uniqueDepts.sort().forEach(d => { deptSelect.innerHTML += `<option value="${d}">${d}</option>`; });
+        updateMainFilters('dept');
+    }
+
+    function updateMainFilters(source) {
+        const dept = document.getElementById('filter-main-dept').value;
+        const catSelect = document.getElementById('filter-main-cat');
+        const subcatSelect = document.getElementById('filter-main-subcat');
+
+        if(source === 'dept') {
+            catSelect.innerHTML = '<option value="ALL">All Categories</option>';
+            subcatSelect.innerHTML = '<option value="ALL">All Sub-Categories</option>';
+            if(dept === 'ALL') { catSelect.disabled = true; subcatSelect.disabled = true; } 
+            else {
+                catSelect.disabled = false;
+                const uniqueCats = [...new Set(rawInventory.filter(i => i.department === dept).map(i => i.category).filter(Boolean))];
+                uniqueCats.sort().forEach(c => { catSelect.innerHTML += `<option value="${c}">${c}</option>`; });
+            }
+        }
+        if(source === 'cat' || source === 'dept') {
+            subcatSelect.innerHTML = '<option value="ALL">All Sub-Categories</option>';
+            const cat = catSelect.value;
+            if(cat === 'ALL' || catSelect.disabled) { subcatSelect.disabled = true; } 
+            else {
+                subcatSelect.disabled = false;
+                const uniqueSubcats = [...new Set(rawInventory.filter(i => i.department === dept && i.category === cat).map(i => i.subCategory).filter(Boolean))];
+                uniqueSubcats.sort().forEach(sc => { subcatSelect.innerHTML += `<option value="${sc}">${sc}</option>`; });
+            }
+        }
+        if(source !== 'init') renderInventory();
+    }
+
+    function renderInventory() {
+        const container = document.getElementById('inventory-racks-container');
+        const query = document.getElementById('search-input').value.toLowerCase().trim();
+        const fDept = document.getElementById('filter-main-dept').value;
+        const fCat = document.getElementById('filter-main-cat').value;
+        const fSubcat = document.getElementById('filter-main-subcat').value;
+        
+        let totalItems = 0; let lowStock = 0; container.innerHTML = "";
+
+        let filtered = rawInventory.filter(item => {
+            const textMatch = (item.name && item.name.toLowerCase().includes(query)) || (item.barcode && item.barcode.toLowerCase().includes(query));
+            const deptMatch = fDept === 'ALL' || item.department === fDept;
+            const catMatch = fCat === 'ALL' || item.category === fCat;
+            const subcatMatch = fSubcat === 'ALL' || item.subCategory === fSubcat;
+            return textMatch && deptMatch && catMatch && subcatMatch;
+        });
+
+        if(filtered.length === 0) {
+            container.innerHTML = `<div style="text-align:center; padding:60px; color:var(--text-light);"><i class="bi bi-search" style="font-size:40px; display:block; margin-bottom:10px;"></i><h3>No items match criteria.</h3></div>`;
+            document.getElementById('dash-total').innerText = 0; document.getElementById('dash-low').innerText = 0;
+            return;
+        }
+
+        let grouped = {};
+        filtered.forEach(item => {
+            totalItems++;
+            const minStock = parseFloat(item.minStock !== undefined ? item.minStock : 5);
+            if(parseFloat(item.qty || 0) < minStock) lowStock++;
+
+            const d = item.department || "Other";
+            const c = item.category || "General";
+            const s = item.subCategory || "Items";
+
+            if(!grouped[d]) grouped[d] = {};
+            if(!grouped[d][c]) grouped[d][c] = {};
+            if(!grouped[d][c][s]) grouped[d][c][s] = [];
+            grouped[d][c][s].push(item);
+        });
+
+        const bgGradientsLocal = [
+            'linear-gradient(135deg, #e0f2fe, #bae6fd)', 'linear-gradient(135deg, #dcfce7, #a7f3d0)',
+            'linear-gradient(135deg, #fef3c7, #fde68a)', 'linear-gradient(135deg, #f3e8ff, #ddd6fe)',
+            'linear-gradient(135deg, #fee2e2, #fecaca)'
+        ];
+
+        let html = '';
+        Object.keys(grouped).sort().forEach(d => {
+            Object.keys(grouped[d]).sort().forEach(c => {
+                Object.keys(grouped[d][c]).sort().forEach(s => {
+                    const items = grouped[d][c][s];
+                    html += `
+                    <div class="shelf-wrapper">
+                        <div class="shelf-header">${d} <i class="bi bi-caret-right-fill"></i> ${c} <i class="bi bi-caret-right-fill"></i> <span style="color:var(--primary);">${s}</span><span class="shelf-count">${items.length} Varieties</span></div>
+                        <div class="shelf-grid">`;
+
+                    items.forEach((item, index) => {
+                        const qty = parseFloat(item.qty || 0);
+                        const minStock = parseFloat(item.minStock !== undefined ? item.minStock : 5);
+                        const isLow = qty < minStock; 
+                        const firstLetter = item.name ? item.name.charAt(0).toUpperCase() : 'B';
+                        const bgGrad = bgGradientsLocal[index % bgGradientsLocal.length];
+                        const textCol = isLow ? '#ef4444' : '#0f172a';
+
+                        let paramSubtitle = '';
+                        if(item.customParams) {
+                            paramSubtitle = `<div style="font-size: 9px; color: var(--text-light); width: 100%; display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; margin-top: 2px; font-weight: 700; line-height: 1.2;">${Object.values(item.customParams).join(' • ')}</div>`;
+                        }
+
+                        html += `
+                            <div class="shelf-item" onclick="openItemDetailsModal('${item.docId}')" title="${item.name}">
+                                <div class="shelf-icon" style="background: ${bgGrad}; color: ${textCol};">
+                                    <div class="qty-badge ${isLow ? 'qty-low' : ''}">${qty}</div>
+                                    ${firstLetter}
+                                </div>
+                                <div class="shelf-item-name">${item.name}</div>
+                                ${paramSubtitle}
+                                <div class="shelf-item-price" style="margin-top: 4px;">₹${parseFloat(item.msp || 0).toFixed(2)}</div>
+                            </div>`;
+                    });
+                    html += `</div><div class="shelf-board"></div></div>`;
+                });
+            });
+        });
+
+        container.innerHTML = html;
+        document.getElementById('dash-total').innerText = totalItems;
+        document.getElementById('dash-low').innerText = lowStock;
+    }
+
+    // --- MODAL CONTROLLERS ---
+    function openItemDetailsModal(docId) {
+        const item = rawInventory.find(i => i.docId === docId);
+        if(!item) return;
+
+        const firstLetter = item.name ? item.name.charAt(0).toUpperCase() : 'B';
+        document.getElementById('detail-avatar').innerText = firstLetter;
+        document.getElementById('detail-name').innerText = item.name;
+        document.getElementById('detail-sku').innerText = `SKU: ${item.barcode}`;
+        
+        let paramsHtml = '';
+        if(item.customParams) {
+            for(const [k, v] of Object.entries(item.customParams)) {
+                paramsHtml += `<span style="background:#e2e8f0; padding:2px 6px; border-radius:4px; font-size:10px; font-weight:800; color:var(--navy);">${k}: ${v}</span>`;
+            }
+        }
+        document.getElementById('detail-params').innerHTML = paramsHtml;
+        document.getElementById('detail-hierarchy').innerText = `${item.department || '-'} / ${item.category || '-'} / ${item.subCategory || '-'}`;
+        
+        const qty = parseFloat(item.qty || 0); const minStock = parseFloat(item.minStock !== undefined ? item.minStock : 5);
+        document.getElementById('detail-stock').innerText = `${qty} ${item.unit || 'PCS'}`;
+        document.getElementById('detail-stock').style.color = qty < minStock ? "var(--danger)" : "var(--emerald)";
+
+        const cp = parseFloat(item.costPer || 0); const msp = parseFloat(item.msp || 0); const gst = parseFloat(item.gstRate || 0);
+        const preTaxMsp = msp / (1 + (gst/100)); const profit = preTaxMsp - cp;
+        const marginPct = preTaxMsp > 0 ? (profit / preTaxMsp) * 100 : 0; const markup = cp > 0 ? (profit / cp) * 100 : 0;
+
+        document.getElementById('detail-cp').innerText = `₹${cp.toFixed(2)}`;
+        document.getElementById('detail-mrp').innerText = `₹${msp.toFixed(2)} (${gst}% GST)`;
+        
+        const marginEl = document.getElementById('detail-margins');
+        marginEl.innerText = `${marginPct.toFixed(1)}% Mg / ${markup.toFixed(1)}% Pr`;
+        marginEl.style.color = profit >= 0 ? "var(--emerald)" : "var(--danger)";
+
+        let actionsHtml = `
+            <button class="action-btn" style="color:#4f46e5;" onclick="closeItemDetailsModal(); openBlueprintModal('${docId}')"><i class="bi bi-pencil-fill"></i><span>Edit</span></button>
+            <button class="action-btn" style="color:#a16207;" onclick="closeItemDetailsModal(); openPromoModal('${docId}')"><i class="bi bi-gift-fill"></i><span>Offer</span></button>
+            <button class="action-btn" style="color:#0284c7;" onclick="closeItemDetailsModal(); openMoveModal('${docId}')"><i class="bi bi-truck"></i><span>Transfer</span></button>
+            <button class="action-btn" style="color:#dc2626;" onclick="closeItemDetailsModal(); openWastageModal('${docId}')"><i class="bi bi-trash-fill"></i><span>Wastage</span></button>
+        `;
+        if(item.isSystemBarcode) actionsHtml += `<button class="action-btn" style="color:#10b981;" onclick="printBarcode('${docId}')"><i class="bi bi-printer-fill"></i><span>Print Tag</span></button>`;
+
+        document.getElementById('detail-actions-container').innerHTML = actionsHtml;
+        document.getElementById('item-details-modal').style.display = 'flex';
+    }
+    function closeItemDetailsModal() { document.getElementById('item-details-modal').style.display = 'none'; }
+
+    // --- BLUEPRINT AUTO-LEARNING LOGIC ---
+    function getCombinedTaxonomy() { return [...masterTaxonomyList, ...localShopTaxonomy]; }
 
     function populateDeptDropdown() {
         const dlDept = document.getElementById('dl-dept'); dlDept.innerHTML = '';
@@ -461,9 +658,7 @@ let masterTaxonomyList = [];
         const dept = document.getElementById('bp-dept').value;
         const dlCat = document.getElementById('dl-cat'); dlCat.innerHTML = '';
         const catInput = document.getElementById('bp-cat'); const subcatInput = document.getElementById('bp-subcat');
-        
         document.getElementById('bp-dynamic-params').style.display = 'none';
-
         if(!dept) { catInput.disabled = true; subcatInput.disabled = true; return; }
         
         catInput.disabled = false; subcatInput.disabled = true;
@@ -475,7 +670,6 @@ let masterTaxonomyList = [];
         const dept = document.getElementById('bp-dept').value; const cat = document.getElementById('bp-cat').value;
         const dlSubcat = document.getElementById('dl-subcat'); dlSubcat.innerHTML = '';
         const subcatInput = document.getElementById('bp-subcat');
-        
         if(!cat) { subcatInput.disabled = true; return; }
         
         subcatInput.disabled = false;
@@ -486,11 +680,10 @@ let masterTaxonomyList = [];
     function renderSmartTemplate() {
         const dept = document.getElementById('bp-dept').value; const cat = document.getElementById('bp-cat').value; const subcat = document.getElementById('bp-subcat').value;
         const container = document.getElementById('bp-dynamic-params'); container.innerHTML = "";
-        
         if(!subcat) { container.style.display = 'none'; return; }
         
         const rule = getCombinedTaxonomy().find(i => i.dept === dept && i.cat === cat && i.subcat === subcat);
-        if(!rule) return; // If it's a completely new typed subcat, it stays empty until they add params
+        if(!rule) return; 
 
         if(rule.unit) { document.getElementById('bp-unit').value = rule.unit.toUpperCase(); }
         if(!rule.param) { container.style.display = 'none'; return; }
@@ -511,22 +704,14 @@ let masterTaxonomyList = [];
     function addNewParameterUI() {
         const container = document.getElementById('bp-dynamic-params');
         container.style.display = 'block';
-        
         let grid = document.getElementById('params-grid');
-        if(!grid) {
-            container.innerHTML = '<div class="grid-2" id="params-grid"></div>';
-            grid = document.getElementById('params-grid');
-        }
+        if(!grid) { container.innerHTML = '<div class="grid-2" id="params-grid"></div>'; grid = document.getElementById('params-grid'); }
 
-        const paramName = prompt("Enter new parameter name (e.g., COLOR, RAM, EXPIRY):");
+        const paramName = prompt("Enter new parameter name (e.g., COLOR, RAM, MATERIAL):");
         if(!paramName) return;
         
-        const key = paramName.trim().toUpperCase();
-        const cleanKeyId = key.replace(/[^a-zA-Z0-9]/g, '_');
-        
-        // Don't add if it already exists
+        const key = paramName.trim().toUpperCase(); const cleanKeyId = key.replace(/[^a-zA-Z0-9]/g, '_');
         if(document.getElementById(`bp-param-${cleanKeyId}`)) return alert("Parameter already exists!");
-
         grid.innerHTML += `<div><label style="color:#10b981;">${key} (New)</label><input type="text" id="bp-param-${cleanKeyId}" class="modal-input" list="dl-${cleanKeyId}" oninput="forceUppercase(this)" style="margin-bottom:0; border-color:#10b981;" data-key="${key}"></div>`;
     }
 
@@ -535,15 +720,13 @@ let masterTaxonomyList = [];
         const msp = parseFloat(document.getElementById('bp-msp').value) || 0;
         const gst = parseFloat(document.getElementById('bp-gst').value) || 0;
         
-        const preTaxMsp = msp / (1 + (gst/100));
-        const profit = preTaxMsp - cp;
+        const preTaxMsp = msp / (1 + (gst/100)); const profit = preTaxMsp - cp;
         
         document.getElementById('disp-base-mrp').innerText = `₹${preTaxMsp.toFixed(2)}`;
         document.getElementById('disp-profit').innerText = `₹${profit.toFixed(2)}`;
         document.getElementById('disp-profit').style.color = profit >= 0 ? "var(--primary)" : "var(--danger)";
         
-        const margin = preTaxMsp > 0 ? (profit / preTaxMsp) * 100 : 0;
-        const markup = cp > 0 ? (profit / cp) * 100 : 0;
+        const margin = preTaxMsp > 0 ? (profit / preTaxMsp) * 100 : 0; const markup = cp > 0 ? (profit / cp) * 100 : 0;
         
         document.getElementById('disp-margin').innerText = `${margin.toFixed(1)}% / ${markup.toFixed(1)}%`;
         document.getElementById('disp-margin').style.color = profit >= 0 ? "var(--emerald)" : "var(--danger)";
@@ -552,22 +735,16 @@ let masterTaxonomyList = [];
     function openBlueprintModal(docId = null) {
         editingBlueprintId = docId;
         const modal = document.getElementById('blueprint-modal');
-        const deptSelect = document.getElementById('bp-dept');
-        deptSelect.innerHTML = '<option value="">Select...</option>';
-        const uniqueDepts = [...new Set(masterTaxonomyList.map(i => i.dept).filter(Boolean))];
-        uniqueDepts.sort().forEach(d => { deptSelect.innerHTML += `<option value="${d}">${d}</option>`; });
+        populateDeptDropdown();
 
         if (docId) {
             const item = rawInventory.find(i => i.docId === docId);
-            document.getElementById('bp-barcode').value = item.barcode || "";
-            document.getElementById('bp-name').value = item.name || "";
-            document.getElementById('bp-gst').value = item.gstRate || "0";
-            document.getElementById('bp-cost').value = item.costPer || "0";
-            document.getElementById('bp-msp').value = item.msp || "0";
-            document.getElementById('bp-min').value = item.minStock !== undefined ? item.minStock : "5";
+            document.getElementById('bp-barcode').value = item.barcode || ""; document.getElementById('bp-name').value = item.name || "";
+            document.getElementById('bp-gst').value = item.gstRate || "0"; document.getElementById('bp-cost').value = item.costPer || "0";
+            document.getElementById('bp-msp').value = item.msp || "0"; document.getElementById('bp-min').value = item.minStock !== undefined ? item.minStock : "5";
             
             if(item.department) {
-                deptSelect.value = item.department; updateCatDropdown();
+                document.getElementById('bp-dept').value = item.department; updateCatDropdown();
                 if(item.category) {
                     document.getElementById('bp-cat').value = item.category; updateSubcatDropdown();
                     if(item.subCategory) {
@@ -587,11 +764,10 @@ let masterTaxonomyList = [];
         } else {
             document.getElementById('bp-barcode').disabled = false;
             document.getElementById('bp-barcode').value = ""; document.getElementById('bp-name').value = "";
-            deptSelect.value = ""; updateCatDropdown();
+            document.getElementById('bp-dept').value = ""; updateCatDropdown();
             document.getElementById('bp-gst').value = "0"; document.getElementById('bp-unit').value = "PIECES";
             document.getElementById('bp-cost').value = "0"; document.getElementById('bp-msp').value = "";
-            document.getElementById('bp-min').value = "5";
-            document.getElementById('bp-dynamic-params').style.display = 'none';
+            document.getElementById('bp-min').value = "5"; document.getElementById('bp-dynamic-params').style.display = 'none';
         }
         updateProfitCalculations();
         modal.style.display = 'flex';
@@ -600,18 +776,14 @@ let masterTaxonomyList = [];
     function closeBlueprintModal() { stopBlueprintScanner(); document.getElementById('blueprint-modal').style.display = 'none'; editingBlueprintId = null; }
 
     async function saveBlueprint() {
-        let inputBarcode = document.getElementById('bp-barcode').value.trim();
-        let isSystemBarcode = false;
+        let inputBarcode = document.getElementById('bp-barcode').value.trim(); let isSystemBarcode = false;
         if(!inputBarcode) { inputBarcode = `SYS-${Date.now().toString().slice(-6)}${Math.floor(Math.random() * 99)}`; isSystemBarcode = true; }
 
         const name = document.getElementById('bp-name').value.trim();
         const department = document.getElementById('bp-dept').value; const category = document.getElementById('bp-cat').value; const subCategory = document.getElementById('bp-subcat').value;
-        const gstRate = parseFloat(document.getElementById('bp-gst').value) || 0;
-        const unit = document.getElementById('bp-unit').value;
-        const costPer = parseFloat(document.getElementById('bp-cost').value) || 0;
-        const msp = parseFloat(document.getElementById('bp-msp').value) || 0;
-        const minStock = parseFloat(document.getElementById('bp-min').value) || 0;
-        const branchId = document.getElementById('filter-branch').value;
+        const gstRate = parseFloat(document.getElementById('bp-gst').value) || 0; const unit = document.getElementById('bp-unit').value;
+        const costPer = parseFloat(document.getElementById('bp-cost').value) || 0; const msp = parseFloat(document.getElementById('bp-msp').value) || 0;
+        const minStock = parseFloat(document.getElementById('bp-min').value) || 0; const branchId = document.getElementById('filter-branch').value;
 
         if(!name || !category || !subCategory) return alert("Name, Category, and Sub-Category are mandatory!");
 
@@ -627,7 +799,7 @@ let masterTaxonomyList = [];
             }
         });
 
-     if(editingBlueprintId) {
+        if(editingBlueprintId) {
             const existingItem = rawInventory.find(i => i.docId === editingBlueprintId);
             if(existingItem && existingItem.isSystemBarcode) isSystemBarcode = true;
         }
@@ -636,43 +808,31 @@ let masterTaxonomyList = [];
 
         try {
             const db = firebase.firestore();
-
-            // AUTO-LEARN NEW TAXONOMY: Did the shopkeeper invent a new category or parameter?
             const currentKeys = Object.keys(customParams).join(', ');
             const existingRule = getCombinedTaxonomy().find(i => i.dept === department && i.cat === category && i.subcat === subCategory);
             
             let needToSaveTaxonomy = false;
             if(!existingRule) {
-                // Completely new Subcategory created!
                 localShopTaxonomy.push({ dept: department, cat: category, subcat: subCategory, param: currentKeys, unit: unit });
                 needToSaveTaxonomy = true;
             } else if (existingRule && currentKeys) {
-                // Check if they added a new parameter to an existing subcategory
                 const existingParams = existingRule.param ? existingRule.param.split(',').map(p=>p.trim()) : [];
                 const newParams = Object.keys(customParams);
                 const hasNewParam = newParams.some(p => !existingParams.includes(p));
                 
                 if(hasNewParam) {
-                    // Update the local rule
                     const mergedParams = [...new Set([...existingParams, ...newParams])].join(', ');
-                    
-                    // If it was a master rule, copy it to local to override it. If it was already local, update it.
                     let localRuleIndex = localShopTaxonomy.findIndex(i => i.dept === department && i.cat === category && i.subcat === subCategory);
-                    if(localRuleIndex !== -1) {
-                        localShopTaxonomy[localRuleIndex].param = mergedParams;
-                    } else {
-                        localShopTaxonomy.push({ dept: department, cat: category, subcat: subCategory, param: mergedParams, unit: unit });
-                    }
+                    if(localRuleIndex !== -1) { localShopTaxonomy[localRuleIndex].param = mergedParams; } 
+                    else { localShopTaxonomy.push({ dept: department, cat: category, subcat: subCategory, param: mergedParams, unit: unit }); }
                     needToSaveTaxonomy = true;
                 }
             }
 
             if(needToSaveTaxonomy) {
-                // Silently save the new taxonomy rules to the shop's profile
-                await db.collection('companies').doc(activeUserPhone).collection('settings').doc('local_taxonomy').set({
-                    dictionary: localShopTaxonomy
-                }, { merge: true });
+                await db.collection('companies').doc(activeUserPhone).collection('settings').doc('local_taxonomy').set({ dictionary: localShopTaxonomy }, { merge: true });
             }
+            
             const invRef = db.collection('companies').doc(activeUserPhone).collection('branches').doc(branchId).collection('inventory');
             if (editingBlueprintId) { await invRef.doc(editingBlueprintId).update(itemData); } 
             else { itemData.qty = 0; await invRef.add(itemData); }
@@ -686,9 +846,7 @@ let masterTaxonomyList = [];
         btn.innerText = "Save Blueprint"; btn.disabled = false;
     }
 
-    // ==========================================
-    // PROMO LOGIC & PROFIT IMPACT
-    // ==========================================
+    // --- OTHER MODALS ---
     function openPromoModal(docId) {
         const item = rawInventory.find(i => i.docId === docId);
         currentPromoDocId = docId; currentMspForMath = parseFloat(item.msp||0); currentCpForMath = parseFloat(item.costPer||0); currentGstForMath = parseFloat(item.gstRate||0);
@@ -698,55 +856,32 @@ let masterTaxonomyList = [];
         document.getElementById('promo-base-gst').innerText = `${currentGstForMath}%`;
         document.getElementById('promo-base-msp').innerText = `₹${currentMspForMath.toFixed(2)}`;
         
-        const typeSelect = document.getElementById('promo-type');
-        typeSelect.value = item.offer?.type || "";
-        togglePromoFields(item.offer);
+        document.getElementById('promo-type').value = item.offer?.type || ""; togglePromoFields(item.offer);
         document.getElementById('promo-start').value = item.offer?.validFrom || ""; document.getElementById('promo-end').value = item.offer?.validUntil || "";
-        document.getElementById('promo-modal').style.display = 'flex';
-        calcPromoMath();
+        document.getElementById('promo-modal').style.display = 'flex'; calcPromoMath();
     }
     function closePromoModal() { document.getElementById('promo-modal').style.display = 'none'; }
     
     function togglePromoFields(existingOffer = null) {
         const type = document.getElementById('promo-type').value; const container = document.getElementById('promo-dynamic-fields'); 
         const impactBox = document.getElementById('promo-profit-impact'); container.innerHTML = ""; impactBox.style.display = 'none';
-        
-        if (type === "discount") {
-            container.innerHTML = `<div class="grid-2"><div><label>Discount (%)</label><input type="number" id="promo-pct" class="modal-input" value="${existingOffer?.pctOff||''}" oninput="calcPromoMath('pct')"></div><div><label>Flat Off (₹)</label><input type="number" id="promo-flat" class="modal-input" value="${existingOffer?.flatOff||''}" oninput="calcPromoMath('flat')"></div></div>`;
-            impactBox.style.display = 'flex';
-        } else if (type === "volume") {
-            container.innerHTML = `<div class="grid-2"><div><label>Buy Quantity</label><input type="number" id="promo-req" class="modal-input" value="${existingOffer?.reqQty||''}"></div><div><label>For Total Price (₹)</label><input type="number" id="promo-price" class="modal-input" value="${existingOffer?.targetPrice||''}"></div></div>`;
-        } else if (type === "bogo") {
-            container.innerHTML = `<div class="grid-2"><div><label>Buy Quantity</label><input type="number" id="promo-req" class="modal-input" value="${existingOffer?.reqQty||''}"></div><div><label>Get Free Qty</label><input type="number" id="promo-free" class="modal-input" value="${existingOffer?.freeQty||''}"></div></div>`;
-        } else if (type === "cross_bogo") {
-            container.innerHTML = `<div><label>Buy Qty of This</label><input type="number" id="promo-req" class="modal-input" value="${existingOffer?.reqQty||''}"></div><label>Get Target Item (Barcode)</label><input type="text" id="promo-target-bar" class="modal-input" placeholder="Barcode of Free Item" value="${existingOffer?.targetBarcode||''}"><div class="grid-2"><div><label>Free Qty</label><input type="number" id="promo-free" class="modal-input" value="${existingOffer?.freeQty||''}"></div><div><label>OR % Off Target</label><input type="number" id="promo-target-pct" class="modal-input" placeholder="100 for Free" value="${existingOffer?.targetPctOff||'100'}"></div></div>`;
-        }
+        if (type === "discount") { container.innerHTML = `<div class="grid-2"><div><label>Discount (%)</label><input type="number" id="promo-pct" class="modal-input" value="${existingOffer?.pctOff||''}" oninput="calcPromoMath('pct')"></div><div><label>Flat Off (₹)</label><input type="number" id="promo-flat" class="modal-input" value="${existingOffer?.flatOff||''}" oninput="calcPromoMath('flat')"></div></div>`; impactBox.style.display = 'flex'; } 
+        else if (type === "volume") { container.innerHTML = `<div class="grid-2"><div><label>Buy Quantity</label><input type="number" id="promo-req" class="modal-input" value="${existingOffer?.reqQty||''}"></div><div><label>For Total Price (₹)</label><input type="number" id="promo-price" class="modal-input" value="${existingOffer?.targetPrice||''}"></div></div>`; } 
+        else if (type === "bogo") { container.innerHTML = `<div class="grid-2"><div><label>Buy Quantity</label><input type="number" id="promo-req" class="modal-input" value="${existingOffer?.reqQty||''}"></div><div><label>Get Free Qty</label><input type="number" id="promo-free" class="modal-input" value="${existingOffer?.freeQty||''}"></div></div>`; } 
+        else if (type === "cross_bogo") { container.innerHTML = `<div><label>Buy Qty</label><input type="number" id="promo-req" class="modal-input" value="${existingOffer?.reqQty||''}"></div><label>Target Item Barcode</label><input type="text" id="promo-target-bar" class="modal-input" value="${existingOffer?.targetBarcode||''}"><div class="grid-2"><div><label>Free Qty</label><input type="number" id="promo-free" class="modal-input" value="${existingOffer?.freeQty||''}"></div><div><label>% Off Target</label><input type="number" id="promo-target-pct" class="modal-input" value="${existingOffer?.targetPctOff||'100'}"></div></div>`; }
     }
 
     window.calcPromoMath = function(source = null) {
-        const type = document.getElementById('promo-type').value;
-        if(type !== 'discount') return;
-
+        const type = document.getElementById('promo-type').value; if(type !== 'discount') return;
         const pctInput = document.getElementById('promo-pct'); const flatInput = document.getElementById('promo-flat');
         if(!pctInput || !flatInput) return;
+        if(source === 'pct') { const pct = parseFloat(pctInput.value) || 0; if(pct >= 0 && pct <= 100) flatInput.value = (currentMspForMath * (pct / 100)).toFixed(2); } 
+        else if(source === 'flat') { const flat = parseFloat(flatInput.value) || 0; if(flat >= 0 && flat <= currentMspForMath) pctInput.value = ((flat / currentMspForMath) * 100).toFixed(2); }
 
-        if(source === 'pct') { 
-            const pct = parseFloat(pctInput.value) || 0; 
-            if(pct >= 0 && pct <= 100) flatInput.value = (currentMspForMath * (pct / 100)).toFixed(2); 
-        } else if(source === 'flat') { 
-            const flat = parseFloat(flatInput.value) || 0; 
-            if(flat >= 0 && flat <= currentMspForMath) pctInput.value = ((flat / currentMspForMath) * 100).toFixed(2); 
-        }
-
-        const effectiveMsp = currentMspForMath - (parseFloat(flatInput.value) || 0);
-        const preTaxEffective = effectiveMsp / (1 + (currentGstForMath/100));
-        const effectiveProfit = preTaxEffective - currentCpForMath;
-        const effectiveMargin = preTaxEffective > 0 ? (effectiveProfit / preTaxEffective) * 100 : 0;
-
-        document.getElementById('impact-sell').innerText = `₹${effectiveMsp.toFixed(2)}`;
-        const profitEl = document.getElementById('impact-profit');
-        profitEl.innerText = `₹${effectiveProfit.toFixed(2)} (${effectiveMargin.toFixed(1)}%)`;
-        profitEl.style.color = effectiveProfit >= 0 ? "var(--emerald)" : "var(--danger)";
+        const effectiveMsp = currentMspForMath - (parseFloat(flatInput.value) || 0); const preTaxEffective = effectiveMsp / (1 + (currentGstForMath/100));
+        const effectiveProfit = preTaxEffective - currentCpForMath; const effectiveMargin = preTaxEffective > 0 ? (effectiveProfit / preTaxEffective) * 100 : 0;
+        document.getElementById('impact-sell').innerText = `₹${effectiveMsp.toFixed(2)}`; const profitEl = document.getElementById('impact-profit');
+        profitEl.innerText = `₹${effectiveProfit.toFixed(2)} (${effectiveMargin.toFixed(1)}%)`; profitEl.style.color = effectiveProfit >= 0 ? "var(--emerald)" : "var(--danger)";
     };
 
     async function savePromo() {
@@ -758,8 +893,7 @@ let masterTaxonomyList = [];
             else if (type === "bogo") { offerObj.reqQty = parseFloat(document.getElementById('promo-req').value) || 0; offerObj.freeQty = parseFloat(document.getElementById('promo-free').value) || 0; }
             else if (type === "cross_bogo") { offerObj.reqQty = parseFloat(document.getElementById('promo-req').value) || 0; offerObj.targetBarcode = document.getElementById('promo-target-bar').value; offerObj.freeQty = parseFloat(document.getElementById('promo-free').value) || 0; offerObj.targetPctOff = parseFloat(document.getElementById('promo-target-pct').value) || 100; }
         }
-        const branchId = document.getElementById('filter-branch').value; 
-        document.getElementById('btn-save-promo').innerText = "SAVING..."; document.getElementById('btn-save-promo').disabled = true;
+        const branchId = document.getElementById('filter-branch').value; document.getElementById('btn-save-promo').innerText = "SAVING..."; document.getElementById('btn-save-promo').disabled = true;
         try {
             const ref = firebase.firestore().collection('companies').doc(activeUserPhone).collection('branches').doc(branchId).collection('inventory').doc(currentPromoDocId);
             if (offerObj) { await ref.update({ offer: offerObj }); } else { await ref.update({ offer: firebase.firestore.FieldValue.delete() }); }
@@ -770,61 +904,40 @@ let masterTaxonomyList = [];
         document.getElementById('btn-save-promo').innerText = "Apply Offer"; document.getElementById('btn-save-promo').disabled = false;
     }
 
-    // ==========================================
-    // WASTAGE LOGIC
-    // ==========================================
     function openWastageModal(docId) {
         currentWasteItem = rawInventory.find(i => i.docId === docId);
-        document.getElementById('waste-item-name').innerText = currentWasteItem.name;
-        document.getElementById('waste-max-qty').innerText = `(Available: ${currentWasteItem.qty})`;
-        document.getElementById('waste-qty').value = ""; document.getElementById('waste-reason').value = "Expired";
-        document.getElementById('wastage-modal').style.display = 'flex';
+        document.getElementById('waste-item-name').innerText = currentWasteItem.name; document.getElementById('waste-max-qty').innerText = `(Available: ${currentWasteItem.qty})`;
+        document.getElementById('waste-qty').value = ""; document.getElementById('waste-reason').value = "Expired"; document.getElementById('wastage-modal').style.display = 'flex';
     }
     function closeWastageModal() { document.getElementById('wastage-modal').style.display = 'none'; currentWasteItem = null; }
-    function validateWasteQty() { 
-        const input = document.getElementById('waste-qty'); let val = parseFloat(input.value); 
-        if(val > currentWasteItem.qty) input.value = currentWasteItem.qty; 
-    }
+    function validateWasteQty() { const input = document.getElementById('waste-qty'); let val = parseFloat(input.value); if(val > currentWasteItem.qty) input.value = currentWasteItem.qty; }
+    
     async function saveWastage() {
-        const qty = parseFloat(document.getElementById('waste-qty').value);
-        const reason = document.getElementById('waste-reason').value;
-        const branchId = document.getElementById('filter-branch').value;
+        const qty = parseFloat(document.getElementById('waste-qty').value); const reason = document.getElementById('waste-reason').value; const branchId = document.getElementById('filter-branch').value;
         if(isNaN(qty) || qty <= 0) return alert("Enter valid quantity.");
-
         const btn = document.getElementById('btn-save-waste'); btn.innerText = "Processing..."; btn.disabled = true;
         try {
             const db = firebase.firestore(); const batch = db.batch();
             const invRef = db.collection('companies').doc(activeUserPhone).collection('branches').doc(branchId).collection('inventory').doc(currentWasteItem.docId);
             const logRef = db.collection('companies').doc(activeUserPhone).collection('branches').doc(branchId).collection('wastage_logs').doc();
-            
             batch.update(invRef, { qty: firebase.firestore.FieldValue.increment(-qty) });
-            batch.set(logRef, {
-                itemId: currentWasteItem.docId, barcode: currentWasteItem.barcode, name: currentWasteItem.name,
-                qtyWasted: qty, reason: reason, costLost: (currentWasteItem.costPer || 0) * qty,
-                timestamp: new Date().toISOString(), staffId: activeStaffId || 'admin'
-            });
+            batch.set(logRef, { itemId: currentWasteItem.docId, barcode: currentWasteItem.barcode, name: currentWasteItem.name, qtyWasted: qty, reason: reason, costLost: (currentWasteItem.costPer || 0) * qty, timestamp: new Date().toISOString(), staffId: activeStaffId || 'admin' });
             await batch.commit();
-
-            currentWasteItem.qty -= qty;
-            renderInventory(); closeWastageModal();
+            currentWasteItem.qty -= qty; renderInventory(); closeWastageModal();
         } catch(e) { alert("Error: " + e.message); }
         btn.innerText = "Confirm Write-Off"; btn.disabled = false;
     }
 
-    // ==========================================
-    // MOVE LOGIC
-    // ==========================================
     function openMoveModal(docId) {
-        currentMoveItem = rawInventory.find(i => i.docId === docId);
-        const currentBranchId = document.getElementById('filter-branch').value; const targetSelect = document.getElementById('move-target-branch');
-        targetSelect.innerHTML = '<option value="">Select Destination...</option>';
-        globalBranches.forEach(b => { if (b.id !== currentBranchId) targetSelect.innerHTML += `<option value="${b.id}">${b.name}</option>`; });
+        currentMoveItem = rawInventory.find(i => i.docId === docId); const currentBranchId = document.getElementById('filter-branch').value; const targetSelect = document.getElementById('move-target-branch');
+        targetSelect.innerHTML = '<option value="">Select Destination...</option>'; globalBranches.forEach(b => { if (b.id !== currentBranchId) targetSelect.innerHTML += `<option value="${b.id}">${b.name}</option>`; });
         if(targetSelect.options.length <= 1) return alert("You need another branch to move stock to.");
         document.getElementById('move-item-name').innerText = currentMoveItem.name; document.getElementById('move-max-qty').innerText = `(Max: ${currentMoveItem.qty})`;
         document.getElementById('move-qty').value = 1; document.getElementById('move-modal').style.display = 'flex';
     }
     function closeMoveModal() { document.getElementById('move-modal').style.display = 'none'; currentMoveItem = null; }
     function validateMoveQty() { const input = document.getElementById('move-qty'); let val = parseFloat(input.value); if (val > currentMoveItem.qty) input.value = currentMoveItem.qty; }
+    
     async function saveMove() {
         const moveQty = parseFloat(document.getElementById('move-qty').value); const targetBranchId = document.getElementById('move-target-branch').value; const currentBranchId = document.getElementById('filter-branch').value;
         if(!targetBranchId || isNaN(moveQty) || moveQty <= 0) return alert("Select destination and valid quantity.");
@@ -834,21 +947,15 @@ let masterTaxonomyList = [];
             const sourceRef = db.collection('companies').doc(activeUserPhone).collection('branches').doc(currentBranchId).collection('inventory').doc(currentMoveItem.docId);
             const targetInvRef = db.collection('companies').doc(activeUserPhone).collection('branches').doc(targetBranchId).collection('inventory');
             const existingSnap = await targetInvRef.where('barcode', '==', currentMoveItem.barcode).get();
-
             batch.update(sourceRef, { qty: firebase.firestore.FieldValue.increment(-moveQty) });
             if (!existingSnap.empty) { batch.update(targetInvRef.doc(existingSnap.docs[0].id), { qty: firebase.firestore.FieldValue.increment(moveQty) }); } 
             else { const newDoc = targetInvRef.doc(); const newItemData = { ...currentMoveItem, qty: moveQty }; delete newItemData.docId; batch.set(newDoc, newItemData); }
             await batch.commit();
-
-            currentMoveItem.qty -= moveQty;
-            renderInventory(); closeMoveModal(); alert(`Moved ${moveQty} successfully.`);
+            currentMoveItem.qty -= moveQty; renderInventory(); closeMoveModal(); alert(`Moved ${moveQty} successfully.`);
         } catch(e) { alert("Error: " + e.message); }
         btn.innerText = "Confirm Transfer"; btn.disabled = false;
     }
 
-    // ==========================================
-    // OTHER UTILS (Global Deals, Print, Scanner)
-    // ==========================================
     function openGlobalDealsModal() { document.getElementById('global-modal').style.display = 'flex'; }
     function closeGlobalDealsModal() { document.getElementById('global-modal').style.display = 'none'; }
     function toggleGlobalFields() {
@@ -858,17 +965,57 @@ let masterTaxonomyList = [];
     async function saveGlobalDeals() { alert("Global Deals Engine saved!"); closeGlobalDealsModal(); }
 
     window.printBarcode = function(docId) {
-        const item = rawInventory.find(i => i.docId === docId);
-        if(!item) return;
-        let subTitle = item.subCategory || item.category || "";
-        if(item.customParams) subTitle = Object.values(item.customParams).join(' | ');
+        const item = rawInventory.find(i => i.docId === docId); if(!item) return;
+        let subTitle = item.subCategory || item.category || ""; if(item.customParams) subTitle = Object.values(item.customParams).join(' | ');
         const printWindow = window.open('', '_blank', 'width=400,height=400');
-        printWindow.document.write(`
-            <html><head><title>Print Label</title><script src="https://cdn.jsdelivr.net/npm/jsbarcode@3.11.5/dist/JsBarcode.all.min.js"><\/script>
-            <style> body { text-align: center; font-family: 'Arial', sans-serif; margin: 0; padding: 20px; background: #fff;} .label-container { border: 2px dashed #000; padding: 15px; display: inline-block; width: 60mm; min-height: 40mm;} .name { font-weight: 900; font-size: 14px; margin-bottom: 2px; text-transform: uppercase;} .subtitle { font-size: 10px; color: #333; margin-bottom: 8px; font-weight: bold;} .price { font-size: 18px; font-weight: 900; margin-top: 5px; } svg { width: 100%; max-height: 60px; }</style></head>
-            <body><div class="label-container"><div class="name">${item.name}</div><div class="subtitle">${subTitle}</div><svg id="barcode"></svg><div class="price">MRP: ₹${item.msp}</div></div>
-            <script> JsBarcode("#barcode", "${item.barcode}", { format: "CODE128", width: 2, height: 40, displayValue: true, fontSize: 12, margin: 0 }); setTimeout(() => { window.print(); window.close(); }, 500); <\/script></body></html>
-        `);
+        printWindow.document.write(`<html><head><title>Print Label</title><script src="https://cdn.jsdelivr.net/npm/jsbarcode@3.11.5/dist/JsBarcode.all.min.js"><\/script><style> body { text-align: center; font-family: 'Arial', sans-serif; margin: 0; padding: 20px; background: #fff;} .label-container { border: 2px dashed #000; padding: 15px; display: inline-block; width: 60mm; min-height: 40mm;} .name { font-weight: 900; font-size: 14px; margin-bottom: 2px; text-transform: uppercase;} .subtitle { font-size: 10px; color: #333; margin-bottom: 8px; font-weight: bold;} .price { font-size: 18px; font-weight: 900; margin-top: 5px; } svg { width: 100%; max-height: 60px; }</style></head><body><div class="label-container"><div class="name">${item.name}</div><div class="subtitle">${subTitle}</div><svg id="barcode"></svg><div class="price">MRP: ₹${item.msp}</div></div><script> JsBarcode("#barcode", "${item.barcode}", { format: "CODE128", width: 2, height: 40, displayValue: true, fontSize: 12, margin: 0 }); setTimeout(() => { window.print(); window.close(); }, 500); <\/script></body></html>`);
+        printWindow.document.close();
+    }
+
+    // --- PHASE 1 PRINT WALL CATALOG FEATURE ---
+    window.printWallCatalog = function() {
+        if(rawInventory.length === 0) return alert("Inventory is empty!");
+        let printWindow = window.open('', '_blank');
+        let html = `<html><head><title>Wall Catalog</title>
+        <script src="https://cdn.jsdelivr.net/npm/jsbarcode@3.11.5/dist/JsBarcode.all.min.js"><\/script>
+        <style>
+            body { font-family: sans-serif; padding: 20px; }
+            h2 { text-align: center; margin-bottom: 30px; }
+            .grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(200px, 1fr)); gap: 15px; }
+            .card { border: 2px dashed #ccc; padding: 15px; text-align: center; border-radius: 8px; page-break-inside: avoid; }
+            .name { font-weight: bold; font-size: 14px; margin-bottom: 5px; text-transform: uppercase; }
+            .subtitle { font-size: 10px; color: #666; margin-bottom: 8px; }
+            .price { font-weight: 900; color: #3b82f6; font-size: 18px; margin-bottom: 10px; }
+            svg { width: 100%; height: 50px; }
+        </style></head><body><h2>Store Wall Catalog</h2><div class="grid">`;
+        
+        rawInventory.forEach((item, index) => {
+            let subTitle = item.subCategory || item.category || ""; 
+            if(item.customParams) subTitle = Object.values(item.customParams).join(' | ');
+            
+            html += `<div class="card">
+                <div class="name">${item.name}</div>
+                <div class="subtitle">${subTitle}</div>
+                <div class="price">MRP: ₹${parseFloat(item.msp || 0).toFixed(2)}</div>
+                <svg class="barcode" id="bc-${index}"></svg>
+            </div>`;
+        });
+        
+        html += `</div>
+        <script>
+            const items = ${JSON.stringify(rawInventory.map(i => i.barcode))};
+            items.forEach((code, i) => {
+                if(code) {
+                    try {
+                        JsBarcode("#bc-" + i, code, { format: "CODE128", width: 2, height: 40, displayValue: true, fontSize: 12, margin: 0 });
+                    } catch(e) { console.error("Invalid barcode format", code); }
+                }
+            });
+            setTimeout(() => { window.print(); }, 1500);
+        <\/script>
+        </body></html>`;
+        
+        printWindow.document.write(html);
         printWindow.document.close();
     }
 
