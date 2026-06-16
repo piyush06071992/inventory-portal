@@ -439,11 +439,11 @@
         } catch(e) { alert("Error: " + e.message); }
     }
 
-    async function fetchInventory() {
+ async function fetchInventory() {
         const branchId = document.getElementById('filter-branch').value;
         if (!branchId) return;
         document.getElementById('inventory-list-body').innerHTML = `<tr><td colspan="6" style="text-align:center; padding:40px;">Fetching records...</td></tr>`;
-        try {
+        try {{
             const snap = await firebase.firestore().collection('companies').doc(activeUserPhone).collection('branches').doc(branchId).collection('inventory').get();
             rawInventory = [];
             snap.forEach(doc => { rawInventory.push({ docId: doc.id, ...doc.data() }); });
