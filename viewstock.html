@@ -555,7 +555,7 @@ async function fetchInventory() {
                         <div class="shelf-grid">
                     `;
 
-                    items.forEach((item, index) => {
+                   items.forEach((item, index) => {
                         const qty = parseFloat(item.qty || 0);
                         const minStock = parseFloat(item.minStock !== undefined ? item.minStock : 5);
                         const isLow = qty < minStock; 
@@ -564,14 +564,22 @@ async function fetchInventory() {
                         const bgGrad = bgGradientsLocal[index % bgGradientsLocal.length];
                         const textCol = isLow ? '#ef4444' : '#0f172a'; // Red if low, else navy
 
+                        // Extract parameters for the shelf view
+                        let paramSubtitle = '';
+                        if(item.customParams) {
+                            // Joins the parameters with a bullet point (e.g., MDH • 100 GMS • POWDER)
+                            paramSubtitle = `<div style="font-size: 9px; color: var(--text-light); width: 100%; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; margin-top: 2px; font-weight: 700;">${Object.values(item.customParams).join(' • ')}</div>`;
+                        }
+
                         html += `
-                            <div class="shelf-item" onclick="openItemDetailsModal('${item.docId}')">
+                            <div class="shelf-item" onclick="openItemDetailsModal('${item.docId}')" title="${item.name}">
                                 <div class="shelf-icon" style="background: ${bgGrad}; color: ${textCol};">
                                     <div class="qty-badge ${isLow ? 'qty-low' : ''}">${qty}</div>
                                     ${firstLetter}
                                 </div>
                                 <div class="shelf-item-name">${item.name}</div>
-                                <div class="shelf-item-price">₹${parseFloat(item.msp || 0).toFixed(2)}</div>
+                                ${paramSubtitle}
+                                <div class="shelf-item-price" style="margin-top: 4px;">₹${parseFloat(item.msp || 0).toFixed(2)}</div>
                             </div>
                         `;
                     });
