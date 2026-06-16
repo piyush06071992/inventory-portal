@@ -410,7 +410,7 @@ let masterTaxonomyList = [];
         } catch(e) { console.error("Error loading params", e); }
     }
 
-    function rebuildDatalists() {
+   function rebuildDatalists() {
         const container = document.getElementById('dynamic-datalists');
         container.innerHTML = "";
         for (const [key, values] of Object.entries(savedShopParams)) {
@@ -421,6 +421,31 @@ let masterTaxonomyList = [];
             container.appendChild(dl);
         }
     }
+
+    async function loadBranches() {
+        const db = firebase.firestore();
+        const bSelect = document.getElementById('filter-branch');
+        bSelect.innerHTML = ''; globalBranches = [];
+        try {
+            const snap = await db.collection('companies').doc(activeUserPhone).collection('branches').get();
+            snap.forEach(doc => {
+                const bId = doc.data().branchId; const bName = doc.data().branchName;
+                globalBranches.push({ id: bId, name: bName });
+                const isAdmin = !activeStaffId || assignedBranch === "admin";
+                const isAssigned = Array.isArray(assignedBranch) ? assignedBranch.includes(bId) : assignedBranch === bId;
+                if (isAdmin || isAssigned) bSelect.innerHTML += `<option value="${bId}">${bName}</option>`;
+            });
+
+            if (bSelect.options.length > 0) {
+                if (!activeStaffId || assignedBranch === "admin") {
+                    const mainOpt = [...bSelect.options].find(o => o.text.toLowerCase().includes('main'));
+                    bSelect.value = mainOpt ? mainOpt.value : bSelect.options[0].value;
+                } else { bSelect.value = assignedBranch; }
+                fetchInventory(); 
+            }
+        } catch(e) { alert("Error: " + e.message); }
+    }
+
     // Helper to merge Master + Local for dropdowns
     function getCombinedTaxonomy() {
         return [...masterTaxonomyList, ...localShopTaxonomy];
