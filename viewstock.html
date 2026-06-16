@@ -41,38 +41,43 @@
         .filter-row { display: flex; gap: 8px; background: white; padding: 8px; border-radius: 8px; border: 1px solid var(--border); flex: 1; align-items: center; flex-wrap: wrap;}
         .filter-input { padding: 6px 10px; border: 1px solid var(--border); border-radius: 6px; font-size: 12px; font-weight: 600; background: #f8fafc; flex: 1; min-width: 110px; outline: none;}
 
-        /* Compact Table Layout (Excel Style) */
-        .table-container { background: white; border-radius: 8px; border: 1px solid var(--border); overflow-x: auto; box-shadow: 0 2px 8px rgba(0,0,0,0.05); }
-        .data-table { width: 100%; border-collapse: collapse; text-align: left; white-space: nowrap; }
-        .data-table th { background: #f1f5f9; padding: 10px; font-size: 11px; font-weight: 800; color: var(--text-light); text-transform: uppercase; border-bottom: 2px solid var(--border); position: sticky; top: 0; z-index: 10;}
-        .data-table td { padding: 8px 10px; border-bottom: 1px solid #e2e8f0; vertical-align: middle; }
-        .data-table tr:hover { background: #f8fafc; }
+       /* Store Shelf Layout */
+        #inventory-racks-container { padding: 10px 0; }
+        .shelf-wrapper { margin-bottom: 40px; }
+        .shelf-header { font-size: 16px; font-weight: 900; color: var(--navy); padding: 0 10px 10px 10px; display: flex; align-items: center; gap: 8px; flex-wrap: wrap; text-transform: uppercase;}
+        .shelf-header i { font-size: 12px; color: var(--text-light); }
+        .shelf-count { background: var(--primary); color: white; padding: 2px 8px; border-radius: 12px; font-size: 11px; margin-left: auto; }
         
-        .cell-product { display: flex; align-items: center; gap: 10px; min-width: 200px; }
-        .cell-product-name { font-weight: 800; font-size: 13px; color: var(--navy); text-overflow: ellipsis; overflow: hidden; }
-        .cell-product-sku { font-size: 10px; color: var(--text-light); font-family: monospace; font-weight: 600; display: block; }
+        .shelf-grid { display: flex; flex-wrap: wrap; gap: 20px; padding: 10px 20px; }
+        .shelf-item { width: 100px; cursor: pointer; text-align: center; position: relative; transition: 0.2s; display: flex; flex-direction: column; align-items: center;}
+        .shelf-item:hover { transform: translateY(-5px); }
+        .shelf-icon { width: 80px; height: 80px; border-radius: 16px; background: linear-gradient(135deg, #e0f2fe, #bae6fd); display: flex; align-items: center; justify-content: center; font-size: 36px; font-weight: 900; color: var(--primary); box-shadow: 0 8px 15px rgba(0,0,0,0.1); position: relative; border: 3px solid white; margin-bottom: 10px; transition: 0.2s;}
+        .shelf-item:hover .shelf-icon { box-shadow: 0 12px 20px rgba(59, 130, 246, 0.2); border-color: var(--primary);}
+        .shelf-item-name { font-size: 12px; font-weight: 800; color: var(--navy); width: 100%; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; line-height: 1.2;}
+        .shelf-item-price { font-size: 11px; font-weight: 900; color: var(--text-light); margin-top: 3px;}
         
-        .badge { padding: 2px 6px; border-radius: 4px; font-size: 10px; font-weight: 800; }
-        .badge-cat { background: #e0e7ff; color: #3730a3; }
-        .badge-subcat { background: #fef3c7; color: #92400e; }
-        .badge-promo { background: #fee2e2; color: #b91c1c; animation: pulse 2s infinite; }
-        @keyframes pulse { 0% { opacity: 1; } 50% { opacity: 0.7; } 100% { opacity: 1; } }
+        .qty-badge { position: absolute; top: -8px; right: -8px; background: #10b981; color: white; min-width: 26px; height: 26px; border-radius: 13px; font-size: 11px; font-weight: 900; display: flex; align-items: center; justify-content: center; box-shadow: 0 2px 4px rgba(0,0,0,0.2); border: 2px solid white; padding: 0 4px; z-index: 2;}
+        .qty-low { background: #ef4444; animation: pulse 2s infinite; }
+        @keyframes pulse { 0% { box-shadow: 0 0 0 0 rgba(239, 68, 68, 0.7); } 70% { box-shadow: 0 0 0 8px rgba(239, 68, 68, 0); } 100% { box-shadow: 0 0 0 0 rgba(239, 68, 68, 0); } }
 
-        .stock-good { color: #059669; font-weight: 900; font-size: 14px;}
-        .stock-low { color: #dc2626; font-weight: 900; font-size: 14px;}
+        .shelf-board { height: 14px; background: linear-gradient(to bottom, #f8fafc, #cbd5e1); border-radius: 4px; box-shadow: inset 0 2px 4px rgba(255,255,255,0.8), 0 6px 8px rgba(0,0,0,0.05); margin-top: 10px; width: 100%; border-bottom: 2px solid #94a3b8;}
 
-        .money-text { font-family: monospace; font-weight: 800; font-size: 13px; }
-        .margin-positive { color: #059669; font-weight: 800; font-size: 12px;}
-        .margin-negative { color: #dc2626; font-weight: 800; font-size: 12px;}
+        /* Item Details Panel Styles */
+        .item-detail-hero { display: flex; gap: 15px; align-items: center; margin-bottom: 20px; padding-bottom: 15px; border-bottom: 1px dashed var(--border);}
+        .hero-icon { width: 60px; height: 60px; border-radius: 12px; background: var(--primary); color: white; display: flex; align-items: center; justify-content: center; font-size: 28px; font-weight: 900; }
+        .hero-info h3 { margin: 0 0 4px 0; font-size: 18px; font-weight: 900; color: var(--navy); line-height: 1.1;}
+        .hero-info span { font-size: 11px; font-family: monospace; color: var(--text-light); font-weight: 700;}
+        
+        .detail-row { display: flex; justify-content: space-between; padding: 8px 0; border-bottom: 1px solid #f1f5f9; font-size: 13px;}
+        .detail-row span:first-child { color: var(--text-light); font-weight: 800; text-transform: uppercase; font-size: 10px;}
+        .detail-row span:last-child { font-weight: 800; color: var(--navy); text-align: right;}
 
-        .table-actions { display: flex; gap: 4px; }
-        .btn-icon-sm { border: none; background: #f1f5f9; width: 28px; height: 28px; border-radius: 6px; cursor: pointer; font-size: 13px; display: flex; align-items: center; justify-content: center; transition: 0.1s;}
-        .btn-icon-sm:hover { transform: scale(1.1); }
-        .btn-edit { color: #4f46e5; background: #e0e7ff; }
-        .btn-move { color: #0284c7; background: #e0f2fe; }
-        .btn-offer { color: #a16207; background: #fef08a; }
-        .btn-print { color: #10b981; background: #dcfce7; }
-        .btn-waste { color: #dc2626; background: #fee2e2; }
+        .action-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(80px, 1fr)); gap: 10px; margin-top: 20px; }
+        .action-btn { background: #f8fafc; border: 1px solid var(--border); padding: 12px 5px; border-radius: 10px; cursor: pointer; display: flex; flex-direction: column; align-items: center; gap: 8px; transition: 0.2s;}
+        .action-btn i { font-size: 20px; }
+        .action-btn span { font-size: 10px; font-weight: 800; text-transform: uppercase; color: var(--navy);}
+        .action-btn:hover { background: var(--primary); color: white; border-color: var(--primary); transform: translateY(-3px);}
+        .action-btn:hover span { color: white; }
 
         /* Modals */
         .modal-overlay { display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(15,23,42,0.7); z-index: 3000; align-items: center; justify-content: center; padding: 15px; box-sizing: border-box; backdrop-filter: blur(4px); }
@@ -127,25 +132,39 @@
         </div>
     </div>
 
-    <div class="table-container">
-        <table class="data-table">
-            <thead>
-                <tr>
-                    <th>Item Details</th>
-                    <th>Classification</th>
-                    <th>Stock</th>
-                    <th>Financials (₹)</th>
-                    <th>Profit/Margin</th>
-                    <th>Actions</th>
-                </tr>
-            </thead>
-            <tbody id="inventory-list-body">
-                <tr><td colspan="6" style="text-align: center; padding: 40px; color: var(--text-light);">Loading Racks...</td></tr>
-            </tbody>
-        </table>
+<div id="inventory-racks-container">
+        <div style="text-align: center; padding: 60px; color: var(--text-light); font-weight: 800; font-size: 16px;">
+            <i class="bi bi-box-seam" style="font-size: 40px; display: block; margin-bottom: 15px; opacity: 0.5;"></i>
+            Loading Store Shelves...
+        </div>
     </div>
 </div>
+<div class="modal-overlay" id="item-details-modal">
+    <div class="modal-card" style="max-width: 450px;">
+        <button onclick="closeItemDetailsModal()" style="position:absolute; top:15px; right:15px; background:#f1f5f9; border:none; border-radius:50%; width:32px; height:32px; cursor:pointer;"><i class="bi bi-x-lg"></i></button>
+        
+        <div class="item-detail-hero">
+            <div class="hero-icon" id="detail-avatar"></div>
+            <div class="hero-info">
+                <h3 id="detail-name">Product Name</h3>
+                <span id="detail-sku">SKU: 123456</span>
+                <div id="detail-params" style="margin-top: 6px; display: flex; flex-wrap: wrap; gap: 4px;"></div>
+            </div>
+        </div>
 
+        <div style="background: #f8fafc; padding: 15px; border-radius: 12px; margin-bottom: 15px; border: 1px solid var(--border);">
+            <div class="detail-row"><span>Classification</span><span id="detail-hierarchy">Dept / Cat / Subcat</span></div>
+            <div class="detail-row"><span>Available Stock</span><span id="detail-stock" style="font-size: 16px;">0</span></div>
+            <div class="detail-row"><span>Cost Price (CP)</span><span id="detail-cp">₹0.00</span></div>
+            <div class="detail-row"><span>Sell Price (MRP)</span><span id="detail-mrp" style="color:var(--primary); font-size: 15px;">₹0.00</span></div>
+            <div class="detail-row"><span>Margin / Profit</span><span id="detail-margins">0% / 0%</span></div>
+        </div>
+
+        <label style="margin-bottom: 10px;">Store Actions</label>
+        <div class="action-grid" id="detail-actions-container">
+            </div>
+    </div>
+</div>
 <div class="modal-overlay" id="blueprint-modal">
     <div class="modal-card">
         <button onclick="closeBlueprintModal()" style="position:absolute; top:12px; right:12px; background:#f1f5f9; border:none; border-radius:50%; width:30px; height:30px; cursor:pointer;"><i class="bi bi-x-lg"></i></button>
@@ -469,14 +488,14 @@
         renderInventory();
     }
 
-    function renderInventory() {
-        const tbody = document.getElementById('inventory-list-body');
+ function renderInventory() {
+        const container = document.getElementById('inventory-racks-container');
         const query = document.getElementById('search-input').value.toLowerCase().trim();
         const fDept = document.getElementById('filter-main-dept').value;
         const fCat = document.getElementById('filter-main-cat').value;
         const fSubcat = document.getElementById('filter-main-subcat').value;
         
-        let totalItems = 0; let lowStock = 0; tbody.innerHTML = "";
+        let totalItems = 0; let lowStock = 0; container.innerHTML = "";
 
         let filtered = rawInventory.filter(item => {
             const textMatch = (item.name && item.name.toLowerCase().includes(query)) || (item.barcode && item.barcode.toLowerCase().includes(query));
@@ -486,84 +505,154 @@
             return textMatch && deptMatch && catMatch && subcatMatch;
         });
 
-        // Sort by Dept -> Cat -> Subcat -> Name
-        filtered.sort((a, b) => {
-            if((a.department||"") !== (b.department||"")) return (a.department||"").localeCompare(b.department||"");
-            if((a.category||"") !== (b.category||"")) return (a.category||"").localeCompare(b.category||"");
-            if((a.subCategory||"") !== (b.subCategory||"")) return (a.subCategory||"").localeCompare(b.subCategory||"");
-            return (a.name||"").localeCompare(b.name||"");
-        });
-
         if(filtered.length === 0) {
-            tbody.innerHTML = `<tr><td colspan="6" style="text-align:center; padding:30px; color:var(--text-light);">No items match criteria.</td></tr>`;
+            container.innerHTML = `<div style="text-align:center; padding:60px; color:var(--text-light);"><i class="bi bi-search" style="font-size:40px; display:block; margin-bottom:10px;"></i><h3>No items match criteria.</h3></div>`;
             document.getElementById('dash-total').innerText = 0; document.getElementById('dash-low').innerText = 0;
             return;
         }
 
-        filtered.forEach((item) => {
+        // HIERARCHICAL GROUPING: Dept -> Cat -> SubCat
+        let grouped = {};
+        filtered.forEach(item => {
             totalItems++;
-            const cp = parseFloat(item.costPer || 0);
-            const msp = parseFloat(item.msp || 0);
-            const gst = parseFloat(item.gstRate || 0);
-            const qty = parseFloat(item.qty || 0);
             const minStock = parseFloat(item.minStock !== undefined ? item.minStock : 5);
-            const isLow = qty < minStock; 
-            if(isLow) lowStock++;
+            if(parseFloat(item.qty || 0) < minStock) lowStock++;
 
-            // Profit Math: Assuming MRP includes GST, and CP is net cost. 
-            // Pre-tax MRP = MRP / (1 + (GST/100)).
-            const preTaxMsp = msp / (1 + (gst/100));
-            const profit = preTaxMsp - cp;
-            const marginPct = preTaxMsp > 0 ? (profit / preTaxMsp) * 100 : 0;
-            const marginClass = profit >= 0 ? 'margin-positive' : 'margin-negative';
+            const d = item.department || "Other";
+            const c = item.category || "General";
+            const s = item.subCategory || "Items";
 
-            let promoBadge = item.offer?.type ? `<span class="badge badge-promo"><i class="bi bi-fire"></i> Offer</span>` : '';
-            let paramsStr = item.customParams ? Object.values(item.customParams).join(' | ') : '';
-            if(paramsStr) paramsStr = `<div style="font-size:9px; color:var(--text-light); margin-top:2px;">${paramsStr}</div>`;
-
-            let printBtn = item.isSystemBarcode ? `<button class="btn-icon-sm btn-print" onclick="printBarcode('${item.docId}')" title="Print Tag"><i class="bi bi-printer-fill"></i></button>` : '';
-
-            const tr = document.createElement('tr');
-            tr.innerHTML = `
-                <td>
-                    <div class="cell-product">
-                        <div>
-                            <span class="cell-product-sku">${item.barcode}</span>
-                            <div class="cell-product-name">${item.name} ${promoBadge}</div>
-                            ${paramsStr}
-                        </div>
-                    </div>
-                </td>
-                <td>
-                    <span class="badge badge-cat">${item.department||'-'} / ${item.category||'-'}</span><br>
-                    <span class="badge badge-subcat" style="margin-top:4px; display:inline-block;">${item.subCategory||'-'}</span>
-                </td>
-                <td>
-                    <span class="${isLow ? 'stock-low' : 'stock-good'}">${qty}</span> <span style="font-size:10px; color:var(--text-light);">${item.unit||'PCS'}</span>
-                </td>
-                <td>
-                    <div class="money-text" style="color:var(--text-light);">CP: ₹${cp.toFixed(2)}</div>
-                    <div class="money-text" style="color:var(--navy);">MRP: ₹${msp.toFixed(2)} <span style="font-size:9px;">(${gst}% GST)</span></div>
-                </td>
-                <td>
-                    <div class="${marginClass}">₹${profit.toFixed(2)}</div>
-                    <div style="font-size:10px; color:var(--text-light); font-weight:700;">${marginPct.toFixed(1)}% Mg</div>
-                </td>
-                <td>
-                    <div class="table-actions">
-                        <button class="btn-icon-sm btn-edit" onclick="openBlueprintModal('${item.docId}')" title="Edit"><i class="bi bi-pencil-fill"></i></button>
-                        <button class="btn-icon-sm btn-offer" onclick="openPromoModal('${item.docId}')" title="Discounts"><i class="bi bi-gift-fill"></i></button>
-                        <button class="btn-icon-sm btn-move" onclick="openMoveModal('${item.docId}')" title="Transfer"><i class="bi bi-arrow-left-right"></i></button>
-                        <button class="btn-icon-sm btn-waste" onclick="openWastageModal('${item.docId}')" title="Mark Wastage"><i class="bi bi-trash-fill"></i></button>
-                        ${printBtn}
-                    </div>
-                </td>
-            `;
-            tbody.appendChild(tr);
+            if(!grouped[d]) grouped[d] = {};
+            if(!grouped[d][c]) grouped[d][c] = {};
+            if(!grouped[d][c][s]) grouped[d][c][s] = [];
+            grouped[d][c][s].push(item);
         });
 
+        const bgGradientsLocal = [
+            'linear-gradient(135deg, #e0f2fe, #bae6fd)', 'linear-gradient(135deg, #dcfce7, #a7f3d0)',
+            'linear-gradient(135deg, #fef3c7, #fde68a)', 'linear-gradient(135deg, #f3e8ff, #ddd6fe)',
+            'linear-gradient(135deg, #fee2e2, #fecaca)'
+        ];
+
+        let html = '';
+        Object.keys(grouped).sort().forEach(d => {
+            Object.keys(grouped[d]).sort().forEach(c => {
+                Object.keys(grouped[d][c]).sort().forEach(s => {
+                    const items = grouped[d][c][s];
+                    
+                    html += `
+                    <div class="shelf-wrapper">
+                        <div class="shelf-header">
+                            ${d} <i class="bi bi-caret-right-fill"></i> ${c} <i class="bi bi-caret-right-fill"></i> <span style="color:var(--primary);">${s}</span>
+                            <span class="shelf-count">${items.length} Varieties</span>
+                        </div>
+                        <div class="shelf-grid">
+                    `;
+
+                    items.forEach((item, index) => {
+                        const qty = parseFloat(item.qty || 0);
+                        const minStock = parseFloat(item.minStock !== undefined ? item.minStock : 5);
+                        const isLow = qty < minStock; 
+                        
+                        const firstLetter = item.name ? item.name.charAt(0).toUpperCase() : 'B';
+                        const bgGrad = bgGradientsLocal[index % bgGradientsLocal.length];
+                        const textCol = isLow ? '#ef4444' : '#0f172a'; // Red if low, else navy
+
+                        html += `
+                            <div class="shelf-item" onclick="openItemDetailsModal('${item.docId}')">
+                                <div class="shelf-icon" style="background: ${bgGrad}; color: ${textCol};">
+                                    <div class="qty-badge ${isLow ? 'qty-low' : ''}">${qty}</div>
+                                    ${firstLetter}
+                                </div>
+                                <div class="shelf-item-name">${item.name}</div>
+                                <div class="shelf-item-price">₹${parseFloat(item.msp || 0).toFixed(2)}</div>
+                            </div>
+                        `;
+                    });
+
+                    html += `
+                        </div>
+                        <div class="shelf-board"></div>
+                    </div>`;
+                });
+            });
+        });
+
+        container.innerHTML = html;
         document.getElementById('dash-total').innerText = totalItems;
         document.getElementById('dash-low').innerText = lowStock;
+    }
+
+    // --- ITEM DETAILS MODAL CONTROLLER ---
+    function openItemDetailsModal(docId) {
+        const item = rawInventory.find(i => i.docId === docId);
+        if(!item) return;
+
+        const firstLetter = item.name ? item.name.charAt(0).toUpperCase() : 'B';
+        document.getElementById('detail-avatar').innerText = firstLetter;
+        document.getElementById('detail-name').innerText = item.name;
+        document.getElementById('detail-sku').innerText = `SKU: ${item.barcode}`;
+        
+        let paramsHtml = '';
+        if(item.customParams) {
+            for(const [k, v] of Object.entries(item.customParams)) {
+                paramsHtml += `<span style="background:#e2e8f0; padding:2px 6px; border-radius:4px; font-size:10px; font-weight:800; color:var(--navy);">${k}: ${v}</span>`;
+            }
+        }
+        document.getElementById('detail-params').innerHTML = paramsHtml;
+
+        document.getElementById('detail-hierarchy').innerText = `${item.department || '-'} / ${item.category || '-'} / ${item.subCategory || '-'}`;
+        
+        const qty = parseFloat(item.qty || 0);
+        const minStock = parseFloat(item.minStock !== undefined ? item.minStock : 5);
+        document.getElementById('detail-stock').innerText = `${qty} ${item.unit || 'PCS'}`;
+        document.getElementById('detail-stock').style.color = qty < minStock ? "var(--danger)" : "var(--emerald)";
+
+        const cp = parseFloat(item.costPer || 0);
+        const msp = parseFloat(item.msp || 0);
+        const gst = parseFloat(item.gstRate || 0);
+        
+        const preTaxMsp = msp / (1 + (gst/100));
+        const profit = preTaxMsp - cp;
+        const marginPct = preTaxMsp > 0 ? (profit / preTaxMsp) * 100 : 0;
+        const markup = cp > 0 ? (profit / cp) * 100 : 0;
+
+        document.getElementById('detail-cp').innerText = `₹${cp.toFixed(2)}`;
+        document.getElementById('detail-mrp').innerText = `₹${msp.toFixed(2)} (${gst}% GST)`;
+        
+        const marginEl = document.getElementById('detail-margins');
+        marginEl.innerText = `${marginPct.toFixed(1)}% Mg / ${markup.toFixed(1)}% Pr`;
+        marginEl.style.color = profit >= 0 ? "var(--emerald)" : "var(--danger)";
+
+        // Build Action Grid
+        let actionsHtml = `
+            <button class="action-btn" style="color:#4f46e5;" onclick="closeItemDetailsModal(); openBlueprintModal('${docId}')">
+                <i class="bi bi-pencil-fill"></i><span>Edit</span>
+            </button>
+            <button class="action-btn" style="color:#a16207;" onclick="closeItemDetailsModal(); openPromoModal('${docId}')">
+                <i class="bi bi-gift-fill"></i><span>Offer</span>
+            </button>
+            <button class="action-btn" style="color:#0284c7;" onclick="closeItemDetailsModal(); openMoveModal('${docId}')">
+                <i class="bi bi-truck"></i><span>Transfer</span>
+            </button>
+            <button class="action-btn" style="color:#dc2626;" onclick="closeItemDetailsModal(); openWastageModal('${docId}')">
+                <i class="bi bi-trash-fill"></i><span>Wastage</span>
+            </button>
+        `;
+
+        if(item.isSystemBarcode) {
+            actionsHtml += `
+            <button class="action-btn" style="color:#10b981;" onclick="printBarcode('${docId}')">
+                <i class="bi bi-printer-fill"></i><span>Print Tag</span>
+            </button>`;
+        }
+
+        document.getElementById('detail-actions-container').innerHTML = actionsHtml;
+        document.getElementById('item-details-modal').style.display = 'flex';
+    }
+
+    function closeItemDetailsModal() {
+        document.getElementById('item-details-modal').style.display = 'none';
     }
 
     // ==========================================
