@@ -200,30 +200,34 @@
             </div>
         </div>
 
-        <datalist id="dl-dept"></datalist>
-        <datalist id="dl-cat"></datalist>
-        <datalist id="dl-subcat"></datalist>
+      <!-- Deprecated datalists removed in favor of strict selects -->
 
         <div style="background: #f8fafc; padding: 10px; border-radius: 8px; border: 1px solid var(--border); margin-bottom: 10px;">
             <div class="grid-3">
                 <div>
-                    <label>Department</label>
-                    <input type="text" id="bp-dept" class="modal-input" list="dl-dept" placeholder="Select or Type..." style="margin-bottom:0;" onchange="updateCatDropdown()" oninput="forceUppercase(this)">
+                    <label>Department (विभाग)</label>
+                    <select id="bp-dept" class="modal-input" style="margin-bottom:0;" onchange="handleDropdownChange('dept')">
+                        <option value="">Select...</option>
+                    </select>
                 </div>
                 <div>
-                    <label>Category</label>
-                    <input type="text" id="bp-cat" class="modal-input" list="dl-cat" placeholder="Select or Type..." style="margin-bottom:0;" onchange="updateSubcatDropdown()" oninput="forceUppercase(this)" disabled>
+                    <label>Category (श्रेणी)</label>
+                    <select id="bp-cat" class="modal-input" style="margin-bottom:0;" onchange="handleDropdownChange('cat')" disabled>
+                        <option value="">Select...</option>
+                    </select>
                 </div>
                 <div>
-                    <label>Sub-Category</label>
-                    <input type="text" id="bp-subcat" class="modal-input" list="dl-subcat" placeholder="Select or Type..." style="margin-bottom:0;" onchange="renderSmartTemplate()" oninput="forceUppercase(this)" disabled>
+                    <label>Sub-Category (उप-श्रेणी)</label>
+                    <select id="bp-subcat" class="modal-input" style="margin-bottom:0;" onchange="handleDropdownChange('subcat')" disabled>
+                        <option value="">Select...</option>
+                    </select>
                 </div>
             </div>
         </div>
 
         <div style="background:#e0f2fe; padding:10px; border-radius:8px; border:1px dashed #7dd3fc; margin-bottom:10px;">
             <div id="bp-dynamic-params" style="display:none; margin-bottom: 10px;"></div>
-            <button class="btn-action" style="background: white; border: 1px solid var(--primary); color: var(--primary); font-size: 10px; padding: 4px 8px;" onclick="addNewParameterUI()"><i class="bi bi-plus"></i> Add Custom Parameter</button>
+            <button class="btn-action" style="background: white; border: 1px solid var(--primary); color: var(--primary); font-size: 10px; padding: 4px 8px;" onclick="addNewParameterUI()"><i class="bi bi-plus"></i> Add Custom Param (नया पैरामीटर)</button>
         </div>
 
         <div class="grid-3">
