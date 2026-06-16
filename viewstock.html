@@ -388,7 +388,7 @@ let masterTaxonomyList = [];
         inputElem.value = inputElem.value.toUpperCase().replace(/\s{2,}/g, ' ');
     }
 
-   async function loadMasterTaxonomy() {
+  async function loadMasterTaxonomy() {
         try {
             // Load Dev Master List
             const masterDoc = await firebase.firestore().collection('admin_settings').doc('master_taxonomy').get();
@@ -400,6 +400,27 @@ let masterTaxonomyList = [];
         } catch(e) { console.error("Error loading taxonomy", e); }
     }
 
+    async function loadShopParams() {
+        try {
+            const doc = await firebase.firestore().collection('companies').doc(activeUserPhone).collection('settings').doc('params').get();
+            if (doc.exists && doc.data().customParams) {
+                savedShopParams = doc.data().customParams;
+                rebuildDatalists();
+            }
+        } catch(e) { console.error("Error loading params", e); }
+    }
+
+    function rebuildDatalists() {
+        const container = document.getElementById('dynamic-datalists');
+        container.innerHTML = "";
+        for (const [key, values] of Object.entries(savedShopParams)) {
+            const cleanKeyId = key.replace(/[^a-zA-Z0-9]/g, '_');
+            const dl = document.createElement('datalist');
+            dl.id = `dl-${cleanKeyId}`;
+            values.forEach(val => { dl.innerHTML += `<option value="${val}">`; });
+            container.appendChild(dl);
+        }
+    }
     // Helper to merge Master + Local for dropdowns
     function getCombinedTaxonomy() {
         return [...masterTaxonomyList, ...localShopTaxonomy];
