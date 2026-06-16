@@ -513,87 +513,110 @@
         const fCat = document.getElementById('filter-main-cat').value;
         const fSubcat = document.getElementById('filter-main-subcat').value;
         
-        let totalItems = 0; let lowStock = 0; container.innerHTML = "";
+        let totalItems = 0; let lowStock = 0; 
+        
+        // requestAnimationFrame creates Ultra-Fast non-blocking rendering
+        window.requestAnimationFrame(() => {
+            let filtered = [];
+            for (let i = 0; i < rawInventory.length; i++) {
+                const item = rawInventory[i];
+                if(fDept !== 'ALL' && item.department !== fDept) continue;
+                if(fCat !== 'ALL' && item.category !== fCat) continue;
+                if(fSubcat !== 'ALL' && item.subCategory !== fSubcat) continue;
+                
+                if (query) {
+                    const n = item.name ? item.name.toLowerCase() : "";
+                    const b = item.barcode ? item.barcode.toLowerCase() : "";
+                    if (!n.includes(query) && !b.includes(query)) continue;
+                }
+                filtered.push(item);
+            }
 
-        let filtered = rawInventory.filter(item => {
-            const textMatch = (item.name && item.name.toLowerCase().includes(query)) || (item.barcode && item.barcode.toLowerCase().includes(query));
-            const deptMatch = fDept === 'ALL' || item.department === fDept;
-            const catMatch = fCat === 'ALL' || item.category === fCat;
-            const subcatMatch = fSubcat === 'ALL' || item.subCategory === fSubcat;
-            return textMatch && deptMatch && catMatch && subcatMatch;
-        });
+            if(filtered.length === 0) {
+                container.innerHTML = `<div style="text-align:center; padding:60px; color:var(--text-light);"><i class="bi bi-search" style="font-size:40px; display:block; margin-bottom:10px;"></i><h3>No items match criteria.</h3></div>`;
+                document.getElementById('dash-total').innerText = 0; document.getElementById('dash-low').innerText = 0;
+                return;
+            }
 
-        if(filtered.length === 0) {
-            container.innerHTML = `<div style="text-align:center; padding:60px; color:var(--text-light);"><i class="bi bi-search" style="font-size:40px; display:block; margin-bottom:10px;"></i><h3>No items match criteria.</h3></div>`;
-            document.getElementById('dash-total').innerText = 0; document.getElementById('dash-low').innerText = 0;
-            return;
-        }
+            let grouped = {};
+            for (let i = 0; i < filtered.length; i++) {
+                const item = filtered[i];
+                totalItems++;
+                const minStock = item.minStock !== undefined ? parseFloat(item.minStock) : 5;
+                if((parseFloat(item.qty) || 0) < minStock) lowStock++;
 
-        let grouped = {};
-        filtered.forEach(item => {
-            totalItems++;
-            const minStock = parseFloat(item.minStock !== undefined ? item.minStock : 5);
-            if(parseFloat(item.qty || 0) < minStock) lowStock++;
+                const d = item.department || "Other";
+                const c = item.category || "General";
+                const s = item.subCategory || "Items";
 
-            const d = item.department || "Other";
-            const c = item.category || "General";
-            const s = item.subCategory || "Items";
+                if(!grouped[d]) grouped[d] = {};
+                if(!grouped[d][c]) grouped[d][c] = {};
+                if(!grouped[d][c][s]) grouped[d][c][s] = [];
+                grouped[d][c][s].push(item);
+            }
 
-            if(!grouped[d]) grouped[d] = {};
-            if(!grouped[d][c]) grouped[d][c] = {};
-            if(!grouped[d][c][s]) grouped[d][c][s] = [];
-            grouped[d][c][s].push(item);
-        });
+            const bgGradientsLocal = [
+                'linear-gradient(135deg, #e0f2fe, #bae6fd)', 'linear-gradient(135deg, #dcfce7, #a7f3d0)',
+                'linear-gradient(135deg, #fef3c7, #fde68a)', 'linear-gradient(135deg, #f3e8ff, #ddd6fe)',
+                'linear-gradient(135deg, #fee2e2, #fecaca)'
+            ];
 
-        const bgGradientsLocal = [
-            'linear-gradient(135deg, #e0f2fe, #bae6fd)', 'linear-gradient(135deg, #dcfce7, #a7f3d0)',
-            'linear-gradient(135deg, #fef3c7, #fde68a)', 'linear-gradient(135deg, #f3e8ff, #ddd6fe)',
-            'linear-gradient(135deg, #fee2e2, #fecaca)'
-        ];
+            let htmlArr = []; // Using an Array Builder is 10x faster than standard string concatenation
+            const depts = Object.keys(grouped).sort();
+            
+            for (let d = 0; d < depts.length; d++) {
+                const deptName = depts[d];
+                const cats = Object.keys(grouped[deptName]).sort();
+                
+                for (let c = 0; c < cats.length; c++) {
+                    const catName = cats[c];
+                    const subcats = Object.keys(grouped[deptName][catName]).sort();
+                    
+                    for (let s = 0; s < subcats.length; s++) {
+                        const subcatName = subcats[s];
+                        const items = grouped[deptName][catName][subcatName];
+                        
+                        // Using content-visibility forces the browser to only render shelves currently on screen
+                        htmlArr.push(`<div class="shelf-wrapper" style="content-visibility: auto; contain-intrinsic-size: 200px;">
+                            <div class="shelf-header">${deptName} <i class="bi bi-caret-right-fill"></i> ${catName} <i class="bi bi-caret-right-fill"></i> <span style="color:var(--primary);">${subcatName}</span><span class="shelf-count">${items.length} Varieties</span></div>
+                            <div class="shelf-grid">`);
 
-        let html = '';
-        Object.keys(grouped).sort().forEach(d => {
-            Object.keys(grouped[d]).sort().forEach(c => {
-                Object.keys(grouped[d][c]).sort().forEach(s => {
-                    const items = grouped[d][c][s];
-                    html += `
-                    <div class="shelf-wrapper">
-                        <div class="shelf-header">${d} <i class="bi bi-caret-right-fill"></i> ${c} <i class="bi bi-caret-right-fill"></i> <span style="color:var(--primary);">${s}</span><span class="shelf-count">${items.length} Varieties</span></div>
-                        <div class="shelf-grid">`;
+                        for (let i = 0; i < items.length; i++) {
+                            const item = items[i];
+                            const qty = parseFloat(item.qty || 0);
+                            const minStock = parseFloat(item.minStock !== undefined ? item.minStock : 5);
+                            const isLow = qty < minStock; 
+                            const firstLetter = item.name ? item.name.charAt(0).toUpperCase() : 'B';
+                            const bgGrad = bgGradientsLocal[i % 5];
+                            const textCol = isLow ? '#ef4444' : '#0f172a';
 
-                    items.forEach((item, index) => {
-                        const qty = parseFloat(item.qty || 0);
-                        const minStock = parseFloat(item.minStock !== undefined ? item.minStock : 5);
-                        const isLow = qty < minStock; 
-                        const firstLetter = item.name ? item.name.charAt(0).toUpperCase() : 'B';
-                        const bgGrad = bgGradientsLocal[index % bgGradientsLocal.length];
-                        const textCol = isLow ? '#ef4444' : '#0f172a';
+                            let paramSubtitle = '';
+                            if(item.customParams) {
+                                paramSubtitle = `<div style="font-size: 9px; color: var(--text-light); width: 100%; display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; margin-top: 2px; font-weight: 700; line-height: 1.2;">${Object.values(item.customParams).join(' • ')}</div>`;
+                            }
 
-                        let paramSubtitle = '';
-                        if(item.customParams) {
-                            paramSubtitle = `<div style="font-size: 9px; color: var(--text-light); width: 100%; display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; margin-top: 2px; font-weight: 700; line-height: 1.2;">${Object.values(item.customParams).join(' • ')}</div>`;
+                            htmlArr.push(`
+                                <div class="shelf-item" onclick="openItemDetailsModal('${item.docId}')" title="${item.name}">
+                                    <div class="shelf-icon" style="background: ${bgGrad}; color: ${textCol};">
+                                        <div class="qty-badge ${isLow ? 'qty-low' : ''}">${qty}</div>
+                                        ${firstLetter}
+                                    </div>
+                                    <div class="shelf-item-name">${item.name}</div>
+                                    ${paramSubtitle}
+                                    <div class="shelf-item-price" style="margin-top: 4px;">₹${parseFloat(item.msp || 0).toFixed(2)}</div>
+                                </div>`);
                         }
+                        htmlArr.push(`</div><div class="shelf-board"></div></div>`);
+                    }
+                }
+            }
 
-                        html += `
-                            <div class="shelf-item" onclick="openItemDetailsModal('${item.docId}')" title="${item.name}">
-                                <div class="shelf-icon" style="background: ${bgGrad}; color: ${textCol};">
-                                    <div class="qty-badge ${isLow ? 'qty-low' : ''}">${qty}</div>
-                                    ${firstLetter}
-                                </div>
-                                <div class="shelf-item-name">${item.name}</div>
-                                ${paramSubtitle}
-                                <div class="shelf-item-price" style="margin-top: 4px;">₹${parseFloat(item.msp || 0).toFixed(2)}</div>
-                            </div>`;
-                    });
-                    html += `</div><div class="shelf-board"></div></div>`;
-                });
-            });
+            container.innerHTML = htmlArr.join('');
+            document.getElementById('dash-total').innerText = totalItems;
+            document.getElementById('dash-low').innerText = lowStock;
         });
-
-        container.innerHTML = html;
-        document.getElementById('dash-total').innerText = totalItems;
-        document.getElementById('dash-low').innerText = lowStock;
     }
+       
 
     // --- MODAL CONTROLLERS ---
     function openItemDetailsModal(docId) {
@@ -642,74 +665,107 @@
     }
     function closeItemDetailsModal() { document.getElementById('item-details-modal').style.display = 'none'; }
 
-    // --- BLUEPRINT AUTO-LEARNING LOGIC ---
+  // --- BLUEPRINT AUTO-LEARNING LOGIC (Select + Prompt) ---
     function getCombinedTaxonomy() { return [...masterTaxonomyList, ...localShopTaxonomy]; }
 
+    window.handleDropdownChange = function(level, paramKey = null) {
+        let selectEl = paramKey ? document.getElementById(`bp-param-${paramKey}`) : document.getElementById(`bp-${level}`);
+        
+        if (selectEl.value === 'ADD_NEW') {
+            let newVal = prompt(`Enter New ${level.toUpperCase()} (नया दर्ज करें):`);
+            if (newVal) {
+                newVal = newVal.trim().toUpperCase();
+                let exists = false;
+                for (let i = 0; i < selectEl.options.length; i++) { if (selectEl.options[i].value === newVal) exists = true; }
+                
+                if (exists) {
+                    alert("⚠️ ALREADY EXISTS! (पहले से मौजूद है!)"); selectEl.value = "";
+                } else {
+                    const newOpt = new Option(newVal, newVal);
+                    selectEl.add(newOpt, selectEl.options[1]); 
+                    selectEl.value = newVal;
+                }
+            } else { selectEl.value = ""; }
+        }
+
+        if (level === 'dept') updateCatDropdown();
+        if (level === 'cat') updateSubcatDropdown();
+        if (level === 'subcat') renderSmartTemplate();
+    };
+
     function populateDeptDropdown() {
-        const dlDept = document.getElementById('dl-dept'); dlDept.innerHTML = '';
+        const select = document.getElementById('bp-dept'); 
+        select.innerHTML = '<option value="">Select (चुनें)...</option><option value="ADD_NEW" style="color:var(--primary); font-weight:bold;">+ Add New (नया जोड़ें)</option>';
         const uniqueDepts = [...new Set(getCombinedTaxonomy().map(i => i.dept).filter(Boolean))];
-        uniqueDepts.sort().forEach(d => { dlDept.innerHTML += `<option value="${d}">`; });
+        uniqueDepts.sort().forEach(d => { select.innerHTML += `<option value="${d}">${d}</option>`; });
     }
 
     function updateCatDropdown() {
         const dept = document.getElementById('bp-dept').value;
-        const dlCat = document.getElementById('dl-cat'); dlCat.innerHTML = '';
-        const catInput = document.getElementById('bp-cat'); const subcatInput = document.getElementById('bp-subcat');
+        const catSelect = document.getElementById('bp-cat'); const subcatSelect = document.getElementById('bp-subcat');
         document.getElementById('bp-dynamic-params').style.display = 'none';
-        if(!dept) { catInput.disabled = true; subcatInput.disabled = true; return; }
         
-        catInput.disabled = false; subcatInput.disabled = true;
+        catSelect.innerHTML = '<option value="">Select (चुनें)...</option><option value="ADD_NEW" style="color:var(--primary); font-weight:bold;">+ Add New (नया जोड़ें)</option>';
+        subcatSelect.innerHTML = '<option value="">Select (चुनें)...</option>';
+        
+        if(!dept || dept === 'ADD_NEW') { catSelect.disabled = true; subcatSelect.disabled = true; return; }
+        
+        catSelect.disabled = false; subcatSelect.disabled = true;
         const uniqueCats = [...new Set(getCombinedTaxonomy().filter(i => i.dept === dept).map(i => i.cat).filter(Boolean))];
-        uniqueCats.sort().forEach(c => { dlCat.innerHTML += `<option value="${c}">`; });
+        uniqueCats.sort().forEach(c => { catSelect.innerHTML += `<option value="${c}">${c}</option>`; });
     }
 
     function updateSubcatDropdown() {
         const dept = document.getElementById('bp-dept').value; const cat = document.getElementById('bp-cat').value;
-        const dlSubcat = document.getElementById('dl-subcat'); dlSubcat.innerHTML = '';
-        const subcatInput = document.getElementById('bp-subcat');
-        if(!cat) { subcatInput.disabled = true; return; }
+        const subcatSelect = document.getElementById('bp-subcat');
         
-        subcatInput.disabled = false;
+        subcatSelect.innerHTML = '<option value="">Select (चुनें)...</option><option value="ADD_NEW" style="color:var(--primary); font-weight:bold;">+ Add New (नया जोड़ें)</option>';
+        if(!cat || cat === 'ADD_NEW') { subcatSelect.disabled = true; return; }
+        
+        subcatSelect.disabled = false;
         const uniqueSubcats = [...new Set(getCombinedTaxonomy().filter(i => i.dept === dept && i.cat === cat).map(i => i.subcat).filter(Boolean))];
-        uniqueSubcats.sort().forEach(sc => { dlSubcat.innerHTML += `<option value="${sc}">`; });
+        uniqueSubcats.sort().forEach(sc => { subcatSelect.innerHTML += `<option value="${sc}">${sc}</option>`; });
     }
 
     function renderSmartTemplate() {
         const dept = document.getElementById('bp-dept').value; const cat = document.getElementById('bp-cat').value; const subcat = document.getElementById('bp-subcat').value;
         const container = document.getElementById('bp-dynamic-params'); container.innerHTML = "";
-        if(!subcat) { container.style.display = 'none'; return; }
+        if(!subcat || subcat === 'ADD_NEW') { container.style.display = 'none'; return; }
         
+        let params = [];
         const rule = getCombinedTaxonomy().find(i => i.dept === dept && i.cat === cat && i.subcat === subcat);
-        if(!rule) return; 
-
-        if(rule.unit) { document.getElementById('bp-unit').value = rule.unit.toUpperCase(); }
-        if(!rule.param) { container.style.display = 'none'; return; }
-        
-        const params = rule.param.split(',').map(p => p.trim()).filter(p => p);
-        if(params.length > 0) {
-            container.style.display = 'block';
-            let html = '<div class="grid-2" id="params-grid">';
-            params.forEach(key => {
-                const cleanKeyId = key.replace(/[^a-zA-Z0-9]/g, '_');
-                html += `<div><label style="color:#0369a1;">${key}</label><input type="text" id="bp-param-${cleanKeyId}" class="modal-input" list="dl-${cleanKeyId}" oninput="forceUppercase(this)" style="margin-bottom:0;" data-key="${key}"></div>`;
-            });
-            html += '</div>';
-            container.innerHTML = html;
+        if(rule) {
+            if(rule.unit) { document.getElementById('bp-unit').value = rule.unit.toUpperCase(); }
+            if(rule.param) { params = rule.param.split(',').map(p => p.trim()).filter(p => p); }
         }
+        
+        container.style.display = 'block';
+        container.innerHTML = '<div class="grid-2" id="params-grid"></div>';
+        if(params.length > 0) { params.forEach(key => injectParamSelect(key)); }
+    }
+
+    function injectParamSelect(key) {
+        const grid = document.getElementById('params-grid');
+        const cleanKeyId = key.replace(/[^a-zA-Z0-9]/g, '_');
+        if(document.getElementById(`bp-param-${cleanKeyId}`)) return; 
+        
+        let optionsHtml = `<option value="">Select ${key}...</option><option value="ADD_NEW" style="color:var(--primary); font-weight:bold;">+ Add New (नया जोड़ें)</option>`;
+        if(savedShopParams[key]) {
+            savedShopParams[key].sort().forEach(val => { optionsHtml += `<option value="${val}">${val}</option>`; });
+        }
+        grid.innerHTML += `<div><label style="color:#0369a1;">${key}</label><select id="bp-param-${cleanKeyId}" class="modal-input" style="margin-bottom:0;" data-key="${key}" onchange="handleDropdownChange('param', '${cleanKeyId}')">${optionsHtml}</select></div>`;
     }
 
     function addNewParameterUI() {
-        const container = document.getElementById('bp-dynamic-params');
-        container.style.display = 'block';
-        let grid = document.getElementById('params-grid');
-        if(!grid) { container.innerHTML = '<div class="grid-2" id="params-grid"></div>'; grid = document.getElementById('params-grid'); }
+        const container = document.getElementById('bp-dynamic-params'); container.style.display = 'block';
+        if(!document.getElementById('params-grid')) { container.innerHTML = '<div class="grid-2" id="params-grid"></div>'; }
 
-        const paramName = prompt("Enter new parameter name (e.g., COLOR, RAM, MATERIAL):");
+        let paramName = prompt("Enter New Custom Parameter (नया पैरामीटर) \nEx: BRAND, COLOR, RAM:");
         if(!paramName) return;
         
         const key = paramName.trim().toUpperCase(); const cleanKeyId = key.replace(/[^a-zA-Z0-9]/g, '_');
-        if(document.getElementById(`bp-param-${cleanKeyId}`)) return alert("Parameter already exists!");
-        grid.innerHTML += `<div><label style="color:#10b981;">${key} (New)</label><input type="text" id="bp-param-${cleanKeyId}" class="modal-input" list="dl-${cleanKeyId}" oninput="forceUppercase(this)" style="margin-bottom:0; border-color:#10b981;" data-key="${key}"></div>`;
+        if(document.getElementById(`bp-param-${cleanKeyId}`)) return alert("⚠️ ALREADY EXISTS! (पहले से मौजूद है!)");
+        injectParamSelect(key);
     }
 
     function updateProfitCalculations() {
@@ -746,11 +802,17 @@
                     document.getElementById('bp-cat').value = item.category; updateSubcatDropdown();
                     if(item.subCategory) {
                         document.getElementById('bp-subcat').value = item.subCategory; renderSmartTemplate();
-                        if(item.customParams) {
+                       if(item.customParams) {
                             Object.keys(item.customParams).forEach(key => {
                                 const cleanKeyId = key.replace(/[^a-zA-Z0-9]/g, '_');
+                                if(!document.getElementById(`bp-param-${cleanKeyId}`)) injectParamSelect(key);
                                 const el = document.getElementById(`bp-param-${cleanKeyId}`);
-                                if(el) el.value = item.customParams[key];
+                                if(el) {
+                                    let exists = false;
+                                    for(let i=0; i<el.options.length; i++) { if(el.options[i].value === item.customParams[key]) exists = true; }
+                                    if(!exists) el.add(new Option(item.customParams[key], item.customParams[key]));
+                                    el.value = item.customParams[key];
+                                }
                             });
                         }
                     }
@@ -786,10 +848,10 @@
 
         const btn = document.getElementById('btn-save-blueprint'); btn.innerText = "SAVING..."; btn.disabled = true;
         let customParams = {}; let needToUpdateGlobalParams = false;
-        const paramInputs = document.querySelectorAll('#bp-dynamic-params input');
-        paramInputs.forEach(input => {
-            const realKey = input.getAttribute('data-key'); const val = input.value.trim();
-            if(val && realKey) {
+      const paramSelects = document.querySelectorAll('#bp-dynamic-params select');
+        paramSelects.forEach(select => {
+            const realKey = select.getAttribute('data-key'); const val = select.value.trim();
+            if(val && val !== 'ADD_NEW' && realKey) {
                 customParams[realKey] = val;
                 if(!savedShopParams[realKey]) savedShopParams[realKey] = [];
                 if(!savedShopParams[realKey].includes(val)) { savedShopParams[realKey].push(val); needToUpdateGlobalParams = true; }
