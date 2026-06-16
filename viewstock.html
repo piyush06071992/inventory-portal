@@ -424,16 +424,9 @@
         } catch(e) { console.error("Error loading params", e); }
     }
 
-    function rebuildDatalists() {
-        const container = document.getElementById('dynamic-datalists');
-        container.innerHTML = "";
-        for (const [key, values] of Object.entries(savedShopParams)) {
-            const cleanKeyId = key.replace(/[^a-zA-Z0-9]/g, '_');
-            const dl = document.createElement('datalist');
-            dl.id = `dl-${cleanKeyId}`;
-            values.forEach(val => { dl.innerHTML += `<option value="${val}">`; });
-            container.appendChild(dl);
-        }
+  function rebuildDatalists() {
+        // Datalists are deprecated in favor of intelligent Select Dropdowns
+        // Leaving empty block to prevent legacy call errors from loadShopParams
     }
 
     async function loadBranches() {
