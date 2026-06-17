@@ -121,18 +121,9 @@
             <i class="bi bi-exclamation-triangle" style="font-size:24px; opacity:0.5;"></i>
         </div>
         
-        <div class="filter-row">
-            <input type="text" id="search-input" class="filter-input" placeholder="Search barcode/name..." oninput="renderInventory()">
-            <select id="filter-branch" class="filter-input" onchange="fetchInventory()"></select>
-            <select id="filter-main-dept" class="filter-input" onchange="updateMainFilters('dept')">
-                <option value="ALL">All Departments</option>
-            </select>
-            <select id="filter-main-cat" class="filter-input" onchange="updateMainFilters('cat')" disabled>
-                <option value="ALL">All Categories</option>
-            </select>
-            <select id="filter-main-subcat" class="filter-input" onchange="renderInventory()" disabled>
-                <option value="ALL">All Sub-Categories</option>
-            </select>
+  <div class="filter-row" style="padding: 10px;">
+            <input type="text" id="search-input" class="filter-input" placeholder="🔍 Search barcode or item name..." oninput="renderInventory()" style="font-size: 14px; padding: 10px;">
+            <select id="filter-branch" class="filter-input" onchange="fetchInventory()" style="font-size: 14px; padding: 10px; max-width: 180px;"></select>
         </div>
     </div>
 
@@ -473,55 +464,17 @@
         try {
             const snap = await firebase.firestore().collection('companies').doc(activeUserPhone).collection('branches').doc(branchId).collection('inventory').get();
             rawInventory = [];
-            snap.forEach(doc => { rawInventory.push({ docId: doc.id, ...doc.data() }); });
+       snap.forEach(doc => { rawInventory.push({ docId: doc.id, ...doc.data() }); });
             
-            initMainFilters();
+            // Filters removed in favor of drill-down UI
             renderInventory();
         } catch(e) { alert("Error: " + e.message); }
     }
 
-    // --- UI FILTERS & ULTRA-FAST LIST VIEW RENDER ---
-    function initMainFilters() {
-        const deptSelect = document.getElementById('filter-main-dept');
-        deptSelect.innerHTML = '<option value="ALL">All Departments</option>';
-        const uniqueDepts = [...new Set(rawInventory.map(item => item.department).filter(Boolean))];
-        uniqueDepts.sort().forEach(d => { deptSelect.innerHTML += `<option value="${d}">${d}</option>`; });
-        updateMainFilters('dept');
-    }
-
-    function updateMainFilters(source) {
-        const dept = document.getElementById('filter-main-dept').value;
-        const catSelect = document.getElementById('filter-main-cat');
-        const subcatSelect = document.getElementById('filter-main-subcat');
-
-        if(source === 'dept') {
-            catSelect.innerHTML = '<option value="ALL">All Categories</option>';
-            subcatSelect.innerHTML = '<option value="ALL">All Sub-Categories</option>';
-            if(dept === 'ALL') { catSelect.disabled = true; subcatSelect.disabled = true; } 
-            else {
-                catSelect.disabled = false;
-                const uniqueCats = [...new Set(rawInventory.filter(i => i.department === dept).map(i => i.category).filter(Boolean))];
-                uniqueCats.sort().forEach(c => { catSelect.innerHTML += `<option value="${c}">${c}</option>`; });
-            }
-        }
-        if(source === 'cat' || source === 'dept') {
-            subcatSelect.innerHTML = '<option value="ALL">All Sub-Categories</option>';
-            const cat = catSelect.value;
-            if(cat === 'ALL' || catSelect.disabled) { subcatSelect.disabled = true; } 
-            else {
-                subcatSelect.disabled = false;
-                const uniqueSubcats = [...new Set(rawInventory.filter(i => i.department === dept && i.category === cat).map(i => i.subCategory).filter(Boolean))];
-                uniqueSubcats.sort().forEach(sc => { subcatSelect.innerHTML += `<option value="${sc}">${sc}</option>`; });
-            }
-        }
-        if(source !== 'init') renderInventory();
-    }
+    // --- ULTRA-FAST LIST VIEW RENDER ---
 window.renderInventory = function() {
         const container = document.getElementById('inventory-racks-container');
         const query = document.getElementById('search-input').value.toLowerCase().trim();
-        const fDept = document.getElementById('filter-main-dept').value;
-        const fCat = document.getElementById('filter-main-cat').value;
-        const fSubcat = document.getElementById('filter-main-subcat').value;
         
         // MAGIC TEXT CLEANER: Scrubs out any Hindi brackets from the DB dynamically
         const cleanStr = (str) => str ? str.replace(/\s*\([^)]*\)/g, '').trim() : "Unknown";
@@ -532,9 +485,6 @@ window.renderInventory = function() {
             let filtered = [];
             for (let i = 0; i < rawInventory.length; i++) {
                 const item = rawInventory[i];
-                if(fDept !== 'ALL' && item.department !== fDept) continue;
-                if(fCat !== 'ALL' && item.category !== fCat) continue;
-                if(fSubcat !== 'ALL' && item.subCategory !== fSubcat) continue;
                 
                 // If searching, ignore folders and show matching items
                 if (query) {
@@ -624,21 +574,32 @@ window.renderInventory = function() {
                     groupedList[key]++;
                 });
 
-                const keys = Object.keys(groupedList).sort();
-                htmlArr.push(`<div style="display:flex; flex-direction:column; gap:6px;">`);
+              const keys = Object.keys(groupedList).sort();
+                htmlArr.push(`<div style="display:flex; flex-direction:column; gap:10px;">`);
                 
-                keys.forEach(k => {
+                // Vibrant, modern solid color palette for the strips
+                const stripColors = [
+                    { bg: '#3b82f6', hover: '#2563eb', text: '#ffffff', badgeBg: 'rgba(255,255,255,0.2)', icon: '#93c5fd' }, // Blue
+                    { bg: '#10b981', hover: '#059669', text: '#ffffff', badgeBg: 'rgba(255,255,255,0.2)', icon: '#6ee7b7' }, // Emerald
+                    { bg: '#8b5cf6', hover: '#7c3aed', text: '#ffffff', badgeBg: 'rgba(255,255,255,0.2)', icon: '#c4b5fd' }, // Purple
+                    { bg: '#f59e0b', hover: '#d97706', text: '#ffffff', badgeBg: 'rgba(255,255,255,0.2)', icon: '#fcd34d' }, // Amber
+                    { bg: '#ec4899', hover: '#db2777', text: '#ffffff', badgeBg: 'rgba(255,255,255,0.2)', icon: '#fbcfe8' }, // Pink
+                    { bg: '#14b8a6', hover: '#0d9488', text: '#ffffff', badgeBg: 'rgba(255,255,255,0.2)', icon: '#5eead4' }  // Teal
+                ];
+
+                keys.forEach((k, index) => {
                     const cleanK = cleanStr(k);
-                    // Dark UI exact match for the image you provided
+                    const palette = stripColors[index % stripColors.length];
+                    
                     htmlArr.push(`
-                        <div onclick="drillDown('${k}')" style="background:#1e293b; color:white; padding:15px 20px; border-radius:6px; display:flex; justify-content:space-between; align-items:center; cursor:pointer; font-weight:900; font-size:13px; text-transform:uppercase; box-shadow:0 2px 4px rgba(0,0,0,0.1); transition:0.1s;" onmouseover="this.style.background='#334155'" onmouseout="this.style.background='#1e293b'">
-                            <div style="display:flex; align-items:center; gap:12px; letter-spacing:0.5px;">
-                                <i class="bi bi-folder-fill" style="color:#60a5fa; font-size:18px;"></i>
+                        <div onclick="drillDown('${k}')" style="background:${palette.bg}; color:${palette.text}; padding:18px 20px; border-radius:12px; display:flex; justify-content:space-between; align-items:center; cursor:pointer; font-weight:900; font-size:15px; text-transform:uppercase; box-shadow:0 4px 6px rgba(0,0,0,0.05); transition:0.2s;" onmouseover="this.style.background='${palette.hover}'; this.style.transform='translateY(-2px)';" onmouseout="this.style.background='${palette.bg}'; this.style.transform='none';">
+                            <div style="display:flex; align-items:center; gap:15px; letter-spacing:0.5px;">
+                                <i class="bi bi-folder-fill" style="color:${palette.icon}; font-size:24px;"></i>
                                 ${cleanK}
                             </div>
                             <div style="display:flex; align-items:center; gap:15px;">
-                                <span style="background:rgba(255,255,255,0.15); padding:3px 10px; border-radius:12px; font-size:10px;">${groupedList[k]} Options</span>
-                                <i class="bi bi-caret-down-fill" style="opacity:0.5; font-size:12px;"></i>
+                                <span style="background:${palette.badgeBg}; padding:6px 14px; border-radius:12px; font-size:12px; font-weight:800;">${groupedList[k]} Options</span>
+                                <i class="bi bi-caret-right-fill" style="opacity:0.8; font-size:16px;"></i>
                             </div>
                         </div>
                     `);
