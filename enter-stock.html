@@ -26,7 +26,7 @@
         label { display: block; font-size: 12px; font-weight: 700; color: #64748b; margin-bottom: 4px; text-transform: uppercase; }
         input, select { width: 100%; padding: 14px; margin-bottom: 12px; border: 2px solid #e2e8f0; border-radius: 10px; font-size: 15px; box-sizing: border-box; background: white; font-weight: 600; color: var(--text);}
         input:focus, select:focus { border-color: var(--navy); outline: none; }
-        input[disabled], select[disabled] { background-color: #f1f5f9; color: #94a3b8; cursor: not-allowed; }
+        input[disabled], select[disabled] { background-color: #e2e8f0; color: #64748b; cursor: not-allowed; opacity: 0.8; }
         
         .grid-2 { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
         
@@ -44,10 +44,9 @@
         .cart-item p { margin: 0; font-size: 12px; color: #64748b; line-height: 1.4;}
         .btn-remove { background: #fee2e2; color: #ef4444; border: none; padding: 10px 14px; border-radius: 8px; font-weight: bold; cursor: pointer; }
         
-    .tax-split-box { background: #e0f2fe; border: 1px dashed #7dd3fc; padding: 10px; border-radius: 8px; font-size: 12px; font-weight: 600; color: #0369a1; text-align: center; margin-bottom: 12px; display: none;}
+        .tax-split-box { background: #e0f2fe; border: 1px dashed #7dd3fc; padding: 10px; border-radius: 8px; font-size: 12px; font-weight: 600; color: #0369a1; text-align: center; margin-bottom: 12px; display: none;}
         .param-row { display: flex; gap: 8px; margin-bottom: 10px; align-items: center; }
         
-        /* Quick-Select Shelf */
         .quick-shelf { display: flex; overflow-x: auto; gap: 10px; padding: 10px 0; margin-bottom: 15px; scroll-snap-type: x mandatory; }
         .quick-shelf::-webkit-scrollbar { height: 4px; }
         .quick-shelf::-webkit-scrollbar-thumb { background: #cbd5e1; border-radius: 4px; }
@@ -111,20 +110,19 @@
             <i class="bi bi-qr-code-scan"></i> SCAN BARCODE
         </button>
         
- <label>Search Product / Barcode</label>
+        <label>Search Product / Barcode</label>
         <div style="position: relative;">
             <input type="text" id="barcode" placeholder="Scan Barcode or Type Name..." oninput="handleSmartSearch()" autocomplete="off">
             <div id="search-suggestions" style="display: none; position: absolute; top: 100%; left: 0; width: 100%; background: white; border: 1px solid #cbd5e1; border-radius: 8px; box-shadow: 0 10px 15px -3px rgba(0,0,0,0.1); max-height: 200px; overflow-y: auto; z-index: 50;"></div>
         </div>
         
         <div class="quick-shelf" id="quick-shelf-container">
-            <!-- Frequent Items Populated by JS -->
-        </div>
+            </div>
         
         <label>Product Name</label>
         <input type="text" id="item-name" placeholder="Item Name">
         
-     <div class="grid-2">
+        <div class="grid-2">
             <div>
                 <label>Category</label>
                 <select id="category" onchange="handleCategoryChange()"><option value="">Loading...</option></select>
@@ -147,12 +145,13 @@
             </select>
         </div>
 
-        <div id="dynamic-params"></div>         <datalist id="saved-param-keys"></datalist>
+        <div id="dynamic-params"></div>
+        <datalist id="saved-param-keys"></datalist>
         <button class="btn-main" style="background:#f1f5f9; color:#475569; border: 1px dashed #cbd5e1; margin-bottom: 15px;" onclick="addParam()">
             <i class="bi bi-node-plus"></i> Add Custom Parameter (Size, Color, etc.)
         </button>
 
-       <label>Expiry Date (Optional)</label>
+        <label>Expiry Date (Optional)</label>
         <input type="date" id="expiry-date" style="color: #475569;">
 
         <div class="grid-2">
@@ -193,7 +192,7 @@
         </div>
         <h3 id="grand-total" style="text-align: right; color: var(--navy);">Total: ₹0.00</h3>
         
-     <button class="btn-main btn-emerald" onclick="saveWholeBill()" id="save-bill-btn" style="margin-top: 15px;">
+        <button class="btn-main btn-emerald" onclick="saveWholeBill()" id="save-bill-btn" style="margin-top: 15px;">
             <i class="bi bi-cloud-arrow-up-fill"></i> SAVE WHOLE BILL
         </button>
     </div>
@@ -224,18 +223,25 @@
 </div>
 
 <script>
- let activeUserPhone = localStorage.getItem("activeUserPhone");
+    let activeUserPhone = localStorage.getItem("activeUserPhone");
     let assignedBranch = localStorage.getItem("assignedBranch");
     let currentBillItems = [];
     
- let html5QrCode;
+    let html5QrCode;
     let currentFacingMode = "environment"; 
     let isRetryingScanner = false; 
-   let savedShopParams = {}; // Master memory for custom parameters
-    let globalProductCatalog = []; // Memory for Smart Search
+    let savedShopParams = {}; 
+    let globalProductCatalog = []; 
 
- let shopTaxonomy = {}; // Memory for Category -> Subcategory hierarchy
-    let taxonomyChanged = false; // Tracks if we learned a new category
+    let shopTaxonomy = {}; 
+    let taxonomyChanged = false; 
+
+    function setFormLockState(isLocked) {
+        document.getElementById('item-name').disabled = isLocked;
+        document.getElementById('category').disabled = isLocked;
+        document.getElementById('subcategory').disabled = isLocked;
+        document.getElementById('unit').disabled = isLocked;
+    }
 
     async function loadShopSettings() {
         try {
@@ -248,22 +254,19 @@
         } catch (e) { console.error("Error loading params", e); }
     }
 
-document.addEventListener('DOMContentLoaded', () => {
+    document.addEventListener('DOMContentLoaded', () => {
         firebase.auth().onAuthStateChanged(async (user) => {
             if (!user) return window.location.replace('/login.html');
             
-            // OWNER RECOVERY: Rebuild session from email if owner is logged in
             if (!activeUserPhone && user.email && user.email.includes('@')) {
                 activeUserPhone = user.email.split('@')[0];
                 localStorage.setItem("activeUserPhone", activeUserPhone);
             }
 
             if (activeUserPhone) {
-                // Show Admin Security Panel if they are the owner/admin
                 if (!assignedBranch || assignedBranch === "admin") {
                     document.getElementById('admin-auth-card').style.display = 'block';
                 } else {
-                    // STAFF SECURITY CHECK: If not Admin, verify permission in real-time
                     const db = firebase.firestore();
                     db.collection('companies').doc(activeUserPhone).collection('staff').doc(localStorage.getItem("activeStaffId"))
                     .onSnapshot(doc => {
@@ -282,7 +285,6 @@ document.addEventListener('DOMContentLoaded', () => {
         });
     });
 
-   // --- SMART SEARCH CATALOG LOADER ---
     async function loadProductCatalog() {
         try {
             const db = firebase.firestore();
@@ -291,7 +293,7 @@ document.addEventListener('DOMContentLoaded', () => {
             snap.forEach(doc => {
                 globalProductCatalog.push({ id: doc.id, ...doc.data() });
             });
-            renderQuickShelf(); // Build the shelf immediately
+            renderQuickShelf(); 
         } catch(e) { console.error("Error loading catalog for search", e); }
     }
 
@@ -306,8 +308,6 @@ document.addEventListener('DOMContentLoaded', () => {
 
         shelf.innerHTML = '';
         const colors = ['#3b82f6', '#10b981', '#f43f5e', '#8b5cf6', '#eab308'];
-        
-        // Sort items by Most Recently Updated so active inventory stays at the front
         const sortedCatalog = [...globalProductCatalog].sort((a,b) => new Date(b.lastUpdated || 0) - new Date(a.lastUpdated || 0)).slice(0, 20);
 
         sortedCatalog.forEach((p, i) => {
@@ -323,7 +323,6 @@ document.addEventListener('DOMContentLoaded', () => {
         });
     }
 
-// --- ADMIN AUTHORIZATION LOGIC ---
     let globalAuthStaff = [];
     let globalAuthBranches = {};
 
@@ -333,7 +332,6 @@ document.addEventListener('DOMContentLoaded', () => {
         document.getElementById('auth-staff-list').innerHTML = `<p style="text-align:center; color:#64748b; font-size:13px; margin-top:20px;">Loading staff...</p>`;
         
         try {
-            // 1. Fetch Branches for filter
             const branchSnap = await db.collection('companies').doc(activeUserPhone).collection('branches').get();
             const bFilter = document.getElementById('auth-branch-filter');
             bFilter.innerHTML = '<option value="">All Branches</option>';
@@ -342,7 +340,6 @@ document.addEventListener('DOMContentLoaded', () => {
                 bFilter.innerHTML += `<option value="${doc.data().branchId}">${doc.data().branchName}</option>`;
             });
 
-            // 2. Fetch Roles for filter
             const compDoc = await db.collection('companies').doc(activeUserPhone).get();
             const rFilter = document.getElementById('auth-role-filter');
             rFilter.innerHTML = '<option value="">All Roles</option>';
@@ -350,7 +347,6 @@ document.addEventListener('DOMContentLoaded', () => {
                 compDoc.data().roles.forEach(r => rFilter.innerHTML += `<option value="${r}">${r}</option>`);
             }
 
-            // 3. Fetch Active Staff
             const staffSnap = await db.collection('companies').doc(activeUserPhone).collection('staff').where('status', '==', 'Active').get();
             globalAuthStaff = [];
             staffSnap.forEach(doc => {
@@ -376,12 +372,10 @@ document.addEventListener('DOMContentLoaded', () => {
 
         let count = 0;
         globalAuthStaff.forEach(stf => {
-            // Multi-branch array support filter
             if (bFilter) {
                 const stfBranches = Array.isArray(stf.assignedBranch) ? stf.assignedBranch : [stf.assignedBranch];
                 if (!stfBranches.includes(bFilter)) return;
             }
-            // Role Filter
             if (rFilter && stf.role !== rFilter) return;
 
             count++;
@@ -406,24 +400,21 @@ document.addEventListener('DOMContentLoaded', () => {
     async function toggleStockAuth(staffId, newState) {
         try {
             const db = firebase.firestore();
-            // Updates specifically the canEnterStock permission inside the permissions object
             await db.collection('companies').doc(activeUserPhone).collection('staff').doc(staffId).set({
                 permissions: { canEnterStock: newState }
             }, { merge: true });
             
-            // Update local memory to change the button color instantly
             const stf = globalAuthStaff.find(s => s.id === staffId);
             if (stf) {
                 if (!stf.permissions) stf.permissions = {};
                 stf.permissions.canEnterStock = newState;
             }
-            renderAuthList(); // Refresh the list
+            renderAuthList(); 
         } catch (e) {
             alert("Error updating permissions: " + e.message);
         }
     }
 
-    // --- 1. SMART RESPONSIVE SCANNER ---
     function startScanner() {
         document.getElementById('start-scan-btn').style.display = 'none';
         document.getElementById('scanner-container').style.display = 'block';
@@ -441,9 +432,8 @@ document.addEventListener('DOMContentLoaded', () => {
                 document.getElementById('barcode').value = decodedText;
                 stopScanner(); lookupProduct(); 
             },
-            (errorMessage) => { /* Ignore standard stream noise */ }
+            (errorMessage) => { }
         ).catch(err => {
-            // LAPTOP FIX: If "environment" (Back camera) fails, auto-flip to "user" (Webcam)
             if (currentFacingMode === "environment" && !isRetryingScanner) {
                 console.warn("Back camera failed, trying front/webcam...");
                 currentFacingMode = "user";
@@ -479,8 +469,6 @@ document.addEventListener('DOMContentLoaded', () => {
         }
     }
 
-    // --- 2. DYNAMIC PARAMETERS ---
-  // --- 2. DYNAMIC PARAMETERS (UPGRADED TO SMART DROPDOWNS) ---
     function addParam(key = "", val = "") {
         const div = document.createElement('div');
         div.className = 'param-row';
@@ -535,33 +523,26 @@ document.addEventListener('DOMContentLoaded', () => {
         }
     }
 
-    // --- 3. LOADERS & MEMORY ---
     async function loadBranches() {
         const db = firebase.firestore();
         const select = document.getElementById('branch-select');
         select.innerHTML = '<option value="">Select Branch</option>';
         
         const snap = await db.collection('companies').doc(activeUserPhone).collection('branches').get();
-        
-        // 1. Determine allowed branches (Handle both single string and array/JSON string)
         let allowedBranches = [];
         if (assignedBranch && assignedBranch !== "admin") {
             try {
-                // If it's a JSON array string, parse it; otherwise treat as single ID
                 allowedBranches = assignedBranch.startsWith('[') ? JSON.parse(assignedBranch) : [assignedBranch];
             } catch(e) { allowedBranches = [assignedBranch]; }
         }
 
-        // 2. Populate the dropdown
         snap.forEach(doc => {
             const bId = doc.data().branchId;
-            // Only add to dropdown if admin (no restrictions) OR if branch is in allowed list
             if (allowedBranches.length === 0 || allowedBranches.includes(bId)) {
                 select.innerHTML += `<option value="${bId}">${doc.data().branchName}</option>`;
             }
         });
 
-        // 3. Smart Lock Logic: Disable ONLY if exactly one branch is assigned
         if (assignedBranch && assignedBranch !== "admin" && allowedBranches.length === 1) {
             select.value = allowedBranches[0];
             select.disabled = true;
@@ -578,7 +559,7 @@ document.addEventListener('DOMContentLoaded', () => {
         snap.forEach(doc => select.innerHTML += `<option value="${doc.data().id}">${doc.data().businessName}</option>`);
     }
 
-function handleDropdownAdd(elemId) {
+    function handleDropdownAdd(elemId) {
         const el = document.getElementById(elemId);
         if(el.value === 'ADD_NEW') {
             const newVal = prompt(`Enter new ${elemId}:`);
@@ -589,12 +570,11 @@ function handleDropdownAdd(elemId) {
         }
     }
 
-    // --- PHASE 3: TAXONOMY (HIERARCHY) LOGIC ---
     function populateCategoryDropdown() {
         const catSelect = document.getElementById('category');
         catSelect.innerHTML = '<option value="">Select Category...</option>';
         for (const cat in shopTaxonomy) {
-            catSelect.innerHTML += `<option value="${cat}">${cat}</option>`;
+            catSelect.innerHTML += `<option value="${cat}">${cat}</option>';
         }
         catSelect.innerHTML += `<option value="ADD_NEW" style="color:var(--emerald); font-weight:bold;">+ Add New Category</option>`;
     }
@@ -612,7 +592,6 @@ function handleDropdownAdd(elemId) {
             } else { catSelect.selectedIndex = 0; }
         }
         
-        // Populate Subcategories automatically
         subSelect.innerHTML = '<option value="">Select Sub-Category...</option>';
         if (catSelect.value && catSelect.value !== 'ADD_NEW' && shopTaxonomy[catSelect.value]) {
             shopTaxonomy[catSelect.value].forEach(sub => {
@@ -635,18 +614,17 @@ function handleDropdownAdd(elemId) {
                     shopTaxonomy[catSelect.value].push(newSub);
                     taxonomyChanged = true;
                 }
-                handleCategoryChange(); // Refresh list to show new item
+                handleCategoryChange(); 
                 subSelect.value = newSub;
             } else { subSelect.selectedIndex = 0; }
         }
     }
 
-  // --- SMART SEARCH LOGIC ---
     function handleSmartSearch() {
         const query = document.getElementById('barcode').value.trim().toLowerCase();
         const suggestionsBox = document.getElementById('search-suggestions');
         
-        // Instantly clear the form so old item data doesn't mix with a new scan/search
+        setFormLockState(false); 
         ['item-name', 'expiry-date', 'qty', 'cost-per', 'total-cost', 'profit-pct', 'msp'].forEach(id => document.getElementById(id).value = "");
         document.getElementById('category').selectedIndex = 0;
         document.getElementById('subcategory').innerHTML = '<option value="">Select Category First</option>';
@@ -657,11 +635,10 @@ function handleDropdownAdd(elemId) {
         
         if (query.length < 2) { suggestionsBox.style.display = 'none'; return; }
         
-        // Search by Product Name or Barcode
         const matches = globalProductCatalog.filter(p => 
             (p.name && p.name.toLowerCase().includes(query)) || 
             (p.id && p.id.toLowerCase().includes(query))
-        ).slice(0, 10); // Show top 10 results
+        ).slice(0, 10);
         
         if (matches.length === 0) { suggestionsBox.style.display = 'none'; return; }
         
@@ -678,19 +655,18 @@ function handleDropdownAdd(elemId) {
             div.onclick = () => {
                 document.getElementById('barcode').value = match.id;
                 suggestionsBox.style.display = 'none';
-                lookupProduct(); // Load the data
+                lookupProduct(); 
             };
             suggestionsBox.appendChild(div);
         });
         suggestionsBox.style.display = 'block';
     }
 
-    // Hide suggestions when clicking outside
     document.addEventListener('click', (e) => {
         if (e.target.id !== 'barcode') document.getElementById('search-suggestions').style.display = 'none';
     });
 
- async function lookupProduct(passedBarcode = null) {
+    async function lookupProduct(passedBarcode = null) {
         if (passedBarcode) {
             document.getElementById('barcode').value = passedBarcode;
             document.getElementById('search-suggestions').style.display = 'none';
@@ -699,9 +675,8 @@ function handleDropdownAdd(elemId) {
         const barcode = document.getElementById('barcode').value.trim();
         if (!barcode) return;
         
-        // Auto-clear UI for new scan
         document.getElementById('item-name').value = "";
-document.getElementById('category').selectedIndex = 0;
+        document.getElementById('category').selectedIndex = 0;
         document.getElementById('unit').selectedIndex = 0;
         document.getElementById('expiry-date').value = "";
         document.getElementById('qty').value = "";
@@ -717,13 +692,12 @@ document.getElementById('category').selectedIndex = 0;
             
             if (doc.exists) {
                 const data = doc.data();
-            document.getElementById('item-name').value = data.name || "";
+                document.getElementById('item-name').value = data.name || "";
                 
-                // Handle Smart Category & Subcategory Loading
                 if (data.category) {
                     if(!shopTaxonomy[data.category]) { shopTaxonomy[data.category] = []; taxonomyChanged = true; populateCategoryDropdown(); }
                     document.getElementById('category').value = data.category;
-                    handleCategoryChange(); // Triggers subcategory load
+                    handleCategoryChange(); 
                 }
                 if (data.subcategory && data.category) {
                     if(!shopTaxonomy[data.category].includes(data.subcategory)) { shopTaxonomy[data.category].push(data.subcategory); taxonomyChanged = true; handleCategoryChange(); }
@@ -734,8 +708,13 @@ document.getElementById('category').selectedIndex = 0;
                     if(!Array.from(uEl.options).some(opt => opt.value === data.unit)) uEl.add(new Option(data.unit, data.unit), 1);
                     uEl.value = data.unit;
                 }
+                if (data.currentMsp) {
+                    document.getElementById('msp').value = data.currentMsp;
+                }
+                if (data.lastCostPrice) {
+                    document.getElementById('cost-per').value = data.lastCostPrice;
+                }
                 
-                // Learn parameters from this product instantly
                 if (data.customParams) {
                     productParams = data.customParams;
                     for (const [k, v] of Object.entries(productParams)) {
@@ -743,16 +722,17 @@ document.getElementById('category').selectedIndex = 0;
                         if (v && !savedShopParams[k].includes(v)) savedShopParams[k].push(v);
                     }
                 }
+                setFormLockState(true); 
+            } else {
+                setFormLockState(false); 
             }
 
-            // Draw ALL globally known parameters on the screen automatically
             for (const key of Object.keys(savedShopParams)) {
                 addParam(key, productParams[key] || "");
             }
         } catch (e) { console.error(e); }
     }
 
-    // --- 4. CALCULATORS & GST TOGGLE ---
     function triggerTaxUpdate() {
         const t = parseFloat(document.getElementById('total-cost').value) || 0; 
         const g = parseFloat(document.getElementById('gst-rate').value) || 0;
@@ -804,27 +784,22 @@ document.getElementById('category').selectedIndex = 0;
         }
     }
 
-    // --- 5. CART & FIREBASE SAVING ---
- async function addItemToBill() {
-        // Collect Dynamic Parameters & Train Global Memory Instantly
+    async function addItemToBill() {
         let customData = {};
-        let paramsChanged = false; // Track if we learned a new parameter
+        let paramsChanged = false; 
         document.querySelectorAll('.param-row').forEach(row => {
             let key = row.querySelector('.param-name').value.trim();
             let val = row.querySelector('.param-val').value.trim();
             
-            // Only save if a valid key is selected, ignore blanks or "ADD_NEW"
             if(key && key !== "ADD_NEW") {
                 if(val && val !== "ADD_NEW") {
                     customData[key] = val;
-                    // Teach the system memory immediately
                     if(!savedShopParams[key]) { savedShopParams[key] = []; paramsChanged = true; }
                     if(!savedShopParams[key].includes(val)) { savedShopParams[key].push(val); paramsChanged = true; }
                 }
             }
         });
 
-        // ENTERPRISE CONCURRENCY: THE "TRAFFIC LIGHT" TRANSACTION
         if (paramsChanged || taxonomyChanged) {
             const db = firebase.firestore();
             const settingsRef = db.collection('companies').doc(activeUserPhone).collection('settings').doc('params');
@@ -835,7 +810,6 @@ document.getElementById('category').selectedIndex = 0;
                     let dbParams = doc.exists && doc.data().customParams ? doc.data().customParams : {};
                     let dbTaxonomy = doc.exists && doc.data().shopTaxonomy ? doc.data().shopTaxonomy : {};
 
-                    // Safely merge local staff changes INTO the master database memory
                     for (const [k, arr] of Object.entries(savedShopParams)) {
                         if (!dbParams[k]) dbParams[k] = [];
                         arr.forEach(val => { if (!dbParams[k].includes(val)) dbParams[k].push(val); });
@@ -848,7 +822,6 @@ document.getElementById('category').selectedIndex = 0;
 
                     t.set(settingsRef, { customParams: dbParams, shopTaxonomy: dbTaxonomy }, { merge: true });
                     
-                    // Update this device's local memory to match the perfectly merged server
                     savedShopParams = dbParams;
                     shopTaxonomy = dbTaxonomy;
                 });
@@ -859,7 +832,6 @@ document.getElementById('category').selectedIndex = 0;
             }
         }
 
-        // AUTO-SKU GENERATOR
         let rawBarcode = document.getElementById('barcode').value.trim();
         if (!rawBarcode) {
             rawBarcode = "SKU-" + Date.now().toString(36).toUpperCase();
@@ -876,7 +848,7 @@ document.getElementById('category').selectedIndex = 0;
             costPer: parseFloat(document.getElementById('cost-per').value) || 0, 
             totalCost: parseFloat(document.getElementById('total-cost').value) || 0,
             gstRate: parseFloat(document.getElementById('gst-rate').value) || 0, 
-           gstType: document.getElementById('gst-type').value,
+            gstType: document.getElementById('gst-type').value,
             msp: parseFloat(document.getElementById('msp').value) || 0,
             expiryDate: document.getElementById('expiry-date').value,
             customParams: customData
@@ -896,7 +868,6 @@ document.getElementById('category').selectedIndex = 0;
         currentBillItems.forEach(item => {
             grandTotal += item.totalCost;
             
-            // Format custom parameters nicely for the UI
             let paramString = "";
             for (const [key, value] of Object.entries(item.customParams)) {
                 paramString += `<span style="background:#e2e8f0; padding:2px 6px; border-radius:4px; font-size:10px; margin-right:4px;">${key}: ${value}</span>`;
@@ -921,18 +892,23 @@ document.getElementById('category').selectedIndex = 0;
 
     function removeItem(id) { currentBillItems = currentBillItems.filter(i => i.id !== id); renderCart(); }
     
-function clearItemForm() {
+    function clearItemForm() {
         ['barcode', 'item-name', 'expiry-date', 'qty', 'cost-per', 'total-cost', 'profit-pct', 'msp'].forEach(id => document.getElementById(id).value = "");
+        document.getElementById('category').selectedIndex = 0;
+        document.getElementById('subcategory').innerHTML = '<option value="">Select Category First</option>';
+        document.getElementById('unit').selectedIndex = 0;
         document.getElementById('dynamic-params').innerHTML = ""; 
         document.getElementById('tax-split').style.display = 'none';
         
-        // Auto-draw all globally known parameters so they are ready for the next item
+        setFormLockState(false); 
+        
         for (const key of Object.keys(savedShopParams)) {
             addParam(key, "");
         }
         
         document.getElementById('barcode').focus();
     }
+
     async function saveWholeBill() {
         if (currentBillItems.length === 0) return alert("Add items to the bill first.");
         const branchId = document.getElementById('branch-select').value;
@@ -962,21 +938,16 @@ function clearItemForm() {
 
             const grandTotal = currentBillItems.reduce((sum, item) => sum + item.totalCost, 0);
 
-            // Save to Supplier Transactions
             await db.collection('companies').doc(activeUserPhone).collection('suppliers').doc(supplierId).collection('transactions').add({
                 billNum: billNum, amount: grandTotal, type: 'Purchase', billImageUrl: imageUrl, date: new Date().toISOString()
             });
 
-          const batch = db.batch();
+            const batch = db.batch();
             
-            // (Settings are already safely merged via Transactions in addItemToBill, skipping here to prevent blind overwrites!)
-            
-            // Save Inventory to Branch
             for (const item of currentBillItems) {
                 const invRef = db.collection('companies').doc(activeUserPhone).collection('branches').doc(branchId).collection('inventory').doc();
                 batch.set(invRef, { ...item, supplierId, billNum, timestamp: new Date().toISOString() });
                 
-                // Save/Merge Master Product Data
                 if (item.barcode && item.barcode !== "") {
                     const masterRef = db.collection('companies').doc(activeUserPhone).collection('products_master').doc(item.barcode);
                     batch.set(masterRef, { 
