@@ -439,16 +439,62 @@
         } catch(e) { console.error("Auto-save load failed", e); }
     }
 
+    // --- SINGLE DEVICE / SESSION CONTROLLER ---
+    let mySessionId = Math.random().toString(36).substring(2, 15) + Date.now().toString(36);
+    let sessionListener = null;
+
+    async function enforceSingleDevice() {
+        const db = firebase.firestore();
+        let sessionRef;
+
+        if (activeStaffId && activeStaffId !== 'admin') {
+            sessionRef = db.collection('companies').doc(activeUserPhone).collection('staff').doc(activeStaffId);
+        } else {
+            // If the Owner is logged in
+            sessionRef = db.collection('companies').doc(activeUserPhone).collection('settings').doc('owner_session');
+        }
+
+        try {
+            // 1. Register this device's unique session in the cloud
+            await sessionRef.set({ currentSessionId: mySessionId, lastLogin: firebase.firestore.FieldValue.serverTimestamp() }, { merge: true });
+            
+            // 2. Listen to the cloud. If the session ID changes, someone else logged in.
+            sessionListener = sessionRef.onSnapshot((doc) => {
+                if (doc.exists) {
+                    const dbSession = doc.data().currentSessionId;
+                    if (dbSession && dbSession !== mySessionId) {
+                        saveCartState(); // Force a final local auto-save to preserve the cart
+                        if (sessionListener) sessionListener(); // Stop listening
+                        
+                        alert("⚠️ Security Alert: Account Logged In Elsewhere\n\nYour account was just used to log in on another device.\nTo protect your store, you have been securely logged out of this screen.\n\nDon't worry, your current unbilled cart has been safely preserved locally on this device.");
+                        
+                        // Force log out and redirect to login page
+                        firebase.auth().signOut().then(() => {
+                            localStorage.removeItem("activeUserPhone");
+                            localStorage.removeItem("activeStaffId");
+                            window.location.replace("/login.html"); // Redirects to login
+                        }).catch(() => {
+                            window.location.replace("/login.html");
+                        });
+                    }
+                }
+            });
+        } catch (e) {
+            console.error("Session tracking failed:", e);
+        }
+    }
+
     document.addEventListener('DOMContentLoaded', () => {
-        firebase.auth().onAuthStateChanged(async () => {
-            if (!activeUserPhone) return;
+        firebase.auth().onAuthStateChanged(async (user) => {
+            if (!user || !activeUserPhone) return;
             try { if(assignedBranch && assignedBranch.startsWith('[')) assignedBranch = JSON.parse(assignedBranch); } catch(e){}
             
-     await determineBranch(); 
+            await determineBranch(); 
             await loadBusinessDetails(); 
             if(activeBranchId) startLiveInventorySync();
             
             setWatermarkDetails(); // Initialize the background watermark
+            enforceSingleDevice(); // Boot up the security watcher
             
             // Boot up the auto-save recovery
             setTimeout(loadCartState, 500); 
