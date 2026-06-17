@@ -392,10 +392,40 @@
     let udhaarPaidNow = 0;
     let searchTimeout = null;
     let currentKhataNumber = null;
-    let selectedCustomer = null;
+  let selectedCustomer = null;
     let cart = [];
     let heldDrafts = [];
     let finalSaleData = {}; 
+
+    // --- CONTINUOUS AUTO-SAVE ENGINE ---
+    function saveCartState() {
+        const state = { cart: cart, customer: selectedCustomer };
+        localStorage.setItem('pos_active_cart', JSON.stringify(state));
+    }
+
+    function loadCartState() {
+        try {
+            const saved = localStorage.getItem('pos_active_cart');
+            if (saved) {
+                const state = JSON.parse(saved);
+                if (state.cart && state.cart.length > 0) {
+                    cart = state.cart;
+                    if (state.customer) {
+                        selectedCustomer = state.customer;
+                        currentKhataNumber = selectedCustomer.khataNum;
+                        currentCustomerPending = selectedCustomer.pending;
+                        document.getElementById('customer-search').value = `${selectedCustomer.name} (${selectedCustomer.phone})`;
+                        document.getElementById('clear-cust-btn').style.display = 'block';
+                        if (currentCustomerPending > 0 || currentKhataNumber) {
+                            document.getElementById('udhaar-badge').innerHTML = currentKhataNumber ? `Khata <span style="color:var(--navy);">#${currentKhataNumber}</span> | Due: <span id="pending-udhaar-amt" style="color:var(--danger);">₹${currentCustomerPending.toFixed(2)}</span>` : `Pending Udhaar: <span id="pending-udhaar-amt" style="color:var(--danger);">₹${currentCustomerPending.toFixed(2)}</span>`;
+                            document.getElementById('udhaar-badge').style.display = 'block';
+                        }
+                    }
+                    renderCart();
+                }
+            }
+        } catch(e) { console.error("Auto-save load failed", e); }
+    }
 
     document.addEventListener('DOMContentLoaded', () => {
         firebase.auth().onAuthStateChanged(async () => {
@@ -405,6 +435,9 @@
             await determineBranch(); 
             await loadBusinessDetails(); 
             if(activeBranchId) startLiveInventorySync();
+            
+            // Boot up the auto-save recovery
+            setTimeout(loadCartState, 500); 
         });
     });
 
@@ -695,17 +728,20 @@ let scannedPendingItem = null;
         
         document.getElementById('cart-total').innerHTML = `₹${finalTot.toFixed(2)} <span style="font-size:12px; color:var(--text-light); font-weight:700; display:block; text-align:right;">${totalItemsCount} Items</span>`;
         
-        finalSaleData.sub = subtotal; 
+      finalSaleData.sub = subtotal; 
         finalSaleData.disc = totalDisc; 
         finalSaleData.gst = totalGst; 
         finalSaleData.tot = finalTot;
+        
+        saveCartState(); // Silently save every time cart renders
     }
 
-    // --- HOLD BILL (DRAFTS) ---
+ // --- HOLD BILL (DRAFTS) ---
     function holdCart() {
         if(cart.length === 0) return;
         heldDrafts.push({ id: new Date().toLocaleTimeString(), items: [...cart], tot: finalSaleData.tot });
         cart = []; renderCart(); alert("Cart put on hold.");
+        localStorage.removeItem('pos_active_cart'); // Clear auto-save
     }
     function showDrafts() {
         const list = document.getElementById('draft-list'); list.innerHTML = "";
@@ -871,6 +907,8 @@ let scannedPendingItem = null;
             document.getElementById('udhaar-badge').innerHTML = currentKhataNumber ? `Khata <span style="color:var(--navy);">#${currentKhataNumber}</span> | Due: <span id="pending-udhaar-amt" style="color:var(--danger);">₹${currentCustomerPending.toFixed(2)}</span>` : `Pending Udhaar: <span id="pending-udhaar-amt" style="color:var(--danger);">₹${currentCustomerPending.toFixed(2)}</span>`;
             document.getElementById('udhaar-badge').style.display = 'block';
         } else { document.getElementById('udhaar-badge').style.display = 'none'; }
+        
+        saveCartState(); // Silently save customer attachment
     }
 
     function clearCustomerSelection(clearInput = true) {
@@ -884,6 +922,8 @@ let scannedPendingItem = null;
             document.getElementById('clear-cust-btn').style.display = 'none';
             document.getElementById('customer-search').focus();
         }
+        
+        saveCartState(); // Silently save customer detachment
     }
 
     document.addEventListener('click', (e) => {
@@ -1079,6 +1119,7 @@ let scannedPendingItem = null;
             await batch.commit();
             
             cart = []; clearCustomerSelection(true); renderCart();
+            localStorage.removeItem('pos_active_cart'); // Clear auto-save after success
             
             let rHtml = `
                 <div class="receipt-card">
