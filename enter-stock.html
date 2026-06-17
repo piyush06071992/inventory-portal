@@ -606,7 +606,7 @@
                     if(![...uEl.options].some(o => o.value === data.unit)) uEl.add(new Option(data.unit, data.unit), 1);
                     uEl.value = data.unit;
                 }
-                if (data.currentMsp || data.msp) {
+               if (data.currentMsp || data.msp) {
                     document.getElementById('msp').value = data.currentMsp || data.msp;
                 }
                 if (data.lastCostPrice || data.costPer) {
@@ -614,6 +614,13 @@
                 }
                 if (data.gstRate !== undefined) {
                     document.getElementById('gst-rate').value = data.gstRate;
+                }
+                
+                // INSTANTLY AUTO-CALCULATE PROFIT % ON LOAD
+                const loadedCp = parseFloat(document.getElementById('cost-per').value);
+                const loadedMsp = parseFloat(document.getElementById('msp').value);
+                if (loadedCp > 0 && loadedMsp > 0) {
+                    document.getElementById('profit-pct').value = (((loadedMsp - loadedCp) / loadedCp) * 100).toFixed(2);
                 }
                 
                 if (data.customParams) {
