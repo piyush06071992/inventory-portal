@@ -570,32 +570,62 @@ window.renderInventory = function() {
 
             let htmlArr = [];
 
-            // ==========================================
+        // ==========================================
             // STATE 1: DRAW FOLDERS (If no search query)
             // ==========================================
             if (!query && currentViewLevel === 'folders') {
-                htmlArr.push('<div style="display:grid; grid-template-columns:repeat(auto-fill, minmax(160px, 1fr)); gap:15px; padding:10px;">');
+                // Vibrant multi-color palette for folders and text
+                const folderColors = [
+                    { primary: '#3b82f6', bg: '#eff6ff', text: '#1e3a8a' }, // Blue
+                    { primary: '#10b981', bg: '#ecfdf5', text: '#064e3b' }, // Green
+                    { primary: '#8b5cf6', bg: '#f5f3ff', text: '#4c1d95' }, // Purple
+                    { primary: '#f97316', bg: '#fff7ed', text: '#7c2d12' }, // Orange
+                    { primary: '#ec4899', bg: '#fdf2f8', text: '#831843' }, // Pink
+                    { primary: '#14b8a6', bg: '#f0fdfa', text: '#134e4a' }  // Teal
+                ];
+                let colorIdx = 0;
+
                 const depts = Object.keys(grouped).sort();
                 for (let d = 0; d < depts.length; d++) {
-                    const deptName = depts[d]; const cats = Object.keys(grouped[deptName]).sort();
+                    const deptName = depts[d]; 
+                    const cats = Object.keys(grouped[deptName]).sort();
+                    
                     for (let c = 0; c < cats.length; c++) {
-                        const catName = cats[c]; const subcats = Object.keys(grouped[deptName][catName]).sort();
+                        const catName = cats[c]; 
+                        const subcats = Object.keys(grouped[deptName][catName]).sort();
+                        
+                        // Create a specific Header for this Department & Category grouping
+                        htmlArr.push(`
+                            <div style="margin: 25px 10px 10px 10px; border-bottom: 2px solid var(--border); padding-bottom: 5px;">
+                                <h2 style="margin:0; font-size:16px; font-weight:900; color:var(--navy); text-transform: uppercase;">
+                                    ${deptName} <i class="bi bi-caret-right-fill" style="color:var(--text-light); font-size:12px;"></i> <span style="color:var(--primary);">${catName}</span>
+                                </h2>
+                            </div>
+                            <div style="display:grid; grid-template-columns:repeat(auto-fill, minmax(150px, 1fr)); gap:15px; padding:0 10px 15px 10px;">
+                        `);
+
+                        // Draw the subcategory folders inside this specific Category grid
                         for (let s = 0; s < subcats.length; s++) {
-                            const subcatName = subcats[s]; const items = grouped[deptName][catName][subcatName];
+                            const subcatName = subcats[s]; 
+                            const items = grouped[deptName][catName][subcatName];
                             
+                            // Cycle through the vibrant color palette
+                            const palette = folderColors[colorIdx % folderColors.length];
+                            colorIdx++;
+
                             htmlArr.push(`
-                                <div onclick="openFolder('${deptName}', '${catName}', '${subcatName}')" style="background:white; border:1px solid var(--border); border-radius:12px; padding:15px; cursor:pointer; text-align:center; box-shadow:0 4px 6px rgba(0,0,0,0.02); transition:0.2s;" onmouseover="this.style.borderColor='var(--primary)'; this.style.transform='translateY(-3px)';" onmouseout="this.style.borderColor='var(--border)'; this.style.transform='none';">
-                                    <i class="bi bi-folder-fill" style="font-size:36px; color:var(--primary); display:block; margin-bottom:8px; opacity: 0.9;"></i>
-                                    <h3 style="margin:0; font-size:13px; font-weight:900; color:var(--navy); line-height:1.2; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;" title="${subcatName}">${subcatName}</h3>
-                                    <p style="margin:4px 0 0 0; font-size:9px; font-weight:800; color:var(--text-light); text-transform:uppercase; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;">${deptName} &rsaquo; ${catName}</p>
-                                    <div style="margin-top:10px; background:#e0f2fe; color:var(--primary); font-size:11px; font-weight:900; padding:4px; border-radius:6px;">${items.length} Items</div>
+                                <div onclick="openFolder('${deptName}', '${catName}', '${subcatName}')" style="background:white; border:2px solid ${palette.bg}; border-radius:12px; padding:15px; cursor:pointer; text-align:center; box-shadow:0 4px 6px rgba(0,0,0,0.02); transition:0.2s;" onmouseover="this.style.borderColor='${palette.primary}'; this.style.transform='translateY(-3px)';" onmouseout="this.style.borderColor='${palette.bg}'; this.style.transform='none';">
+                                    <i class="bi bi-folder-fill" style="font-size:40px; color:${palette.primary}; display:block; margin-bottom:8px;"></i>
+                                    <h3 style="margin:0; font-size:13px; font-weight:900; color:${palette.text}; line-height:1.2; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;" title="${subcatName}">${subcatName}</h3>
+                                    <div style="margin-top:10px; background:${palette.bg}; color:${palette.primary}; font-size:11px; font-weight:900; padding:4px; border-radius:6px; border: 1px dashed ${palette.primary};">${items.length} Items</div>
                                 </div>
                             `);
                         }
+                        // Close the grid array for this specific category
+                        htmlArr.push('</div>');
                     }
                 }
-                htmlArr.push('</div>');
-            } 
+            }
             // ==========================================
             // STATE 2: DRAW ITEMS (Inside folder OR Search)
             // ==========================================
