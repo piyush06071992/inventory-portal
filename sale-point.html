@@ -351,6 +351,30 @@
     </div>
 </div>
 
+<div class="modal-overlay" id="scan-confirm-modal">
+    <div class="modal-card">
+        <h2 style="margin-bottom:15px;font-size:22px;font-weight:900;">
+            Scanned Item
+        </h2>
+
+        <div id="scan-confirm-details"
+             style="text-align:left;background:#f8fafc;padding:15px;border-radius:12px;margin-bottom:20px;">
+        </div>
+
+        <button class="btn-modal-action"
+                style="background:var(--emerald);"
+                onclick="confirmScannedItem()">
+            ✓ Confirm & Add To Cart
+        </button>
+
+        <button class="btn-modal-action"
+                style="background:#e2e8f0;color:var(--navy);"
+                onclick="closeScanConfirmModal()">
+            Cancel
+        </button>
+    </div>
+</div>
+
 <div id="print-receipt-container"></div>
 
 <script>
@@ -487,7 +511,8 @@
     });
 
 // --- CART ENGINE & SMART BULK LOGIC ---
-    let currentLooseItem = null;
+   let currentLooseItem = null;
+let scannedPendingItem = null;
 
     function openLooseModal(item) {
         currentLooseItem = item;
@@ -1198,28 +1223,78 @@
         }
     }
 
-    function onScanSuccess(decodedText, decodedResult) {
-        closeCameraScanner();
-        try { new Audio('https://www.soundjay.com/buttons/beep-07.wav').play(); } catch(e){}
-        
-        const itemMatch = liveInventory.find(i => i.barcode && i.barcode.toLowerCase() === decodedText.toLowerCase());
-        if (itemMatch) {
-            addToCart(itemMatch.docId);
-            const searchInput = document.getElementById('main-search');
-            const cleanName = itemMatch.name.replace(/\s*\([^)]*\)/g, '').trim();
-            searchInput.value = "Added: " + cleanName;
-            
-            setTimeout(() => { 
-                searchInput.value = ""; 
-            }, 1500);
-        } else {
-            alert(`Barcode '${decodedText}' not found in inventory.`);
-        }
+  function onScanSuccess(decodedText, decodedResult) {
+    closeCameraScanner();
+
+    try {
+        new Audio('https://www.soundjay.com/buttons/beep-07.wav').play();
+    } catch(e){}
+
+    const itemMatch = liveInventory.find(
+        i => i.barcode &&
+        i.barcode.toLowerCase() === decodedText.toLowerCase()
+    );
+
+    if (!itemMatch) {
+        alert(`Barcode '${decodedText}' not found in inventory.`);
+        return;
     }
 
-    function onScanFailure(error) {
-        // Ignore background scan errors
+    scannedPendingItem = itemMatch;
+
+    let paramsHtml = '';
+
+    if (itemMatch.customParams) {
+        Object.entries(itemMatch.customParams).forEach(([k,v]) => {
+            paramsHtml += `
+                <div style="margin-bottom:6px;">
+                    <strong>${k}:</strong> ${v}
+                </div>
+            `;
+        });
     }
+
+    document.getElementById('scan-confirm-details').innerHTML = `
+        <div style="font-size:20px;font-weight:900;margin-bottom:10px;">
+            ${itemMatch.name}
+        </div>
+
+        <div style="margin-bottom:8px;">
+            <strong>Price:</strong> ₹${itemMatch.msp}
+        </div>
+
+        <div style="margin-bottom:8px;">
+            <strong>Stock:</strong> ${itemMatch.qty}
+        </div>
+
+        <div style="margin-bottom:8px;">
+            <strong>Unit:</strong> ${itemMatch.unit || '-'}
+        </div>
+
+        ${paramsHtml}
+    `;
+
+    document.getElementById('scan-confirm-modal').style.display = 'flex';
+}
+
+  function confirmScannedItem() {
+    if (!scannedPendingItem) return;
+
+    addToCart(scannedPendingItem.docId);
+
+    document.getElementById('scan-confirm-modal').style.display = 'none';
+
+    scannedPendingItem = null;
+}
+
+function closeScanConfirmModal() {
+    document.getElementById('scan-confirm-modal').style.display = 'none';
+    scannedPendingItem = null;
+}
+
+function onScanFailure(error) {
+    // Ignore background scan errors
+}
 </script>
 </body>
 </html>
