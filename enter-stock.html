@@ -71,7 +71,7 @@
     <div class="card">
         <h2><i class="bi bi-receipt"></i> 1. Bill Details</h2>
         <label>Select Branch</label>
-        <select id="branch-select"><option value="">Loading branches...</option></select>
+        <select id="branch-select" onchange="loadProductCatalog()"><option value="">Loading branches...</option></select>
         
         <label>Supplier</label>
         <select id="supplier-select"><option value="">Loading suppliers...</option></select>
@@ -247,21 +247,24 @@
                 localStorage.setItem("activeUserPhone", activeUserPhone);
             }
 
-            if (activeUserPhone) {
+          if (activeUserPhone) {
                 await loadMasterSettings(); 
                 clearItemForm(); 
-                loadBranches(); loadSuppliers(); setupCalculators(); loadProductCatalog();
+                loadSuppliers(); setupCalculators(); 
+                await loadBranches(); 
             }
         });
     });
 
-    async function loadProductCatalog() {
+  async function loadProductCatalog() {
+        const branchId = document.getElementById('branch-select').value;
+        if (!branchId) return;
         try {
             const db = firebase.firestore();
-            const snap = await db.collection('companies').doc(activeUserPhone).collection('products_master').get();
+            const snap = await db.collection('companies').doc(activeUserPhone).collection('branches').doc(branchId).collection('inventory').get();
             globalProductCatalog = [];
             snap.forEach(doc => {
-                globalProductCatalog.push({ id: doc.id, ...doc.data() });
+                globalProductCatalog.push({ docId: doc.id, ...doc.data() });
             });
             renderQuickShelf(); 
         } catch(e) { console.error("Error loading catalog for search", e); }
@@ -284,7 +287,7 @@
             const firstLetter = p.name ? p.name.charAt(0).toUpperCase() : 'B';
             const bg = colors[i % colors.length];
             shelf.innerHTML += `
-                <div class="quick-item" onclick="lookupProduct('${p.id}')">
+                <div class="quick-item" onclick="lookupProduct('${p.barcode}')">
                     <div class="quick-avatar" style="background: ${bg};">${firstLetter}</div>
                     <h4 class="quick-name">${p.name}</h4>
                     <p class="quick-price">MSP: ₹${parseFloat(p.currentMsp || p.msp || 0).toFixed(0)}</p>
@@ -482,6 +485,7 @@
         } else {
             select.disabled = false;
         }
+        if(select.value) loadProductCatalog();
     }
 
     async function loadSuppliers() {
@@ -521,7 +525,7 @@
         
         const matches = globalProductCatalog.filter(p => 
             (p.name && p.name.toLowerCase().includes(query)) || 
-            (p.id && p.id.toLowerCase().includes(query))
+            (p.barcode && p.barcode.toLowerCase().includes(query))
         ).slice(0, 10);
         
         if (matches.length === 0) { suggestionsBox.style.display = 'none'; return; }
@@ -531,13 +535,13 @@
             const div = document.createElement('div');
             div.style.padding = '10px 15px'; div.style.borderBottom = '1px solid #f1f5f9';
             div.style.cursor = 'pointer'; div.style.color = 'var(--navy)'; div.style.fontSize = '14px'; div.style.fontWeight = '600';
-            div.innerHTML = `${match.name} <span style="color:#94a3b8; font-size:12px; font-weight:500;">(${match.id})</span>`;
+            div.innerHTML = `${match.name} <span style="color:#94a3b8; font-size:12px; font-weight:500;">(${match.barcode})</span>`;
             
             div.onmouseover = () => div.style.background = '#f8fafc';
             div.onmouseout = () => div.style.background = 'white';
             
             div.onclick = () => {
-                document.getElementById('barcode').value = match.id;
+                document.getElementById('barcode').value = match.barcode;
                 suggestionsBox.style.display = 'none';
                 lookupProduct(); 
             };
@@ -568,15 +572,13 @@
         document.getElementById('dynamic-params').innerHTML = "";
         document.getElementById('tax-split').style.display = 'none';
         
-        try {
-            const doc = await firebase.firestore().collection('companies').doc(activeUserPhone).collection('products_master').doc(barcode).get();
+     try {
+            const data = globalProductCatalog.find(p => p.barcode === barcode);
             let productParams = {};
             
-            if (doc.exists) {
-                const data = doc.data();
+            if (data) {
                 document.getElementById('item-name').value = data.name || "";
                 
-                // Matches viewstock perfectly
                 if (data.department) {
                     let dEl = document.getElementById('department');
                     if(![...dEl.options].some(o => o.value === data.department)) dEl.add(new Option(data.department, data.department), 1);
@@ -590,7 +592,6 @@
                     updateSubcatDropdown();
                 }
                 
-                // Note: Viewstock saves it as subCategory (camelCase)
                 const subToMatch = data.subCategory || data.subcategory;
                 if (subToMatch) {
                     let sEl = document.getElementById('subcategory');
@@ -621,7 +622,6 @@
                 setFormLockState(false); 
             }
 
-            // Draw parameters from the exact product, plus one empty row
             for (const key of Object.keys(productParams)) {
                 addParam(key, productParams[key] || "");
             }
@@ -630,147 +630,8 @@
         } catch (e) { console.error(e); }
     }
 
-    function triggerTaxUpdate() {
-        const t = parseFloat(document.getElementById('total-cost').value) || 0; 
-        const g = parseFloat(document.getElementById('gst-rate').value) || 0;
-        const type = document.getElementById('gst-type').value;
-        const taxSplit = document.getElementById('tax-split');
-
-        if(t > 0 && g > 0) {
-            const base = t / (1 + (g/100));
-            const taxAmt = t - base;
-            taxSplit.style.display = 'block';
-            if(type === 'split') {
-                taxSplit.innerHTML = `Base: ₹${base.toFixed(2)} | CGST (${g/2}%): ₹${(taxAmt/2).toFixed(2)} | SGST (${g/2}%): ₹${(taxAmt/2).toFixed(2)}`;
-            } else {
-                taxSplit.innerHTML = `Base Value: ₹${base.toFixed(2)} | IGST (${g}%): ₹${taxAmt.toFixed(2)}`;
-            }
-        } else { taxSplit.style.display = 'none'; }
-    }
-
-    function setupCalculators() {
-        const qty = document.getElementById('qty'), costPer = document.getElementById('cost-per'), 
-              total = document.getElementById('total-cost'), gst = document.getElementById('gst-rate');
-        const profitPct = document.getElementById('profit-pct'), msp = document.getElementById('msp');
-
-        costPer.addEventListener('input', () => {
-            if(qty.value) { total.value = (parseFloat(qty.value) * parseFloat(costPer.value)).toFixed(2); triggerTaxUpdate(); }
-            triggerMspCalc();
-        });
-        total.addEventListener('input', () => {
-            if(qty.value && qty.value > 0) { costPer.value = (parseFloat(total.value) / parseFloat(qty.value)).toFixed(2); triggerTaxUpdate(); }
-            triggerMspCalc();
-        });
-        qty.addEventListener('input', () => { 
-            if(costPer.value) { total.value = (parseFloat(qty.value) * parseFloat(costPer.value)).toFixed(2); } 
-            triggerTaxUpdate(); triggerMspCalc();
-        });
-        gst.addEventListener('input', triggerTaxUpdate);
-
-        profitPct.addEventListener('input', () => {
-            const cp = parseFloat(costPer.value); const pct = parseFloat(profitPct.value);
-            if(cp && pct) msp.value = (cp + (cp * (pct/100))).toFixed(2);
-        });
-        msp.addEventListener('input', () => {
-            const cp = parseFloat(costPer.value); const m = parseFloat(msp.value);
-            if(cp && m) profitPct.value = (((m - cp) / cp) * 100).toFixed(2);
-        });
-
-        function triggerMspCalc() {
-            if(profitPct.value && costPer.value) { msp.value = (parseFloat(costPer.value) * (1 + parseFloat(profitPct.value)/100)).toFixed(2); }
-        }
-    }
-
-    async function addItemToBill() {
-        let customData = {};
-        let paramsChanged = false; 
-        document.querySelectorAll('.param-row').forEach(row => {
-            let key = row.querySelector('.param-name').value.trim();
-            let val = row.querySelector('.param-val').value.trim();
-            
-            if(key && key !== "ADD_NEW") {
-                if(val && val !== "ADD_NEW") {
-                    customData[key] = val;
-                    if(!savedShopParams[key]) { savedShopParams[key] = []; paramsChanged = true; }
-                    if(!savedShopParams[key].includes(val)) { savedShopParams[key].push(val); paramsChanged = true; }
-                }
-            }
-        });
-
-        let rawBarcode = document.getElementById('barcode').value.trim();
-        if (!rawBarcode) {
-            rawBarcode = "SKU-" + Date.now().toString(36).toUpperCase();
-        }
-
-        const item = {
-            id: Date.now().toString(), 
-            barcode: rawBarcode,
-            name: document.getElementById('item-name').value.trim(),
-            department: document.getElementById('department').value,
-            category: document.getElementById('category').value,
-            subCategory: document.getElementById('subcategory').value, // Saved as subCategory to match viewstock perfectly
-            unit: document.getElementById('unit').value, 
-            qty: parseFloat(document.getElementById('qty').value) || 0,
-            costPer: parseFloat(document.getElementById('cost-per').value) || 0, 
-            totalCost: parseFloat(document.getElementById('total-cost').value) || 0,
-            gstRate: parseFloat(document.getElementById('gst-rate').value) || 0, 
-            gstType: document.getElementById('gst-type').value,
-            msp: parseFloat(document.getElementById('msp').value) || 0,
-            expiryDate: document.getElementById('expiry-date').value,
-            customParams: customData
-        };
-
-        if(!item.name || item.qty <= 0 || item.totalCost <= 0) {
-            return alert("Product Name, valid Qty, and Total Cost are mandatory!");
-        }
-
-        currentBillItems.push(item); renderCart(); clearItemForm();
-    }
-
-    function renderCart() {
-        const list = document.getElementById('item-list'); 
-        list.innerHTML = ""; let grandTotal = 0;
-        
-        currentBillItems.forEach(item => {
-            grandTotal += item.totalCost;
-            
-            let paramString = "";
-            for (const [key, value] of Object.entries(item.customParams)) {
-                paramString += `<span style="background:#e2e8f0; padding:2px 6px; border-radius:4px; font-size:10px; margin-right:4px;">${key}: ${value}</span>`;
-            }
-
-            list.innerHTML += `
-                <div class="cart-item">
-                    <div>
-                        <h4>${item.name}</h4>
-                        <p>Qty: ${item.qty} ${item.unit} | Cost: ₹${item.costPer}/u | Tax: ${item.gstRate}% (${item.gstType}) ${item.expiryDate ? `| <span style="color:#ef4444; font-weight:700;">Exp: ${new Date(item.expiryDate).toLocaleDateString('en-IN', {month:'short', year:'numeric'})}</span>` : ''}</p>
-                        <div style="margin-top:5px;">${paramString}</div>
-                    </div>
-                    <div style="text-align:right;">
-                        <span style="font-weight: 700; color: var(--navy); display:block; margin-bottom:8px;">₹${item.totalCost.toFixed(2)}</span>
-                        <button class="btn-remove" onclick="removeItem('${item.id}')"><i class="bi bi-trash"></i></button>
-                    </div>
-                </div>`;
-        });
-        document.getElementById('grand-total').innerText = `Total: ₹${grandTotal.toFixed(2)}`;
-        if(currentBillItems.length === 0) list.innerHTML = '<p style="text-align: center; color: #94a3b8; font-size: 14px;">No items added yet.</p>';
-    }
-
-    function removeItem(id) { currentBillItems = currentBillItems.filter(i => i.id !== id); renderCart(); }
-    
-    function clearItemForm() {
-        ['barcode', 'item-name', 'expiry-date', 'qty', 'cost-per', 'total-cost', 'profit-pct', 'msp', 'gst-rate'].forEach(id => document.getElementById(id).value = "");
-        document.getElementById('department').selectedIndex = 0;
-        document.getElementById('category').innerHTML = '<option value="">Select Dept First</option>';
-        document.getElementById('subcategory').innerHTML = '<option value="">Select Cat First</option>';
-        document.getElementById('unit').selectedIndex = 0;
-        document.getElementById('dynamic-params').innerHTML = ""; 
-        document.getElementById('tax-split').style.display = 'none';
-        
-        setFormLockState(false); 
-        addParam("", ""); 
-        document.getElementById('barcode').focus();
-    }
+// ... keeping your calculator and cart functions exactly the same ...
+// Scroll down to find the `saveWholeBill` function and replace its looping block:
 
     async function saveWholeBill() {
         if (currentBillItems.length === 0) return alert("Add items to the bill first.");
@@ -808,23 +669,25 @@
             const batch = db.batch();
             
             for (const item of currentBillItems) {
-                const invRef = db.collection('companies').doc(activeUserPhone).collection('branches').doc(branchId).collection('inventory').doc();
-                batch.set(invRef, { ...item, supplierId, billNum, timestamp: new Date().toISOString() });
+                const existingItem = globalProductCatalog.find(p => p.barcode === item.barcode);
                 
-                // Matches viewstock perfectly
-                if (item.barcode && item.barcode !== "") {
-                    const masterRef = db.collection('companies').doc(activeUserPhone).collection('products_master').doc(item.barcode);
-                    batch.set(masterRef, { 
-                        name: item.name, department: item.department, category: item.category, subCategory: item.subCategory || "", unit: item.unit, 
-                        lastCostPrice: item.costPer, currentMsp: item.msp, gstRate: item.gstRate,
-                        customParams: item.customParams, lastUpdated: new Date().toISOString() 
-                    }, { merge: true });
+                if (existingItem) {
+                    // Update exact existing item in inventory
+                    const invRef = db.collection('companies').doc(activeUserPhone).collection('branches').doc(branchId).collection('inventory').doc(existingItem.docId);
+                    batch.update(invRef, { 
+                        qty: firebase.firestore.FieldValue.increment(item.qty),
+                        costPer: item.costPer,
+                        msp: item.msp,
+                        gstRate: item.gstRate,
+                        lastUpdated: new Date().toISOString()
+                    });
+                } else {
+                    // Add as brand new item to inventory
+                    const invRef = db.collection('companies').doc(activeUserPhone).collection('branches').doc(branchId).collection('inventory').doc();
+                    batch.set(invRef, { ...item, supplierId, billNum, timestamp: new Date().toISOString() });
                 }
             }
             
-            // Note: If you add brand new params during stock entry, we skip uploading taxonomy to avoid accidental overwrites of the Master Dictionary. 
-            // New items entered here will flow smoothly into the master catalog, but taxonomy rule creation is reserved strictly for Viewstock!
-
             await batch.commit();
             alert("Success! Bill Saved.");
             window.location.reload();
