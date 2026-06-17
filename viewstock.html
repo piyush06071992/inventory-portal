@@ -400,9 +400,9 @@
 
     let rawInventory = []; let globalBranches = []; 
     let currentMoveItem = null; let currentWasteItem = null; 
-   let currentPromoDocId = null; let currentMspForMath = 0; let currentCpForMath = 0; let currentGstForMath = 0;
+ let currentPromoDocId = null; let currentMspForMath = 0; let currentCpForMath = 0; let currentGstForMath = 0;
     let editingBlueprintId = null; 
-    let currentViewLevel = 'folders'; let activeFolder = null; // FOLDER STATE VARIABLES
+    let navPath = { dept: null, cat: null, subcat: null }; // GOOGLE DRIVE DRILL-DOWN STATE
     let savedShopParams = {};
     let masterTaxonomyList = []; 
     let localShopTaxonomy = [];
@@ -523,6 +523,9 @@ window.renderInventory = function() {
         const fCat = document.getElementById('filter-main-cat').value;
         const fSubcat = document.getElementById('filter-main-subcat').value;
         
+        // MAGIC TEXT CLEANER: Scrubs out any Hindi brackets from the DB dynamically
+        const cleanStr = (str) => str ? str.replace(/\s*\([^)]*\)/g, '').trim() : "Unknown";
+
         let totalItems = 0; let lowStock = 0; 
         
         window.requestAnimationFrame(() => {
@@ -533,169 +536,114 @@ window.renderInventory = function() {
                 if(fCat !== 'ALL' && item.category !== fCat) continue;
                 if(fSubcat !== 'ALL' && item.subCategory !== fSubcat) continue;
                 
-                // Search bypasses everything
+                // If searching, ignore folders and show matching items
                 if (query) {
                     const n = item.name ? item.name.toLowerCase() : "";
                     const b = item.barcode ? item.barcode.toLowerCase() : "";
                     if (!n.includes(query) && !b.includes(query)) continue;
                 }
-
-                // If no search query, and we are inside a folder, filter out items not in this folder
-                if (!query && currentViewLevel === 'items' && activeFolder) {
-                    if (item.department !== activeFolder.dept || item.category !== activeFolder.cat || item.subCategory !== activeFolder.subcat) continue;
+                
+                // If NOT searching, apply drill-down path filtering
+                if (!query) {
+                    if (navPath.dept && item.department !== navPath.dept) continue;
+                    if (navPath.cat && item.category !== navPath.cat) continue;
+                    if (navPath.subcat && item.subCategory !== navPath.subcat) continue;
                 }
-
                 filtered.push(item);
             }
 
             if(filtered.length === 0) {
-                let backBtn = (currentViewLevel === 'items') ? `<button class="btn-action" onclick="closeFolder()" style="margin:10px auto;"><i class="bi bi-arrow-left"></i> Back</button>` : '';
+                let backBtn = (navPath.dept || navPath.cat || navPath.subcat) && !query ? `<button class="btn-action" onclick="setNavPath('back')" style="margin:10px auto;"><i class="bi bi-arrow-left"></i> Go Back</button>` : '';
                 container.innerHTML = `<div style="text-align:center; padding:60px; color:var(--text-light);"><i class="bi bi-search" style="font-size:40px; display:block; margin-bottom:10px;"></i><h3>No items match criteria.</h3>${backBtn}</div>`;
                 document.getElementById('dash-total').innerText = 0; document.getElementById('dash-low').innerText = 0;
                 return;
             }
 
-            let grouped = {};
-            for (let i = 0; i < filtered.length; i++) {
-                const item = filtered[i];
-                totalItems++;
-                const minStock = item.minStock !== undefined ? parseFloat(item.minStock) : 5;
-                if((parseFloat(item.qty) || 0) < minStock) lowStock++;
-
-                const d = item.department || "Other"; const c = item.category || "General"; const s = item.subCategory || "Items";
-                if(!grouped[d]) grouped[d] = {}; if(!grouped[d][c]) grouped[d][c] = {}; if(!grouped[d][c][s]) grouped[d][c][s] = [];
-                grouped[d][c][s].push(item);
-            }
-
             let htmlArr = [];
 
-        // ==========================================
-            // STATE 1: DRAW FOLDERS (If no search query)
-            // ==========================================
-            if (!query && currentViewLevel === 'folders') {
-                // Vibrant multi-color palette for folders and text
-                const folderColors = [
-                    { primary: '#3b82f6', bg: '#eff6ff', text: '#1e3a8a' }, // Blue
-                    { primary: '#10b981', bg: '#ecfdf5', text: '#064e3b' }, // Green
-                    { primary: '#8b5cf6', bg: '#f5f3ff', text: '#4c1d95' }, // Purple
-                    { primary: '#f97316', bg: '#fff7ed', text: '#7c2d12' }, // Orange
-                    { primary: '#ec4899', bg: '#fdf2f8', text: '#831843' }, // Pink
-                    { primary: '#14b8a6', bg: '#f0fdfa', text: '#134e4a' }  // Teal
-                ];
-                let colorIdx = 0;
-
-                const depts = Object.keys(grouped).sort();
-                for (let d = 0; d < depts.length; d++) {
-                    const deptName = depts[d]; 
-                    const cats = Object.keys(grouped[deptName]).sort();
-                    
-                    for (let c = 0; c < cats.length; c++) {
-                        const catName = cats[c]; 
-                        const subcats = Object.keys(grouped[deptName][catName]).sort();
-                        
-                        // Create a specific Header for this Department & Category grouping
-                        htmlArr.push(`
-                            <div style="margin: 25px 10px 10px 10px; border-bottom: 2px solid var(--border); padding-bottom: 5px;">
-                                <h2 style="margin:0; font-size:16px; font-weight:900; color:var(--navy); text-transform: uppercase;">
-                                    ${deptName} <i class="bi bi-caret-right-fill" style="color:var(--text-light); font-size:12px;"></i> <span style="color:var(--primary);">${catName}</span>
-                                </h2>
-                            </div>
-                            <div style="display:grid; grid-template-columns:repeat(auto-fill, minmax(150px, 1fr)); gap:15px; padding:0 10px 15px 10px;">
-                        `);
-
-                        // Draw the subcategory folders inside this specific Category grid
-                        for (let s = 0; s < subcats.length; s++) {
-                            const subcatName = subcats[s]; 
-                            const items = grouped[deptName][catName][subcatName];
-                            
-                            // Cycle through the vibrant color palette
-                            const palette = folderColors[colorIdx % folderColors.length];
-                            colorIdx++;
-
-                            htmlArr.push(`
-                                <div onclick="openFolder('${deptName}', '${catName}', '${subcatName}')" style="background:white; border:2px solid ${palette.bg}; border-radius:12px; padding:15px; cursor:pointer; text-align:center; box-shadow:0 4px 6px rgba(0,0,0,0.02); transition:0.2s;" onmouseover="this.style.borderColor='${palette.primary}'; this.style.transform='translateY(-3px)';" onmouseout="this.style.borderColor='${palette.bg}'; this.style.transform='none';">
-                                    <i class="bi bi-folder-fill" style="font-size:40px; color:${palette.primary}; display:block; margin-bottom:8px;"></i>
-                                    <h3 style="margin:0; font-size:13px; font-weight:900; color:${palette.text}; line-height:1.2; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;" title="${subcatName}">${subcatName}</h3>
-                                    <div style="margin-top:10px; background:${palette.bg}; color:${palette.primary}; font-size:11px; font-weight:900; padding:4px; border-radius:6px; border: 1px dashed ${palette.primary};">${items.length} Items</div>
-                                </div>
-                            `);
-                        }
-                        // Close the grid array for this specific category
-                        htmlArr.push('</div>');
-                    }
-                }
-            }
-            // ==========================================
-            // STATE 2: DRAW ITEMS (Inside folder OR Search)
-            // ==========================================
-            else {
-                if (!query && currentViewLevel === 'items') {
-                    htmlArr.push(`<div style="margin-bottom:15px; padding:0 10px; display:flex; align-items:center; gap:10px;">
-                        <button class="btn-action" onclick="closeFolder()" style="background:white; color:var(--navy); border:1px solid var(--border);"><i class="bi bi-arrow-left"></i> Back</button>
-                        <h2 style="margin:0; font-size:18px; font-weight:900; color:var(--navy);"><i class="bi bi-folder2-open" style="color:var(--text-light); margin-right:5px;"></i> ${activeFolder.subcat}</h2>
-                    </div>`);
-                } else if (query) {
-                    htmlArr.push(`<div style="margin-bottom:15px; padding:0 10px;"><span style="font-size:13px; font-weight:800; color:var(--text-light);">Search Results for: <span style="color:var(--primary);">'${query}'</span></span></div>`);
-                }
-
-                const bgGradientsLocal = ['linear-gradient(135deg, #e0f2fe, #bae6fd)', 'linear-gradient(135deg, #dcfce7, #a7f3d0)', 'linear-gradient(135deg, #fef3c7, #fde68a)', 'linear-gradient(135deg, #f3e8ff, #ddd6fe)', 'linear-gradient(135deg, #fee2e2, #fecaca)'];
+            // BREADCRUMB NAVIGATION UI (Only show if not searching)
+            if (!query) {
+                let bcHtml = `<div style="display:flex; gap:8px; align-items:center; padding:12px 15px; background:white; border-radius:8px; margin-bottom:15px; border:1px solid var(--border); font-size:12px; font-weight:900; color:var(--text-light); overflow-x:auto;">`;
+                bcHtml += `<span onclick="setNavPath('home')" style="cursor:pointer; color:${!navPath.dept ? 'var(--navy)' : 'var(--primary)'};"><i class="bi bi-house-door-fill"></i> Home</span>`;
                 
-                const depts = Object.keys(grouped).sort();
-                for (let d = 0; d < depts.length; d++) {
-                    const deptName = depts[d]; const cats = Object.keys(grouped[deptName]).sort();
-                    for (let c = 0; c < cats.length; c++) {
-                        const catName = cats[c]; const subcats = Object.keys(grouped[deptName][catName]).sort();
-                        for (let s = 0; s < subcats.length; s++) {
-                            const subcatName = subcats[s]; const items = grouped[deptName][catName][subcatName];
-                            
-                            // Only draw category headers if searching globally
-                            if (query) {
-                                htmlArr.push(`<div class="shelf-wrapper" style="content-visibility: auto; contain-intrinsic-size: 200px;">
-                                <div class="shelf-header">${deptName} <i class="bi bi-caret-right-fill"></i> ${catName} <i class="bi bi-caret-right-fill"></i> <span style="color:var(--primary);">${subcatName}</span><span class="shelf-count">${items.length} Items</span></div>
-                                <div class="shelf-grid">`);
-                            } else {
-                                htmlArr.push(`<div class="shelf-wrapper"><div class="shelf-grid">`);
-                            }
+                if (navPath.dept) bcHtml += ` <i class="bi bi-chevron-right" style="opacity:0.5;"></i> <span onclick="setNavPath('dept')" style="cursor:pointer; color:${!navPath.cat ? 'var(--navy)' : 'var(--primary)'};">${cleanStr(navPath.dept)}</span>`;
+                if (navPath.cat) bcHtml += ` <i class="bi bi-chevron-right" style="opacity:0.5;"></i> <span onclick="setNavPath('cat')" style="cursor:pointer; color:${!navPath.subcat ? 'var(--navy)' : 'var(--primary)'};">${cleanStr(navPath.cat)}</span>`;
+                if (navPath.subcat) bcHtml += ` <i class="bi bi-chevron-right" style="opacity:0.5;"></i> <span style="color:var(--navy);">${cleanStr(navPath.subcat)}</span>`;
+                
+                bcHtml += `</div>`;
+                htmlArr.push(bcHtml);
+            }
 
-                            for (let i = 0; i < items.length; i++) {
-                                const item = items[i]; const qty = parseFloat(item.qty || 0);
-                                const minStock = parseFloat(item.minStock !== undefined ? item.minStock : 5);
-                                const isLow = qty < minStock; 
-                                const firstLetter = item.name ? item.name.charAt(0).toUpperCase() : 'B';
-                                const bgGrad = bgGradientsLocal[i % 5]; const textCol = isLow ? '#ef4444' : '#0f172a';
+            // STATE 1: RENDER ITEMS (If searching or fully drilled down to Sub-Category)
+            if (query || navPath.subcat) {
+                if (query) htmlArr.push(`<div style="margin-bottom:15px; padding:0 5px;"><span style="font-size:13px; font-weight:800; color:var(--text-light);">Search Results for: <span style="color:var(--primary);">'${query}'</span></span></div>`);
+                
+                const bgGradientsLocal = ['linear-gradient(135deg, #e0f2fe, #bae6fd)', 'linear-gradient(135deg, #dcfce7, #a7f3d0)', 'linear-gradient(135deg, #fef3c7, #fde68a)', 'linear-gradient(135deg, #f3e8ff, #ddd6fe)', 'linear-gradient(135deg, #fee2e2, #fecaca)'];
+                htmlArr.push(`<div class="shelf-grid">`);
+                
+                for (let i = 0; i < filtered.length; i++) {
+                    const item = filtered[i]; totalItems++;
+                    const qty = parseFloat(item.qty || 0); const minStock = parseFloat(item.minStock !== undefined ? item.minStock : 5);
+                    const isLow = qty < minStock; if (isLow) lowStock++;
+                    const firstLetter = item.name ? item.name.charAt(0).toUpperCase() : 'B';
+                    const bgGrad = bgGradientsLocal[i % 5]; const textCol = isLow ? '#ef4444' : '#0f172a';
 
-                                let paramSubtitle = '';
-                                if(item.customParams) paramSubtitle = `<div class="shelf-item-subtitle">${Object.values(item.customParams).join(' • ')}</div>`;
+                    let paramSubtitle = '';
+                    if(item.customParams) paramSubtitle = `<div class="shelf-item-subtitle">${Object.values(item.customParams).join(' • ')}</div>`;
 
-                                let iconHtml = '';
-                                if (item.imageUrl) {
-                                    iconHtml = `
-                                    <div class="shelf-icon">
-                                        <div class="qty-badge ${isLow ? 'qty-low' : ''}">${qty}</div>
-                                        <img src="${item.imageUrl}" loading="lazy" style="width: 100%; height: 100%; object-fit: contain; border-radius: 8px;">
-                                    </div>`;
-                                } else {
-                                    iconHtml = `
-                                    <div class="shelf-icon" style="background: ${bgGrad}; color: ${textCol}; border:none;">
-                                        <div class="qty-badge ${isLow ? 'qty-low' : ''}">${qty}</div>
-                                        ${firstLetter}
-                                    </div>`;
-                                }
+                    let iconHtml = item.imageUrl ? 
+                        `<div class="shelf-icon"><div class="qty-badge ${isLow ? 'qty-low' : ''}">${qty}</div><img src="${item.imageUrl}" loading="lazy" style="width: 100%; height: 100%; object-fit: contain; border-radius: 8px;"></div>` : 
+                        `<div class="shelf-icon" style="background: ${bgGrad}; color: ${textCol}; border:none;"><div class="qty-badge ${isLow ? 'qty-low' : ''}">${qty}</div>${firstLetter}</div>`;
 
-                                htmlArr.push(`
-                                    <div class="shelf-item" onclick="openItemDetailsModal('${item.docId}')" title="${item.name}">
-                                        ${iconHtml}
-                                        <div class="shelf-item-details">
-                                            <div class="shelf-item-name">${item.name}</div>
-                                            ${paramSubtitle}
-                                        </div>
-                                        <div class="shelf-item-price">₹${parseFloat(item.msp || 0).toFixed(2)}</div>
-                                    </div>`);
-                            }
-                            htmlArr.push(`</div></div>`);
-                        }
-                    }
+                    // Clean names in item list as well
+                    const displayName = cleanStr(item.name);
+
+                    htmlArr.push(`
+                        <div class="shelf-item" onclick="openItemDetailsModal('${item.docId}')" title="${displayName}">
+                            ${iconHtml}
+                            <div class="shelf-item-details">
+                                <div class="shelf-item-name">${displayName}</div>
+                                ${paramSubtitle}
+                            </div>
+                            <div class="shelf-item-price">₹${parseFloat(item.msp || 0).toFixed(2)}</div>
+                        </div>`);
                 }
+                htmlArr.push(`</div>`);
+            } 
+            // STATE 2: RENDER DRILL-DOWN LIST (Dark Accordion Style from Image)
+            else {
+                let groupedList = {};
+                filtered.forEach(item => {
+                    totalItems++;
+                    let key = "";
+                    if (!navPath.dept) key = item.department || "Other";
+                    else if (!navPath.cat) key = item.category || "General";
+                    else if (!navPath.subcat) key = item.subCategory || "Items";
+                    
+                    if (!groupedList[key]) groupedList[key] = 0;
+                    groupedList[key]++;
+                });
+
+                const keys = Object.keys(groupedList).sort();
+                htmlArr.push(`<div style="display:flex; flex-direction:column; gap:6px;">`);
+                
+                keys.forEach(k => {
+                    const cleanK = cleanStr(k);
+                    // Dark UI exact match for the image you provided
+                    htmlArr.push(`
+                        <div onclick="drillDown('${k}')" style="background:#1e293b; color:white; padding:15px 20px; border-radius:6px; display:flex; justify-content:space-between; align-items:center; cursor:pointer; font-weight:900; font-size:13px; text-transform:uppercase; box-shadow:0 2px 4px rgba(0,0,0,0.1); transition:0.1s;" onmouseover="this.style.background='#334155'" onmouseout="this.style.background='#1e293b'">
+                            <div style="display:flex; align-items:center; gap:12px; letter-spacing:0.5px;">
+                                <i class="bi bi-folder-fill" style="color:#60a5fa; font-size:18px;"></i>
+                                ${cleanK}
+                            </div>
+                            <div style="display:flex; align-items:center; gap:15px;">
+                                <span style="background:rgba(255,255,255,0.15); padding:3px 10px; border-radius:12px; font-size:10px;">${groupedList[k]} Options</span>
+                                <i class="bi bi-caret-down-fill" style="opacity:0.5; font-size:12px;"></i>
+                            </div>
+                        </div>
+                    `);
+                });
+                htmlArr.push(`</div>`);
             }
 
             container.innerHTML = htmlArr.join('');
@@ -704,17 +652,25 @@ window.renderInventory = function() {
         });
     }
 
-    // FOLDER HELPER FUNCTIONS
-    window.openFolder = function(dept, cat, subcat) {
-        activeFolder = { dept, cat, subcat };
-        currentViewLevel = 'items';
-        document.getElementById('search-input').value = ""; // Clear search on open
+    // --- DRILL DOWN NAVIGATION CONTROLLERS ---
+    window.setNavPath = function(level) {
+        if (level === 'home') navPath = { dept: null, cat: null, subcat: null };
+        if (level === 'dept') navPath = { dept: navPath.dept, cat: null, subcat: null };
+        if (level === 'cat') navPath = { dept: navPath.dept, cat: navPath.cat, subcat: null };
+        if (level === 'back') {
+            if (navPath.subcat) navPath.subcat = null;
+            else if (navPath.cat) navPath.cat = null;
+            else if (navPath.dept) navPath.dept = null;
+        }
+        document.getElementById('search-input').value = "";
         renderInventory();
     }
-    
-    window.closeFolder = function() {
-        activeFolder = null;
-        currentViewLevel = 'folders';
+
+    window.drillDown = function(selectedValue) {
+        if (!navPath.dept) navPath.dept = selectedValue;
+        else if (!navPath.cat) navPath.cat = selectedValue;
+        else if (!navPath.subcat) navPath.subcat = selectedValue;
+        document.getElementById('search-input').value = "";
         renderInventory();
     }
 
