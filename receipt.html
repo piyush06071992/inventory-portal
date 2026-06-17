@@ -197,6 +197,14 @@
 
             container.innerHTML = html;
 
+            // --- AUTO PRINT LOGIC ---
+            // If the POS sent the autoprint command, pop open the print dialog instantly
+            if (urlParams.get('autoprint') === 'true') {
+                setTimeout(() => {
+                    window.print();
+                }, 800); // We wait 800ms to ensure the fonts and CSS layout have fully rendered
+            }
+
         } catch (error) {
             console.error("Error loading receipt:", error);
             container.innerHTML = `<div class="error-msg"><i class="bi bi-exclamation-triangle" style="font-size:40px; display:block; margin-bottom:10px;"></i>Could not load receipt. Permissions issue.</div>`;
