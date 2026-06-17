@@ -401,9 +401,10 @@
 
     let rawInventory = []; let globalBranches = []; 
     let currentMoveItem = null; let currentWasteItem = null; 
-    let currentPromoDocId = null; let currentMspForMath = 0; let currentCpForMath = 0; let currentGstForMath = 0;
+   let currentPromoDocId = null; let currentMspForMath = 0; let currentCpForMath = 0; let currentGstForMath = 0;
     let editingBlueprintId = null; 
-    let savedShopParams = {}; 
+    let currentViewLevel = 'folders'; let activeFolder = null; // FOLDER STATE VARIABLES
+    let savedShopParams = {};
     let masterTaxonomyList = []; 
     let localShopTaxonomy = [];
 
@@ -516,8 +517,7 @@
         }
         if(source !== 'init') renderInventory();
     }
-
-    window.renderInventory = function() {
+window.renderInventory = function() {
         const container = document.getElementById('inventory-racks-container');
         const query = document.getElementById('search-input').value.toLowerCase().trim();
         const fDept = document.getElementById('filter-main-dept').value;
@@ -533,16 +533,25 @@
                 if(fDept !== 'ALL' && item.department !== fDept) continue;
                 if(fCat !== 'ALL' && item.category !== fCat) continue;
                 if(fSubcat !== 'ALL' && item.subCategory !== fSubcat) continue;
+                
+                // Search bypasses everything
                 if (query) {
                     const n = item.name ? item.name.toLowerCase() : "";
                     const b = item.barcode ? item.barcode.toLowerCase() : "";
                     if (!n.includes(query) && !b.includes(query)) continue;
                 }
+
+                // If no search query, and we are inside a folder, filter out items not in this folder
+                if (!query && currentViewLevel === 'items' && activeFolder) {
+                    if (item.department !== activeFolder.dept || item.category !== activeFolder.cat || item.subCategory !== activeFolder.subcat) continue;
+                }
+
                 filtered.push(item);
             }
 
             if(filtered.length === 0) {
-                container.innerHTML = `<div style="text-align:center; padding:60px; color:var(--text-light);"><i class="bi bi-search" style="font-size:40px; display:block; margin-bottom:10px;"></i><h3>No items match criteria.</h3></div>`;
+                let backBtn = (currentViewLevel === 'items') ? `<button class="btn-action" onclick="closeFolder()" style="margin:10px auto;"><i class="bi bi-arrow-left"></i> Back</button>` : '';
+                container.innerHTML = `<div style="text-align:center; padding:60px; color:var(--text-light);"><i class="bi bi-search" style="font-size:40px; display:block; margin-bottom:10px;"></i><h3>No items match criteria.</h3>${backBtn}</div>`;
                 document.getElementById('dash-total').innerText = 0; document.getElementById('dash-low').innerText = 0;
                 return;
             }
@@ -559,63 +568,103 @@
                 grouped[d][c][s].push(item);
             }
 
-            const bgGradientsLocal = [
-                'linear-gradient(135deg, #e0f2fe, #bae6fd)', 'linear-gradient(135deg, #dcfce7, #a7f3d0)',
-                'linear-gradient(135deg, #fef3c7, #fde68a)', 'linear-gradient(135deg, #f3e8ff, #ddd6fe)',
-                'linear-gradient(135deg, #fee2e2, #fecaca)'
-            ];
-
             let htmlArr = [];
-            const depts = Object.keys(grouped).sort();
-            
-            for (let d = 0; d < depts.length; d++) {
-                const deptName = depts[d]; const cats = Object.keys(grouped[deptName]).sort();
-                for (let c = 0; c < cats.length; c++) {
-                    const catName = cats[c]; const subcats = Object.keys(grouped[deptName][catName]).sort();
-                    for (let s = 0; s < subcats.length; s++) {
-                        const subcatName = subcats[s]; const items = grouped[deptName][catName][subcatName];
-                        
-                        htmlArr.push(`<div class="shelf-wrapper" style="content-visibility: auto; contain-intrinsic-size: 200px;">
-                            <div class="shelf-header">${deptName} <i class="bi bi-caret-right-fill"></i> ${catName} <i class="bi bi-caret-right-fill"></i> <span style="color:var(--primary);">${subcatName}</span><span class="shelf-count">${items.length} Varieties</span></div>
-                            <div class="shelf-grid">`);
 
-                        for (let i = 0; i < items.length; i++) {
-                            const item = items[i]; const qty = parseFloat(item.qty || 0);
-                            const minStock = parseFloat(item.minStock !== undefined ? item.minStock : 5);
-                            const isLow = qty < minStock; 
-                            const firstLetter = item.name ? item.name.charAt(0).toUpperCase() : 'B';
-                            const bgGrad = bgGradientsLocal[i % 5]; const textCol = isLow ? '#ef4444' : '#0f172a';
+            // ==========================================
+            // STATE 1: DRAW FOLDERS (If no search query)
+            // ==========================================
+            if (!query && currentViewLevel === 'folders') {
+                htmlArr.push('<div style="display:grid; grid-template-columns:repeat(auto-fill, minmax(160px, 1fr)); gap:15px; padding:10px;">');
+                const depts = Object.keys(grouped).sort();
+                for (let d = 0; d < depts.length; d++) {
+                    const deptName = depts[d]; const cats = Object.keys(grouped[deptName]).sort();
+                    for (let c = 0; c < cats.length; c++) {
+                        const catName = cats[c]; const subcats = Object.keys(grouped[deptName][catName]).sort();
+                        for (let s = 0; s < subcats.length; s++) {
+                            const subcatName = subcats[s]; const items = grouped[deptName][catName][subcatName];
+                            
+                            htmlArr.push(`
+                                <div onclick="openFolder('${deptName}', '${catName}', '${subcatName}')" style="background:white; border:1px solid var(--border); border-radius:12px; padding:15px; cursor:pointer; text-align:center; box-shadow:0 4px 6px rgba(0,0,0,0.02); transition:0.2s;" onmouseover="this.style.borderColor='var(--primary)'; this.style.transform='translateY(-3px)';" onmouseout="this.style.borderColor='var(--border)'; this.style.transform='none';">
+                                    <i class="bi bi-folder-fill" style="font-size:36px; color:var(--primary); display:block; margin-bottom:8px; opacity: 0.9;"></i>
+                                    <h3 style="margin:0; font-size:13px; font-weight:900; color:var(--navy); line-height:1.2; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;" title="${subcatName}">${subcatName}</h3>
+                                    <p style="margin:4px 0 0 0; font-size:9px; font-weight:800; color:var(--text-light); text-transform:uppercase; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;">${deptName} &rsaquo; ${catName}</p>
+                                    <div style="margin-top:10px; background:#e0f2fe; color:var(--primary); font-size:11px; font-weight:900; padding:4px; border-radius:6px;">${items.length} Items</div>
+                                </div>
+                            `);
+                        }
+                    }
+                }
+                htmlArr.push('</div>');
+            } 
+            // ==========================================
+            // STATE 2: DRAW ITEMS (Inside folder OR Search)
+            // ==========================================
+            else {
+                if (!query && currentViewLevel === 'items') {
+                    htmlArr.push(`<div style="margin-bottom:15px; padding:0 10px; display:flex; align-items:center; gap:10px;">
+                        <button class="btn-action" onclick="closeFolder()" style="background:white; color:var(--navy); border:1px solid var(--border);"><i class="bi bi-arrow-left"></i> Back</button>
+                        <h2 style="margin:0; font-size:18px; font-weight:900; color:var(--navy);"><i class="bi bi-folder2-open" style="color:var(--text-light); margin-right:5px;"></i> ${activeFolder.subcat}</h2>
+                    </div>`);
+                } else if (query) {
+                    htmlArr.push(`<div style="margin-bottom:15px; padding:0 10px;"><span style="font-size:13px; font-weight:800; color:var(--text-light);">Search Results for: <span style="color:var(--primary);">'${query}'</span></span></div>`);
+                }
 
-                            let paramSubtitle = '';
-                            if(item.customParams) paramSubtitle = `<div class="shelf-item-subtitle">${Object.values(item.customParams).join(' • ')}</div>`;
-
-                            // Apply Camera Image or Fallback Gradient
-                            let iconHtml = '';
-                            if (item.imageUrl) {
-                                iconHtml = `
-                                <div class="shelf-icon">
-                                    <div class="qty-badge ${isLow ? 'qty-low' : ''}">${qty}</div>
-                                    <img src="${item.imageUrl}" loading="lazy" style="width: 100%; height: 100%; object-fit: contain; border-radius: 8px;">
-                                </div>`;
+                const bgGradientsLocal = ['linear-gradient(135deg, #e0f2fe, #bae6fd)', 'linear-gradient(135deg, #dcfce7, #a7f3d0)', 'linear-gradient(135deg, #fef3c7, #fde68a)', 'linear-gradient(135deg, #f3e8ff, #ddd6fe)', 'linear-gradient(135deg, #fee2e2, #fecaca)'];
+                
+                const depts = Object.keys(grouped).sort();
+                for (let d = 0; d < depts.length; d++) {
+                    const deptName = depts[d]; const cats = Object.keys(grouped[deptName]).sort();
+                    for (let c = 0; c < cats.length; c++) {
+                        const catName = cats[c]; const subcats = Object.keys(grouped[deptName][catName]).sort();
+                        for (let s = 0; s < subcats.length; s++) {
+                            const subcatName = subcats[s]; const items = grouped[deptName][catName][subcatName];
+                            
+                            // Only draw category headers if searching globally
+                            if (query) {
+                                htmlArr.push(`<div class="shelf-wrapper" style="content-visibility: auto; contain-intrinsic-size: 200px;">
+                                <div class="shelf-header">${deptName} <i class="bi bi-caret-right-fill"></i> ${catName} <i class="bi bi-caret-right-fill"></i> <span style="color:var(--primary);">${subcatName}</span><span class="shelf-count">${items.length} Items</span></div>
+                                <div class="shelf-grid">`);
                             } else {
-                                iconHtml = `
-                                <div class="shelf-icon" style="background: ${bgGrad}; color: ${textCol}; border:none;">
-                                    <div class="qty-badge ${isLow ? 'qty-low' : ''}">${qty}</div>
-                                    ${firstLetter}
-                                </div>`;
+                                htmlArr.push(`<div class="shelf-wrapper"><div class="shelf-grid">`);
                             }
 
-                            htmlArr.push(`
-                                <div class="shelf-item" onclick="openItemDetailsModal('${item.docId}')" title="${item.name}">
-                                    ${iconHtml}
-                                    <div class="shelf-item-details">
-                                        <div class="shelf-item-name">${item.name}</div>
-                                        ${paramSubtitle}
-                                    </div>
-                                    <div class="shelf-item-price">₹${parseFloat(item.msp || 0).toFixed(2)}</div>
-                                </div>`);
+                            for (let i = 0; i < items.length; i++) {
+                                const item = items[i]; const qty = parseFloat(item.qty || 0);
+                                const minStock = parseFloat(item.minStock !== undefined ? item.minStock : 5);
+                                const isLow = qty < minStock; 
+                                const firstLetter = item.name ? item.name.charAt(0).toUpperCase() : 'B';
+                                const bgGrad = bgGradientsLocal[i % 5]; const textCol = isLow ? '#ef4444' : '#0f172a';
+
+                                let paramSubtitle = '';
+                                if(item.customParams) paramSubtitle = `<div class="shelf-item-subtitle">${Object.values(item.customParams).join(' • ')}</div>`;
+
+                                let iconHtml = '';
+                                if (item.imageUrl) {
+                                    iconHtml = `
+                                    <div class="shelf-icon">
+                                        <div class="qty-badge ${isLow ? 'qty-low' : ''}">${qty}</div>
+                                        <img src="${item.imageUrl}" loading="lazy" style="width: 100%; height: 100%; object-fit: contain; border-radius: 8px;">
+                                    </div>`;
+                                } else {
+                                    iconHtml = `
+                                    <div class="shelf-icon" style="background: ${bgGrad}; color: ${textCol}; border:none;">
+                                        <div class="qty-badge ${isLow ? 'qty-low' : ''}">${qty}</div>
+                                        ${firstLetter}
+                                    </div>`;
+                                }
+
+                                htmlArr.push(`
+                                    <div class="shelf-item" onclick="openItemDetailsModal('${item.docId}')" title="${item.name}">
+                                        ${iconHtml}
+                                        <div class="shelf-item-details">
+                                            <div class="shelf-item-name">${item.name}</div>
+                                            ${paramSubtitle}
+                                        </div>
+                                        <div class="shelf-item-price">₹${parseFloat(item.msp || 0).toFixed(2)}</div>
+                                    </div>`);
+                            }
+                            htmlArr.push(`</div></div>`);
                         }
-                        htmlArr.push(`</div><div class="shelf-board"></div></div>`);
                     }
                 }
             }
@@ -624,6 +673,20 @@
             document.getElementById('dash-total').innerText = totalItems;
             document.getElementById('dash-low').innerText = lowStock;
         });
+    }
+
+    // FOLDER HELPER FUNCTIONS
+    window.openFolder = function(dept, cat, subcat) {
+        activeFolder = { dept, cat, subcat };
+        currentViewLevel = 'items';
+        document.getElementById('search-input').value = ""; // Clear search on open
+        renderInventory();
+    }
+    
+    window.closeFolder = function() {
+        activeFolder = null;
+        currentViewLevel = 'folders';
+        renderInventory();
     }
 
     // --- MODAL CONTROLLERS ---
