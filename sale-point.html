@@ -484,7 +484,7 @@
         }
     }
 
-    document.addEventListener('DOMContentLoaded', () => {
+   document.addEventListener('DOMContentLoaded', () => {
         firebase.auth().onAuthStateChanged(async (user) => {
             if (!user || !activeUserPhone) return;
             try { if(assignedBranch && assignedBranch.startsWith('[')) assignedBranch = JSON.parse(assignedBranch); } catch(e){}
@@ -494,7 +494,36 @@
             if(activeBranchId) startLiveInventorySync();
             
             setWatermarkDetails(); // Initialize the background watermark
-            enforceSingleDevice(); // Boot up the security watcher
+
+            // --- UNIFIED MULTI-DEVICE SECURITY (Synced with Dashboard) ---
+            const myLoginTime = localStorage.getItem("myLoginTime");
+            
+            if (activeStaffId && activeStaffId !== 'admin' && myLoginTime) {
+                const db = firebase.firestore();
+                db.collection('companies').doc(activeUserPhone).collection('staff').doc(activeStaffId)
+                .onSnapshot((doc) => {
+                    if (doc.exists) {
+                        const data = doc.data();
+                        if (data.lastLoginTime) {
+                            const dbTime = new Date(data.lastLoginTime).getTime();
+                            const localTime = new Date(myLoginTime).getTime();
+                            
+                            // 5-Second Buffer matching your Dashboard logic
+                            if ((dbTime - localTime) > 5000) {
+                                saveCartState(); // Instantly rescue and save the active cart locally
+                                
+                                alert("⚠️ Security Alert: Account Logged In Elsewhere\n\nYour account was just used to log in on another device.\nTo protect your store, you have been securely logged out of this screen.\n\nDon't worry, your current unbilled cart has been safely preserved locally on this device.");
+                                
+                                // Force exact logout sequence from dashboard
+                                localStorage.clear();
+                                sessionStorage.clear();
+                                firebase.auth().signOut().then(() => window.location.replace('/login.html'))
+                                    .catch(() => window.location.replace('/login.html'));
+                            }
+                        }
+                    }
+                });
+            }
             
             // Boot up the auto-save recovery
             setTimeout(loadCartState, 500); 
