@@ -29,6 +29,7 @@
         input[disabled], select[disabled] { background-color: #e2e8f0; color: #64748b; cursor: not-allowed; opacity: 0.8; }
         
         .grid-2 { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
+        .grid-3 { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 10px; }
         
         .btn-main { width: 100%; padding: 16px; border: none; border-radius: 12px; font-size: 15px; font-weight: 700; cursor: pointer; color: white; margin-bottom: 10px; display: flex; align-items: center; justify-content: center; gap: 8px;}
         .btn-emerald { background: var(--emerald); }
@@ -65,16 +66,6 @@
         <button onclick="history.back()" style="background: white; border: 1px solid #cbd5e1; padding: 8px 12px; border-radius: 8px; font-weight: 700; color: #475569; cursor: pointer; display: flex; align-items: center; gap: 6px; box-shadow: 0 2px 4px rgba(0,0,0,0.02);">
             <i class="bi bi-x-lg"></i> Exit
         </button>
-    </div>
-
-    <div class="card" id="admin-auth-card" style="display: none; background: #f0fdf4; border-color: #bbf7d0;">
-        <div style="display: flex; justify-content: space-between; align-items: center;">
-            <div>
-                <h2 style="margin:0; color:#166534; font-size: 16px;"><i class="bi bi-shield-lock-fill"></i> Access Control</h2>
-                <p style="margin:4px 0 0 0; font-size:12px; color:#15803d;">Manage staff entry permissions</p>
-            </div>
-            <button class="btn-main btn-emerald" style="width: auto; padding: 10px 15px; margin: 0; font-size: 13px;" onclick="openAuthModal()">AUTHORIZE</button>
-        </div>
     </div>
 
     <div class="card">
@@ -117,24 +108,29 @@
         </div>
         
         <div class="quick-shelf" id="quick-shelf-container">
-            </div>
+            <!-- Frequent Items Populated by JS -->
+        </div>
         
         <label>Product Name</label>
         <input type="text" id="item-name" placeholder="Item Name">
         
-        <div class="grid-2">
+        <div class="grid-3">
+            <div>
+                <label>Department</label>
+                <select id="department" onchange="handleDropdownChange('department')"><option value="">Loading...</option></select>
+            </div>
             <div>
                 <label>Category</label>
-                <select id="category" onchange="handleCategoryChange()"><option value="">Loading...</option></select>
+                <select id="category" onchange="handleDropdownChange('category')" disabled><option value="">Select Dept First</option></select>
             </div>
             <div>
                 <label>Sub-Category</label>
-                <select id="subcategory" onchange="handleSubcategoryChange()"><option value="">Select Category First</option></select>
+                <select id="subcategory" onchange="handleDropdownChange('subcategory')" disabled><option value="">Select Cat First</option></select>
             </div>
         </div>
         
         <div style="margin-bottom: 12px;">
-            <label>Unit</label>
+            <label>Unit Base</label>
             <select id="unit" onchange="handleDropdownAdd('unit')">
                 <option value="">Select...</option>
                 <option value="Pieces">Pieces</option>
@@ -146,7 +142,6 @@
         </div>
 
         <div id="dynamic-params"></div>
-        <datalist id="saved-param-keys"></datalist>
         <button class="btn-main" style="background:#f1f5f9; color:#475569; border: 1px dashed #cbd5e1; margin-bottom: 15px;" onclick="addParam()">
             <i class="bi bi-node-plus"></i> Add Custom Parameter (Size, Color, etc.)
         </button>
@@ -198,30 +193,6 @@
     </div>
 </div>
 
-<div id="auth-modal" style="display:none; position:fixed; top:0; left:0; width:100%; height:100%; background:rgba(15,23,42,0.7); z-index:1000; align-items:center; justify-content:center; padding:15px; box-sizing:border-box; backdrop-filter:blur(4px);">
-    <div style="background:white; width:100%; max-width:500px; border-radius:20px; padding:24px; max-height:90vh; display:flex; flex-direction:column; position:relative; box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.25);">
-        <button onclick="closeAuthModal()" style="position:absolute; top:15px; right:15px; background:#f1f5f9; border:none; border-radius:50%; width:32px; height:32px; cursor:pointer; color:#64748b;"><i class="bi bi-x-lg"></i></button>
-        <h2 style="margin-top:0; color:#1e3a8a; font-size:18px; margin-bottom:15px;"><i class="bi bi-person-lines-fill"></i> Authorize Staff</h2>
-        
-        <div class="grid-2" style="margin-bottom: 5px;">
-            <div>
-                <label style="font-size: 11px;">Filter Branch</label>
-                <select id="auth-branch-filter" onchange="renderAuthList()" style="padding:10px; font-size:13px; margin-bottom:10px;"><option value="">All Branches</option></select>
-            </div>
-            <div>
-                <label style="font-size: 11px;">Filter Role</label>
-                <select id="auth-role-filter" onchange="renderAuthList()" style="padding:10px; font-size:13px; margin-bottom:10px;"><option value="">All Roles</option></select>
-            </div>
-        </div>
-
-        <div style="flex-grow: 1; overflow-y: auto; background: #f8fafc; border: 1px inset #e2e8f0; border-radius: 12px; padding: 10px; margin-bottom: 10px; min-height: 200px;" id="auth-staff-list">
-            <p style="text-align:center; color:#64748b; font-size:13px; margin-top:20px;">Loading staff...</p>
-        </div>
-        
-        <p style="font-size:11px; color:#64748b; margin-top:0; margin-bottom:0; text-align:center;">Permissions update instantly when you tap Grant or Revoke.</p>
-    </div>
-</div>
-
 <script>
     let activeUserPhone = localStorage.getItem("activeUserPhone");
     let assignedBranch = localStorage.getItem("assignedBranch");
@@ -230,29 +201,42 @@
     let html5QrCode;
     let currentFacingMode = "environment"; 
     let isRetryingScanner = false; 
+
+    // Sync variables matching viewstock.html perfectly
+    let masterTaxonomyList = []; 
+    let localShopTaxonomy = [];
     let savedShopParams = {}; 
     let globalProductCatalog = []; 
 
-    let shopTaxonomy = {}; 
-    let taxonomyChanged = false; 
-
     function setFormLockState(isLocked) {
         document.getElementById('item-name').disabled = isLocked;
+        document.getElementById('department').disabled = isLocked;
         document.getElementById('category').disabled = isLocked;
         document.getElementById('subcategory').disabled = isLocked;
         document.getElementById('unit').disabled = isLocked;
+        // Cost and MSP remain unlocked so you can update them per new shipment
     }
 
-    async function loadShopSettings() {
+    async function loadMasterSettings() {
+        const db = firebase.firestore();
         try {
-            const doc = await firebase.firestore().collection('companies').doc(activeUserPhone).collection('settings').doc('params').get();
-            if (doc.exists) {
-                if (doc.data().customParams) savedShopParams = doc.data().customParams;
-                if (doc.data().shopTaxonomy) shopTaxonomy = doc.data().shopTaxonomy;
-            }
-            populateCategoryDropdown();
-        } catch (e) { console.error("Error loading params", e); }
+            // Pull Exact Taxonomy from Master
+            const masterDoc = await db.collection('admin_settings').doc('master_taxonomy').get();
+            if(masterDoc.exists && masterDoc.data().dictionary) masterTaxonomyList = masterDoc.data().dictionary;
+            
+            // Pull Exact Local Taxonomy
+            const localDoc = await db.collection('companies').doc(activeUserPhone).collection('settings').doc('local_taxonomy').get();
+            if(localDoc.exists && localDoc.data().dictionary) localShopTaxonomy = localDoc.data().dictionary;
+            
+            // Pull Exact Params
+            const paramDoc = await db.collection('companies').doc(activeUserPhone).collection('settings').doc('params').get();
+            if (paramDoc.exists && paramDoc.data().customParams) savedShopParams = paramDoc.data().customParams;
+            
+            populateDeptDropdown();
+        } catch (e) { console.error("Error loading master settings", e); }
     }
+
+    function getCombinedTaxonomy() { return [...masterTaxonomyList, ...localShopTaxonomy]; }
 
     document.addEventListener('DOMContentLoaded', () => {
         firebase.auth().onAuthStateChanged(async (user) => {
@@ -264,21 +248,7 @@
             }
 
             if (activeUserPhone) {
-                if (!assignedBranch || assignedBranch === "admin") {
-                    document.getElementById('admin-auth-card').style.display = 'block';
-                } else {
-                    const db = firebase.firestore();
-                    db.collection('companies').doc(activeUserPhone).collection('staff').doc(localStorage.getItem("activeStaffId"))
-                    .onSnapshot(doc => {
-                        const perm = doc.data()?.permissions?.canEnterStock;
-                        if (!perm) {
-                            alert("ACCESS DENIED: You do not have permission to enter stock.");
-                            window.location.replace('/staff-dashboard.html');
-                        }
-                    });
-                }
-
-                await loadShopSettings(); 
+                await loadMasterSettings(); 
                 clearItemForm(); 
                 loadBranches(); loadSuppliers(); setupCalculators(); loadProductCatalog();
             }
@@ -317,102 +287,10 @@
                 <div class="quick-item" onclick="lookupProduct('${p.id}')">
                     <div class="quick-avatar" style="background: ${bg};">${firstLetter}</div>
                     <h4 class="quick-name">${p.name}</h4>
-                    <p class="quick-price">MSP: ₹${parseFloat(p.currentMsp || 0).toFixed(0)}</p>
+                    <p class="quick-price">MSP: ₹${parseFloat(p.currentMsp || p.msp || 0).toFixed(0)}</p>
                 </div>
             `;
         });
-    }
-
-    let globalAuthStaff = [];
-    let globalAuthBranches = {};
-
-    async function openAuthModal() {
-        document.getElementById('auth-modal').style.display = 'flex';
-        const db = firebase.firestore();
-        document.getElementById('auth-staff-list').innerHTML = `<p style="text-align:center; color:#64748b; font-size:13px; margin-top:20px;">Loading staff...</p>`;
-        
-        try {
-            const branchSnap = await db.collection('companies').doc(activeUserPhone).collection('branches').get();
-            const bFilter = document.getElementById('auth-branch-filter');
-            bFilter.innerHTML = '<option value="">All Branches</option>';
-            branchSnap.forEach(doc => {
-                globalAuthBranches[doc.data().branchId] = doc.data().branchName;
-                bFilter.innerHTML += `<option value="${doc.data().branchId}">${doc.data().branchName}</option>`;
-            });
-
-            const compDoc = await db.collection('companies').doc(activeUserPhone).get();
-            const rFilter = document.getElementById('auth-role-filter');
-            rFilter.innerHTML = '<option value="">All Roles</option>';
-            if (compDoc.exists && compDoc.data().roles) {
-                compDoc.data().roles.forEach(r => rFilter.innerHTML += `<option value="${r}">${r}</option>`);
-            }
-
-            const staffSnap = await db.collection('companies').doc(activeUserPhone).collection('staff').where('status', '==', 'Active').get();
-            globalAuthStaff = [];
-            staffSnap.forEach(doc => {
-                globalAuthStaff.push({ id: doc.id, ...doc.data() });
-            });
-            
-            renderAuthList();
-        } catch (e) {
-            console.error(e);
-            document.getElementById('auth-staff-list').innerHTML = `<p style="color:red; text-align:center;">Error loading data.</p>`;
-        }
-    }
-
-    function closeAuthModal() {
-        document.getElementById('auth-modal').style.display = 'none';
-    }
-
-    function renderAuthList() {
-        const bFilter = document.getElementById('auth-branch-filter').value;
-        const rFilter = document.getElementById('auth-role-filter').value;
-        const list = document.getElementById('auth-staff-list');
-        list.innerHTML = '';
-
-        let count = 0;
-        globalAuthStaff.forEach(stf => {
-            if (bFilter) {
-                const stfBranches = Array.isArray(stf.assignedBranch) ? stf.assignedBranch : [stf.assignedBranch];
-                if (!stfBranches.includes(bFilter)) return;
-            }
-            if (rFilter && stf.role !== rFilter) return;
-
-            count++;
-            const isAuth = stf.permissions && stf.permissions.canEnterStock === true;
-            
-            list.innerHTML += `
-                <div style="background:white; padding:12px; border-radius:10px; margin-bottom:8px; display:flex; justify-content:space-between; align-items:center; border:1px solid #e2e8f0; box-shadow: 0 2px 4px rgba(0,0,0,0.02);">
-                    <div>
-                        <p style="margin:0; font-weight:700; font-size:14px; color:var(--navy);">${stf.name}</p>
-                        <p style="margin:3px 0 0 0; font-size:11px; color:#64748b;"><span style="background:#e2e8f0; padding:2px 6px; border-radius:4px;">${stf.role}</span> | +91 ${stf.phone}</p>
-                    </div>
-                    <button onclick="toggleStockAuth('${stf.id}', ${!isAuth})" style="background:${isAuth ? '#fee2e2' : '#dcfce7'}; color:${isAuth ? '#ef4444' : '#10b981'}; border:1px solid ${isAuth ? '#fca5a5' : '#86efac'}; padding:8px 12px; border-radius:8px; font-weight:700; font-size:12px; cursor:pointer; width:90px; transition: all 0.2s;">
-                        ${isAuth ? '<i class="bi bi-x-circle"></i> REVOKE' : '<i class="bi bi-check-circle"></i> GRANT'}
-                    </button>
-                </div>
-            `;
-        });
-
-        if (count === 0) list.innerHTML = `<p style="text-align:center; color:#94a3b8; font-size:13px; margin-top:20px;">No staff match these filters.</p>`;
-    }
-
-    async function toggleStockAuth(staffId, newState) {
-        try {
-            const db = firebase.firestore();
-            await db.collection('companies').doc(activeUserPhone).collection('staff').doc(staffId).set({
-                permissions: { canEnterStock: newState }
-            }, { merge: true });
-            
-            const stf = globalAuthStaff.find(s => s.id === staffId);
-            if (stf) {
-                if (!stf.permissions) stf.permissions = {};
-                stf.permissions.canEnterStock = newState;
-            }
-            renderAuthList(); 
-        } catch (e) {
-            alert("Error updating permissions: " + e.message);
-        }
     }
 
     function startScanner() {
@@ -422,12 +300,9 @@
         if (!html5QrCode) html5QrCode = new Html5Qrcode("reader");
 
         const isMobile = window.innerWidth < 600;
-        const boxWidth = isMobile ? 250 : 350;
-        const boxHeight = isMobile ? 120 : 150;
-
         html5QrCode.start(
             { facingMode: currentFacingMode },
-            { fps: 15, qrbox: { width: boxWidth, height: boxHeight } },
+            { fps: 15, qrbox: { width: isMobile ? 250 : 350, height: isMobile ? 120 : 150 } },
             (decodedText) => {
                 document.getElementById('barcode').value = decodedText;
                 stopScanner(); lookupProduct(); 
@@ -435,12 +310,12 @@
             (errorMessage) => { }
         ).catch(err => {
             if (currentFacingMode === "environment" && !isRetryingScanner) {
-                console.warn("Back camera failed, trying front/webcam...");
+                console.warn("Back camera failed, trying front...");
                 currentFacingMode = "user";
                 isRetryingScanner = true;
                 startScanner();
             } else {
-                alert("Camera Error: Ensure permissions are granted. " + err.name);
+                alert("Camera Error: Ensure permissions are granted.");
                 stopScanner();
             }
         });
@@ -448,9 +323,7 @@
 
     function stopScanner() {
         if (html5QrCode && html5QrCode.isScanning) {
-            html5QrCode.stop().then(() => {
-                resetScannerUI();
-            });
+            html5QrCode.stop().then(() => resetScannerUI());
         } else { resetScannerUI(); }
     }
     
@@ -467,6 +340,65 @@
                 startScanner();
             });
         }
+    }
+
+    // --- EXACT VIEWSTOCK TAXONOMY REPLICATION ---
+    window.handleDropdownChange = function(level) {
+        let selectEl = document.getElementById(level);
+        
+        if (selectEl.value === 'ADD_NEW') {
+            let newVal = prompt(`Enter New ${level.toUpperCase()}:`);
+            if (newVal) {
+                newVal = newVal.trim().toUpperCase();
+                let exists = false;
+                for (let i = 0; i < selectEl.options.length; i++) { if (selectEl.options[i].value === newVal) exists = true; }
+                
+                if (exists) {
+                    alert("⚠️ ALREADY EXISTS!"); selectEl.value = "";
+                } else {
+                    selectEl.add(new Option(newVal, newVal), 1); 
+                    selectEl.value = newVal;
+                }
+            } else { selectEl.value = ""; }
+        }
+
+        if (level === 'department') updateCatDropdown();
+        if (level === 'category') updateSubcatDropdown();
+    };
+
+    function populateDeptDropdown() {
+        const select = document.getElementById('department'); 
+        select.innerHTML = '<option value="">Select Department...</option><option value="ADD_NEW" style="color:var(--emerald); font-weight:bold;">+ Add New</option>';
+        const uniqueDepts = [...new Set(getCombinedTaxonomy().map(i => i.dept).filter(Boolean))];
+        uniqueDepts.sort().forEach(d => { select.innerHTML += `<option value="${d}">${d}</option>`; });
+    }
+
+    function updateCatDropdown() {
+        const dept = document.getElementById('department').value;
+        const catSelect = document.getElementById('category'); 
+        const subcatSelect = document.getElementById('subcategory');
+        
+        catSelect.innerHTML = '<option value="">Select Category...</option><option value="ADD_NEW" style="color:var(--emerald); font-weight:bold;">+ Add New</option>';
+        subcatSelect.innerHTML = '<option value="">Select Sub-Category...</option>';
+        
+        if(!dept || dept === 'ADD_NEW') { catSelect.disabled = true; subcatSelect.disabled = true; return; }
+        
+        catSelect.disabled = false; subcatSelect.disabled = true;
+        const uniqueCats = [...new Set(getCombinedTaxonomy().filter(i => i.dept === dept).map(i => i.cat).filter(Boolean))];
+        uniqueCats.sort().forEach(c => { catSelect.innerHTML += `<option value="${c}">${c}</option>`; });
+    }
+
+    function updateSubcatDropdown() {
+        const dept = document.getElementById('department').value; 
+        const cat = document.getElementById('category').value;
+        const subcatSelect = document.getElementById('subcategory');
+        
+        subcatSelect.innerHTML = '<option value="">Select Sub-Category...</option><option value="ADD_NEW" style="color:var(--emerald); font-weight:bold;">+ Add New</option>';
+        if(!cat || cat === 'ADD_NEW') { subcatSelect.disabled = true; return; }
+        
+        subcatSelect.disabled = false;
+        const uniqueSubcats = [...new Set(getCombinedTaxonomy().filter(i => i.dept === dept && i.cat === cat).map(i => i.subcat).filter(Boolean))];
+        uniqueSubcats.sort().forEach(sc => { subcatSelect.innerHTML += `<option value="${sc}">${sc}</option>`; });
     }
 
     function addParam(key = "", val = "") {
@@ -497,9 +429,10 @@
         if(selectElem.value === 'ADD_NEW') {
             const newVal = prompt("Enter new parameter name (e.g., Company, Size):");
             if(newVal && newVal.trim() !== "") {
-                selectElem.add(new Option(newVal, newVal), selectElem.options.length - 1);
-                selectElem.value = newVal;
-                if(!savedShopParams[newVal]) savedShopParams[newVal] = [];
+                const upperVal = newVal.trim().toUpperCase();
+                selectElem.add(new Option(upperVal, upperVal), selectElem.options.length - 1);
+                selectElem.value = upperVal;
+                if(!savedShopParams[upperVal]) savedShopParams[upperVal] = [];
             } else { selectElem.selectedIndex = 0; }
         }
         const valSelect = selectElem.parentElement.querySelector('.param-val');
@@ -570,68 +503,19 @@
         }
     }
 
-  function populateCategoryDropdown() {
-        const catSelect = document.getElementById('category');
-        catSelect.innerHTML = '<option value="">Select Category...</option>';
-        for (const cat in shopTaxonomy) {
-            catSelect.innerHTML += `<option value="${cat}">${cat}</option>`;
-        }
-        catSelect.innerHTML += `<option value="ADD_NEW" style="color:var(--emerald); font-weight:bold;">+ Add New Category</option>`;
-    }
-
-    function handleCategoryChange() {
-        const catSelect = document.getElementById('category');
-        const subSelect = document.getElementById('subcategory');
-        
-        if (catSelect.value === 'ADD_NEW') {
-            const newCat = prompt("Enter New Category (e.g., Grocery, Stationery):");
-            if (newCat && newCat.trim() !== "") {
-                if (!shopTaxonomy[newCat]) { shopTaxonomy[newCat] = []; taxonomyChanged = true; }
-                populateCategoryDropdown();
-                catSelect.value = newCat;
-            } else { catSelect.selectedIndex = 0; }
-        }
-        
-        subSelect.innerHTML = '<option value="">Select Sub-Category...</option>';
-        if (catSelect.value && catSelect.value !== 'ADD_NEW' && shopTaxonomy[catSelect.value]) {
-            shopTaxonomy[catSelect.value].forEach(sub => {
-                subSelect.innerHTML += `<option value="${sub}">${sub}</option>`;
-            });
-            subSelect.innerHTML += `<option value="ADD_NEW" style="color:var(--emerald); font-weight:bold;">+ Add New Sub-Category</option>`;
-        } else {
-            subSelect.innerHTML = '<option value="">Select Category First</option>';
-        }
-    }
-
-    function handleSubcategoryChange() {
-        const catSelect = document.getElementById('category');
-        const subSelect = document.getElementById('subcategory');
-        
-        if (subSelect.value === 'ADD_NEW') {
-            const newSub = prompt(`Enter New Sub-Category under "${catSelect.value}":`);
-            if (newSub && newSub.trim() !== "") {
-                if (!shopTaxonomy[catSelect.value].includes(newSub)) {
-                    shopTaxonomy[catSelect.value].push(newSub);
-                    taxonomyChanged = true;
-                }
-                handleCategoryChange(); 
-                subSelect.value = newSub;
-            } else { subSelect.selectedIndex = 0; }
-        }
-    }
-
     function handleSmartSearch() {
         const query = document.getElementById('barcode').value.trim().toLowerCase();
         const suggestionsBox = document.getElementById('search-suggestions');
         
         setFormLockState(false); 
-        ['item-name', 'expiry-date', 'qty', 'cost-per', 'total-cost', 'profit-pct', 'msp'].forEach(id => document.getElementById(id).value = "");
-        document.getElementById('category').selectedIndex = 0;
-        document.getElementById('subcategory').innerHTML = '<option value="">Select Category First</option>';
+        ['item-name', 'expiry-date', 'qty', 'cost-per', 'total-cost', 'profit-pct', 'msp', 'gst-rate'].forEach(id => document.getElementById(id).value = "");
+        document.getElementById('department').selectedIndex = 0;
+        document.getElementById('category').innerHTML = '<option value="">Select Dept First</option>';
+        document.getElementById('subcategory').innerHTML = '<option value="">Select Cat First</option>';
         document.getElementById('unit').selectedIndex = 0;
         document.getElementById('dynamic-params').innerHTML = "";
         document.getElementById('tax-split').style.display = 'none';
-        for (const key of Object.keys(savedShopParams)) { addParam(key, ""); }
+        addParam("", ""); // Add one blank param row
         
         if (query.length < 2) { suggestionsBox.style.display = 'none'; return; }
         
@@ -675,14 +559,12 @@
         const barcode = document.getElementById('barcode').value.trim();
         if (!barcode) return;
         
-        document.getElementById('item-name').value = "";
-        document.getElementById('category').selectedIndex = 0;
+        // Auto-Clear
+        ['item-name', 'expiry-date', 'qty', 'cost-per', 'total-cost', 'profit-pct', 'msp', 'gst-rate'].forEach(id => document.getElementById(id).value = "");
+        document.getElementById('department').selectedIndex = 0;
+        document.getElementById('category').innerHTML = '<option value="">Select Dept First</option>';
+        document.getElementById('subcategory').innerHTML = '<option value="">Select Cat First</option>';
         document.getElementById('unit').selectedIndex = 0;
-        document.getElementById('expiry-date').value = "";
-        document.getElementById('qty').value = "";
-        document.getElementById('cost-per').value = "";
-        document.getElementById('total-cost').value = "";
-        document.getElementById('msp').value = "";
         document.getElementById('dynamic-params').innerHTML = "";
         document.getElementById('tax-split').style.display = 'none';
         
@@ -694,42 +576,57 @@
                 const data = doc.data();
                 document.getElementById('item-name').value = data.name || "";
                 
+                // Matches viewstock perfectly
+                if (data.department) {
+                    let dEl = document.getElementById('department');
+                    if(![...dEl.options].some(o => o.value === data.department)) dEl.add(new Option(data.department, data.department), 1);
+                    dEl.value = data.department;
+                    updateCatDropdown(); 
+                }
                 if (data.category) {
-                    if(!shopTaxonomy[data.category]) { shopTaxonomy[data.category] = []; taxonomyChanged = true; populateCategoryDropdown(); }
-                    document.getElementById('category').value = data.category;
-                    handleCategoryChange(); 
+                    let cEl = document.getElementById('category');
+                    if(![...cEl.options].some(o => o.value === data.category)) cEl.add(new Option(data.category, data.category), 1);
+                    cEl.value = data.category;
+                    updateSubcatDropdown();
                 }
-                if (data.subcategory && data.category) {
-                    if(!shopTaxonomy[data.category].includes(data.subcategory)) { shopTaxonomy[data.category].push(data.subcategory); taxonomyChanged = true; handleCategoryChange(); }
-                    document.getElementById('subcategory').value = data.subcategory;
+                
+                // Note: Viewstock saves it as subCategory (camelCase)
+                const subToMatch = data.subCategory || data.subcategory;
+                if (subToMatch) {
+                    let sEl = document.getElementById('subcategory');
+                    if(![...sEl.options].some(o => o.value === subToMatch)) sEl.add(new Option(subToMatch, subToMatch), 1);
+                    sEl.value = subToMatch;
                 }
+
                 if (data.unit) {
-                    const uEl = document.getElementById('unit');
-                    if(!Array.from(uEl.options).some(opt => opt.value === data.unit)) uEl.add(new Option(data.unit, data.unit), 1);
+                    let uEl = document.getElementById('unit');
+                    if(![...uEl.options].some(o => o.value === data.unit)) uEl.add(new Option(data.unit, data.unit), 1);
                     uEl.value = data.unit;
                 }
-                if (data.currentMsp) {
-                    document.getElementById('msp').value = data.currentMsp;
+                if (data.currentMsp || data.msp) {
+                    document.getElementById('msp').value = data.currentMsp || data.msp;
                 }
-                if (data.lastCostPrice) {
-                    document.getElementById('cost-per').value = data.lastCostPrice;
+                if (data.lastCostPrice || data.costPer) {
+                    document.getElementById('cost-per').value = data.lastCostPrice || data.costPer;
+                }
+                if (data.gstRate !== undefined) {
+                    document.getElementById('gst-rate').value = data.gstRate;
                 }
                 
                 if (data.customParams) {
                     productParams = data.customParams;
-                    for (const [k, v] of Object.entries(productParams)) {
-                        if (!savedShopParams[k]) savedShopParams[k] = [];
-                        if (v && !savedShopParams[k].includes(v)) savedShopParams[k].push(v);
-                    }
                 }
                 setFormLockState(true); 
             } else {
                 setFormLockState(false); 
             }
 
-            for (const key of Object.keys(savedShopParams)) {
+            // Draw parameters from the exact product, plus one empty row
+            for (const key of Object.keys(productParams)) {
                 addParam(key, productParams[key] || "");
             }
+            addParam("", "");
+
         } catch (e) { console.error(e); }
     }
 
@@ -800,38 +697,6 @@
             }
         });
 
-        if (paramsChanged || taxonomyChanged) {
-            const db = firebase.firestore();
-            const settingsRef = db.collection('companies').doc(activeUserPhone).collection('settings').doc('params');
-            
-            try {
-                await db.runTransaction(async (t) => {
-                    const doc = await t.get(settingsRef);
-                    let dbParams = doc.exists && doc.data().customParams ? doc.data().customParams : {};
-                    let dbTaxonomy = doc.exists && doc.data().shopTaxonomy ? doc.data().shopTaxonomy : {};
-
-                    for (const [k, arr] of Object.entries(savedShopParams)) {
-                        if (!dbParams[k]) dbParams[k] = [];
-                        arr.forEach(val => { if (!dbParams[k].includes(val)) dbParams[k].push(val); });
-                    }
-                    
-                    for (const [cat, subArr] of Object.entries(shopTaxonomy)) {
-                        if (!dbTaxonomy[cat]) dbTaxonomy[cat] = [];
-                        subArr.forEach(sub => { if (!dbTaxonomy[cat].includes(sub)) dbTaxonomy[cat].push(sub); });
-                    }
-
-                    t.set(settingsRef, { customParams: dbParams, shopTaxonomy: dbTaxonomy }, { merge: true });
-                    
-                    savedShopParams = dbParams;
-                    shopTaxonomy = dbTaxonomy;
-                });
-                taxonomyChanged = false;
-                paramsChanged = false;
-            } catch (err) {
-                console.error("Transaction failed: ", err);
-            }
-        }
-
         let rawBarcode = document.getElementById('barcode').value.trim();
         if (!rawBarcode) {
             rawBarcode = "SKU-" + Date.now().toString(36).toUpperCase();
@@ -841,8 +706,9 @@
             id: Date.now().toString(), 
             barcode: rawBarcode,
             name: document.getElementById('item-name').value.trim(),
+            department: document.getElementById('department').value,
             category: document.getElementById('category').value,
-            subcategory: document.getElementById('subcategory').value,
+            subCategory: document.getElementById('subcategory').value, // Saved as subCategory to match viewstock perfectly
             unit: document.getElementById('unit').value, 
             qty: parseFloat(document.getElementById('qty').value) || 0,
             costPer: parseFloat(document.getElementById('cost-per').value) || 0, 
@@ -893,19 +759,16 @@
     function removeItem(id) { currentBillItems = currentBillItems.filter(i => i.id !== id); renderCart(); }
     
     function clearItemForm() {
-        ['barcode', 'item-name', 'expiry-date', 'qty', 'cost-per', 'total-cost', 'profit-pct', 'msp'].forEach(id => document.getElementById(id).value = "");
-        document.getElementById('category').selectedIndex = 0;
-        document.getElementById('subcategory').innerHTML = '<option value="">Select Category First</option>';
+        ['barcode', 'item-name', 'expiry-date', 'qty', 'cost-per', 'total-cost', 'profit-pct', 'msp', 'gst-rate'].forEach(id => document.getElementById(id).value = "");
+        document.getElementById('department').selectedIndex = 0;
+        document.getElementById('category').innerHTML = '<option value="">Select Dept First</option>';
+        document.getElementById('subcategory').innerHTML = '<option value="">Select Cat First</option>';
         document.getElementById('unit').selectedIndex = 0;
         document.getElementById('dynamic-params').innerHTML = ""; 
         document.getElementById('tax-split').style.display = 'none';
         
         setFormLockState(false); 
-        
-        for (const key of Object.keys(savedShopParams)) {
-            addParam(key, "");
-        }
-        
+        addParam("", ""); 
         document.getElementById('barcode').focus();
     }
 
@@ -948,15 +811,20 @@
                 const invRef = db.collection('companies').doc(activeUserPhone).collection('branches').doc(branchId).collection('inventory').doc();
                 batch.set(invRef, { ...item, supplierId, billNum, timestamp: new Date().toISOString() });
                 
+                // Matches viewstock perfectly
                 if (item.barcode && item.barcode !== "") {
                     const masterRef = db.collection('companies').doc(activeUserPhone).collection('products_master').doc(item.barcode);
                     batch.set(masterRef, { 
-                        name: item.name, category: item.category, subcategory: item.subcategory || "", unit: item.unit, 
-                        lastCostPrice: item.costPer, currentMsp: item.msp, 
+                        name: item.name, department: item.department, category: item.category, subCategory: item.subCategory || "", unit: item.unit, 
+                        lastCostPrice: item.costPer, currentMsp: item.msp, gstRate: item.gstRate,
                         customParams: item.customParams, lastUpdated: new Date().toISOString() 
                     }, { merge: true });
                 }
             }
+            
+            // Note: If you add brand new params during stock entry, we skip uploading taxonomy to avoid accidental overwrites of the Master Dictionary. 
+            // New items entered here will flow smoothly into the master catalog, but taxonomy rule creation is reserved strictly for Viewstock!
+
             await batch.commit();
             alert("Success! Bill Saved.");
             window.location.reload();
