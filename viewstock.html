@@ -8,6 +8,7 @@
     <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-firestore-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-auth-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-storage-compat.js"></script>
     <script src="/auth.js"></script>
     
     <script src="https://unpkg.com/html5-qrcode"></script>
@@ -41,30 +42,33 @@
         .filter-row { display: flex; gap: 8px; background: white; padding: 8px; border-radius: 8px; border: 1px solid var(--border); flex: 1; align-items: center; flex-wrap: wrap;}
         .filter-input { padding: 6px 10px; border: 1px solid var(--border); border-radius: 6px; font-size: 12px; font-weight: 600; background: #f8fafc; flex: 1; min-width: 110px; outline: none;}
 
-       /* Store Shelf Layout */
+       /* Store Shelf Layout - LIST VIEW DEFAULT */
         #inventory-racks-container { padding: 10px 0; }
-        .shelf-wrapper { margin-bottom: 40px; }
+        .shelf-wrapper { margin-bottom: 20px; }
         .shelf-header { font-size: 16px; font-weight: 900; color: var(--navy); padding: 0 10px 10px 10px; display: flex; align-items: center; gap: 8px; flex-wrap: wrap; text-transform: uppercase;}
         .shelf-header i { font-size: 12px; color: var(--text-light); }
         .shelf-count { background: var(--primary); color: white; padding: 2px 8px; border-radius: 12px; font-size: 11px; margin-left: auto; }
         
-        .shelf-grid { display: flex; flex-wrap: wrap; gap: 20px; padding: 10px 20px; }
-        .shelf-item { width: 120px; cursor: pointer; text-align: center; position: relative; transition: 0.2s; display: flex; flex-direction: column; align-items: center;}
-        .shelf-item:hover { transform: translateY(-5px); }
-        .shelf-icon { width: 80px; height: 80px; border-radius: 16px; background: linear-gradient(135deg, #e0f2fe, #bae6fd); display: flex; align-items: center; justify-content: center; font-size: 36px; font-weight: 900; color: var(--primary); box-shadow: 0 8px 15px rgba(0,0,0,0.1); position: relative; border: 3px solid white; margin-bottom: 10px; transition: 0.2s;}
-        .shelf-item:hover .shelf-icon { box-shadow: 0 12px 20px rgba(59, 130, 246, 0.2); border-color: var(--primary);}
-        .shelf-item-name { font-size: 12px; font-weight: 800; color: var(--navy); width: 100%; display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; line-height: 1.2; min-height: 28px;}
-        .shelf-item-price { font-size: 11px; font-weight: 900; color: var(--text-light); margin-top: 3px;}
+        .shelf-grid { display: flex; flex-direction: column; gap: 8px; padding: 5px 10px; }
         
-        .qty-badge { position: absolute; top: -8px; right: -8px; background: #10b981; color: white; min-width: 26px; height: 26px; border-radius: 13px; font-size: 11px; font-weight: 900; display: flex; align-items: center; justify-content: center; box-shadow: 0 2px 4px rgba(0,0,0,0.2); border: 2px solid white; padding: 0 4px; z-index: 2;}
+        .shelf-item { width: 100%; display: flex; flex-direction: row; align-items: center; padding: 10px; border: 1px solid var(--border); border-radius: 12px; background: white; cursor: pointer; transition: 0.2s; box-shadow: 0 2px 4px rgba(0,0,0,0.02); box-sizing: border-box;}
+        .shelf-item:hover { transform: translateX(5px); box-shadow: 0 4px 8px rgba(0,0,0,0.05); border-color: var(--primary);}
+        
+        .shelf-icon { width: 55px; height: 55px; flex-shrink: 0; border-radius: 10px; margin-right: 15px; position: relative; border: 1px solid #e2e8f0; overflow: hidden; background: #f8fafc; display: flex; align-items: center; justify-content: center; font-size: 24px; font-weight: 900;}
+        .shelf-item-details { display: flex; flex-direction: column; flex-grow: 1; text-align: left; overflow: hidden;}
+        .shelf-item-name { font-size: 14px; font-weight: 800; color: var(--navy); white-space: nowrap; overflow: hidden; text-overflow: ellipsis;}
+        .shelf-item-subtitle { font-size: 11px; color: var(--text-light); font-weight: 700; margin-top: 4px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;}
+        .shelf-item-price { font-size: 15px; font-weight: 900; color: var(--primary); margin-left: 15px; text-align: right; min-width: 80px;}
+        
+        .qty-badge { position: absolute; top: -4px; right: -4px; background: #10b981; color: white; min-width: 20px; height: 20px; border-radius: 10px; font-size: 10px; font-weight: 900; display: flex; align-items: center; justify-content: center; box-shadow: 0 2px 4px rgba(0,0,0,0.2); border: 2px solid white; padding: 0 4px; z-index: 2;}
         .qty-low { background: #ef4444; animation: pulse 2s infinite; }
         @keyframes pulse { 0% { box-shadow: 0 0 0 0 rgba(239, 68, 68, 0.7); } 70% { box-shadow: 0 0 0 8px rgba(239, 68, 68, 0); } 100% { box-shadow: 0 0 0 0 rgba(239, 68, 68, 0); } }
 
-        .shelf-board { height: 14px; background: linear-gradient(to bottom, #f8fafc, #cbd5e1); border-radius: 4px; box-shadow: inset 0 2px 4px rgba(255,255,255,0.8), 0 6px 8px rgba(0,0,0,0.05); margin-top: 10px; width: 100%; border-bottom: 2px solid #94a3b8;}
+        .shelf-board { height: 6px; background: linear-gradient(to bottom, #cbd5e1, #94a3b8); border-radius: 4px; margin-top: 15px; width: 100%; opacity: 0.5;}
 
         /* Item Details Panel Styles */
         .item-detail-hero { display: flex; gap: 15px; align-items: center; margin-bottom: 20px; padding-bottom: 15px; border-bottom: 1px dashed var(--border);}
-        .hero-icon { width: 60px; height: 60px; border-radius: 12px; background: var(--primary); color: white; display: flex; align-items: center; justify-content: center; font-size: 28px; font-weight: 900; }
+        .hero-icon { width: 60px; height: 60px; border-radius: 12px; background: var(--primary); color: white; display: flex; align-items: center; justify-content: center; font-size: 28px; font-weight: 900; overflow: hidden; }
         .hero-info h3 { margin: 0 0 4px 0; font-size: 18px; font-weight: 900; color: var(--navy); line-height: 1.1;}
         .hero-info span { font-size: 11px; font-family: monospace; color: var(--text-light); font-weight: 700;}
         
@@ -85,7 +89,8 @@
         .modal-input { width: 100%; padding: 10px; border: 1px solid var(--border); border-radius: 8px; font-size: 13px; font-weight: 600; color: var(--navy); outline: none; margin-bottom: 12px; box-sizing: border-box; background: var(--bg); transition: 0.2s;}
         .modal-input:focus { border-color: var(--primary); background: white; }
         .modal-input:disabled { background: #e2e8f0; cursor: not-allowed; opacity: 0.8; color: var(--text-light);}
-        .btn-save-modal { width: 100%; padding: 14px; background: var(--primary); color: white; border: none; border-radius: 8px; font-weight: 800; font-size: 14px; cursor: pointer; margin-top: 5px;}
+        .btn-save-modal { width: 100%; padding: 14px; background: var(--primary); color: white; border: none; border-radius: 8px; font-weight: 800; font-size: 14px; cursor: pointer; margin-top: 5px; transition: 0.2s;}
+        .btn-save-modal:hover { filter: brightness(1.1); }
         label { display: block; font-size: 10px; font-weight: 800; color: var(--text-light); text-transform: uppercase; margin-bottom: 4px; text-align: left;}
         .grid-2 { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
         .grid-3 { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 10px; }
@@ -94,8 +99,6 @@
     </style>
 </head>
 <body>
-
-<div id="dynamic-datalists" style="display: none;"></div>
 
 <div class="wrapper">
     <div class="header-bar">
@@ -192,6 +195,18 @@
             </div>
         </div>
 
+        <!-- CAMERA / GALLERY UPLOAD INTEGRATION -->
+        <div style="background: #f8fafc; padding: 10px; border-radius: 8px; border: 1px solid var(--border); margin-bottom: 10px;">
+            <label>Product Photo (Camera / Gallery)</label>
+            <div style="display: flex; gap: 10px; align-items: center;">
+                <input type="file" id="bp-image-upload" accept="image/*" capture="environment" class="modal-input" style="margin-bottom:0; flex: 1; padding: 6px;">
+                <input type="hidden" id="bp-image-url">
+                <div id="bp-image-preview-container" style="display: none; width: 40px; height: 40px; border-radius: 6px; border: 1px solid var(--border); overflow: hidden;">
+                    <img id="bp-image-preview" src="" style="width: 100%; height: 100%; object-fit: cover;">
+                </div>
+            </div>
+        </div>
+
         <div id="bp-scanner-container" style="display: none; margin-bottom: 10px;">
             <div id="bp-reader" style="width: 100%; border-radius: 8px; overflow: hidden; border: 2px solid var(--primary);"></div>
             <div class="grid-2" style="margin-top: 5px;">
@@ -199,8 +214,6 @@
                 <button class="btn-action" style="justify-content: center; color: var(--danger); border-color: #fca5a5; background: #fee2e2;" onclick="stopBlueprintScanner()"><i class="bi bi-x-circle"></i> Stop</button>
             </div>
         </div>
-
-      <!-- Deprecated datalists removed in favor of strict selects -->
 
         <div style="background: #f8fafc; padding: 10px; border-radius: 8px; border: 1px solid var(--border); margin-bottom: 10px;">
             <div class="grid-3">
@@ -283,7 +296,11 @@
             </div>
         </div>
 
-        <button class="btn-save-modal" id="btn-save-blueprint" onclick="saveBlueprint()">Save Blueprint</button>
+        <!-- THE NEW SAVE BUTTON LOGIC (DUAL BUTTONS) -->
+        <div style="display: flex; gap: 10px; margin-top: 15px;">
+            <button class="btn-save-modal" id="btn-save-blueprint" onclick="saveBlueprint(false)" style="flex:1;">Save Item</button>
+            <button class="btn-save-modal" id="btn-save-as-new" onclick="saveBlueprint(true)" style="flex:1; display:none; background: var(--emerald);">Save as New Variety</button>
+        </div>
     </div>
 </div>
 
@@ -419,14 +436,8 @@
             const doc = await firebase.firestore().collection('companies').doc(activeUserPhone).collection('settings').doc('params').get();
             if (doc.exists && doc.data().customParams) {
                 savedShopParams = doc.data().customParams;
-                rebuildDatalists();
             }
         } catch(e) { console.error("Error loading params", e); }
-    }
-
-  function rebuildDatalists() {
-        // Datalists are deprecated in favor of intelligent Select Dropdowns
-        // Leaving empty block to prevent legacy call errors from loadShopParams
     }
 
     async function loadBranches() {
@@ -469,7 +480,7 @@
         } catch(e) { alert("Error: " + e.message); }
     }
 
-    // --- UI FILTERS & RENDER ---
+    // --- UI FILTERS & ULTRA-FAST LIST VIEW RENDER ---
     function initMainFilters() {
         const deptSelect = document.getElementById('filter-main-dept');
         deptSelect.innerHTML = '<option value="ALL">All Departments</option>';
@@ -506,7 +517,7 @@
         if(source !== 'init') renderInventory();
     }
 
-    function renderInventory() {
+    window.renderInventory = function() {
         const container = document.getElementById('inventory-racks-container');
         const query = document.getElementById('search-input').value.toLowerCase().trim();
         const fDept = document.getElementById('filter-main-dept').value;
@@ -515,7 +526,6 @@
         
         let totalItems = 0; let lowStock = 0; 
         
-        // requestAnimationFrame creates Ultra-Fast non-blocking rendering
         window.requestAnimationFrame(() => {
             let filtered = [];
             for (let i = 0; i < rawInventory.length; i++) {
@@ -523,7 +533,6 @@
                 if(fDept !== 'ALL' && item.department !== fDept) continue;
                 if(fCat !== 'ALL' && item.category !== fCat) continue;
                 if(fSubcat !== 'ALL' && item.subCategory !== fSubcat) continue;
-                
                 if (query) {
                     const n = item.name ? item.name.toLowerCase() : "";
                     const b = item.barcode ? item.barcode.toLowerCase() : "";
@@ -545,13 +554,8 @@
                 const minStock = item.minStock !== undefined ? parseFloat(item.minStock) : 5;
                 if((parseFloat(item.qty) || 0) < minStock) lowStock++;
 
-                const d = item.department || "Other";
-                const c = item.category || "General";
-                const s = item.subCategory || "Items";
-
-                if(!grouped[d]) grouped[d] = {};
-                if(!grouped[d][c]) grouped[d][c] = {};
-                if(!grouped[d][c][s]) grouped[d][c][s] = [];
+                const d = item.department || "Other"; const c = item.category || "General"; const s = item.subCategory || "Items";
+                if(!grouped[d]) grouped[d] = {}; if(!grouped[d][c]) grouped[d][c] = {}; if(!grouped[d][c][s]) grouped[d][c][s] = [];
                 grouped[d][c][s].push(item);
             }
 
@@ -561,49 +565,54 @@
                 'linear-gradient(135deg, #fee2e2, #fecaca)'
             ];
 
-            let htmlArr = []; // Using an Array Builder is 10x faster than standard string concatenation
+            let htmlArr = [];
             const depts = Object.keys(grouped).sort();
             
             for (let d = 0; d < depts.length; d++) {
-                const deptName = depts[d];
-                const cats = Object.keys(grouped[deptName]).sort();
-                
+                const deptName = depts[d]; const cats = Object.keys(grouped[deptName]).sort();
                 for (let c = 0; c < cats.length; c++) {
-                    const catName = cats[c];
-                    const subcats = Object.keys(grouped[deptName][catName]).sort();
-                    
+                    const catName = cats[c]; const subcats = Object.keys(grouped[deptName][catName]).sort();
                     for (let s = 0; s < subcats.length; s++) {
-                        const subcatName = subcats[s];
-                        const items = grouped[deptName][catName][subcatName];
+                        const subcatName = subcats[s]; const items = grouped[deptName][catName][subcatName];
                         
-                        // Using content-visibility forces the browser to only render shelves currently on screen
                         htmlArr.push(`<div class="shelf-wrapper" style="content-visibility: auto; contain-intrinsic-size: 200px;">
                             <div class="shelf-header">${deptName} <i class="bi bi-caret-right-fill"></i> ${catName} <i class="bi bi-caret-right-fill"></i> <span style="color:var(--primary);">${subcatName}</span><span class="shelf-count">${items.length} Varieties</span></div>
                             <div class="shelf-grid">`);
 
                         for (let i = 0; i < items.length; i++) {
-                            const item = items[i];
-                            const qty = parseFloat(item.qty || 0);
+                            const item = items[i]; const qty = parseFloat(item.qty || 0);
                             const minStock = parseFloat(item.minStock !== undefined ? item.minStock : 5);
                             const isLow = qty < minStock; 
                             const firstLetter = item.name ? item.name.charAt(0).toUpperCase() : 'B';
-                            const bgGrad = bgGradientsLocal[i % 5];
-                            const textCol = isLow ? '#ef4444' : '#0f172a';
+                            const bgGrad = bgGradientsLocal[i % 5]; const textCol = isLow ? '#ef4444' : '#0f172a';
 
                             let paramSubtitle = '';
-                            if(item.customParams) {
-                                paramSubtitle = `<div style="font-size: 9px; color: var(--text-light); width: 100%; display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; margin-top: 2px; font-weight: 700; line-height: 1.2;">${Object.values(item.customParams).join(' • ')}</div>`;
+                            if(item.customParams) paramSubtitle = `<div class="shelf-item-subtitle">${Object.values(item.customParams).join(' • ')}</div>`;
+
+                            // Apply Camera Image or Fallback Gradient
+                            let iconHtml = '';
+                            if (item.imageUrl) {
+                                iconHtml = `
+                                <div class="shelf-icon">
+                                    <div class="qty-badge ${isLow ? 'qty-low' : ''}">${qty}</div>
+                                    <img src="${item.imageUrl}" loading="lazy" style="width: 100%; height: 100%; object-fit: contain; border-radius: 8px;">
+                                </div>`;
+                            } else {
+                                iconHtml = `
+                                <div class="shelf-icon" style="background: ${bgGrad}; color: ${textCol}; border:none;">
+                                    <div class="qty-badge ${isLow ? 'qty-low' : ''}">${qty}</div>
+                                    ${firstLetter}
+                                </div>`;
                             }
 
                             htmlArr.push(`
                                 <div class="shelf-item" onclick="openItemDetailsModal('${item.docId}')" title="${item.name}">
-                                    <div class="shelf-icon" style="background: ${bgGrad}; color: ${textCol};">
-                                        <div class="qty-badge ${isLow ? 'qty-low' : ''}">${qty}</div>
-                                        ${firstLetter}
+                                    ${iconHtml}
+                                    <div class="shelf-item-details">
+                                        <div class="shelf-item-name">${item.name}</div>
+                                        ${paramSubtitle}
                                     </div>
-                                    <div class="shelf-item-name">${item.name}</div>
-                                    ${paramSubtitle}
-                                    <div class="shelf-item-price" style="margin-top: 4px;">₹${parseFloat(item.msp || 0).toFixed(2)}</div>
+                                    <div class="shelf-item-price">₹${parseFloat(item.msp || 0).toFixed(2)}</div>
                                 </div>`);
                         }
                         htmlArr.push(`</div><div class="shelf-board"></div></div>`);
@@ -616,41 +625,38 @@
             document.getElementById('dash-low').innerText = lowStock;
         });
     }
-       
 
     // --- MODAL CONTROLLERS ---
     function openItemDetailsModal(docId) {
-        const item = rawInventory.find(i => i.docId === docId);
-        if(!item) return;
+        const item = rawInventory.find(i => i.docId === docId); if(!item) return;
 
-        const firstLetter = item.name ? item.name.charAt(0).toUpperCase() : 'B';
-        document.getElementById('detail-avatar').innerText = firstLetter;
-        document.getElementById('detail-name').innerText = item.name;
-        document.getElementById('detail-sku').innerText = `SKU: ${item.barcode}`;
+        if (item.imageUrl) {
+            document.getElementById('detail-avatar').innerHTML = `<img src="${item.imageUrl}" style="width:100%; height:100%; object-fit:cover; border-radius:12px;">`;
+            document.getElementById('detail-avatar').style.background = 'white';
+        } else {
+            document.getElementById('detail-avatar').innerHTML = item.name ? item.name.charAt(0).toUpperCase() : 'B';
+            document.getElementById('detail-avatar').style.background = 'var(--primary)';
+        }
+
+        document.getElementById('detail-name').innerText = item.name; document.getElementById('detail-sku').innerText = `SKU: ${item.barcode}`;
         
         let paramsHtml = '';
         if(item.customParams) {
-            for(const [k, v] of Object.entries(item.customParams)) {
-                paramsHtml += `<span style="background:#e2e8f0; padding:2px 6px; border-radius:4px; font-size:10px; font-weight:800; color:var(--navy);">${k}: ${v}</span>`;
-            }
+            for(const [k, v] of Object.entries(item.customParams)) { paramsHtml += `<span style="background:#e2e8f0; padding:2px 6px; border-radius:4px; font-size:10px; font-weight:800; color:var(--navy);">${k}: ${v}</span>`; }
         }
         document.getElementById('detail-params').innerHTML = paramsHtml;
         document.getElementById('detail-hierarchy').innerText = `${item.department || '-'} / ${item.category || '-'} / ${item.subCategory || '-'}`;
         
         const qty = parseFloat(item.qty || 0); const minStock = parseFloat(item.minStock !== undefined ? item.minStock : 5);
-        document.getElementById('detail-stock').innerText = `${qty} ${item.unit || 'PCS'}`;
-        document.getElementById('detail-stock').style.color = qty < minStock ? "var(--danger)" : "var(--emerald)";
+        document.getElementById('detail-stock').innerText = `${qty} ${item.unit || 'PCS'}`; document.getElementById('detail-stock').style.color = qty < minStock ? "var(--danger)" : "var(--emerald)";
 
         const cp = parseFloat(item.costPer || 0); const msp = parseFloat(item.msp || 0); const gst = parseFloat(item.gstRate || 0);
         const preTaxMsp = msp / (1 + (gst/100)); const profit = preTaxMsp - cp;
         const marginPct = preTaxMsp > 0 ? (profit / preTaxMsp) * 100 : 0; const markup = cp > 0 ? (profit / cp) * 100 : 0;
 
-        document.getElementById('detail-cp').innerText = `₹${cp.toFixed(2)}`;
-        document.getElementById('detail-mrp').innerText = `₹${msp.toFixed(2)} (${gst}% GST)`;
+        document.getElementById('detail-cp').innerText = `₹${cp.toFixed(2)}`; document.getElementById('detail-mrp').innerText = `₹${msp.toFixed(2)} (${gst}% GST)`;
         
-        const marginEl = document.getElementById('detail-margins');
-        marginEl.innerText = `${marginPct.toFixed(1)}% Mg / ${markup.toFixed(1)}% Pr`;
-        marginEl.style.color = profit >= 0 ? "var(--emerald)" : "var(--danger)";
+        const marginEl = document.getElementById('detail-margins'); marginEl.innerText = `${marginPct.toFixed(1)}% Mg / ${markup.toFixed(1)}% Pr`; marginEl.style.color = profit >= 0 ? "var(--emerald)" : "var(--danger)";
 
         let actionsHtml = `
             <button class="action-btn" style="color:#4f46e5;" onclick="closeItemDetailsModal(); openBlueprintModal('${docId}')"><i class="bi bi-pencil-fill"></i><span>Edit</span></button>
@@ -665,7 +671,7 @@
     }
     function closeItemDetailsModal() { document.getElementById('item-details-modal').style.display = 'none'; }
 
-  // --- BLUEPRINT AUTO-LEARNING LOGIC (Select + Prompt) ---
+    // --- BLUEPRINT AUTO-LEARNING LOGIC (Select + Prompt) ---
     function getCombinedTaxonomy() { return [...masterTaxonomyList, ...localShopTaxonomy]; }
 
     window.handleDropdownChange = function(level, paramKey = null) {
@@ -739,50 +745,36 @@
             if(rule.param) { params = rule.param.split(',').map(p => p.trim()).filter(p => p); }
         }
         
-        container.style.display = 'block';
-        container.innerHTML = '<div class="grid-2" id="params-grid"></div>';
+        container.style.display = 'block'; container.innerHTML = '<div class="grid-2" id="params-grid"></div>';
         if(params.length > 0) { params.forEach(key => injectParamSelect(key)); }
     }
 
     function injectParamSelect(key) {
-        const grid = document.getElementById('params-grid');
-        const cleanKeyId = key.replace(/[^a-zA-Z0-9]/g, '_');
+        const grid = document.getElementById('params-grid'); const cleanKeyId = key.replace(/[^a-zA-Z0-9]/g, '_');
         if(document.getElementById(`bp-param-${cleanKeyId}`)) return; 
         
         let optionsHtml = `<option value="">Select ${key}...</option><option value="ADD_NEW" style="color:var(--primary); font-weight:bold;">+ Add New (नया जोड़ें)</option>`;
-        if(savedShopParams[key]) {
-            savedShopParams[key].sort().forEach(val => { optionsHtml += `<option value="${val}">${val}</option>`; });
-        }
+        if(savedShopParams[key]) { savedShopParams[key].sort().forEach(val => { optionsHtml += `<option value="${val}">${val}</option>`; }); }
         grid.innerHTML += `<div><label style="color:#0369a1;">${key}</label><select id="bp-param-${cleanKeyId}" class="modal-input" style="margin-bottom:0;" data-key="${key}" onchange="handleDropdownChange('param', '${cleanKeyId}')">${optionsHtml}</select></div>`;
     }
 
     function addNewParameterUI() {
         const container = document.getElementById('bp-dynamic-params'); container.style.display = 'block';
         if(!document.getElementById('params-grid')) { container.innerHTML = '<div class="grid-2" id="params-grid"></div>'; }
-
         let paramName = prompt("Enter New Custom Parameter (नया पैरामीटर) \nEx: BRAND, COLOR, RAM:");
         if(!paramName) return;
-        
         const key = paramName.trim().toUpperCase(); const cleanKeyId = key.replace(/[^a-zA-Z0-9]/g, '_');
         if(document.getElementById(`bp-param-${cleanKeyId}`)) return alert("⚠️ ALREADY EXISTS! (पहले से मौजूद है!)");
         injectParamSelect(key);
     }
 
     function updateProfitCalculations() {
-        const cp = parseFloat(document.getElementById('bp-cost').value) || 0;
-        const msp = parseFloat(document.getElementById('bp-msp').value) || 0;
-        const gst = parseFloat(document.getElementById('bp-gst').value) || 0;
-        
+        const cp = parseFloat(document.getElementById('bp-cost').value) || 0; const msp = parseFloat(document.getElementById('bp-msp').value) || 0; const gst = parseFloat(document.getElementById('bp-gst').value) || 0;
         const preTaxMsp = msp / (1 + (gst/100)); const profit = preTaxMsp - cp;
-        
         document.getElementById('disp-base-mrp').innerText = `₹${preTaxMsp.toFixed(2)}`;
-        document.getElementById('disp-profit').innerText = `₹${profit.toFixed(2)}`;
-        document.getElementById('disp-profit').style.color = profit >= 0 ? "var(--primary)" : "var(--danger)";
-        
+        document.getElementById('disp-profit').innerText = `₹${profit.toFixed(2)}`; document.getElementById('disp-profit').style.color = profit >= 0 ? "var(--primary)" : "var(--danger)";
         const margin = preTaxMsp > 0 ? (profit / preTaxMsp) * 100 : 0; const markup = cp > 0 ? (profit / cp) * 100 : 0;
-        
-        document.getElementById('disp-margin').innerText = `${margin.toFixed(1)}% / ${markup.toFixed(1)}%`;
-        document.getElementById('disp-margin').style.color = profit >= 0 ? "var(--emerald)" : "var(--danger)";
+        document.getElementById('disp-margin').innerText = `${margin.toFixed(1)}% / ${markup.toFixed(1)}%`; document.getElementById('disp-margin').style.color = profit >= 0 ? "var(--emerald)" : "var(--danger)";
     }
 
     function openBlueprintModal(docId = null) {
@@ -790,19 +782,34 @@
         const modal = document.getElementById('blueprint-modal');
         populateDeptDropdown();
 
+        // Clear Image Previews
+        document.getElementById('bp-image-upload').value = "";
+        document.getElementById('bp-image-url').value = "";
+        document.getElementById('bp-image-preview-container').style.display = 'none';
+
         if (docId) {
+            // SHOW SAVE AS NEW BUTTON IF EDITING
+            document.getElementById('btn-save-as-new').style.display = 'block';
+            document.getElementById('btn-save-blueprint').innerText = "Update Item";
+
             const item = rawInventory.find(i => i.docId === docId);
             document.getElementById('bp-barcode').value = item.barcode || ""; document.getElementById('bp-name').value = item.name || "";
             document.getElementById('bp-gst').value = item.gstRate || "0"; document.getElementById('bp-cost').value = item.costPer || "0";
             document.getElementById('bp-msp').value = item.msp || "0"; document.getElementById('bp-min').value = item.minStock !== undefined ? item.minStock : "5";
             
+            if (item.imageUrl) {
+                document.getElementById('bp-image-url').value = item.imageUrl;
+                document.getElementById('bp-image-preview-container').style.display = 'block';
+                document.getElementById('bp-image-preview').src = item.imageUrl;
+            }
+
             if(item.department) {
                 document.getElementById('bp-dept').value = item.department; updateCatDropdown();
                 if(item.category) {
                     document.getElementById('bp-cat').value = item.category; updateSubcatDropdown();
                     if(item.subCategory) {
                         document.getElementById('bp-subcat').value = item.subCategory; renderSmartTemplate();
-                       if(item.customParams) {
+                        if(item.customParams) {
                             Object.keys(item.customParams).forEach(key => {
                                 const cleanKeyId = key.replace(/[^a-zA-Z0-9]/g, '_');
                                 if(!document.getElementById(`bp-param-${cleanKeyId}`)) injectParamSelect(key);
@@ -821,6 +828,10 @@
             setTimeout(() => { document.getElementById('bp-unit').value = item.unit || "PIECES"; }, 50);
             document.getElementById('bp-barcode').disabled = true;
         } else {
+            // HIDE SAVE AS NEW BUTTON IF CREATING FRESH
+            document.getElementById('btn-save-as-new').style.display = 'none';
+            document.getElementById('btn-save-blueprint').innerText = "Save Blueprint";
+
             document.getElementById('bp-barcode').disabled = false;
             document.getElementById('bp-barcode').value = ""; document.getElementById('bp-name').value = "";
             document.getElementById('bp-dept').value = ""; updateCatDropdown();
@@ -828,15 +839,27 @@
             document.getElementById('bp-cost').value = "0"; document.getElementById('bp-msp').value = "";
             document.getElementById('bp-min').value = "5"; document.getElementById('bp-dynamic-params').style.display = 'none';
         }
-        updateProfitCalculations();
-        modal.style.display = 'flex';
+        updateProfitCalculations(); modal.style.display = 'flex';
     }
 
     function closeBlueprintModal() { stopBlueprintScanner(); document.getElementById('blueprint-modal').style.display = 'none'; editingBlueprintId = null; }
 
-    async function saveBlueprint() {
+    // DUPLICATE/SAVE LOGIC ADDED HERE
+    async function saveBlueprint(isSaveAsNew = false) {
         let inputBarcode = document.getElementById('bp-barcode').value.trim(); let isSystemBarcode = false;
-        if(!inputBarcode) { inputBarcode = `SYS-${Date.now().toString().slice(-6)}${Math.floor(Math.random() * 99)}`; isSystemBarcode = true; }
+        
+        // If the user hit "Save as New Variety", we wipe the edit ID and generate a fresh barcode automatically
+        if (isSaveAsNew) {
+            editingBlueprintId = null;
+            inputBarcode = `SYS-${Date.now().toString().slice(-8)}${Math.floor(10000 + Math.random() * 90000).toString()}`;
+            isSystemBarcode = true;
+        } else {
+            if(!inputBarcode) { inputBarcode = `SYS-${Date.now().toString().slice(-8)}${Math.floor(10000 + Math.random() * 90000).toString()}`; isSystemBarcode = true; }
+            if(editingBlueprintId) {
+                const existingItem = rawInventory.find(i => i.docId === editingBlueprintId);
+                if(existingItem && existingItem.isSystemBarcode) isSystemBarcode = true;
+            }
+        }
 
         const name = document.getElementById('bp-name').value.trim();
         const department = document.getElementById('bp-dept').value; const category = document.getElementById('bp-cat').value; const subCategory = document.getElementById('bp-subcat').value;
@@ -846,9 +869,11 @@
 
         if(!name || !category || !subCategory) return alert("Name, Category, and Sub-Category are mandatory!");
 
-        const btn = document.getElementById('btn-save-blueprint'); btn.innerText = "SAVING..."; btn.disabled = true;
+        const btn = isSaveAsNew ? document.getElementById('btn-save-as-new') : document.getElementById('btn-save-blueprint');
+        const originalText = btn.innerText; btn.innerText = "SAVING..."; btn.disabled = true;
+        
         let customParams = {}; let needToUpdateGlobalParams = false;
-      const paramSelects = document.querySelectorAll('#bp-dynamic-params select');
+        const paramSelects = document.querySelectorAll('#bp-dynamic-params select');
         paramSelects.forEach(select => {
             const realKey = select.getAttribute('data-key'); const val = select.value.trim();
             if(val && val !== 'ADD_NEW' && realKey) {
@@ -858,14 +883,25 @@
             }
         });
 
-        if(editingBlueprintId) {
-            const existingItem = rawInventory.find(i => i.docId === editingBlueprintId);
-            if(existingItem && existingItem.isSystemBarcode) isSystemBarcode = true;
-        }
-
-        const itemData = { barcode: inputBarcode, name, department, category, subCategory, gstRate, unit, minStock, costPer, msp, customParams, isSystemBarcode, lastUpdated: new Date().toISOString() };
+        let finalImageUrl = document.getElementById('bp-image-url').value;
+        const imageFile = document.getElementById('bp-image-upload').files[0];
 
         try {
+            // Upload photo to Firebase Storage if a new one was selected
+            if (imageFile) {
+                btn.innerText = "UPLOADING PHOTO...";
+                const storageRef = firebase.storage().ref();
+                const imageRef = storageRef.child(`inventory_images/${activeUserPhone}/${Date.now()}_${imageFile.name}`);
+                const snapshot = await imageRef.put(imageFile);
+                finalImageUrl = await snapshot.ref.getDownloadURL();
+            }
+
+            const itemData = { 
+                barcode: inputBarcode, name, department, category, subCategory, 
+                gstRate, unit, minStock, costPer, msp, customParams, 
+                isSystemBarcode, imageUrl: finalImageUrl || null, lastUpdated: new Date().toISOString() 
+            };
+
             const db = firebase.firestore();
             const currentKeys = Object.keys(customParams).join(', ');
             const existingRule = getCombinedTaxonomy().find(i => i.dept === department && i.cat === category && i.subcat === subCategory);
@@ -888,12 +924,10 @@
                 }
             }
 
-            if(needToSaveTaxonomy) {
-                await db.collection('companies').doc(activeUserPhone).collection('settings').doc('local_taxonomy').set({ dictionary: localShopTaxonomy }, { merge: true });
-            }
+            if(needToSaveTaxonomy) { await db.collection('companies').doc(activeUserPhone).collection('settings').doc('local_taxonomy').set({ dictionary: localShopTaxonomy }, { merge: true }); }
             
             const invRef = db.collection('companies').doc(activeUserPhone).collection('branches').doc(branchId).collection('inventory');
-            if (editingBlueprintId) { await invRef.doc(editingBlueprintId).update(itemData); } 
+            if (editingBlueprintId && !isSaveAsNew) { await invRef.doc(editingBlueprintId).update(itemData); } 
             else { itemData.qty = 0; await invRef.add(itemData); }
 
             if(needToUpdateGlobalParams) {
@@ -902,28 +936,19 @@
             }
             closeBlueprintModal(); fetchInventory(); 
         } catch(e) { alert("Error saving: " + e.message); }
-        btn.innerText = "Save Blueprint"; btn.disabled = false;
+        btn.innerText = originalText; btn.disabled = false;
     }
 
     // --- OTHER MODALS ---
     function openPromoModal(docId) {
-        const item = rawInventory.find(i => i.docId === docId);
-        currentPromoDocId = docId; currentMspForMath = parseFloat(item.msp||0); currentCpForMath = parseFloat(item.costPer||0); currentGstForMath = parseFloat(item.gstRate||0);
-        
-        document.getElementById('promo-item-name').innerText = item.name;
-        document.getElementById('promo-base-cp').innerText = `₹${currentCpForMath.toFixed(2)}`;
-        document.getElementById('promo-base-gst').innerText = `${currentGstForMath}%`;
-        document.getElementById('promo-base-msp').innerText = `₹${currentMspForMath.toFixed(2)}`;
-        
-        document.getElementById('promo-type').value = item.offer?.type || ""; togglePromoFields(item.offer);
-        document.getElementById('promo-start').value = item.offer?.validFrom || ""; document.getElementById('promo-end').value = item.offer?.validUntil || "";
-        document.getElementById('promo-modal').style.display = 'flex'; calcPromoMath();
+        const item = rawInventory.find(i => i.docId === docId); currentPromoDocId = docId; currentMspForMath = parseFloat(item.msp||0); currentCpForMath = parseFloat(item.costPer||0); currentGstForMath = parseFloat(item.gstRate||0);
+        document.getElementById('promo-item-name').innerText = item.name; document.getElementById('promo-base-cp').innerText = `₹${currentCpForMath.toFixed(2)}`; document.getElementById('promo-base-gst').innerText = `${currentGstForMath}%`; document.getElementById('promo-base-msp').innerText = `₹${currentMspForMath.toFixed(2)}`;
+        document.getElementById('promo-type').value = item.offer?.type || ""; togglePromoFields(item.offer); document.getElementById('promo-start').value = item.offer?.validFrom || ""; document.getElementById('promo-end').value = item.offer?.validUntil || ""; document.getElementById('promo-modal').style.display = 'flex'; calcPromoMath();
     }
     function closePromoModal() { document.getElementById('promo-modal').style.display = 'none'; }
     
     function togglePromoFields(existingOffer = null) {
-        const type = document.getElementById('promo-type').value; const container = document.getElementById('promo-dynamic-fields'); 
-        const impactBox = document.getElementById('promo-profit-impact'); container.innerHTML = ""; impactBox.style.display = 'none';
+        const type = document.getElementById('promo-type').value; const container = document.getElementById('promo-dynamic-fields'); const impactBox = document.getElementById('promo-profit-impact'); container.innerHTML = ""; impactBox.style.display = 'none';
         if (type === "discount") { container.innerHTML = `<div class="grid-2"><div><label>Discount (%)</label><input type="number" id="promo-pct" class="modal-input" value="${existingOffer?.pctOff||''}" oninput="calcPromoMath('pct')"></div><div><label>Flat Off (₹)</label><input type="number" id="promo-flat" class="modal-input" value="${existingOffer?.flatOff||''}" oninput="calcPromoMath('flat')"></div></div>`; impactBox.style.display = 'flex'; } 
         else if (type === "volume") { container.innerHTML = `<div class="grid-2"><div><label>Buy Quantity</label><input type="number" id="promo-req" class="modal-input" value="${existingOffer?.reqQty||''}"></div><div><label>For Total Price (₹)</label><input type="number" id="promo-price" class="modal-input" value="${existingOffer?.targetPrice||''}"></div></div>`; } 
         else if (type === "bogo") { container.innerHTML = `<div class="grid-2"><div><label>Buy Quantity</label><input type="number" id="promo-req" class="modal-input" value="${existingOffer?.reqQty||''}"></div><div><label>Get Free Qty</label><input type="number" id="promo-free" class="modal-input" value="${existingOffer?.freeQty||''}"></div></div>`; } 
@@ -932,170 +957,84 @@
 
     window.calcPromoMath = function(source = null) {
         const type = document.getElementById('promo-type').value; if(type !== 'discount') return;
-        const pctInput = document.getElementById('promo-pct'); const flatInput = document.getElementById('promo-flat');
-        if(!pctInput || !flatInput) return;
+        const pctInput = document.getElementById('promo-pct'); const flatInput = document.getElementById('promo-flat'); if(!pctInput || !flatInput) return;
         if(source === 'pct') { const pct = parseFloat(pctInput.value) || 0; if(pct >= 0 && pct <= 100) flatInput.value = (currentMspForMath * (pct / 100)).toFixed(2); } 
         else if(source === 'flat') { const flat = parseFloat(flatInput.value) || 0; if(flat >= 0 && flat <= currentMspForMath) pctInput.value = ((flat / currentMspForMath) * 100).toFixed(2); }
 
-        const effectiveMsp = currentMspForMath - (parseFloat(flatInput.value) || 0); const preTaxEffective = effectiveMsp / (1 + (currentGstForMath/100));
-        const effectiveProfit = preTaxEffective - currentCpForMath; const effectiveMargin = preTaxEffective > 0 ? (effectiveProfit / preTaxEffective) * 100 : 0;
-        document.getElementById('impact-sell').innerText = `₹${effectiveMsp.toFixed(2)}`; const profitEl = document.getElementById('impact-profit');
-        profitEl.innerText = `₹${effectiveProfit.toFixed(2)} (${effectiveMargin.toFixed(1)}%)`; profitEl.style.color = effectiveProfit >= 0 ? "var(--emerald)" : "var(--danger)";
+        const effectiveMsp = currentMspForMath - (parseFloat(flatInput.value) || 0); const preTaxEffective = effectiveMsp / (1 + (currentGstForMath/100)); const effectiveProfit = preTaxEffective - currentCpForMath; const effectiveMargin = preTaxEffective > 0 ? (effectiveProfit / preTaxEffective) * 100 : 0;
+        document.getElementById('impact-sell').innerText = `₹${effectiveMsp.toFixed(2)}`; const profitEl = document.getElementById('impact-profit'); profitEl.innerText = `₹${effectiveProfit.toFixed(2)} (${effectiveMargin.toFixed(1)}%)`; profitEl.style.color = effectiveProfit >= 0 ? "var(--emerald)" : "var(--danger)";
     };
 
     async function savePromo() {
         const type = document.getElementById('promo-type').value; let offerObj = null;
-        if (type !== "") {
-            offerObj = { type: type, validFrom: document.getElementById('promo-start').value || null, validUntil: document.getElementById('promo-end').value || null };
-            if (type === "discount") { offerObj.pctOff = parseFloat(document.getElementById('promo-pct').value) || 0; offerObj.flatOff = parseFloat(document.getElementById('promo-flat').value) || 0; }
-            else if (type === "volume") { offerObj.reqQty = parseFloat(document.getElementById('promo-req').value) || 0; offerObj.targetPrice = parseFloat(document.getElementById('promo-price').value) || 0; }
-            else if (type === "bogo") { offerObj.reqQty = parseFloat(document.getElementById('promo-req').value) || 0; offerObj.freeQty = parseFloat(document.getElementById('promo-free').value) || 0; }
-            else if (type === "cross_bogo") { offerObj.reqQty = parseFloat(document.getElementById('promo-req').value) || 0; offerObj.targetBarcode = document.getElementById('promo-target-bar').value; offerObj.freeQty = parseFloat(document.getElementById('promo-free').value) || 0; offerObj.targetPctOff = parseFloat(document.getElementById('promo-target-pct').value) || 100; }
-        }
+        if (type !== "") { offerObj = { type: type, validFrom: document.getElementById('promo-start').value || null, validUntil: document.getElementById('promo-end').value || null }; if (type === "discount") { offerObj.pctOff = parseFloat(document.getElementById('promo-pct').value) || 0; offerObj.flatOff = parseFloat(document.getElementById('promo-flat').value) || 0; } else if (type === "volume") { offerObj.reqQty = parseFloat(document.getElementById('promo-req').value) || 0; offerObj.targetPrice = parseFloat(document.getElementById('promo-price').value) || 0; } else if (type === "bogo") { offerObj.reqQty = parseFloat(document.getElementById('promo-req').value) || 0; offerObj.freeQty = parseFloat(document.getElementById('promo-free').value) || 0; } else if (type === "cross_bogo") { offerObj.reqQty = parseFloat(document.getElementById('promo-req').value) || 0; offerObj.targetBarcode = document.getElementById('promo-target-bar').value; offerObj.freeQty = parseFloat(document.getElementById('promo-free').value) || 0; offerObj.targetPctOff = parseFloat(document.getElementById('promo-target-pct').value) || 100; } }
         const branchId = document.getElementById('filter-branch').value; document.getElementById('btn-save-promo').innerText = "SAVING..."; document.getElementById('btn-save-promo').disabled = true;
         try {
             const ref = firebase.firestore().collection('companies').doc(activeUserPhone).collection('branches').doc(branchId).collection('inventory').doc(currentPromoDocId);
             if (offerObj) { await ref.update({ offer: offerObj }); } else { await ref.update({ offer: firebase.firestore.FieldValue.delete() }); }
-            const index = rawInventory.findIndex(i => i.docId === currentPromoDocId);
-            if(index !== -1) { if(offerObj) rawInventory[index].offer = offerObj; else delete rawInventory[index].offer; }
+            const index = rawInventory.findIndex(i => i.docId === currentPromoDocId); if(index !== -1) { if(offerObj) rawInventory[index].offer = offerObj; else delete rawInventory[index].offer; }
             closePromoModal(); renderInventory();
         } catch(e) { alert("Error: " + e.message); }
         document.getElementById('btn-save-promo').innerText = "Apply Offer"; document.getElementById('btn-save-promo').disabled = false;
     }
 
-    function openWastageModal(docId) {
-        currentWasteItem = rawInventory.find(i => i.docId === docId);
-        document.getElementById('waste-item-name').innerText = currentWasteItem.name; document.getElementById('waste-max-qty').innerText = `(Available: ${currentWasteItem.qty})`;
-        document.getElementById('waste-qty').value = ""; document.getElementById('waste-reason').value = "Expired"; document.getElementById('wastage-modal').style.display = 'flex';
-    }
+    function openWastageModal(docId) { currentWasteItem = rawInventory.find(i => i.docId === docId); document.getElementById('waste-item-name').innerText = currentWasteItem.name; document.getElementById('waste-max-qty').innerText = `(Available: ${currentWasteItem.qty})`; document.getElementById('waste-qty').value = ""; document.getElementById('waste-reason').value = "Expired"; document.getElementById('wastage-modal').style.display = 'flex'; }
     function closeWastageModal() { document.getElementById('wastage-modal').style.display = 'none'; currentWasteItem = null; }
     function validateWasteQty() { const input = document.getElementById('waste-qty'); let val = parseFloat(input.value); if(val > currentWasteItem.qty) input.value = currentWasteItem.qty; }
-    
     async function saveWastage() {
         const qty = parseFloat(document.getElementById('waste-qty').value); const reason = document.getElementById('waste-reason').value; const branchId = document.getElementById('filter-branch').value;
         if(isNaN(qty) || qty <= 0) return alert("Enter valid quantity.");
         const btn = document.getElementById('btn-save-waste'); btn.innerText = "Processing..."; btn.disabled = true;
         try {
-            const db = firebase.firestore(); const batch = db.batch();
-            const invRef = db.collection('companies').doc(activeUserPhone).collection('branches').doc(branchId).collection('inventory').doc(currentWasteItem.docId);
-            const logRef = db.collection('companies').doc(activeUserPhone).collection('branches').doc(branchId).collection('wastage_logs').doc();
-            batch.update(invRef, { qty: firebase.firestore.FieldValue.increment(-qty) });
-            batch.set(logRef, { itemId: currentWasteItem.docId, barcode: currentWasteItem.barcode, name: currentWasteItem.name, qtyWasted: qty, reason: reason, costLost: (currentWasteItem.costPer || 0) * qty, timestamp: new Date().toISOString(), staffId: activeStaffId || 'admin' });
-            await batch.commit();
-            currentWasteItem.qty -= qty; renderInventory(); closeWastageModal();
+            const db = firebase.firestore(); const batch = db.batch(); const invRef = db.collection('companies').doc(activeUserPhone).collection('branches').doc(branchId).collection('inventory').doc(currentWasteItem.docId); const logRef = db.collection('companies').doc(activeUserPhone).collection('branches').doc(branchId).collection('wastage_logs').doc();
+            batch.update(invRef, { qty: firebase.firestore.FieldValue.increment(-qty) }); batch.set(logRef, { itemId: currentWasteItem.docId, barcode: currentWasteItem.barcode, name: currentWasteItem.name, qtyWasted: qty, reason: reason, costLost: (currentWasteItem.costPer || 0) * qty, timestamp: new Date().toISOString(), staffId: activeStaffId || 'admin' });
+            await batch.commit(); currentWasteItem.qty -= qty; renderInventory(); closeWastageModal();
         } catch(e) { alert("Error: " + e.message); }
         btn.innerText = "Confirm Write-Off"; btn.disabled = false;
     }
 
     function openMoveModal(docId) {
-        currentMoveItem = rawInventory.find(i => i.docId === docId); const currentBranchId = document.getElementById('filter-branch').value; const targetSelect = document.getElementById('move-target-branch');
-        targetSelect.innerHTML = '<option value="">Select Destination...</option>'; globalBranches.forEach(b => { if (b.id !== currentBranchId) targetSelect.innerHTML += `<option value="${b.id}">${b.name}</option>`; });
+        currentMoveItem = rawInventory.find(i => i.docId === docId); const currentBranchId = document.getElementById('filter-branch').value; const targetSelect = document.getElementById('move-target-branch'); targetSelect.innerHTML = '<option value="">Select Destination...</option>'; globalBranches.forEach(b => { if (b.id !== currentBranchId) targetSelect.innerHTML += `<option value="${b.id}">${b.name}</option>`; });
         if(targetSelect.options.length <= 1) return alert("You need another branch to move stock to.");
-        document.getElementById('move-item-name').innerText = currentMoveItem.name; document.getElementById('move-max-qty').innerText = `(Max: ${currentMoveItem.qty})`;
-        document.getElementById('move-qty').value = 1; document.getElementById('move-modal').style.display = 'flex';
+        document.getElementById('move-item-name').innerText = currentMoveItem.name; document.getElementById('move-max-qty').innerText = `(Max: ${currentMoveItem.qty})`; document.getElementById('move-qty').value = 1; document.getElementById('move-modal').style.display = 'flex';
     }
     function closeMoveModal() { document.getElementById('move-modal').style.display = 'none'; currentMoveItem = null; }
     function validateMoveQty() { const input = document.getElementById('move-qty'); let val = parseFloat(input.value); if (val > currentMoveItem.qty) input.value = currentMoveItem.qty; }
-    
     async function saveMove() {
         const moveQty = parseFloat(document.getElementById('move-qty').value); const targetBranchId = document.getElementById('move-target-branch').value; const currentBranchId = document.getElementById('filter-branch').value;
-        if(!targetBranchId || isNaN(moveQty) || moveQty <= 0) return alert("Select destination and valid quantity.");
-        const btn = document.getElementById('btn-save-move'); btn.innerText = "MOVING..."; btn.disabled = true;
+        if(!targetBranchId || isNaN(moveQty) || moveQty <= 0) return alert("Select destination and valid quantity."); const btn = document.getElementById('btn-save-move'); btn.innerText = "MOVING..."; btn.disabled = true;
         try {
-            const db = firebase.firestore(); const batch = db.batch();
-            const sourceRef = db.collection('companies').doc(activeUserPhone).collection('branches').doc(currentBranchId).collection('inventory').doc(currentMoveItem.docId);
-            const targetInvRef = db.collection('companies').doc(activeUserPhone).collection('branches').doc(targetBranchId).collection('inventory');
-            const existingSnap = await targetInvRef.where('barcode', '==', currentMoveItem.barcode).get();
-            batch.update(sourceRef, { qty: firebase.firestore.FieldValue.increment(-moveQty) });
-            if (!existingSnap.empty) { batch.update(targetInvRef.doc(existingSnap.docs[0].id), { qty: firebase.firestore.FieldValue.increment(moveQty) }); } 
-            else { const newDoc = targetInvRef.doc(); const newItemData = { ...currentMoveItem, qty: moveQty }; delete newItemData.docId; batch.set(newDoc, newItemData); }
-            await batch.commit();
-            currentMoveItem.qty -= moveQty; renderInventory(); closeMoveModal(); alert(`Moved ${moveQty} successfully.`);
+            const db = firebase.firestore(); const batch = db.batch(); const sourceRef = db.collection('companies').doc(activeUserPhone).collection('branches').doc(currentBranchId).collection('inventory').doc(currentMoveItem.docId); const targetInvRef = db.collection('companies').doc(activeUserPhone).collection('branches').doc(targetBranchId).collection('inventory'); const existingSnap = await targetInvRef.where('barcode', '==', currentMoveItem.barcode).get();
+            batch.update(sourceRef, { qty: firebase.firestore.FieldValue.increment(-moveQty) }); if (!existingSnap.empty) { batch.update(targetInvRef.doc(existingSnap.docs[0].id), { qty: firebase.firestore.FieldValue.increment(moveQty) }); } else { const newDoc = targetInvRef.doc(); const newItemData = { ...currentMoveItem, qty: moveQty }; delete newItemData.docId; batch.set(newDoc, newItemData); }
+            await batch.commit(); currentMoveItem.qty -= moveQty; renderInventory(); closeMoveModal(); alert(`Moved ${moveQty} successfully.`);
         } catch(e) { alert("Error: " + e.message); }
         btn.innerText = "Confirm Transfer"; btn.disabled = false;
     }
 
     function openGlobalDealsModal() { document.getElementById('global-modal').style.display = 'flex'; }
     function closeGlobalDealsModal() { document.getElementById('global-modal').style.display = 'none'; }
-    function toggleGlobalFields() {
-        const type = document.getElementById('global-type').value; const container = document.getElementById('global-dynamic-fields'); container.innerHTML = "";
-        if (type === "cart_min") { container.innerHTML = `<label>If Spends Over (₹)</label><input type="number" id="global-min-spend" class="modal-input" placeholder="e.g. 1000"><div class="grid-2"><div><label>Give Discount (%)</label><input type="number" id="global-pct" class="modal-input" placeholder="10"></div><div><label>OR Flat Off (₹)</label><input type="number" id="global-flat" class="modal-input" placeholder="₹100"></div></div>`; }
-    }
+    function toggleGlobalFields() { const type = document.getElementById('global-type').value; const container = document.getElementById('global-dynamic-fields'); container.innerHTML = ""; if (type === "cart_min") { container.innerHTML = `<label>If Spends Over (₹)</label><input type="number" id="global-min-spend" class="modal-input" placeholder="e.g. 1000"><div class="grid-2"><div><label>Give Discount (%)</label><input type="number" id="global-pct" class="modal-input" placeholder="10"></div><div><label>OR Flat Off (₹)</label><input type="number" id="global-flat" class="modal-input" placeholder="₹100"></div></div>`; } }
     async function saveGlobalDeals() { alert("Global Deals Engine saved!"); closeGlobalDealsModal(); }
 
     window.printBarcode = function(docId) {
-        const item = rawInventory.find(i => i.docId === docId); if(!item) return;
-        let subTitle = item.subCategory || item.category || ""; if(item.customParams) subTitle = Object.values(item.customParams).join(' | ');
+        const item = rawInventory.find(i => i.docId === docId); if(!item) return; let subTitle = item.subCategory || item.category || ""; if(item.customParams) subTitle = Object.values(item.customParams).join(' | ');
         const printWindow = window.open('', '_blank', 'width=400,height=400');
         printWindow.document.write(`<html><head><title>Print Label</title><script src="https://cdn.jsdelivr.net/npm/jsbarcode@3.11.5/dist/JsBarcode.all.min.js"><\/script><style> body { text-align: center; font-family: 'Arial', sans-serif; margin: 0; padding: 20px; background: #fff;} .label-container { border: 2px dashed #000; padding: 15px; display: inline-block; width: 60mm; min-height: 40mm;} .name { font-weight: 900; font-size: 14px; margin-bottom: 2px; text-transform: uppercase;} .subtitle { font-size: 10px; color: #333; margin-bottom: 8px; font-weight: bold;} .price { font-size: 18px; font-weight: 900; margin-top: 5px; } svg { width: 100%; max-height: 60px; }</style></head><body><div class="label-container"><div class="name">${item.name}</div><div class="subtitle">${subTitle}</div><svg id="barcode"></svg><div class="price">MRP: ₹${item.msp}</div></div><script> JsBarcode("#barcode", "${item.barcode}", { format: "CODE128", width: 2, height: 40, displayValue: true, fontSize: 12, margin: 0 }); setTimeout(() => { window.print(); window.close(); }, 500); <\/script></body></html>`);
         printWindow.document.close();
     }
 
-    // --- PHASE 1 PRINT WALL CATALOG FEATURE ---
     window.printWallCatalog = function() {
-        if(rawInventory.length === 0) return alert("Inventory is empty!");
-        let printWindow = window.open('', '_blank');
-        let html = `<html><head><title>Wall Catalog</title>
-        <script src="https://cdn.jsdelivr.net/npm/jsbarcode@3.11.5/dist/JsBarcode.all.min.js"><\/script>
-        <style>
-            body { font-family: sans-serif; padding: 20px; }
-            h2 { text-align: center; margin-bottom: 30px; }
-            .grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(200px, 1fr)); gap: 15px; }
-            .card { border: 2px dashed #ccc; padding: 15px; text-align: center; border-radius: 8px; page-break-inside: avoid; }
-            .name { font-weight: bold; font-size: 14px; margin-bottom: 5px; text-transform: uppercase; }
-            .subtitle { font-size: 10px; color: #666; margin-bottom: 8px; }
-            .price { font-weight: 900; color: #3b82f6; font-size: 18px; margin-bottom: 10px; }
-            svg { width: 100%; height: 50px; }
-        </style></head><body><h2>Store Wall Catalog</h2><div class="grid">`;
-        
-        rawInventory.forEach((item, index) => {
-            let subTitle = item.subCategory || item.category || ""; 
-            if(item.customParams) subTitle = Object.values(item.customParams).join(' | ');
-            
-            html += `<div class="card">
-                <div class="name">${item.name}</div>
-                <div class="subtitle">${subTitle}</div>
-                <div class="price">MRP: ₹${parseFloat(item.msp || 0).toFixed(2)}</div>
-                <svg class="barcode" id="bc-${index}"></svg>
-            </div>`;
-        });
-        
-        html += `</div>
-        <script>
-            const items = ${JSON.stringify(rawInventory.map(i => i.barcode))};
-            items.forEach((code, i) => {
-                if(code) {
-                    try {
-                        JsBarcode("#bc-" + i, code, { format: "CODE128", width: 2, height: 40, displayValue: true, fontSize: 12, margin: 0 });
-                    } catch(e) { console.error("Invalid barcode format", code); }
-                }
-            });
-            setTimeout(() => { window.print(); }, 1500);
-        <\/script>
-        </body></html>`;
-        
-        printWindow.document.write(html);
-        printWindow.document.close();
+        if(rawInventory.length === 0) return alert("Inventory is empty!"); let printWindow = window.open('', '_blank');
+        let html = `<html><head><title>Wall Catalog</title><script src="https://cdn.jsdelivr.net/npm/jsbarcode@3.11.5/dist/JsBarcode.all.min.js"><\/script><style> body { font-family: sans-serif; padding: 20px; } h2 { text-align: center; margin-bottom: 30px; } .grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(200px, 1fr)); gap: 15px; } .card { border: 2px dashed #ccc; padding: 15px; text-align: center; border-radius: 8px; page-break-inside: avoid; } .name { font-weight: bold; font-size: 14px; margin-bottom: 5px; text-transform: uppercase; } .subtitle { font-size: 10px; color: #666; margin-bottom: 8px; } .price { font-weight: 900; color: #3b82f6; font-size: 18px; margin-bottom: 10px; } svg { width: 100%; height: 50px; }</style></head><body><h2>Store Wall Catalog</h2><div class="grid">`;
+        rawInventory.forEach((item, index) => { let subTitle = item.subCategory || item.category || ""; if(item.customParams) subTitle = Object.values(item.customParams).join(' | '); html += `<div class="card"><div class="name">${item.name}</div><div class="subtitle">${subTitle}</div><div class="price">MRP: ₹${parseFloat(item.msp || 0).toFixed(2)}</div><svg class="barcode" id="bc-${index}"></svg></div>`; });
+        html += `</div><script> const items = ${JSON.stringify(rawInventory.map(i => i.barcode))}; items.forEach((code, i) => { if(code) { try { JsBarcode("#bc-" + i, code, { format: "CODE128", width: 2, height: 40, displayValue: true, fontSize: 12, margin: 0 }); } catch(e) { console.error("Invalid barcode format", code); } } }); setTimeout(() => { window.print(); }, 1500); <\/script></body></html>`;
+        printWindow.document.write(html); printWindow.document.close();
     }
 
     let html5QrCodeBlueprint; let currentFacingModeBlueprint = "environment";
-    function startBlueprintScanner() {
-        document.getElementById('bp-scanner-container').style.display = 'block';
-        if (!html5QrCodeBlueprint) html5QrCodeBlueprint = new Html5Qrcode("bp-reader");
-        html5QrCodeBlueprint.start( { facingMode: currentFacingModeBlueprint }, { fps: 10, qrbox: { width: 250, height: 150 } },
-            (decodedText) => { document.getElementById('bp-barcode').value = decodedText; stopBlueprintScanner(); }, (errorMessage) => { }
-        ).catch(err => {
-            if (currentFacingModeBlueprint === "environment") { currentFacingModeBlueprint = "user"; startBlueprintScanner(); } 
-            else { alert("Camera Error: Ensure permissions are granted."); stopBlueprintScanner(); }
-        });
-    }
-    function stopBlueprintScanner() {
-        if (html5QrCodeBlueprint && html5QrCodeBlueprint.isScanning) { html5QrCodeBlueprint.stop().then(() => { document.getElementById('bp-scanner-container').style.display = 'none'; }).catch(err => console.error(err)); } 
-        else { document.getElementById('bp-scanner-container').style.display = 'none'; }
-    }
-    function switchBlueprintCamera() {
-        if (html5QrCodeBlueprint && html5QrCodeBlueprint.isScanning) { html5QrCodeBlueprint.stop().then(() => { currentFacingModeBlueprint = (currentFacingModeBlueprint === "environment") ? "user" : "environment"; startBlueprintScanner(); }); }
-    }
+    function startBlueprintScanner() { document.getElementById('bp-scanner-container').style.display = 'block'; if (!html5QrCodeBlueprint) html5QrCodeBlueprint = new Html5Qrcode("bp-reader"); html5QrCodeBlueprint.start( { facingMode: currentFacingModeBlueprint }, { fps: 10, qrbox: { width: 250, height: 150 } }, (decodedText) => { document.getElementById('bp-barcode').value = decodedText; stopBlueprintScanner(); }, (errorMessage) => { } ).catch(err => { if (currentFacingModeBlueprint === "environment") { currentFacingModeBlueprint = "user"; startBlueprintScanner(); } else { alert("Camera Error: Ensure permissions are granted."); stopBlueprintScanner(); } }); }
+    function stopBlueprintScanner() { if (html5QrCodeBlueprint && html5QrCodeBlueprint.isScanning) { html5QrCodeBlueprint.stop().then(() => { document.getElementById('bp-scanner-container').style.display = 'none'; }).catch(err => console.error(err)); } else { document.getElementById('bp-scanner-container').style.display = 'none'; } }
+    function switchBlueprintCamera() { if (html5QrCodeBlueprint && html5QrCodeBlueprint.isScanning) { html5QrCodeBlueprint.stop().then(() => { currentFacingModeBlueprint = (currentFacingModeBlueprint === "environment") ? "user" : "environment"; startBlueprintScanner(); }); } }
 </script>
 </body>
 </html>
