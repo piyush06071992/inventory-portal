@@ -5,7 +5,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <title>POS Checkout - Business Saarthi</title>
     
-   <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-firestore-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-auth-compat.js"></script>
     <script src="/auth.js"></script>
@@ -16,7 +16,7 @@
 
     <style>
         :root { --navy: #0f172a; --primary: #3b82f6; --emerald: #10b981; --danger: #ef4444; --warning: #f59e0b; --text-light: #64748b; --border: #e2e8f0; --bg: #f8fafc; }
-       body { font-family: 'Inter', sans-serif; background-color: var(--bg); margin: 0; padding: 0; color: var(--navy); height: 100vh; height: 100dvh; display: flex; flex-direction: column; overflow-x: hidden; overflow-y: hidden; max-width: 100vw; }
+        body { font-family: 'Inter', sans-serif; background-color: var(--bg); margin: 0; padding: 0; color: var(--navy); height: 100vh; height: 100dvh; display: flex; flex-direction: column; overflow-x: hidden; overflow-y: hidden; max-width: 100vw; }
         
         /* Top Navigation */
         .pos-header { background: white; padding: 12px 20px; display: flex; justify-content: space-between; align-items: center; border-bottom: 2px solid var(--border); z-index: 10; flex-shrink: 0; width: 100%; box-sizing: border-box;}
@@ -58,7 +58,7 @@
         .summary-row { display: flex; justify-content: space-between; margin-bottom: 5px; font-size: 12px; font-weight: 700; color: var(--text-light);}
         .summary-total { display: flex; justify-content: space-between; margin-bottom: 10px; font-size: 20px; font-weight: 900; color: var(--navy); border-top: 1px dashed var(--border); padding-top: 8px;}
         
-      .checkout-btns { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 8px;}
+        .checkout-btns { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 8px;}
         .btn-checkout { padding: 12px; border: none; border-radius: 10px; font-size: 14px; font-weight: 900; color: white; cursor: pointer; display: flex; align-items: center; justify-content: center; gap: 6px;}
         .btn-cash { background: var(--emerald); }
         .btn-upi { background: #8b5cf6; }
@@ -68,31 +68,27 @@
         .grid-panel { flex: 1; display: flex; flex-direction: column; background: var(--bg); overflow: hidden;}
         @media (max-width: 800px) { .grid-panel { height: 50vh; } }
         
-       .search-header { padding: 15px; background: white; border-bottom: 1px solid var(--border); flex-shrink: 0; width: 100%; box-sizing: border-box;}
-        .search-box { position: relative; margin-bottom: 10px; display: flex; gap: 10px; width: 100%;}
+        .search-header { padding: 15px; background: white; border-bottom: 1px solid var(--border); flex-shrink: 0; width: 100%; box-sizing: border-box;}
+        .search-box { position: relative; display: flex; gap: 10px; width: 100%;}
         .search-input { flex: 1; padding: 12px 12px 12px 40px; border: 2px solid var(--border); border-radius: 10px; font-size: 14px; font-weight: 800; outline: none; background: #f8fafc; box-sizing: border-box; min-width: 0;}
         .search-icon { position: absolute; left: 14px; top: 12px; color: var(--text-light); font-size: 16px;}
-        .btn-custom-item { background: var(--navy); color: white; border: none; border-radius: 10px; padding: 0 15px; font-weight: 800; cursor: pointer; white-space: nowrap; flex-shrink: 0;}
         
-        /* Quick Category Horizontal Scroll */
-        .cat-scroll { display: flex; overflow-x: auto; gap: 10px; padding-bottom: 5px; scroll-snap-type: x mandatory;}
-        .cat-scroll::-webkit-scrollbar { height: 4px; }
-        .cat-scroll::-webkit-scrollbar-thumb { background: #cbd5e1; border-radius: 4px; }
-        .cat-pill { padding: 8px 16px; background: white; border: 1px solid var(--border); border-radius: 20px; font-size: 12px; font-weight: 800; cursor: pointer; white-space: nowrap; transition: 0.1s; scroll-snap-align: start;}
-        .cat-pill.active { background: var(--primary); color: white; border-color: var(--primary);}
-
-        .product-grid { flex: 1; overflow-y: auto; padding: 15px; display: grid; grid-template-columns: repeat(auto-fill, minmax(110px, 1fr)); gap: 10px; align-content: start;}
+        /* List View Styles for Items */
+        .product-grid { flex: 1; overflow-y: auto; padding: 15px; display: block;}
         
-        .pos-card { background: white; border: 1px solid var(--border); border-radius: 12px; padding: 10px; cursor: pointer; text-align: center; position: relative; user-select: none; transition: transform 0.1s;}
-        .pos-card:active { transform: scale(0.95); border-color: var(--primary);}
-        .pos-card.disabled { opacity: 0.4; pointer-events: none; filter: grayscale(100%);}
+        .shelf-item { width: 100%; display: flex; flex-direction: row; align-items: center; padding: 10px; border: 1px solid var(--border); border-radius: 12px; background: white; cursor: pointer; transition: 0.2s; box-shadow: 0 2px 4px rgba(0,0,0,0.02); box-sizing: border-box; margin-bottom: 8px;}
+        .shelf-item:hover { transform: translateX(5px); box-shadow: 0 4px 8px rgba(0,0,0,0.05); border-color: var(--primary);}
+        .shelf-item.disabled { opacity: 0.4; pointer-events: none; filter: grayscale(100%); }
         
-        .stock-badge { position: absolute; top: 5px; right: 5px; font-size: 9px; font-weight: 900; background: #f1f5f9; padding: 2px 6px; border-radius: 4px; border: 1px solid #cbd5e1;}
-        .stock-badge.low { background: #fee2e2; color: var(--danger); border-color: #fca5a5;}
+        .shelf-icon { width: 55px; height: 55px; flex-shrink: 0; border-radius: 10px; margin-right: 15px; position: relative; border: 1px solid #e2e8f0; overflow: hidden; background: #f8fafc; display: flex; align-items: center; justify-content: center; font-size: 24px; font-weight: 900;}
+        .shelf-item-details { display: flex; flex-direction: column; flex-grow: 1; text-align: left; overflow: hidden;}
+        .shelf-item-name { font-size: 14px; font-weight: 800; color: var(--navy); white-space: nowrap; overflow: hidden; text-overflow: ellipsis;}
+        .shelf-item-subtitle { font-size: 11px; color: var(--text-light); font-weight: 700; margin-top: 4px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;}
+        .shelf-item-price { font-size: 15px; font-weight: 900; color: var(--primary); margin-left: 15px; text-align: right; min-width: 80px;}
         
-        .card-avatar { width: 36px; height: 36px; border-radius: 8px; display: flex; align-items: center; justify-content: center; font-size: 16px; font-weight: 900; color: white; margin: 0 auto 8px auto;}
-        .card-name { font-size: 11px; font-weight: 900; margin: 0 0 4px 0; line-height: 1.2; height: 26px; overflow: hidden;}
-        .card-price { font-size: 13px; font-weight: 900; color: var(--primary);}
+        .qty-badge { position: absolute; top: -4px; right: -4px; background: #10b981; color: white; min-width: 20px; height: 20px; border-radius: 10px; font-size: 10px; font-weight: 900; display: flex; align-items: center; justify-content: center; box-shadow: 0 2px 4px rgba(0,0,0,0.2); border: 2px solid white; padding: 0 4px; z-index: 2;}
+        .qty-low { background: #ef4444; animation: pulse 2s infinite; }
+        @keyframes pulse { 0% { box-shadow: 0 0 0 0 rgba(239, 68, 68, 0.7); } 70% { box-shadow: 0 0 0 8px rgba(239, 68, 68, 0); } 100% { box-shadow: 0 0 0 0 rgba(239, 68, 68, 0); } }
 
         /* Modals & Overlays */
         #loading-overlay { position: fixed; inset: 0; background: white; z-index: 9999; display: flex; flex-direction: column; align-items: center; justify-content: center; font-weight: 900; color: var(--primary);}
@@ -108,7 +104,7 @@
         .qr-container { background: #f8fafc; padding: 15px; border-radius: 12px; margin-bottom: 15px; border: 2px dashed #cbd5e1;}
         .qr-container img { width: 180px; height: 180px; border-radius: 8px;}
 
-       /* PDF/PRINT RECEIPT STYLES */
+        /* PDF/PRINT RECEIPT STYLES */
         #print-receipt-container { display: none; }
         @media print {
             body * { visibility: hidden; }
@@ -135,7 +131,6 @@
             .thank-you { text-align: center; font-size: 14px; font-weight: 800; color: var(--text-light); margin-top: 20px; }
         }
     </style>
-    </style>
 </head>
 <body>
 
@@ -143,7 +138,7 @@
 
 <div class="pos-header">
     <h1><span id="top-shop-name">Store</span> <span style="font-size:12px; color:var(--text-light); font-weight:600;" id="active-branch-name"></span></h1>
- <div class="header-actions">
+    <div class="header-actions">
         <button class="btn-nav btn-hold" onclick="holdCart()"><i class="bi bi-pause-circle-fill"></i> Hold</button>
         <button class="btn-nav" onclick="showDrafts()"><i class="bi bi-list-ul"></i> Drafts</button>
         <button class="btn-nav" onclick="showRecentSales()" style="background:#e0f2fe; color:#0284c7; border-color:#bae6fd;"><i class="bi bi-clock-history"></i> Sales</button>
@@ -152,9 +147,9 @@
 </div>
 
 <div class="pos-layout">
-   <div class="cart-panel">
+    <div class="cart-panel">
         <div class="cart-items-container" id="cart-container"></div>
-   <div class="cart-footer">
+        <div class="cart-footer">
             <div style="position: relative; margin-bottom: 10px;">
                 <div style="display:flex; align-items:center; background:#f8fafc; border:1px solid var(--border); border-radius:8px; padding-right:10px;">
                     <input type="text" id="customer-search" class="customer-input" placeholder="🔍 Search Name, Mobile, or Khata #" style="border:none; background:transparent; margin-bottom:0; flex:1;" autocomplete="off" oninput="handleCustomerSearch()">
@@ -178,13 +173,10 @@
 
     <div class="grid-panel">
         <div class="search-header">
-       <div class="search-box">
+            <div class="search-box">
                 <i class="bi bi-upc-scan search-icon" style="cursor: pointer; color: var(--primary); z-index: 10; pointer-events: auto;" onclick="openCameraScanner()" title="Open Camera Scanner"></i>
                 <input type="text" id="pos-search" class="search-input" placeholder="Tap icon for Camera or Type..." oninput="filterGrid()" autocomplete="off">
             </div>
-            <div class="cat-scroll" id="cat-tabs">
-                <button class="cat-pill active" onclick="setCategory('ALL')">All Items</button>
-                </div>
         </div>
         <div class="product-grid" id="pos-grid"></div>
     </div>
@@ -315,6 +307,7 @@
 </div>
 
 <div id="print-receipt-container"></div>
+
 <script>
     // --- APP STATE ---
     let activeUserPhone = localStorage.getItem("activeUserPhone");
@@ -322,20 +315,21 @@
     const activeStaffId = localStorage.getItem("activeStaffId");
     let activeBranchId = null;
 
-    let shopUpiId = ""; // Will be fetched dynamically from Firebase
-   let shopName = "Store"; // Will be fetched dynamically from Firebase
+    let shopUpiId = ""; 
+    let shopName = "Store"; 
 
     let liveInventory = [];
-let currentCustomerPending = 0;
+    let currentCustomerPending = 0;
     let udhaarPaidNow = 0;
     let searchTimeout = null;
     let currentKhataNumber = null;
     let selectedCustomer = null;
-    let shopTaxonomy = {};
     let cart = [];
     let heldDrafts = [];
-    let currentCategory = 'ALL';
-    let finalSaleData = {}; // Stores data for WhatsApp/Print after checkout
+    let finalSaleData = {}; 
+    
+    // NAVIGATION STATE (Google Drive Drill-Down style)
+    let navPath = { dept: null, cat: null, subcat: null }; 
 
     const bgGradients = ['#3b82f6', '#10b981', '#f43f5e', '#8b5cf6', '#eab308'];
 
@@ -344,17 +338,12 @@ let currentCustomerPending = 0;
             if (!activeUserPhone) return;
             try { if(assignedBranch && assignedBranch.startsWith('[')) assignedBranch = JSON.parse(assignedBranch); } catch(e){}
             
-            // 1. Fetch real branch ID first
             await determineBranch(); 
-            // 2. Fetch UPI and Taxonomy
             await loadBusinessDetails(); 
-            await loadTaxonomy();
-            // 3. Start Live Sync with the correct Branch ID
             if(activeBranchId) startLiveInventorySync();
         });
     });
 
-    // Determines the correct branch ID dynamically from Firebase
     async function determineBranch() {
         const db = firebase.firestore();
         try {
@@ -368,12 +357,10 @@ let currentCustomerPending = 0;
             }
             
             if (!activeStaffId || assignedBranch === "admin") {
-                // Admin: Find Main Branch or pick the first one available
                 const main = branches.find(b => b.name.toLowerCase().includes('main'));
                 activeBranchId = main ? main.id : branches[0].id;
                 document.getElementById('active-branch-name').innerText = main ? main.name : branches[0].name;
             } else {
-                // Staff: Use their assigned branch
                 activeBranchId = Array.isArray(assignedBranch) ? assignedBranch[0] : assignedBranch;
                 const b = branches.find(b => b.id === activeBranchId);
                 document.getElementById('active-branch-name').innerText = b ? b.name : "Branch POS";
@@ -381,44 +368,20 @@ let currentCustomerPending = 0;
         } catch(e) { console.error("Branch Error", e); }
     }
 
-   async function loadBusinessDetails() {
+    async function loadBusinessDetails() {
         try {
             const doc = await firebase.firestore().collection('companies').doc(activeUserPhone).get();
             if (doc.exists) {
                 const data = doc.data();
-                
                 if (data.businessName) {
                     shopName = data.businessName;
                     document.getElementById('top-shop-name').innerText = shopName;
-                    document.getElementById('r-shop-name').innerText = shopName.toUpperCase();
                 }
-
-                // Grab the first UPI ID from the array if the shopkeeper has saved one
                 if (data.upiIds && data.upiIds.length > 0) {
                     shopUpiId = data.upiIds[0];
                 }
             }
         } catch(e) { console.error("Error fetching business details:", e); }
-    }
-
-    async function loadTaxonomy() {
-        try {
-            const doc = await firebase.firestore().collection('companies').doc(activeUserPhone).collection('settings').doc('params').get();
-            if (doc.exists && doc.data().shopTaxonomy) {
-                shopTaxonomy = doc.data().shopTaxonomy;
-                const tabs = document.getElementById('cat-tabs');
-                for (const cat in shopTaxonomy) { 
-                    tabs.innerHTML += `<button class="cat-pill" onclick="setCategory('${cat}', this)">${cat}</button>`; 
-                }
-            }
-        } catch(e) { console.error(e); }
-    }
-
-    function setCategory(cat, el = null) {
-        currentCategory = cat;
-        document.querySelectorAll('.cat-pill').forEach(p => p.classList.remove('active'));
-        if(el) el.classList.add('active'); else document.querySelector('.cat-pill').classList.add('active');
-        filterGrid();
     }
 
     // --- HYBRID LIVE SYNC ---
@@ -428,40 +391,149 @@ let currentCustomerPending = 0;
               liveInventory = [];
               snapshot.forEach(doc => liveInventory.push({ docId: doc.id, ...doc.data() }));
               document.getElementById('loading-overlay').style.display = 'none';
-              filterGrid();
+              filterGrid(); // Ultra-fast render call
           });
     }
 
-    // --- FAST GRID & SEARCH ---
-    function filterGrid() {
-        const query = document.getElementById('pos-search').value.toLowerCase().trim();
+    // --- NAVIGATION CONTROLLERS ---
+    window.setNavPath = function(level) {
+        if (level === 'home') navPath = { dept: null, cat: null, subcat: null };
+        if (level === 'dept') navPath = { dept: navPath.dept, cat: null, subcat: null };
+        if (level === 'cat') navPath = { dept: navPath.dept, cat: navPath.cat, subcat: null };
+        if (level === 'back') {
+            if (navPath.subcat) navPath.subcat = null;
+            else if (navPath.cat) navPath.cat = null;
+            else if (navPath.dept) navPath.dept = null;
+        }
+        document.getElementById('pos-search').value = "";
+        filterGrid();
+    }
+
+    window.drillDown = function(selectedValue) {
+        if (!navPath.dept) navPath.dept = selectedValue;
+        else if (!navPath.cat) navPath.cat = selectedValue;
+        else if (!navPath.subcat) navPath.subcat = selectedValue;
+        document.getElementById('pos-search').value = "";
+        filterGrid();
+    }
+
+    // --- ULTRA-FAST GRID & SEARCH ENGINE ---
+    window.filterGrid = function() {
         const grid = document.getElementById('pos-grid');
-        grid.innerHTML = "";
-
-        const filtered = liveInventory.filter(item => {
-            const textMatch = (item.name && item.name.toLowerCase().includes(query)) || (item.barcode && item.barcode.toLowerCase() === query);
-            return textMatch && (currentCategory === 'ALL' || item.category === currentCategory);
-        });
-
+        const query = document.getElementById('pos-search').value.toLowerCase().trim();
+        const cleanStr = (str) => str ? str.replace(/\s*\([^)]*\)/g, '').trim() : "Unknown";
+        
         // Instant Barcode Scan Logic
-        if (query.length > 3 && filtered.length === 1 && filtered[0].barcode && filtered[0].barcode.toLowerCase() === query) {
-            addToCart(filtered[0].docId);
-            document.getElementById('pos-search').value = "";
-            filterGrid();
-            return;
+        if (query.length > 3) {
+            const exactMatches = liveInventory.filter(item => item.barcode && item.barcode.toLowerCase() === query);
+            if (exactMatches.length === 1) {
+                addToCart(exactMatches[0].docId);
+                document.getElementById('pos-search').value = "";
+                filterGrid();
+                return;
+            }
         }
 
-        filtered.forEach((item, index) => {
-            const isOut = parseFloat(item.qty) <= 0;
-            const bg = bgGradients[index % bgGradients.length];
-            grid.innerHTML += `
-                <div class="pos-card ${isOut ? 'disabled' : ''}" onclick="!${isOut} && addToCart('${item.docId}')">
-                    <span class="stock-badge ${item.qty < 5 && !isOut ? 'low' : ''}">${item.qty}</span>
-                    <div class="card-avatar" style="background:${bg};">${item.name.charAt(0).toUpperCase()}</div>
-                    <h4 class="card-name">${item.name}</h4>
-                    <span class="card-price">₹${parseFloat(item.msp).toFixed(0)}</span>
-                </div>
-            `;
+        window.requestAnimationFrame(() => {
+            let filtered = [];
+            for (let i = 0; i < liveInventory.length; i++) {
+                const item = liveInventory[i];
+                if (query) {
+                    const n = item.name ? item.name.toLowerCase() : "";
+                    const b = item.barcode ? item.barcode.toLowerCase() : "";
+                    if (!n.includes(query) && !b.includes(query)) continue;
+                } else {
+                    if (navPath.dept && item.department !== navPath.dept) continue;
+                    if (navPath.cat && item.category !== navPath.cat) continue;
+                    if (navPath.subcat && item.subCategory !== navPath.subcat) continue;
+                }
+                filtered.push(item);
+            }
+
+            if (filtered.length === 0) {
+                let backBtn = (navPath.dept || navPath.cat || navPath.subcat) && !query ? `<button class="btn-action" onclick="setNavPath('back')" style="margin:10px auto;"><i class="bi bi-arrow-left"></i> Go Back</button>` : '';
+                grid.innerHTML = `<div style="text-align:center; padding:40px; color:var(--text-light);"><i class="bi bi-search" style="font-size:40px; display:block; margin-bottom:10px;"></i><h3>No items match criteria.</h3>${backBtn}</div>`;
+                return;
+            }
+
+            let htmlArr = [];
+
+            if (!query) {
+                let bcHtml = `<div style="display:flex; gap:8px; align-items:center; padding:12px 15px; background:white; border-radius:8px; margin-bottom:15px; border:1px solid var(--border); font-size:12px; font-weight:900; color:var(--text-light); overflow-x:auto;">`;
+                bcHtml += `<span onclick="setNavPath('home')" style="cursor:pointer; color:${!navPath.dept ? 'var(--navy)' : 'var(--primary)'};"><i class="bi bi-house-door-fill"></i> Home</span>`;
+                if (navPath.dept) bcHtml += ` <i class="bi bi-chevron-right" style="opacity:0.5;"></i> <span onclick="setNavPath('dept')" style="cursor:pointer; color:${!navPath.cat ? 'var(--navy)' : 'var(--primary)'};">${cleanStr(navPath.dept)}</span>`;
+                if (navPath.cat) bcHtml += ` <i class="bi bi-chevron-right" style="opacity:0.5;"></i> <span onclick="setNavPath('cat')" style="cursor:pointer; color:${!navPath.subcat ? 'var(--navy)' : 'var(--primary)'};">${cleanStr(navPath.cat)}</span>`;
+                if (navPath.subcat) bcHtml += ` <i class="bi bi-chevron-right" style="opacity:0.5;"></i> <span style="color:var(--navy);">${cleanStr(navPath.subcat)}</span>`;
+                bcHtml += `</div>`;
+                htmlArr.push(bcHtml);
+            }
+
+            if (query || navPath.subcat) {
+                if (query) htmlArr.push(`<div style="margin-bottom:15px; padding:0 5px;"><span style="font-size:13px; font-weight:800; color:var(--text-light);">Search Results for: <span style="color:var(--primary);">'${query}'</span></span></div>`);
+                
+                htmlArr.push(`<div class="shelf-grid" style="display: flex; flex-direction: column; gap: 8px;">`);
+                for (let i = 0; i < filtered.length; i++) {
+                    const item = filtered[i];
+                    const qty = parseFloat(item.qty || 0);
+                    const isOut = qty <= 0;
+                    const minStock = parseFloat(item.minStock !== undefined ? item.minStock : 5);
+                    const isLow = qty < minStock && !isOut;
+                    const firstLetter = item.name ? item.name.charAt(0).toUpperCase() : 'B';
+                    const bgGrad = bgGradients[i % bgGradients.length]; 
+                    const textCol = isLow ? '#ef4444' : '#0f172a';
+
+                    let paramSubtitle = '';
+                    if(item.customParams) paramSubtitle = `<div class="shelf-item-subtitle">${Object.values(item.customParams).join(' • ')}</div>`;
+
+                    let iconHtml = item.imageUrl ? 
+                        `<div class="shelf-icon"><div class="qty-badge ${isLow ? 'qty-low' : ''}" style="${isOut ? 'background:var(--danger);' : ''}">${qty}</div><img src="${item.imageUrl}" loading="lazy" style="width: 100%; height: 100%; object-fit: contain; border-radius: 8px;"></div>` : 
+                        `<div class="shelf-icon" style="background: ${bgGrad}; color: ${textCol}; border:none;"><div class="qty-badge ${isLow ? 'qty-low' : ''}" style="${isOut ? 'background:var(--danger);' : ''}">${qty}</div>${firstLetter}</div>`;
+
+                    const displayName = cleanStr(item.name);
+
+                    htmlArr.push(`
+                        <div class="shelf-item ${isOut ? 'disabled' : ''}" onclick="if(!${isOut}) addToCart('${item.docId}')" title="${displayName}">
+                            ${iconHtml}
+                            <div class="shelf-item-details">
+                                <div class="shelf-item-name">${displayName}</div>
+                                ${paramSubtitle}
+                            </div>
+                            <div class="shelf-item-price">₹${parseFloat(item.msp || 0).toFixed(0)}</div>
+                        </div>`);
+                }
+                htmlArr.push(`</div>`);
+            } else {
+                let groupedList = {};
+                filtered.forEach(item => {
+                    let key = "";
+                    if (!navPath.dept) key = item.department || "Other";
+                    else if (!navPath.cat) key = item.category || "General";
+                    else if (!navPath.subcat) key = item.subCategory || "Items";
+                    if (!groupedList[key]) groupedList[key] = 0;
+                    groupedList[key]++;
+                });
+
+                const keys = Object.keys(groupedList).sort();
+                htmlArr.push(`<div style="display:flex; flex-direction:column; gap:6px;">`);
+                keys.forEach(k => {
+                    const cleanK = cleanStr(k);
+                    htmlArr.push(`
+                        <div onclick="drillDown('${k}')" style="background:#1e293b; color:white; padding:15px 20px; border-radius:6px; display:flex; justify-content:space-between; align-items:center; cursor:pointer; font-weight:900; font-size:13px; text-transform:uppercase; box-shadow:0 2px 4px rgba(0,0,0,0.1); transition:0.1s;">
+                            <div style="display:flex; align-items:center; gap:12px; letter-spacing:0.5px;">
+                                <i class="bi bi-folder-fill" style="color:#60a5fa; font-size:18px;"></i>
+                                ${cleanK}
+                            </div>
+                            <div style="display:flex; align-items:center; gap:15px;">
+                                <span style="background:rgba(255,255,255,0.15); padding:3px 10px; border-radius:12px; font-size:10px;">${groupedList[k]} Options</span>
+                                <i class="bi bi-caret-down-fill" style="opacity:0.5; font-size:12px;"></i>
+                            </div>
+                        </div>
+                    `);
+                });
+                htmlArr.push(`</div>`);
+            }
+
+            grid.innerHTML = htmlArr.join('');
         });
     }
 
@@ -470,7 +542,7 @@ let currentCustomerPending = 0;
         const item = liveInventory.find(i => i.docId === docId);
         if (!item || item.qty <= 0) return;
         const exist = cart.find(c => c.docId === docId);
-       if (exist) {
+        if (exist) {
             if (exist.cartQty < item.qty) exist.cartQty++;
         } else {
             cart.push({ docId: item.docId, name: item.name, msp: parseFloat(item.msp||0), costPer: parseFloat(item.costPer||0), gstRate: parseFloat(item.gstRate||0), maxQty: parseFloat(item.qty), offer: item.offer || null, cartQty: 1, isCustom: false });
@@ -489,7 +561,7 @@ let currentCustomerPending = 0;
 
     // Custom Ad-hoc Item
     function openCustomItemModal() { document.getElementById('custom-modal').style.display = 'flex'; }
-   function addCustomItem() {
+    function addCustomItem() {
         const name = document.getElementById('custom-name').value || "Misc Item";
         const price = parseFloat(document.getElementById('custom-price').value);
         if(isNaN(price) || price <= 0) return alert("Enter a valid price");
@@ -499,7 +571,7 @@ let currentCustomerPending = 0;
         renderCart();
     }
 
-function renderCart() {
+    function renderCart() {
         const container = document.getElementById('cart-container');
         let subtotal = 0; let totalDisc = 0; let totalGst = 0;
         
@@ -544,7 +616,7 @@ function renderCart() {
                 </div>`;
         });
         
-    document.getElementById('cart-subtotal').innerText = `₹${subtotal.toFixed(2)}`;
+        document.getElementById('cart-subtotal').innerText = `₹${subtotal.toFixed(2)}`;
         document.getElementById('cart-discount').innerText = `- ₹${totalDisc.toFixed(2)}`;
         document.getElementById('cart-gst').innerText = `₹${totalGst.toFixed(2)}`;
         document.getElementById('cart-total').innerText = `₹${(subtotal - totalDisc).toFixed(2)}`;
@@ -568,14 +640,13 @@ function renderCart() {
         });
         document.getElementById('drafts-modal').style.display = 'flex';
     }
-  function restoreDraft(i) { cart = [...heldDrafts[i].items]; heldDrafts.splice(i, 1); renderCart(); document.getElementById('drafts-modal').style.display = 'none'; }
+    function restoreDraft(i) { cart = [...heldDrafts[i].items]; heldDrafts.splice(i, 1); renderCart(); document.getElementById('drafts-modal').style.display = 'none'; }
 
- // --- SALES HISTORY ENGINE ---
+    // --- SALES HISTORY ENGINE ---
     let loadedSales = [];
 
     async function showRecentSales() {
         document.getElementById('sales-history-modal').style.display = 'flex';
-        // Reset filters on open
         document.getElementById('filter-start-date').value = "";
         document.getElementById('filter-end-date').value = "";
         document.getElementById('filter-customer').value = "";
@@ -601,7 +672,6 @@ function renderCart() {
                 let end = new Date(endDate); end.setHours(23,59,59,999);
                 query = query.where('timestamp', '<=', firebase.firestore.Timestamp.fromDate(end));
             }
-            // Limit to last 50 if no dates provided to save data
             if (!startDate && !endDate) { query = query.limit(50); }
             
             const snap = await query.get();
@@ -617,7 +687,7 @@ function renderCart() {
 
     function applyLocalSalesFilter() {
         const list = document.getElementById('sales-history-list');
-        const searchTxt = document.getElementById('filter-customer').value.trim().toLowerCase(); // Forces case-insensitive
+        const searchTxt = document.getElementById('filter-customer').value.trim().toLowerCase(); 
         
         const filtered = loadedSales.filter(s => {
             const cName = (s.customerName || "").toLowerCase();
@@ -650,13 +720,12 @@ function renderCart() {
         });
     }
 
-// --- CUSTOMER SEARCH & KHATA LOGIC ---
+    // --- CUSTOMER SEARCH & KHATA LOGIC ---
     function handleCustomerSearch() {
         let val = document.getElementById('customer-search').value.trim();
         const clearBtn = document.getElementById('clear-cust-btn');
         clearBtn.style.display = val.length > 0 ? 'block' : 'none';
         
-        // If user modifies the text after selecting a customer, unlock the selection
         if (selectedCustomer && val !== `${selectedCustomer.name} (${selectedCustomer.phone})`) {
             clearCustomerSelection(false); 
         }
@@ -665,7 +734,7 @@ function renderCart() {
         searchTimeout = setTimeout(async () => {
             const dropdown = document.getElementById('customer-dropdown');
             if (val.length < 1) { dropdown.style.display = 'none'; return; }
-            if (selectedCustomer) return; // Don't search if a customer is already locked in
+            if (selectedCustomer) return; 
 
             try {
                 const db = firebase.firestore();
@@ -673,7 +742,6 @@ function renderCart() {
                 let snap;
                 let isNumeric = /^\d+$/.test(val);
 
-                // 10 Digits -> Exact Phone Match
                 if (isNumeric && val.length === 10) {
                     const exactSnap = await query.where('phone', '==', val).get();
                     if (!exactSnap.empty) {
@@ -683,7 +751,6 @@ function renderCart() {
                     }
                 }
                 
-                // Khata Number / Phone Substring Search
                 if (isNumeric && val.length <= 5) {
                     snap = await query.where('khataNumber', '==', val).limit(5).get();
                     if (snap.empty && val.length >= 4) {
@@ -692,7 +759,6 @@ function renderCart() {
                 } else if (isNumeric && val.length >= 4) {
                     snap = await query.where('phone', '>=', val).where('phone', '<=', val + '\uf8ff').limit(5).get();
                 } else if (!isNumeric && val.length >= 3) {
-                    // Name search
                     let upperVal = val.toUpperCase();
                     snap = await query.where('name', '>=', upperVal).where('name', '<=', upperVal + '\uf8ff').limit(5).get();
                 }
@@ -742,23 +808,14 @@ function renderCart() {
         }
     }
 
-    // Hide dropdown if clicked outside
     document.addEventListener('click', (e) => {
-        if (!e.target.closest('#customer-dropdown') && e.target.id !== 'customer-search') {
+        if (!e.target.closest('#customer-dropdown') && e.target.id !== 'customer-search' && e.target.id !== 'customer-name' && e.target.id !== 'customer-phone') {
             const dp = document.getElementById('customer-dropdown');
             if(dp) dp.style.display = 'none';
         }
     });
 
-    // Hide dropdown if clicked outside
-    document.addEventListener('click', (e) => {
-        if (!e.target.closest('#customer-dropdown') && e.target.id !== 'customer-name' && e.target.id !== 'customer-phone') {
-            const dp = document.getElementById('customer-dropdown');
-            if(dp) dp.style.display = 'none';
-        }
-    });
-
-function openUdhaarModal() {
+    function openUdhaarModal() {
         if (cart.length === 0) return;
         
         const newCustFields = document.getElementById('new-cust-fields');
@@ -768,7 +825,6 @@ function openUdhaarModal() {
             newCustFields.style.display = 'none';
             document.getElementById('udhaar-customer-name').innerText = `${selectedCustomer.name} (${selectedCustomer.phone})`;
         } else {
-            // New Customer Mode: Open the fields and smartly pre-fill based on what they typed
             newCustFields.style.display = 'block';
             document.getElementById('udhaar-customer-name').innerText = `Adding New Customer...`;
             
@@ -795,7 +851,7 @@ function openUdhaarModal() {
 
     function calcUdhaarMath() {
         udhaarPaidNow = parseFloat(document.getElementById('udhaar-paid-now').value) || 0;
-        if (udhaarPaidNow > finalSaleData.tot) udhaarPaidNow = finalSaleData.tot; // Can't pay more than bill amount
+        if (udhaarPaidNow > finalSaleData.tot) udhaarPaidNow = finalSaleData.tot; 
         const finalPending = (finalSaleData.tot + currentCustomerPending) - udhaarPaidNow;
         document.getElementById('u-final-pending').innerText = `₹${finalPending.toFixed(2)}`;
     }
@@ -815,7 +871,7 @@ function openUdhaarModal() {
         if(diff >= 0) { document.getElementById('cash-return').innerText = `₹${diff.toFixed(0)}`; box.style.display = 'block'; } else { box.style.display = 'none'; }
     }
 
-   function openUpiModal() {
+    function openUpiModal() {
         if(cart.length === 0) return;
         
         if(!shopUpiId) {
@@ -824,8 +880,6 @@ function openUdhaarModal() {
         }
 
         document.getElementById('upi-bill-amt').innerText = `₹${finalSaleData.tot.toFixed(0)}`;
-        
-      // Use dynamic shopUpiId variable and Shop Name
         const upiString = encodeURIComponent(`upi://pay?pa=${shopUpiId}&pn=${shopName}&am=${finalSaleData.tot.toFixed(2)}`);
         
         document.getElementById('upi-qr-img').src = `https://api.qrserver.com/v1/create-qr-code/?size=200x200&data=${upiString}`;
@@ -836,7 +890,6 @@ function openUdhaarModal() {
     async function processSale(mode) {
         document.getElementById('cash-modal').style.display = 'none'; document.getElementById('upi-modal').style.display = 'none';
         
-// Prepare Receipt Data
         finalSaleData.items = [...cart];
         finalSaleData.date = new Date().toLocaleString();
         
@@ -847,7 +900,6 @@ function openUdhaarModal() {
             finalSaleData.name = document.getElementById('new-cust-name').value.trim().toUpperCase();
             finalSaleData.phone = document.getElementById('new-cust-phone').value.trim();
         } else {
-            // Guest Checkout for Cash/UPI
             const rawSearch = document.getElementById('customer-search').value.trim();
             if (/^\d{10}$/.test(rawSearch)) { finalSaleData.phone = rawSearch; finalSaleData.name = ""; }
             else { finalSaleData.name = ""; finalSaleData.phone = ""; }
@@ -863,7 +915,7 @@ function openUdhaarModal() {
             }
         });
 
-document.getElementById('udhaar-modal').style.display = 'none';
+        document.getElementById('udhaar-modal').style.display = 'none';
         const saleRef = db.collection('companies').doc(activeUserPhone).collection('branches').doc(activeBranchId).collection('sales').doc();
         
         finalSaleData.paymentMode = mode;
@@ -876,7 +928,6 @@ document.getElementById('udhaar-modal').style.display = 'none';
         };
 
         try {
-            // BILL NUMBER GENERATOR (Safe Transaction)
             const branchRef = db.collection('companies').doc(activeUserPhone).collection('branches').doc(activeBranchId);
             const generatedBillString = await db.runTransaction(async (t) => {
                 const bDoc = await t.get(branchRef);
@@ -892,19 +943,16 @@ document.getElementById('udhaar-modal').style.display = 'none';
             });
             
             saleObj.billNumber = generatedBillString;
-            finalSaleData.billNumber = generatedBillString; // Keep for print preview
+            finalSaleData.billNumber = generatedBillString;
 
-            // KHATA NUMBER AUTO-ASSIGN ENGINE
             if (finalSaleData.name && finalSaleData.phone && finalSaleData.phone.length === 10) {
                 const custRef = db.collection('companies').doc(activeUserPhone).collection('customers').doc(finalSaleData.phone);
                 
-                // If they don't have a Khata number (New Customer OR Old Customer upgrading)
                 if (!currentKhataNumber) {
                     const cDoc = await custRef.get();
                     if (cDoc.exists && cDoc.data().khataNumber) {
                         currentKhataNumber = cDoc.data().khataNumber;
                     } else {
-                        // Generate the next Khata Number sequentially
                         const kSettingsRef = db.collection('companies').doc(activeUserPhone).collection('settings').doc('khata');
                         currentKhataNumber = await db.runTransaction(async (t) => {
                             const kDoc = await t.get(kSettingsRef);
@@ -917,7 +965,7 @@ document.getElementById('udhaar-modal').style.display = 'none';
                 }
 
                 saleObj.khataNumber = currentKhataNumber;
-                finalSaleData.khataNumber = currentKhataNumber; // Save for receipts
+                finalSaleData.khataNumber = currentKhataNumber;
 
                 let custUpdate = {
                     name: finalSaleData.name, phone: finalSaleData.phone,
@@ -925,7 +973,6 @@ document.getElementById('udhaar-modal').style.display = 'none';
                     lastUpdated: firebase.firestore.FieldValue.serverTimestamp()
                 };
 
-                // IF UDHAAR: Process the Ledger Math
                 if (mode === 'UDHAAR') {
                     finalSaleData.cashPaid = udhaarPaidNow;
                     finalSaleData.udhaarAdded = finalSaleData.tot - udhaarPaidNow;
@@ -953,10 +1000,8 @@ document.getElementById('udhaar-modal').style.display = 'none';
             batch.set(saleRef, saleObj);
             await batch.commit();
             
-           // Background sync successful. Show Success UI.
             cart = []; clearCustomerSelection(true); renderCart();
             
-        // Build PDF-Style Receipt HTML for Printing
             let rHtml = `
                 <div class="receipt-card">
                     <div class="r-header">
@@ -1022,13 +1067,12 @@ document.getElementById('udhaar-modal').style.display = 'none';
 
             document.getElementById('print-receipt-container').innerHTML = rHtml;
             
-            // Show WhatsApp Prompt
             document.getElementById('btn-whatsapp').style.display = finalSaleData.phone ? 'block' : 'none';
             document.getElementById('success-modal').style.display = 'flex';
         } catch(e) { alert("Checkout Failed: " + e.message); }
     }
 
-// --- WHATSAPP ENGINE ---
+    // --- WHATSAPP ENGINE ---
     function sendWhatsApp() {
         let text = `*${shopName.toUpperCase()}*\n`;
         text += `Dear ${finalSaleData.name || 'Customer'},\n`;
@@ -1042,7 +1086,6 @@ document.getElementById('udhaar-modal').style.display = 'none';
             text += `*Total Pending: Rs.${finalSaleData.newTotalKhata.toFixed(0)}*\n\n`;
         }
         
-        // Generate the dynamic link using your actual domain
         const domain = window.location.origin; 
         const receiptLink = `${domain}/receipt.html?id=${finalSaleData.receiptId}&phone=${activeUserPhone}&branch=${activeBranchId}`;
         
@@ -1054,17 +1097,13 @@ document.getElementById('udhaar-modal').style.display = 'none';
         document.getElementById('success-modal').style.display = 'none';
     }
 
-  // Global Keypress for Barcode
     document.addEventListener('keypress', function(e) {
         if (e.target.tagName !== 'INPUT' && e.key === 'Enter') document.getElementById('pos-search').focus();
     });
 
     // --- CAMERA SCANNER ENGINE ---
-    let html5QrcodeScanner = null;
-
-    // --- CAMERA SCANNER ENGINE ---
     let html5QrCode = null;
-    let currentFacingMode = "environment"; // Defaults to the back camera instantly
+    let currentFacingMode = "environment";
 
     function openCameraScanner() {
         document.getElementById('scanner-modal').style.display = 'flex';
@@ -1073,7 +1112,6 @@ document.getElementById('udhaar-modal').style.display = 'none';
             html5QrCode = new Html5Qrcode("reader");
         }
         
-        // Bypasses UI and forces camera to start immediately
         html5QrCode.start(
             { facingMode: currentFacingMode },
             { fps: 10, qrbox: { width: 250, height: 150 } },
@@ -1081,7 +1119,6 @@ document.getElementById('udhaar-modal').style.display = 'none';
             onScanFailure
         ).catch(err => {
             console.error("Camera startup error:", err);
-            // Fallback: If device doesn't have a back camera (like a laptop), try front
             if(currentFacingMode === "environment") {
                 currentFacingMode = "user";
                 openCameraScanner();
@@ -1098,7 +1135,6 @@ document.getElementById('udhaar-modal').style.display = 'none';
         }
     }
 
-    // Allows user to manually flip between front and back cameras
     function flipCamera() {
         if (html5QrCode && html5QrCode.isScanning) {
             html5QrCode.stop().then(() => {
@@ -1110,10 +1146,8 @@ document.getElementById('udhaar-modal').style.display = 'none';
 
     function onScanSuccess(decodedText, decodedResult) {
         closeCameraScanner();
-        // Play beep sound
         try { new Audio('https://www.soundjay.com/buttons/beep-07.wav').play(); } catch(e){}
         
-        // Search inventory for the scanned barcode
         const itemMatch = liveInventory.find(i => i.barcode && i.barcode.toLowerCase() === decodedText.toLowerCase());
         if (itemMatch) {
             addToCart(itemMatch.docId);
