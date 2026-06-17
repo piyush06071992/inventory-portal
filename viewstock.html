@@ -401,24 +401,15 @@
     let masterTaxonomyList = []; 
     let localShopTaxonomy = [];
 
-  document.addEventListener('DOMContentLoaded', () => {
-        firebase.auth().onAuthStateChanged(async (user) => {
-            if (!user) return window.location.href = '/login.html';
-            
-            // Explicitly load dependencies in order
-            await loadMasterTaxonomy();
-            await loadShopParams(); 
-            await loadBranches(); 
-            
-            // Only start fetching inventory if the branch was successfully loaded
-            if (activeBranchId) {
-                await fetchInventory(); 
-            } else {
-                document.getElementById('inventory-racks-container').innerHTML = 
-                    "<div style='text-align:center; padding:60px; color:var(--danger);'>No branch access assigned. Please contact the store owner.</div>";
-            }
-        });
+ document.addEventListener('DOMContentLoaded', () => {
+    firebase.auth().onAuthStateChanged(async (user) => {
+        if (!user) return window.location.href = '/login.html';
+
+        await loadMasterTaxonomy();
+        await loadShopParams();
+        await loadBranches();
     });
+});
 
     function forceUppercase(inputElem) {
         inputElem.value = inputElem.value.toUpperCase().replace(/\s{2,}/g, ' ');
@@ -462,7 +453,7 @@
                     const mainOpt = [...bSelect.options].find(o => o.text.toLowerCase().includes('main'));
                     bSelect.value = mainOpt ? mainOpt.value : bSelect.options[0].value;
                 } else { bSelect.value = assignedBranch; }
-                fetchInventory(); 
+                await fetchInventory();
             }
         } catch(e) { alert("Error: " + e.message); }
     }
