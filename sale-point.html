@@ -1144,11 +1144,26 @@ let scannedPendingItem = null;
         document.getElementById('cash-modal').style.display = 'flex';
     }
     function setCash(amt) { document.getElementById('cash-given').value = amt; calcChange(); }
-    function calcChange() {
+   function calcChange() {
         const given = parseFloat(document.getElementById('cash-given').value) || 0;
         const diff = given - finalSaleData.tot;
         const box = document.getElementById('change-box');
-        if(diff >= 0) { document.getElementById('cash-return').innerText = `₹${diff.toFixed(0)}`; box.style.display = 'block'; } else { box.style.display = 'none'; }
+        const btn = document.querySelector('#cash-modal .btn-modal-action');
+        
+        if (given < finalSaleData.tot && given > 0) {
+            box.style.display = 'none';
+            btn.innerText = "Insufficient Cash -> Move to Khata";
+            btn.style.background = "var(--warning)";
+            btn.onclick = () => { document.getElementById('cash-modal').style.display='none'; openUdhaarModal(); document.getElementById('udhaar-paid-now').value = given; calcUdhaarMath(); };
+        } else if(diff >= 0) { 
+            document.getElementById('cash-return').innerText = `₹${diff.toFixed(0)}`; 
+            box.style.display = 'block'; 
+            btn.innerText = "Complete Sale & Print";
+            btn.style.background = "var(--emerald)";
+            btn.onclick = () => processSale('CASH');
+        } else {
+            box.style.display = 'none';
+        }
     }
 
     function openUpiModal() {
@@ -1261,7 +1276,12 @@ let scannedPendingItem = null;
                     lastUpdated: firebase.firestore.FieldValue.serverTimestamp()
                 };
 
-                if (mode === 'UDHAAR') {
+        if (mode === 'UDHAAR') {
+                    // --- SECURITY VALIDATION ---
+                    if (!finalSaleData.name || finalSaleData.name.length < 3) throw new Error("Customer Name is required.");
+                    if (!finalSaleData.phone || finalSaleData.phone.length !== 10) throw new Error("A valid 10-digit Mobile Number is required for Khata.");
+                    // ---------------------------
+
                     finalSaleData.cashPaid = udhaarPaidNow;
                     finalSaleData.udhaarAdded = finalSaleData.tot - udhaarPaidNow;
                     finalSaleData.newTotalKhata = currentCustomerPending + finalSaleData.udhaarAdded;
@@ -1282,7 +1302,8 @@ let scannedPendingItem = null;
                 
                 batch.set(custRef, custUpdate, { merge: true });
             } else if (mode === 'UDHAAR') {
-                throw new Error("Udhaar requires a valid Name and 10-digit Phone Number.");
+                // This triggers if no customer is selected and fields are empty
+                throw new Error("Udhaar requires a Customer Name and 10-digit Phone Number.");
             }
 
             batch.set(saleRef, saleObj);
