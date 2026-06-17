@@ -215,22 +215,22 @@
             </div>
         </div>
 
-        <div style="background: #f8fafc; padding: 10px; border-radius: 8px; border: 1px solid var(--border); margin-bottom: 10px;">
+      <div style="background: #f8fafc; padding: 10px; border-radius: 8px; border: 1px solid var(--border); margin-bottom: 10px;">
             <div class="grid-3">
                 <div>
-                    <label>Department (विभाग)</label>
+                    <label>Department</label>
                     <select id="bp-dept" class="modal-input" style="margin-bottom:0;" onchange="handleDropdownChange('dept')">
                         <option value="">Select...</option>
                     </select>
                 </div>
                 <div>
-                    <label>Category (श्रेणी)</label>
+                    <label>Category</label>
                     <select id="bp-cat" class="modal-input" style="margin-bottom:0;" onchange="handleDropdownChange('cat')" disabled>
                         <option value="">Select...</option>
                     </select>
                 </div>
                 <div>
-                    <label>Sub-Category (उप-श्रेणी)</label>
+                    <label>Sub-Category</label>
                     <select id="bp-subcat" class="modal-input" style="margin-bottom:0;" onchange="handleDropdownChange('subcat')" disabled>
                         <option value="">Select...</option>
                     </select>
@@ -240,9 +240,8 @@
 
         <div style="background:#e0f2fe; padding:10px; border-radius:8px; border:1px dashed #7dd3fc; margin-bottom:10px;">
             <div id="bp-dynamic-params" style="display:none; margin-bottom: 10px;"></div>
-            <button class="btn-action" style="background: white; border: 1px solid var(--primary); color: var(--primary); font-size: 10px; padding: 4px 8px;" onclick="addNewParameterUI()"><i class="bi bi-plus"></i> Add Custom Param (नया पैरामीटर)</button>
+            <button class="btn-action" style="background: white; border: 1px solid var(--primary); color: var(--primary); font-size: 10px; padding: 4px 8px;" onclick="addNewParameterUI()"><i class="bi bi-plus"></i> Add Custom Parameter</button>
         </div>
-
         <div class="grid-3">
             <div>
                 <label>GST Rate (%)</label>
@@ -764,21 +763,21 @@ window.renderInventory = function() {
     }
     function closeItemDetailsModal() { document.getElementById('item-details-modal').style.display = 'none'; }
 
-    // --- BLUEPRINT AUTO-LEARNING LOGIC (Select + Prompt) ---
+// --- BLUEPRINT AUTO-LEARNING LOGIC (Select + Prompt) ---
     function getCombinedTaxonomy() { return [...masterTaxonomyList, ...localShopTaxonomy]; }
 
     window.handleDropdownChange = function(level, paramKey = null) {
         let selectEl = paramKey ? document.getElementById(`bp-param-${paramKey}`) : document.getElementById(`bp-${level}`);
         
         if (selectEl.value === 'ADD_NEW') {
-            let newVal = prompt(`Enter New ${level.toUpperCase()} (नया दर्ज करें):`);
+            let newVal = prompt(`Enter New ${level.toUpperCase()}:`);
             if (newVal) {
                 newVal = newVal.trim().toUpperCase();
                 let exists = false;
                 for (let i = 0; i < selectEl.options.length; i++) { if (selectEl.options[i].value === newVal) exists = true; }
                 
                 if (exists) {
-                    alert("⚠️ ALREADY EXISTS! (पहले से मौजूद है!)"); selectEl.value = "";
+                    alert("⚠️ ALREADY EXISTS!"); selectEl.value = "";
                 } else {
                     const newOpt = new Option(newVal, newVal);
                     selectEl.add(newOpt, selectEl.options[1]); 
@@ -794,7 +793,7 @@ window.renderInventory = function() {
 
     function populateDeptDropdown() {
         const select = document.getElementById('bp-dept'); 
-        select.innerHTML = '<option value="">Select (चुनें)...</option><option value="ADD_NEW" style="color:var(--primary); font-weight:bold;">+ Add New (नया जोड़ें)</option>';
+        select.innerHTML = '<option value="">Select...</option><option value="ADD_NEW" style="color:var(--primary); font-weight:bold;">+ Add New</option>';
         const uniqueDepts = [...new Set(getCombinedTaxonomy().map(i => i.dept).filter(Boolean))];
         uniqueDepts.sort().forEach(d => { select.innerHTML += `<option value="${d}">${d}</option>`; });
     }
@@ -804,8 +803,8 @@ window.renderInventory = function() {
         const catSelect = document.getElementById('bp-cat'); const subcatSelect = document.getElementById('bp-subcat');
         document.getElementById('bp-dynamic-params').style.display = 'none';
         
-        catSelect.innerHTML = '<option value="">Select (चुनें)...</option><option value="ADD_NEW" style="color:var(--primary); font-weight:bold;">+ Add New (नया जोड़ें)</option>';
-        subcatSelect.innerHTML = '<option value="">Select (चुनें)...</option>';
+        catSelect.innerHTML = '<option value="">Select...</option><option value="ADD_NEW" style="color:var(--primary); font-weight:bold;">+ Add New</option>';
+        subcatSelect.innerHTML = '<option value="">Select...</option>';
         
         if(!dept || dept === 'ADD_NEW') { catSelect.disabled = true; subcatSelect.disabled = true; return; }
         
@@ -818,7 +817,7 @@ window.renderInventory = function() {
         const dept = document.getElementById('bp-dept').value; const cat = document.getElementById('bp-cat').value;
         const subcatSelect = document.getElementById('bp-subcat');
         
-        subcatSelect.innerHTML = '<option value="">Select (चुनें)...</option><option value="ADD_NEW" style="color:var(--primary); font-weight:bold;">+ Add New (नया जोड़ें)</option>';
+        subcatSelect.innerHTML = '<option value="">Select...</option><option value="ADD_NEW" style="color:var(--primary); font-weight:bold;">+ Add New</option>';
         if(!cat || cat === 'ADD_NEW') { subcatSelect.disabled = true; return; }
         
         subcatSelect.disabled = false;
@@ -846,7 +845,7 @@ window.renderInventory = function() {
         const grid = document.getElementById('params-grid'); const cleanKeyId = key.replace(/[^a-zA-Z0-9]/g, '_');
         if(document.getElementById(`bp-param-${cleanKeyId}`)) return; 
         
-        let optionsHtml = `<option value="">Select ${key}...</option><option value="ADD_NEW" style="color:var(--primary); font-weight:bold;">+ Add New (नया जोड़ें)</option>`;
+        let optionsHtml = `<option value="">Select ${key}...</option><option value="ADD_NEW" style="color:var(--primary); font-weight:bold;">+ Add New</option>`;
         if(savedShopParams[key]) { savedShopParams[key].sort().forEach(val => { optionsHtml += `<option value="${val}">${val}</option>`; }); }
         grid.innerHTML += `<div><label style="color:#0369a1;">${key}</label><select id="bp-param-${cleanKeyId}" class="modal-input" style="margin-bottom:0;" data-key="${key}" onchange="handleDropdownChange('param', '${cleanKeyId}')">${optionsHtml}</select></div>`;
     }
@@ -854,10 +853,10 @@ window.renderInventory = function() {
     function addNewParameterUI() {
         const container = document.getElementById('bp-dynamic-params'); container.style.display = 'block';
         if(!document.getElementById('params-grid')) { container.innerHTML = '<div class="grid-2" id="params-grid"></div>'; }
-        let paramName = prompt("Enter New Custom Parameter (नया पैरामीटर) \nEx: BRAND, COLOR, RAM:");
+        let paramName = prompt("Enter New Custom Parameter\nEx: BRAND, COLOR, RAM:");
         if(!paramName) return;
         const key = paramName.trim().toUpperCase(); const cleanKeyId = key.replace(/[^a-zA-Z0-9]/g, '_');
-        if(document.getElementById(`bp-param-${cleanKeyId}`)) return alert("⚠️ ALREADY EXISTS! (पहले से मौजूद है!)");
+        if(document.getElementById(`bp-param-${cleanKeyId}`)) return alert("⚠️ ALREADY EXISTS!");
         injectParamSelect(key);
     }
 
