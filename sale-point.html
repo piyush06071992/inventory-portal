@@ -157,9 +157,16 @@
 </div>
 
 <div class="pos-layout">
-    <div class="cart-panel">
+    <div class="cart-panel" style="position: relative; background: #f8fafc;">
         
-        <div class="main-search-wrapper">
+        <!-- DYNAMIC BACKGROUND WATERMARK -->
+        <div id="pos-watermark" style="position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%); opacity: 0.05; pointer-events: none; z-index: 1; text-align: center; width: 90%; display: flex; flex-direction: column; align-items: center; justify-content: center;">
+            <i class="bi bi-shop" style="font-size: 100px; margin-bottom: 0px;"></i>
+            <h2 id="watermark-branch" style="font-size: 45px; font-weight: 900; margin: 0; line-height: 1.1; letter-spacing: -1px;">STORE</h2>
+            <p id="watermark-user" style="font-size: 20px; font-weight: 800; margin: 5px 0 0 0; text-transform: uppercase;">ADMIN</p>
+        </div>
+
+        <div class="main-search-wrapper" style="position: relative; z-index: 10;">
             <div class="search-box">
                 <i class="bi bi-upc-scan search-icon" style="cursor: pointer; z-index: 10; pointer-events: auto;" onclick="openCameraScanner()" title="Open Camera Scanner"></i>
                 <input type="text" id="main-search" class="search-input" placeholder="Scan Barcode or Type Item Name..." oninput="handleMainSearch()" autocomplete="off">
@@ -167,9 +174,9 @@
             <div id="main-search-dropdown" style="display:none; position:absolute; top:100%; left:20px; right:20px; background:white; border:2px solid var(--primary); border-radius:12px; box-shadow:0 10px 25px rgba(0,0,0,0.15); max-height:350px; overflow-y:auto; z-index:100;"></div>
         </div>
 
-        <div class="cart-items-container" id="cart-container"></div>
+        <div class="cart-items-container" id="cart-container" style="background: transparent; position: relative; z-index: 2;"></div>
         
-        <div class="cart-footer">
+        <div class="cart-footer" style="position: relative; z-index: 10;">
             <div style="position: relative; margin-bottom: 15px;">
                 <div style="display:flex; align-items:center; background:#f8fafc; border:2px solid var(--primary); border-radius:12px; padding-right:10px;">
                     <input type="text" id="customer-search" class="customer-input" placeholder="🔍 Search Name, Mobile, or Khata" style="border:none; background:transparent; margin-bottom:0; flex:1;" autocomplete="off" oninput="handleCustomerSearch()">
@@ -432,9 +439,11 @@
             if (!activeUserPhone) return;
             try { if(assignedBranch && assignedBranch.startsWith('[')) assignedBranch = JSON.parse(assignedBranch); } catch(e){}
             
-            await determineBranch(); 
+     await determineBranch(); 
             await loadBusinessDetails(); 
             if(activeBranchId) startLiveInventorySync();
+            
+            setWatermarkDetails(); // Initialize the background watermark
             
             // Boot up the auto-save recovery
             setTimeout(loadCartState, 500); 
@@ -465,7 +474,7 @@
         } catch(e) { console.error("Branch Error", e); }
     }
 
-    async function loadBusinessDetails() {
+  async function loadBusinessDetails() {
         try {
             const doc = await firebase.firestore().collection('companies').doc(activeUserPhone).get();
             if (doc.exists) {
@@ -479,6 +488,28 @@
                 }
             }
         } catch(e) { console.error("Error fetching business details:", e); }
+    }
+
+    async function setWatermarkDetails() {
+        const db = firebase.firestore();
+        const bName = document.getElementById('active-branch-name').innerText || "Main Branch";
+        document.getElementById('watermark-branch').innerText = bName;
+
+        let uRole = "ADMIN";
+        let uName = "OWNER";
+
+        // If logged in as staff, fetch their specific name and role
+        if (activeStaffId && activeStaffId !== 'admin') {
+            try {
+                const doc = await db.collection('companies').doc(activeUserPhone).collection('staff').doc(activeStaffId).get();
+                if (doc.exists) {
+                    uRole = doc.data().role || "STAFF";
+                    uName = doc.data().name || "User";
+                }
+            } catch(e) { console.error("Watermark fetch error", e); }
+        }
+        
+        document.getElementById('watermark-user').innerText = `${uRole} : ${uName}`;
     }
 
     function startLiveInventorySync() {
