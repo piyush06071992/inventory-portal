@@ -28,14 +28,16 @@
         /* Main Layout */
         .pos-layout { display: flex; flex: 1; overflow: hidden; width: 100vw; max-width: 100%; }
 
-        /* --- RESPONSIVE LOGIC (MOBILE VS TABLET) --- */
+     /* --- RESPONSIVE LOGIC (MOBILE VS TABLET) --- */
         @media (max-width: 800px) { 
             .pos-layout { flex-direction: column; } 
-            .pos-header { flex-direction: column; gap: 12px; padding: 12px; text-align: center; }
+            .pos-header { flex-direction: column; gap: 12px; padding: 12px; text-align: center; flex-shrink: 0; }
             .header-actions { justify-content: center; width: 100%; }
             
-            .grid-panel { flex: 1; height: 55vh; border-right: none; border-bottom: 2px solid var(--border); }
-            .cart-panel { flex: 1; height: 45vh; max-width: 100%; border-top: none; }
+            /* Use Flex Proportions instead of strict vh to prevent cutoff */
+            .grid-panel { flex: 55; height: auto; border-right: none; border-bottom: 2px solid var(--border); min-height: 0; }
+            .cart-panel { flex: 45; height: auto; max-width: 100%; border-top: none; min-height: 0; }
+            
             .search-input { padding: 12px 12px 12px 40px; }
             .checkout-btns { grid-template-columns: 1fr 1fr 1fr; gap: 6px; }
             .btn-checkout { padding: 12px 8px; font-size: 12px; }
