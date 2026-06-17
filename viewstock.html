@@ -121,9 +121,12 @@
             <i class="bi bi-exclamation-triangle" style="font-size:24px; opacity:0.5;"></i>
         </div>
         
-  <div class="filter-row" style="padding: 10px;">
+  <div class="filter-row" style="padding: 10px; gap: 10px;">
             <input type="text" id="search-input" class="filter-input" placeholder="🔍 Search barcode or item name..." oninput="renderInventory()" style="font-size: 14px; padding: 10px;">
             <select id="filter-branch" class="filter-input" onchange="fetchInventory()" style="font-size: 14px; padding: 10px; max-width: 180px;"></select>
+            
+            <button class="btn-action" id="filter-low-stock" onclick="toggleFilter('lowStock')">Low Stock Only</button>
+            <button class="btn-action" id="filter-offers" onclick="toggleFilter('offers')">Offered Items Only</button>
         </div>
     </div>
 
@@ -470,7 +473,15 @@
             renderInventory();
         } catch(e) { alert("Error: " + e.message); }
     }
+let activeFilters = { lowStock: false, offers: false };
 
+    function toggleFilter(filterType) {
+        activeFilters[filterType] = !activeFilters[filterType];
+        const btn = document.getElementById(`filter-${filterType}`);
+        btn.style.background = activeFilters[filterType] ? 'var(--primary)' : 'white';
+        btn.style.color = activeFilters[filterType] ? 'white' : 'var(--navy)';
+        renderInventory();
+    }
     // --- ULTRA-FAST LIST VIEW RENDER ---
 window.renderInventory = function() {
         const container = document.getElementById('inventory-racks-container');
@@ -483,9 +494,15 @@ window.renderInventory = function() {
         
         window.requestAnimationFrame(() => {
             let filtered = [];
-            for (let i = 0; i < rawInventory.length; i++) {
+           for (let i = 0; i < rawInventory.length; i++) {
                 const item = rawInventory[i];
-                
+                const qty = parseFloat(item.qty || 0);
+                const minStock = parseFloat(item.minStock !== undefined ? item.minStock : 5);
+
+                // NEW: Apply Low Stock / Offer Filters
+                if (activeFilters.lowStock && qty >= minStock) continue;
+                if (activeFilters.offers && !item.offer) continue;
+
                 // If searching, ignore folders and show matching items
                 if (query) {
                     const n = item.name ? item.name.toLowerCase() : "";
