@@ -184,6 +184,48 @@
     </div>
 </div>
 
+<div class="modal-overlay" id="loose-item-modal">
+    <div class="modal-card">
+        <button onclick="closeLooseModal()" style="position:absolute; top:15px; right:15px; background:none; border:none; font-size:20px; cursor:pointer;"><i class="bi bi-x-lg"></i></button>
+        <h2 style="margin:0 0 5px 0; font-size:20px; font-weight:900;" id="loose-name">Item Name</h2>
+        <p style="margin:0 0 20px 0; font-size:14px; font-weight:800; color:var(--primary);" id="loose-rate">₹0 / KG</p>
+
+        <div style="display: flex; gap: 15px; margin-bottom: 15px;">
+            <div style="flex: 1;">
+                <label style="display:block; text-align:left; font-size:12px; font-weight:800; color:var(--text-light); margin-bottom:4px;">Quantity (<span id="loose-unit-label">Kg</span>)</label>
+                <input type="number" id="loose-qty" class="modal-input" style="margin-bottom:0;" placeholder="0.00" oninput="calcLooseMath('qty')">
+            </div>
+            <div style="display:flex; align-items:flex-end; padding-bottom:10px; font-weight:900; color:var(--text-light);">
+                <i class="bi bi-arrow-left-right"></i>
+            </div>
+            <div style="flex: 1;">
+                <label style="display:block; text-align:left; font-size:12px; font-weight:800; color:var(--text-light); margin-bottom:4px;">Price (₹)</label>
+                <input type="number" id="loose-price" class="modal-input" style="margin-bottom:0;" placeholder="₹0" oninput="calcLooseMath('price')">
+            </div>
+        </div>
+
+        <div style="margin-bottom: 20px;">
+            <label style="display:block; text-align:left; font-size:11px; font-weight:800; color:var(--text-light); margin-bottom:6px;">Quick Weight (Grams):</label>
+            <div style="display: flex; gap: 8px; overflow-x: auto; padding-bottom: 5px;">
+                <button style="flex-shrink:0; background:#f1f5f9; color:var(--navy); border:none; padding:8px 12px; border-radius:8px; font-weight:800; font-size:12px; cursor:pointer;" onclick="setLooseQty(0.05)">50g</button>
+                <button style="flex-shrink:0; background:#f1f5f9; color:var(--navy); border:none; padding:8px 12px; border-radius:8px; font-weight:800; font-size:12px; cursor:pointer;" onclick="setLooseQty(0.1)">100g</button>
+                <button style="flex-shrink:0; background:#f1f5f9; color:var(--navy); border:none; padding:8px 12px; border-radius:8px; font-weight:800; font-size:12px; cursor:pointer;" onclick="setLooseQty(0.25)">250g</button>
+                <button style="flex-shrink:0; background:#f1f5f9; color:var(--navy); border:none; padding:8px 12px; border-radius:8px; font-weight:800; font-size:12px; cursor:pointer;" onclick="setLooseQty(0.5)">500g</button>
+                <button style="flex-shrink:0; background:#f1f5f9; color:var(--navy); border:none; padding:8px 12px; border-radius:8px; font-weight:800; font-size:12px; cursor:pointer;" onclick="setLooseQty(1)">1 Kg</button>
+            </div>
+            <label style="display:block; text-align:left; font-size:11px; font-weight:800; color:var(--text-light); margin-top:10px; margin-bottom:6px;">Quick Price (Amount):</label>
+            <div style="display: flex; gap: 8px; overflow-x: auto;">
+                <button style="flex-shrink:0; background:#e0f2fe; color:#0284c7; border:none; padding:8px 12px; border-radius:8px; font-weight:800; font-size:12px; cursor:pointer;" onclick="setLoosePrice(10)">₹10</button>
+                <button style="flex-shrink:0; background:#e0f2fe; color:#0284c7; border:none; padding:8px 12px; border-radius:8px; font-weight:800; font-size:12px; cursor:pointer;" onclick="setLoosePrice(20)">₹20</button>
+                <button style="flex-shrink:0; background:#e0f2fe; color:#0284c7; border:none; padding:8px 12px; border-radius:8px; font-weight:800; font-size:12px; cursor:pointer;" onclick="setLoosePrice(50)">₹50</button>
+                <button style="flex-shrink:0; background:#e0f2fe; color:#0284c7; border:none; padding:8px 12px; border-radius:8px; font-weight:800; font-size:12px; cursor:pointer;" onclick="setLoosePrice(100)">₹100</button>
+            </div>
+        </div>
+
+        <button class="btn-modal-action" style="background:var(--primary);" onclick="confirmLooseItem()"><i class="bi bi-plus-lg"></i> Add to Bill</button>
+    </div>
+</div>
+
 <div class="modal-overlay" id="cash-modal">
     <div class="modal-card">
         <button onclick="document.getElementById('cash-modal').style.display='none'" style="position:absolute; top:15px; right:15px; background:none; border:none; font-size:20px; cursor:pointer;"><i class="bi bi-x-lg"></i></button>
@@ -431,15 +473,101 @@
         }
     });
 
-    // --- CART ENGINE ---
-function addToCart(docId) {
+// --- CART ENGINE & SMART BULK LOGIC ---
+    let currentLooseItem = null;
+
+    function openLooseModal(item) {
+        currentLooseItem = item;
+        document.getElementById('loose-name').innerText = item.name.replace(/\s*\([^)]*\)/g, '').trim();
+        document.getElementById('loose-rate').innerText = `₹${parseFloat(item.msp).toFixed(2)} / ${item.unit}`;
+        document.getElementById('loose-unit-label').innerText = item.unit;
+        document.getElementById('loose-qty').value = "";
+        document.getElementById('loose-price').value = "";
+        
+        // Hide search dropdown if open
+        const dp = document.getElementById('main-search-dropdown');
+        if(dp) dp.style.display = 'none';
+
+        document.getElementById('loose-item-modal').style.display = 'flex';
+        setTimeout(() => document.getElementById('loose-qty').focus(), 100);
+    }
+
+    function closeLooseModal() {
+        document.getElementById('loose-item-modal').style.display = 'none';
+        currentLooseItem = null;
+    }
+
+    window.calcLooseMath = function(source) {
+        if (!currentLooseItem) return;
+        const rate = parseFloat(currentLooseItem.msp) || 0;
+        if (rate <= 0) return;
+
+        const qtyInput = document.getElementById('loose-qty');
+        const priceInput = document.getElementById('loose-price');
+
+        if (source === 'qty') {
+            let q = parseFloat(qtyInput.value) || 0;
+            priceInput.value = (q * rate).toFixed(2);
+        } else if (source === 'price') {
+            let p = parseFloat(priceInput.value) || 0;
+            qtyInput.value = (p / rate).toFixed(3);
+        }
+    }
+
+    window.setLooseQty = function(val) { document.getElementById('loose-qty').value = val; calcLooseMath('qty'); }
+    window.setLoosePrice = function(val) { document.getElementById('loose-price').value = val; calcLooseMath('price'); }
+
+    window.confirmLooseItem = function() {
+        if (!currentLooseItem) return;
+        const finalQty = parseFloat(document.getElementById('loose-qty').value);
+        const finalPrice = parseFloat(document.getElementById('loose-price').value);
+
+        if (isNaN(finalQty) || finalQty <= 0 || isNaN(finalPrice) || finalPrice <= 0) {
+            alert("Please enter a valid quantity or price."); return;
+        }
+        if (finalQty > currentLooseItem.qty) {
+            alert(`Only ${currentLooseItem.qty} ${currentLooseItem.unit} available in stock.`); return;
+        }
+
+        let params = currentLooseItem.customParams ? {...currentLooseItem.customParams} : {};
+        params['Weight'] = `${finalQty} ${currentLooseItem.unit}`;
+
+        cart.push({ 
+            docId: currentLooseItem.docId, 
+            name: currentLooseItem.name, 
+            msp: finalPrice / finalQty, 
+            costPer: currentLooseItem.costPer || 0, 
+            gstRate: currentLooseItem.gstRate || 0, 
+            maxQty: parseFloat(currentLooseItem.qty), 
+            offer: null, 
+            customParams: params, 
+            cartQty: finalQty, 
+            isCustom: false,
+            isLoose: true,
+            unit: currentLooseItem.unit
+        });
+
+        document.getElementById('main-search').value = ""; // clear search
+        closeLooseModal();
+        renderCart();
+    }
+
+    function addToCart(docId) {
         const item = liveInventory.find(i => i.docId === docId);
         if (!item || item.qty <= 0) return;
-        const exist = cart.find(c => c.docId === docId);
+
+        // Smart Bulk Check
+        const bulkUnits = ['KG', 'LITRES', 'METERS'];
+        if (item.unit && bulkUnits.includes(item.unit.toUpperCase())) {
+            openLooseModal(item);
+            return;
+        }
+
+        const exist = cart.find(c => c.docId === docId && !c.isLoose);
         if (exist) {
             if (exist.cartQty < item.qty) exist.cartQty++;
         } else {
-            cart.push({ docId: item.docId, name: item.name, msp: parseFloat(item.msp||0), costPer: parseFloat(item.costPer||0), gstRate: parseFloat(item.gstRate||0), maxQty: parseFloat(item.qty), offer: item.offer || null, customParams: item.customParams || null, cartQty: 1, isCustom: false });
+            cart.push({ docId: item.docId, name: item.name, msp: parseFloat(item.msp||0), costPer: parseFloat(item.costPer||0), gstRate: parseFloat(item.gstRate||0), maxQty: parseFloat(item.qty), offer: item.offer || null, customParams: item.customParams || null, cartQty: 1, isCustom: false, isLoose: false });
         }
         renderCart();
     }
@@ -464,10 +592,12 @@ function addToCart(docId) {
             return;
         }
 
-        container.innerHTML = "";
+   container.innerHTML = "";
+        let totalItemsCount = 0;
+
         cart.forEach((item, index) => {
             let base = item.msp * item.cartQty; let disc = 0;
-            totalItemsCount += item.cartQty; // Continuously add to the total bag count
+            totalItemsCount += item.isLoose ? 1 : item.cartQty;
             
             if (item.offer && !item.isCustom) {
                 if (item.offer.type === 'discount') {
@@ -485,7 +615,6 @@ function addToCart(docId) {
 
             const cleanName = item.name ? item.name.replace(/\s*\([^)]*\)/g, '').trim() : "Unknown";
             
-            // Build the subtitle if it has params (like 500ml, Green, etc.)
             let paramSubtitle = '';
             if (item.customParams) {
                 paramSubtitle = `<div style="font-size:11px; color:var(--text-light); font-weight:700; margin-top:3px;">${Object.values(item.customParams).join(' • ')}</div>`;
@@ -503,9 +632,9 @@ function addToCart(docId) {
                     ${disc > 0 ? `<span class="cart-item-discount">Saved ₹${disc.toFixed(0)}</span>` : ''}
                     <div class="cart-qty-row">
                         <div class="qty-controls">
-                            <button class="btn-qty" onclick="updateCartQty(${index}, -1)">-</button>
-                            <span class="qty-val">${item.cartQty}</span>
-                            <button class="btn-qty" onclick="updateCartQty(${index}, 1)">+</button>
+                            ${item.isLoose ? '' : `<button class="btn-qty" onclick="updateCartQty(${index}, -1)">-</button>`}
+                            <span class="qty-val" style="${item.isLoose ? 'width:auto; padding:0 8px; font-size:14px;' : ''}">${item.isLoose ? item.cartQty + ' ' + (item.unit||'') : item.cartQty}</span>
+                            ${item.isLoose ? '' : `<button class="btn-qty" onclick="updateCartQty(${index}, 1)">+</button>`}
                         </div>
                         <button class="btn-del" onclick="removeCartItem(${index})"><i class="bi bi-x-circle-fill"></i></button>
                     </div>
