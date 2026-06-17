@@ -54,7 +54,7 @@
         .shelf-item { width: 100%; display: flex; flex-direction: row; align-items: center; padding: 10px; border: 1px solid var(--border); border-radius: 12px; background: white; cursor: pointer; transition: 0.2s; box-shadow: 0 2px 4px rgba(0,0,0,0.02); box-sizing: border-box;}
         .shelf-item:hover { transform: translateX(5px); box-shadow: 0 4px 8px rgba(0,0,0,0.05); border-color: var(--primary);}
         
-        .shelf-icon { width: 55px; height: 55px; flex-shrink: 0; border-radius: 10px; margin-right: 15px; position: relative; border: 1px solid #e2e8f0; overflow: hidden; background: #f8fafc; display: flex; align-items: center; justify-content: center; font-size: 24px; font-weight: 900;}
+        .shelf-icon { width: 80px; height: 80px; flex-shrink: 0; border-radius: 12px; margin-right: 15px; position: relative; border: 1px solid #e2e8f0; overflow: hidden; background: #f8fafc; display: flex; align-items: center; justify-content: center; font-size: 20px; font-weight: 900;}
         .shelf-item-details { display: flex; flex-direction: column; flex-grow: 1; text-align: left; overflow: hidden;}
         .shelf-item-name { font-size: 14px; font-weight: 800; color: var(--navy); white-space: nowrap; overflow: hidden; text-overflow: ellipsis;}
         .shelf-item-subtitle { font-size: 11px; color: var(--text-light); font-weight: 700; margin-top: 4px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;}
@@ -68,7 +68,7 @@
 
         /* Item Details Panel Styles */
         .item-detail-hero { display: flex; gap: 15px; align-items: center; margin-bottom: 20px; padding-bottom: 15px; border-bottom: 1px dashed var(--border);}
-        .hero-icon { width: 60px; height: 60px; border-radius: 12px; background: var(--primary); color: white; display: flex; align-items: center; justify-content: center; font-size: 28px; font-weight: 900; overflow: hidden; }
+        .hero-icon { width: 120px; height: 120px; border-radius: 12px; background: var(--primary); color: white; display: flex; align-items: center; justify-content: center; font-size: 28px; font-weight: 900; overflow: hidden; }
         .hero-info h3 { margin: 0 0 4px 0; font-size: 18px; font-weight: 900; color: var(--navy); line-height: 1.1;}
         .hero-info span { font-size: 11px; font-family: monospace; color: var(--text-light); font-weight: 700;}
         
@@ -656,8 +656,8 @@ window.renderInventory = function() {
     function openItemDetailsModal(docId) {
         const item = rawInventory.find(i => i.docId === docId); if(!item) return;
 
-        if (item.imageUrl) {
-            document.getElementById('detail-avatar').innerHTML = `<img src="${item.imageUrl}" style="width:100%; height:100%; object-fit:cover; border-radius:12px;">`;
+   if (item.imageUrl) {
+            document.getElementById('detail-avatar').innerHTML = `<img src="${item.imageUrl}" style="width:100%; height:100%; object-fit:contain; border-radius:12px; background:white;">`;
             document.getElementById('detail-avatar').style.background = 'white';
         } else {
             document.getElementById('detail-avatar').innerHTML = item.name ? item.name.charAt(0).toUpperCase() : 'B';
