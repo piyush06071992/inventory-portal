@@ -51,7 +51,7 @@
         
        .shelf-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(140px, 1fr)); gap: 12px; padding: 5px; }
         
-        .shelf-item { width: 100%; display: flex; flex-direction: column; align-items: center; padding: 12px; border: 1px solid var(--border); border-radius: 16px; background: white; cursor: pointer; transition: 0.2s; box-shadow: 0 2px 6px rgba(0,0,0,0.05); box-sizing: border-box; text-align: center;}
+        .shelf-item { width: 100%; display: flex; flex-direction: column; align-items: center; padding: 15px; border: 1px solid var(--border); border-radius: 20px; background: white; cursor: pointer; transition: 0.2s; box-shadow: 0 4px 12px rgba(0,0,0,0.08); box-sizing: border-box; text-align: center;}
         .shelf-item:hover { transform: translateY(-5px); box-shadow: 0 8px 16px rgba(0,0,0,0.1); border-color: var(--primary);}
         .shelf-item:hover { transform: translateX(5px); box-shadow: 0 4px 8px rgba(0,0,0,0.05); border-color: var(--primary);}
         
@@ -560,7 +560,7 @@ window.renderInventory = function() {
                     if(item.customParams) paramSubtitle = `<div class="shelf-item-subtitle">${Object.values(item.customParams).join(' • ')}</div>`;
 
                     let iconHtml = item.imageUrl ? 
-                        `<div class="shelf-icon"><div class="qty-badge ${isLow ? 'qty-low' : ''}">${qty}</div><img src="${item.imageUrl}" loading="lazy" style="width: 100%; height: 100%; object-fit: contain; border-radius: 8px;"></div>` : 
+                        `<div class="shelf-icon"><div class="qty-badge ${isLow ? 'qty-low' : ''}">${qty}</div><img src="${item.imageUrl}" loading="lazy" style="width: 100%; height: 100%; object-fit: contain; padding: 5px;"></div>` : 
                         `<div class="shelf-icon" style="background: ${bgGrad}; color: ${textCol}; border:none;"><div class="qty-badge ${isLow ? 'qty-low' : ''}">${qty}</div>${firstLetter}</div>`;
 
                     // Clean names in item list as well
@@ -568,7 +568,7 @@ window.renderInventory = function() {
 
                    htmlArr.push(`
                         <div class="shelf-item" onclick="openItemDetailsModal('${item.docId}')" title="${displayName}">
-                            <div style="width:100%; position:relative;">${iconHtml.replace('shelf-icon', 'shelf-icon" style="width:100%; height:120px; margin-bottom:10px;')}</div>
+                            <div style="width:100%; position:relative;">${iconHtml.replace('shelf-icon', 'shelf-icon" style="width:100%; height:180px; margin-bottom:12px;')}</div>
                             <div class="shelf-item-details">
                                 <div class="shelf-item-name" style="font-size:12px; height:3em; line-height:1.2; display:-webkit-box; -webkit-line-clamp:2; -webkit-box-orient:vertical; white-space:normal;">${displayName}</div>
                                 ${paramSubtitle}
