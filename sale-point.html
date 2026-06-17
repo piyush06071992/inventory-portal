@@ -17,7 +17,7 @@
     <style>
         :root { --navy: #0f172a; --primary: #3b82f6; --emerald: #10b981; --danger: #ef4444; --warning: #f59e0b; --text-light: #64748b; --border: #e2e8f0; --bg: #f8fafc; }
         
-        body { font-family: 'Inter', sans-serif; background-color: var(--bg); margin: 0; padding: 0; color: var(--navy); height: 100vh; display: flex; flex-direction: column; overflow: hidden; width: 100vw; }
+        body { font-family: 'Inter', sans-serif; background-color: var(--bg); margin: 0; padding: 0; color: var(--navy); min-height: 100dvh; display: flex; flex-direction: column; overflow-x: hidden; width: 100vw; }
         
         /* CUSTOM PC SCROLLBARS */
         ::-webkit-scrollbar { width: 8px; height: 8px; }
@@ -33,7 +33,7 @@
         .btn-hold { background: var(--warning); color: white; border: none; }
         
         /* --- MAIN LAYOUT (CENTERED TERMINAL STYLE) --- */
-        .pos-layout { display: flex; justify-content: center; align-items: flex-start; flex: 1; width: 100%; height: calc(100vh - 65px); background: var(--bg); padding: 20px; box-sizing: border-box; overflow: hidden;}
+        .pos-layout { display: flex; justify-content: center; align-items: flex-start; flex: 1; width: 100%; height: calc(100dvh - 65px); background: var(--bg); padding: 20px; box-sizing: border-box; overflow: hidden;}
 
         .cart-panel { width: 100%; max-width: 800px; height: 100%; display: flex; flex-direction: column; background: white; border-radius: 16px; box-shadow: 0 10px 30px rgba(0,0,0,0.08); overflow: hidden; border: 1px solid var(--border); z-index: 5; }
 
@@ -63,7 +63,7 @@
         .btn-del:hover { color: #b91c1c; transform: scale(1.1); }
 
         /* CHECKOUT FOOTER (COMPACT) */
-        .cart-footer { padding: 12px 15px; background: white; border-top: 1px solid var(--border); box-shadow: 0 -4px 10px rgba(0,0,0,0.03); flex-shrink: 0; z-index: 10;}
+        .cart-footer { padding: 12px 15px; background: white; border-top: 1px solid var(--border); box-shadow: 0 -4px 10px rgba(0,0,0,0.03); flex-shrink: 0; z-index: 10; position: sticky; bottom: 0;}
         .customer-input { width: 100%; padding: 10px; border: 1px solid var(--primary); border-radius: 8px; font-size: 13px; font-weight: 800; background: #eff6ff; margin-bottom: 8px; box-sizing: border-box; outline: none;}
         .summary-row { display: flex; justify-content: space-between; margin-bottom: 4px; font-size: 12px; font-weight: 700; color: var(--text-light);}
         .summary-total { display: flex; justify-content: space-between; margin-bottom: 8px; font-size: 18px; font-weight: 900; color: var(--navy); border-top: 1px dashed var(--border); padding-top: 8px; margin-top: 4px;}
@@ -77,17 +77,30 @@
         .btn-udhaar { background: linear-gradient(135deg, #f59e0b, #d97706); }
 
         /* --- MOBILE RESPONSIVENESS --- */
-        @media (max-width: 800px) { 
-            .pos-header { flex-direction: column; gap: 12px; padding: 12px; text-align: center; height: auto; }
-            .header-actions { justify-content: center; width: 100%; }
-            
-            /* Remove padding and borders on mobile so it acts like a full-screen app */
-            .pos-layout { padding: 0; }
-            .cart-panel { border-radius: 0; border: none; box-shadow: none; }
-            
-            .checkout-btns { gap: 8px; }
-            .btn-checkout { padding: 12px 6px; font-size: 13px; }
-        }
+@media (max-width: 800px) { 
+    .pos-header { flex-direction: column; gap: 12px; padding: 12px; text-align: center; height: auto; }
+    .header-actions { justify-content: center; width: 100%; }
+
+    body{
+        min-height:100dvh;
+    }
+
+    .pos-layout {
+        padding: 0;
+        height: auto;
+        min-height: calc(100dvh - 65px);
+    }
+
+    .cart-panel {
+        border-radius: 0;
+        border: none;
+        box-shadow: none;
+        height: calc(100dvh - 65px);
+    }
+
+    .checkout-btns { gap: 8px; }
+    .btn-checkout { padding: 12px 6px; font-size: 13px; }
+}
 
         /* Modals & Overlays */
         #loading-overlay { position: fixed; inset: 0; background: white; z-index: 9999; display: flex; flex-direction: column; align-items: center; justify-content: center; font-weight: 900; color: var(--primary);}
