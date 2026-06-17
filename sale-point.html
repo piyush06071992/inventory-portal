@@ -583,30 +583,38 @@
 
    function renderCart() {
         const container = document.getElementById('cart-container');
-        let subtotal = 0; let totalDisc = 0; let totalGst = 0; let totalItemsCount = 0;
+        let subtotal = 0; 
+        let totalDisc = 0; 
+        let totalGst = 0; 
+        let totalItemsCount = 0; // Declared exactly ONCE here
         
         if (cart.length === 0) {
             container.innerHTML = `<div class="empty-cart"><i class="bi bi-basket" style="font-size:70px; opacity:0.2; display:block; margin-bottom:15px;"></i>Ready for next customer.<br><span style="font-size:12px; font-weight:600;">Scan or search to begin.</span></div>`;
-            document.getElementById('cart-subtotal').innerText = '₹0.00'; document.getElementById('cart-discount').innerText = '- ₹0.00'; document.getElementById('cart-gst').innerText = '₹0.00'; 
+            document.getElementById('cart-subtotal').innerText = '₹0.00'; 
+            document.getElementById('cart-discount').innerText = '- ₹0.00'; 
+            document.getElementById('cart-gst').innerText = '₹0.00'; 
             document.getElementById('cart-total').innerHTML = `₹0.00 <span style="font-size:12px; color:var(--text-light); font-weight:700; display:block; text-align:right;">0 Items</span>`;
             return;
         }
 
-   container.innerHTML = "";
-        let totalItemsCount = 0;
-
+        container.innerHTML = "";
+        
         cart.forEach((item, index) => {
-            let base = item.msp * item.cartQty; let disc = 0;
-            totalItemsCount += item.isLoose ? 1 : item.cartQty;
+            let base = item.msp * item.cartQty; 
+            let disc = 0;
+            totalItemsCount += item.isLoose ? 1 : item.cartQty; 
             
             if (item.offer && !item.isCustom) {
                 if (item.offer.type === 'discount') {
-                    if (item.offer.pctOff) disc = base * (item.offer.pctOff / 100); else if (item.offer.flatOff) disc = item.offer.flatOff * item.cartQty;
+                    if (item.offer.pctOff) disc = base * (item.offer.pctOff / 100); 
+                    else if (item.offer.flatOff) disc = item.offer.flatOff * item.cartQty;
                 } else if (item.offer.type === 'bogo') {
-                    let bundles = Math.floor(item.cartQty / (item.offer.reqQty + item.offer.freeQty)); disc = bundles * item.offer.freeQty * item.msp;
+                    let bundles = Math.floor(item.cartQty / (item.offer.reqQty + item.offer.freeQty)); 
+                    disc = bundles * item.offer.freeQty * item.msp;
                 }
             }
-            subtotal += base; totalDisc += disc;
+            subtotal += base; 
+            totalDisc += disc;
             let finalPrice = base - disc;
             
             let gstRate = item.gstRate || 0;
@@ -647,10 +655,12 @@
         
         let finalTot = subtotal - totalDisc;
         
-        // Print the total cash amount and total number of items
         document.getElementById('cart-total').innerHTML = `₹${finalTot.toFixed(2)} <span style="font-size:12px; color:var(--text-light); font-weight:700; display:block; text-align:right;">${totalItemsCount} Items</span>`;
         
-        finalSaleData.sub = subtotal; finalSaleData.disc = totalDisc; finalSaleData.gst = totalGst; finalSaleData.tot = finalTot;
+        finalSaleData.sub = subtotal; 
+        finalSaleData.disc = totalDisc; 
+        finalSaleData.gst = totalGst; 
+        finalSaleData.tot = finalTot;
     }
 
     // --- HOLD BILL (DRAFTS) ---
