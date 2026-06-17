@@ -148,9 +148,28 @@
         <label>Expiry Date (Optional)</label>
         <input type="date" id="expiry-date" style="color: #475569;">
 
+        <div id="bulk-entry-toggle" style="display: none; background: #fffbeb; padding: 10px; border-radius: 8px; border: 1px dashed #fcd34d; margin-bottom: 12px;">
+            <label style="color: #d97706; margin-bottom: 6px;">How is this arriving?</label>
+            <div style="display: flex; gap: 10px;">
+                <label style="flex: 1; background: white; padding: 8px; border-radius: 6px; border: 1px solid #fcd34d; text-align: center; cursor: pointer; text-transform: none; font-size: 13px; font-weight: 600;">
+                    <input type="radio" name="entry_unit" value="loose" checked onchange="handleUnitToggle()"> In Loose (<span id="lbl-loose-unit">Kg</span>)
+                </label>
+                <label style="flex: 1; background: white; padding: 8px; border-radius: 6px; border: 1px solid #fcd34d; text-align: center; cursor: pointer; text-transform: none; font-size: 13px; font-weight: 600;">
+                    <input type="radio" name="entry_unit" value="bulk" onchange="handleUnitToggle()"> In Bulk (<span id="lbl-bulk-unit">Bag</span>)
+                </label>
+            </div>
+            <div id="bulk-math-preview" style="font-size: 11px; text-align: center; margin-top: 6px; color: #b45309; font-weight: 700;"></div>
+        </div>
+
         <div class="grid-2">
-            <div><label>Qty</label><input type="number" id="qty" placeholder="0"></div>
-            <div><label>Cost/Unit (₹)</label><input type="number" id="cost-per" placeholder="0.00"></div>
+            <div>
+                <label>Qty <span id="lbl-input-qty" style="color:var(--primary); text-transform:none;"></span></label>
+                <input type="number" id="qty" placeholder="0">
+            </div>
+            <div>
+                <label>Cost / <span id="lbl-input-cost" style="text-transform:none;">Unit</span> (₹)</label>
+                <input type="number" id="cost-per" placeholder="0.00">
+            </div>
         </div>
         
         <div class="grid-2">
@@ -206,6 +225,7 @@
     let localShopTaxonomy = [];
     let savedShopParams = {}; 
     let globalProductCatalog = []; 
+    let currentBulkConfig = null;
 
     function setFormLockState(isLocked) {
         document.getElementById('item-name').disabled = isLocked;
@@ -367,10 +387,6 @@
         if (level === 'category') updateSubcatDropdown();
     };
 
-    function populateCategoryDropdown() {
-        // This is a safety fallback, the real loader is populateDeptDropdown
-    }
-
     function populateDeptDropdown() {
         const select = document.getElementById('department'); 
         select.innerHTML = '<option value="">Select Department...</option><option value="ADD_NEW" style="color:var(--emerald); font-weight:bold;">+ Add New</option>';
@@ -521,6 +537,11 @@
         document.getElementById('unit').selectedIndex = 0;
         document.getElementById('dynamic-params').innerHTML = "";
         document.getElementById('tax-split').style.display = 'none';
+        
+        currentBulkConfig = null;
+        document.getElementById('bulk-entry-toggle').style.display = 'none';
+        document.getElementById('lbl-input-qty').innerText = "";
+        document.getElementById('lbl-input-cost').innerText = "Unit";
         addParam("", ""); 
         
         if (query.length < 2) { suggestionsBox.style.display = 'none'; return; }
@@ -606,7 +627,7 @@
                     if(![...uEl.options].some(o => o.value === data.unit)) uEl.add(new Option(data.unit, data.unit), 1);
                     uEl.value = data.unit;
                 }
-               if (data.currentMsp || data.msp) {
+                if (data.currentMsp || data.msp) {
                     document.getElementById('msp').value = data.currentMsp || data.msp;
                 }
                 if (data.lastCostPrice || data.costPer) {
@@ -615,20 +636,38 @@
                 if (data.gstRate !== undefined) {
                     document.getElementById('gst-rate').value = data.gstRate;
                 }
+
+                // DUAL-UNIT LOGIC ACTIVATION
+                if (data.isBulk) {
+                    currentBulkConfig = { name: data.bulkUnitName, multiplier: data.bulkMultiplier, base: data.unit };
+                    document.getElementById('bulk-entry-toggle').style.display = 'block';
+                    document.getElementById('lbl-loose-unit').innerText = data.unit;
+                    document.getElementById('lbl-bulk-unit').innerText = data.bulkUnitName;
+                    document.querySelector('input[name="entry_unit"][value="loose"]').checked = true;
+                    handleUnitToggle(); 
+                } else {
+                    currentBulkConfig = null;
+                    document.getElementById('bulk-entry-toggle').style.display = 'none';
+                    document.getElementById('lbl-input-qty').innerText = "";
+                    document.getElementById('lbl-input-cost').innerText = data.unit || "Unit";
+                }
                 
-                // INSTANTLY AUTO-CALCULATE PROFIT % ON LOAD
                 const loadedCp = parseFloat(document.getElementById('cost-per').value);
                 const loadedMsp = parseFloat(document.getElementById('msp').value);
                 if (loadedCp > 0 && loadedMsp > 0) {
                     document.getElementById('profit-pct').value = (((loadedMsp - loadedCp) / loadedCp) * 100).toFixed(2);
                 }
-                
+
                 if (data.customParams) {
                     productParams = data.customParams;
                 }
                 setFormLockState(true); 
             } else {
                 setFormLockState(false); 
+                currentBulkConfig = null;
+                document.getElementById('bulk-entry-toggle').style.display = 'none';
+                document.getElementById('lbl-input-qty').innerText = "";
+                document.getElementById('lbl-input-cost').innerText = "Unit";
             }
 
             for (const key of Object.keys(productParams)) {
@@ -638,6 +677,28 @@
 
         } catch (e) { console.error(e); }
     }
+
+    window.handleUnitToggle = function() {
+        if(!currentBulkConfig) return;
+        const mode = document.querySelector('input[name="entry_unit"]:checked').value;
+        const qtyLabel = document.getElementById('lbl-input-qty');
+        const costLabel = document.getElementById('lbl-input-cost');
+        const preview = document.getElementById('bulk-math-preview');
+        
+        if(mode === 'bulk') {
+            qtyLabel.innerText = `(in ${currentBulkConfig.name}s)`;
+            costLabel.innerText = currentBulkConfig.name;
+            preview.innerText = `System converts: 1 ${currentBulkConfig.name} = ${currentBulkConfig.multiplier} ${currentBulkConfig.base}`;
+        } else {
+            qtyLabel.innerText = `(in ${currentBulkConfig.base})`;
+            costLabel.innerText = currentBulkConfig.base;
+            preview.innerText = `Direct entry into inventory.`;
+        }
+        
+        document.getElementById('qty').value = "";
+        document.getElementById('cost-per').value = "";
+        document.getElementById('total-cost').value = "";
+    };
 
     function triggerTaxUpdate() {
         const t = parseFloat(document.getElementById('total-cost').value) || 0; 
@@ -692,11 +753,9 @@
 
     async function addItemToBill() {
         let customData = {};
-        let paramsChanged = false; 
         document.querySelectorAll('.param-row').forEach(row => {
             let key = row.querySelector('.param-name').value.trim();
             let val = row.querySelector('.param-val').value.trim();
-            
             if(key && key !== "ADD_NEW") {
                 if(val && val !== "ADD_NEW") {
                     customData[key] = val;
@@ -709,16 +768,27 @@
             rawBarcode = "SKU-" + Date.now().toString(36).toUpperCase();
         }
 
+        let inputQty = parseFloat(document.getElementById('qty').value) || 0;
+        let inputCostPer = parseFloat(document.getElementById('cost-per').value) || 0;
+        let displayStr = ""; 
+
+        if (currentBulkConfig && document.querySelector('input[name="entry_unit"]:checked').value === 'bulk') {
+            displayStr = ` (Arrived as ${inputQty} ${currentBulkConfig.name}s @ ₹${inputCostPer}/${currentBulkConfig.name})`;
+            inputCostPer = inputCostPer / currentBulkConfig.multiplier;
+            inputQty = inputQty * currentBulkConfig.multiplier;
+        }
+
         const item = {
             id: Date.now().toString(), 
             barcode: rawBarcode,
             name: document.getElementById('item-name').value.trim(),
+            displayInfo: displayStr,
             department: document.getElementById('department').value,
             category: document.getElementById('category').value,
             subCategory: document.getElementById('subcategory').value, 
             unit: document.getElementById('unit').value, 
-            qty: parseFloat(document.getElementById('qty').value) || 0,
-            costPer: parseFloat(document.getElementById('cost-per').value) || 0, 
+            qty: inputQty,
+            costPer: inputCostPer, 
             totalCost: parseFloat(document.getElementById('total-cost').value) || 0,
             gstRate: parseFloat(document.getElementById('gst-rate').value) || 0, 
             gstType: document.getElementById('gst-type').value,
@@ -749,8 +819,8 @@
             list.innerHTML += `
                 <div class="cart-item">
                     <div>
-                        <h4>${item.name}</h4>
-                        <p>Qty: ${item.qty} ${item.unit} | Cost: ₹${item.costPer}/u | Tax: ${item.gstRate}% (${item.gstType}) ${item.expiryDate ? `| <span style="color:#ef4444; font-weight:700;">Exp: ${new Date(item.expiryDate).toLocaleDateString('en-IN', {month:'short', year:'numeric'})}</span>` : ''}</p>
+                        <h4>${item.name} <span style="color:#d97706; font-size:11px;">${item.displayInfo || ''}</span></h4>
+                        <p>Qty: ${item.qty} ${item.unit} | Cost: ₹${item.costPer.toFixed(2)}/u | Tax: ${item.gstRate}% (${item.gstType}) ${item.expiryDate ? `| <span style="color:#ef4444; font-weight:700;">Exp: ${new Date(item.expiryDate).toLocaleDateString('en-IN', {month:'short', year:'numeric'})}</span>` : ''}</p>
                         <div style="margin-top:5px;">${paramString}</div>
                     </div>
                     <div style="text-align:right;">
@@ -776,6 +846,10 @@
         
         setFormLockState(false); 
         addParam("", ""); 
+        currentBulkConfig = null;
+        document.getElementById('bulk-entry-toggle').style.display = 'none';
+        document.getElementById('lbl-input-qty').innerText = "";
+        document.getElementById('lbl-input-cost').innerText = "Unit";
         document.getElementById('barcode').focus();
     }
 
