@@ -570,11 +570,11 @@
         }
     }
 
-    function populateCategoryDropdown() {
+  function populateCategoryDropdown() {
         const catSelect = document.getElementById('category');
         catSelect.innerHTML = '<option value="">Select Category...</option>';
         for (const cat in shopTaxonomy) {
-            catSelect.innerHTML += `<option value="${cat}">${cat}</option>';
+            catSelect.innerHTML += `<option value="${cat}">${cat}</option>`;
         }
         catSelect.innerHTML += `<option value="ADD_NEW" style="color:var(--emerald); font-weight:bold;">+ Add New Category</option>`;
     }
