@@ -25,84 +25,89 @@
         .btn-nav { background: #f1f5f9; border: 1px solid var(--border); padding: 8px 12px; border-radius: 8px; cursor: pointer; font-weight: 800; color: var(--navy); text-decoration: none; font-size: 13px;}
         .btn-hold { background: var(--warning); color: white; border: none; }
         
-        /* Main Layout (Responsive) */
-        .pos-layout { display: flex; flex: 1; overflow: hidden; width: 100vw; max-width: 100%; }
-        
         @media (max-width: 800px) { 
-            .pos-layout { flex-direction: column; } 
             .pos-header { flex-direction: column; gap: 12px; padding: 12px; text-align: center; }
             .header-actions { justify-content: center; width: 100%; }
         }
         
-        /* --- LEFT PANEL: CART --- */
-        .cart-panel { width: 40%; min-width: 320px; background: white; border-right: 2px solid var(--border); display: flex; flex-direction: column; z-index: 5;}
-        @media (max-width: 800px) { .cart-panel { width: 100%; min-width: 100%; height: 50vh; border-right: none; border-bottom: 2px solid var(--border); } }
-        .cart-items-container { flex: 1; overflow-y: auto; padding: 15px; background: #f8fafc;}
-        .empty-cart { text-align: center; color: var(--text-light); margin-top: 20px; font-weight: 700; font-size: 14px;}
-        
-        .cart-item { background: white; border: 1px solid var(--border); border-radius: 10px; padding: 10px; margin-bottom: 8px; box-shadow: 0 2px 4px rgba(0,0,0,0.02);}
-        .cart-item-header { display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 5px; gap: 10px;}
-        .cart-item-name { font-weight: 900; font-size: 13px; margin:0; line-height:1.2; flex: 1; word-break: break-word;}
-        .cart-item-price { font-weight: 900; font-size: 14px; color: var(--navy); flex-shrink: 0;}
-        .cart-item-discount { font-size: 10px; color: var(--danger); font-weight: 800; display: block;}
-        
-        .cart-qty-row { display: flex; justify-content: space-between; align-items: center; margin-top: 8px;}
-        .qty-controls { display: flex; align-items: center; gap: 8px; background: #f1f5f9; padding: 3px; border-radius: 6px;}
-        .btn-qty { background: white; border: 1px solid var(--border); width: 24px; height: 24px; border-radius: 4px; font-weight: 900; cursor: pointer; display: flex; align-items: center; justify-content: center;}
-        .qty-val { font-weight: 900; font-size: 13px; width: 18px; text-align: center;}
-        .btn-del { color: var(--danger); background: transparent; border: none; font-size: 16px; cursor: pointer;}
-
-        /* Cart Footer / Checkout */
-        .cart-footer { padding: 15px; background: white; border-top: 1px solid var(--border); box-shadow: 0 -4px 10px rgba(0,0,0,0.03); flex-shrink: 0;}
-        .customer-input { width: 100%; padding: 10px; border: 1px solid var(--border); border-radius: 8px; font-size: 13px; font-weight: 700; background: #f8fafc; margin-bottom: 10px; box-sizing: border-box; outline: none;}
-        .summary-row { display: flex; justify-content: space-between; margin-bottom: 5px; font-size: 12px; font-weight: 700; color: var(--text-light);}
-        .summary-total { display: flex; justify-content: space-between; margin-bottom: 10px; font-size: 20px; font-weight: 900; color: var(--navy); border-top: 1px dashed var(--border); padding-top: 8px;}
-        
-        .checkout-btns { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 8px;}
-        .btn-checkout { padding: 12px; border: none; border-radius: 10px; font-size: 14px; font-weight: 900; color: white; cursor: pointer; display: flex; align-items: center; justify-content: center; gap: 6px;}
-        .btn-cash { background: var(--emerald); }
-        .btn-upi { background: #8b5cf6; }
-        .btn-udhaar { background: var(--warning); }
-        
-        /* --- RIGHT PANEL: SEARCH & GRID --- */
-        .grid-panel { flex: 1; display: flex; flex-direction: column; background: var(--bg); overflow: hidden;}
-        @media (max-width: 800px) { .grid-panel { height: 50vh; } }
+        /* --- MAIN PANEL: SEARCH & GRID (100% Width) --- */
+        .grid-panel { flex: 1; display: flex; flex-direction: column; background: var(--bg); overflow: hidden; position: relative; padding-bottom: 80px;} /* padding for floating bar */
         
         .search-header { padding: 15px; background: white; border-bottom: 1px solid var(--border); flex-shrink: 0; width: 100%; box-sizing: border-box;}
         .search-box { position: relative; display: flex; gap: 10px; width: 100%;}
-        .search-input { flex: 1; padding: 12px 12px 12px 40px; border: 2px solid var(--border); border-radius: 10px; font-size: 14px; font-weight: 800; outline: none; background: #f8fafc; box-sizing: border-box; min-width: 0;}
-        .search-icon { position: absolute; left: 14px; top: 12px; color: var(--text-light); font-size: 16px;}
+        .search-input { flex: 1; padding: 14px 14px 14px 45px; border: 2px solid var(--primary); border-radius: 12px; font-size: 16px; font-weight: 800; outline: none; background: white; box-sizing: border-box; min-width: 0; box-shadow: 0 4px 6px rgba(59,130,246,0.1);}
+        .search-icon { position: absolute; left: 16px; top: 15px; color: var(--primary); font-size: 20px;}
         
-        /* List View Styles for Items */
+        /* Items Grid */
         .product-grid { flex: 1; overflow-y: auto; padding: 15px; display: block;}
-        
-        .shelf-item { width: 100%; display: flex; flex-direction: row; align-items: center; padding: 10px; border: 1px solid var(--border); border-radius: 12px; background: white; cursor: pointer; transition: 0.2s; box-shadow: 0 2px 4px rgba(0,0,0,0.02); box-sizing: border-box; margin-bottom: 8px;}
-        .shelf-item:hover { transform: translateX(5px); box-shadow: 0 4px 8px rgba(0,0,0,0.05); border-color: var(--primary);}
+        .shelf-item { width: 100%; display: flex; flex-direction: row; align-items: center; padding: 12px; border: 1px solid var(--border); border-radius: 12px; background: white; cursor: pointer; transition: 0.2s; box-shadow: 0 2px 4px rgba(0,0,0,0.02); box-sizing: border-box; margin-bottom: 8px;}
+        .shelf-item:active { transform: scale(0.98); border-color: var(--primary);}
         .shelf-item.disabled { opacity: 0.4; pointer-events: none; filter: grayscale(100%); }
         
         .shelf-icon { width: 55px; height: 55px; flex-shrink: 0; border-radius: 10px; margin-right: 15px; position: relative; border: 1px solid #e2e8f0; overflow: hidden; background: #f8fafc; display: flex; align-items: center; justify-content: center; font-size: 24px; font-weight: 900;}
         .shelf-item-details { display: flex; flex-direction: column; flex-grow: 1; text-align: left; overflow: hidden;}
         .shelf-item-name { font-size: 14px; font-weight: 800; color: var(--navy); white-space: nowrap; overflow: hidden; text-overflow: ellipsis;}
         .shelf-item-subtitle { font-size: 11px; color: var(--text-light); font-weight: 700; margin-top: 4px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;}
-        .shelf-item-price { font-size: 15px; font-weight: 900; color: var(--primary); margin-left: 15px; text-align: right; min-width: 80px;}
+        .shelf-item-price { font-size: 16px; font-weight: 900; color: var(--primary); margin-left: 15px; text-align: right; min-width: 80px;}
         
         .qty-badge { position: absolute; top: -4px; right: -4px; background: #10b981; color: white; min-width: 20px; height: 20px; border-radius: 10px; font-size: 10px; font-weight: 900; display: flex; align-items: center; justify-content: center; box-shadow: 0 2px 4px rgba(0,0,0,0.2); border: 2px solid white; padding: 0 4px; z-index: 2;}
         .qty-low { background: #ef4444; animation: pulse 2s infinite; }
         @keyframes pulse { 0% { box-shadow: 0 0 0 0 rgba(239, 68, 68, 0.7); } 70% { box-shadow: 0 0 0 8px rgba(239, 68, 68, 0); } 100% { box-shadow: 0 0 0 0 rgba(239, 68, 68, 0); } }
 
+        /* --- SWIGGY-STYLE FLOATING CART UI --- */
+        .floating-cart-bar { position: fixed; bottom: 20px; left: 15px; right: 15px; background: var(--navy); color: white; padding: 18px 20px; border-radius: 16px; display: flex; justify-content: space-between; align-items: center; z-index: 4000; box-shadow: 0 10px 25px rgba(15,23,42,0.3); cursor: pointer; transition: 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275); margin: 0 auto; max-width: 800px; border: 2px solid #334155;}
+        .floating-cart-bar.hidden { transform: translateY(150px); opacity: 0; pointer-events: none; }
+        .cart-summary-text { font-size: 16px; font-weight: 900; letter-spacing: 0.5px; }
+        .cart-view-btn { font-size: 14px; font-weight: 900; color: #60a5fa; display: flex; align-items: center; gap: 6px; }
+
+        /* --- SLIDE-UP CART BOTTOM SHEET --- */
+        .cart-sheet-overlay { position: fixed; inset: 0; background: rgba(15,23,42,0.6); z-index: 4999; backdrop-filter: blur(4px); display: none; opacity: 0; transition: opacity 0.3s; }
+        .cart-sheet { position: fixed; bottom: -100%; left: 0; width: 100%; height: 90vh; background: white; z-index: 5000; border-radius: 24px 24px 0 0; display: flex; flex-direction: column; transition: bottom 0.3s cubic-bezier(0.175, 0.885, 0.32, 1); box-shadow: 0 -10px 40px rgba(0,0,0,0.15); max-width: 800px; margin: 0 auto; right: 0;}
+        .cart-sheet.open { bottom: 0; }
+        
+        .cart-sheet-header { display: flex; justify-content: space-between; align-items: center; padding: 20px; border-bottom: 1px solid var(--border); }
+        .cart-sheet-header h2 { margin: 0; font-size: 20px; font-weight: 900; display: flex; align-items: center; gap: 10px;}
+        .close-sheet-btn { background: #f1f5f9; border: none; width: 36px; height: 36px; border-radius: 50%; font-size: 18px; font-weight: 900; cursor: pointer; display: flex; align-items: center; justify-content: center;}
+        
+        .cart-items-container { flex: 1; overflow-y: auto; padding: 15px; background: #f8fafc;}
+        .cart-item { background: white; border: 1px solid var(--border); border-radius: 12px; padding: 12px; margin-bottom: 10px; box-shadow: 0 2px 4px rgba(0,0,0,0.02);}
+        .cart-item-header { display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 5px; gap: 10px;}
+        .cart-item-name { font-weight: 900; font-size: 14px; margin:0; line-height:1.2; flex: 1; word-break: break-word;}
+        .cart-item-price { font-weight: 900; font-size: 16px; color: var(--navy); flex-shrink: 0;}
+        .cart-item-discount { font-size: 11px; color: var(--danger); font-weight: 800; display: block;}
+        
+        .cart-qty-row { display: flex; justify-content: space-between; align-items: center; margin-top: 10px;}
+        .qty-controls { display: flex; align-items: center; gap: 10px; background: #f1f5f9; padding: 4px; border-radius: 8px;}
+        .btn-qty { background: white; border: 1px solid var(--border); width: 30px; height: 30px; border-radius: 6px; font-weight: 900; font-size: 16px; cursor: pointer; display: flex; align-items: center; justify-content: center; box-shadow: 0 2px 4px rgba(0,0,0,0.05);}
+        .qty-val { font-weight: 900; font-size: 15px; width: 24px; text-align: center;}
+        .btn-del { color: var(--danger); background: transparent; border: none; font-size: 20px; cursor: pointer;}
+
+        .cart-footer { padding: 20px; background: white; border-top: 1px solid var(--border); box-shadow: 0 -4px 15px rgba(0,0,0,0.05); flex-shrink: 0; z-index: 10;}
+        .customer-input { width: 100%; padding: 14px; border: 1px solid var(--primary); border-radius: 10px; font-size: 14px; font-weight: 800; background: #eff6ff; margin-bottom: 15px; box-sizing: border-box; outline: none; box-shadow: inset 0 2px 4px rgba(0,0,0,0.02);}
+        .summary-row { display: flex; justify-content: space-between; margin-bottom: 8px; font-size: 14px; font-weight: 700; color: var(--text-light);}
+        .summary-total { display: flex; justify-content: space-between; margin-bottom: 15px; font-size: 24px; font-weight: 900; color: var(--navy); border-top: 2px dashed var(--border); padding-top: 12px;}
+        
+        .checkout-btns { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 10px;}
+        .btn-checkout { padding: 16px 10px; border: none; border-radius: 12px; font-size: 16px; font-weight: 900; color: white; cursor: pointer; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 6px; transition: 0.2s; box-shadow: 0 4px 6px rgba(0,0,0,0.1);}
+        .btn-checkout:active { transform: translateY(2px); box-shadow: none; }
+        .btn-checkout i { font-size: 24px; margin-bottom: 4px; }
+        .btn-cash { background: linear-gradient(135deg, #10b981, #059669); }
+        .btn-upi { background: linear-gradient(135deg, #8b5cf6, #6d28d9); }
+        .btn-udhaar { background: linear-gradient(135deg, #f59e0b, #d97706); }
+
         /* Modals & Overlays */
         #loading-overlay { position: fixed; inset: 0; background: white; z-index: 9999; display: flex; flex-direction: column; align-items: center; justify-content: center; font-weight: 900; color: var(--primary);}
-        .modal-overlay { display: none; position: fixed; inset: 0; background: rgba(15,23,42,0.7); z-index: 3000; align-items: center; justify-content: center; padding: 20px; box-sizing: border-box; backdrop-filter: blur(4px); }
-        .modal-card { background: white; width: 100%; max-width: 350px; border-radius: 16px; padding: 20px; position: relative; text-align: center; box-shadow: 0 25px 50px -12px rgba(0,0,0,0.25);}
-        .modal-input { width: 100%; padding: 12px; border: 2px solid var(--border); border-radius: 8px; font-size: 16px; font-weight: 900; text-align: center; margin-bottom: 15px; box-sizing: border-box; outline:none;}
+        .modal-overlay { display: none; position: fixed; inset: 0; background: rgba(15,23,42,0.7); z-index: 6000; align-items: center; justify-content: center; padding: 20px; box-sizing: border-box; backdrop-filter: blur(4px); } /* Boosted Z-index to cover Cart Sheet */
+        .modal-card { background: white; width: 100%; max-width: 350px; border-radius: 20px; padding: 25px; position: relative; text-align: center; box-shadow: 0 25px 50px -12px rgba(0,0,0,0.25);}
+        .modal-input { width: 100%; padding: 14px; border: 2px solid var(--border); border-radius: 10px; font-size: 18px; font-weight: 900; text-align: center; margin-bottom: 15px; box-sizing: border-box; outline:none;}
         .modal-input:focus { border-color: var(--primary); }
-        .btn-modal-action { width: 100%; padding: 14px; background: var(--navy); color: white; border: none; border-radius: 10px; font-weight: 900; font-size: 14px; cursor: pointer; margin-bottom: 10px;}
+        .btn-modal-action { width: 100%; padding: 16px; background: var(--navy); color: white; border: none; border-radius: 12px; font-weight: 900; font-size: 16px; cursor: pointer; margin-bottom: 10px;}
         
-        .quick-cash-grid { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 8px; margin-bottom: 15px;}
-        .btn-quick-cash { background: #e0f2fe; color: #0284c7; border: none; padding: 10px; border-radius: 8px; font-weight: 900; cursor: pointer;}
+        .quick-cash-grid { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 10px; margin-bottom: 20px;}
+        .btn-quick-cash { background: #e0f2fe; color: #0284c7; border: none; padding: 14px 10px; border-radius: 10px; font-size: 16px; font-weight: 900; cursor: pointer;}
         
-        .qr-container { background: #f8fafc; padding: 15px; border-radius: 12px; margin-bottom: 15px; border: 2px dashed #cbd5e1;}
-        .qr-container img { width: 180px; height: 180px; border-radius: 8px;}
+        .qr-container { background: #f8fafc; padding: 20px; border-radius: 16px; margin-bottom: 20px; border: 2px dashed #cbd5e1;}
+        .qr-container img { width: 200px; height: 200px; border-radius: 10px;}
 
         /* PDF/PRINT RECEIPT STYLES */
         #print-receipt-container { display: none; }
@@ -146,47 +151,61 @@
     </div>
 </div>
 
-<div class="pos-layout">
-    <div class="cart-panel">
-        <div class="cart-items-container" id="cart-container"></div>
-        <div class="cart-footer">
-            <div style="position: relative; margin-bottom: 10px;">
-                <div style="display:flex; align-items:center; background:#f8fafc; border:1px solid var(--border); border-radius:8px; padding-right:10px;">
-                    <input type="text" id="customer-search" class="customer-input" placeholder="🔍 Search Name, Mobile, or Khata #" style="border:none; background:transparent; margin-bottom:0; flex:1;" autocomplete="off" oninput="handleCustomerSearch()">
-                    <i class="bi bi-x-circle-fill" id="clear-cust-btn" style="color:var(--text-light); cursor:pointer; display:none; font-size:16px;" onclick="clearCustomerSelection()"></i>
-                </div>
-                <div id="customer-dropdown" style="display:none; position:absolute; bottom:100%; left:0; width:100%; background:white; border:2px solid var(--primary); border-radius:8px; box-shadow:0 -4px 15px rgba(0,0,0,0.1); max-height:180px; overflow-y:auto; z-index:100;"></div>
-            </div>
-            <div id="udhaar-badge" style="display:none; font-size:12px; font-weight:900; color:var(--danger); text-align:right; margin-bottom:8px;"></div>
-
-            <div class="summary-row"><span>Subtotal:</span> <span id="cart-subtotal">₹0.00</span></div>
-            <div class="summary-row" style="color:var(--danger);"><span>Discounts:</span> <span id="cart-discount">- ₹0.00</span></div>
-            <div class="summary-row" style="color:var(--text-light); font-size: 11px;"><span>Includes GST:</span> <span id="cart-gst">₹0.00</span></div>
-            <div class="summary-total"><span>Total:</span> <span id="cart-total">₹0.00</span></div>
-            <div class="checkout-btns">
-                <button class="btn-checkout btn-cash" onclick="openCashModal()"><i class="bi bi-cash-coin"></i> CASH</button>
-                <button class="btn-checkout btn-upi" onclick="openUpiModal()"><i class="bi bi-qr-code-scan"></i> UPI</button>
-                <button class="btn-checkout btn-udhaar" onclick="openUdhaarModal()"><i class="bi bi-journal-text"></i> UDHAAR</button>
-            </div>
+<!-- 100% FULL SCREEN STOCK VIEW -->
+<div class="grid-panel">
+    <div class="search-header">
+        <div class="search-box">
+            <i class="bi bi-upc-scan search-icon" style="cursor: pointer; z-index: 10; pointer-events: auto;" onclick="openCameraScanner()" title="Open Camera Scanner"></i>
+            <input type="text" id="pos-search" class="search-input" placeholder="Tap icon for Camera or Type..." oninput="filterGrid()" autocomplete="off">
         </div>
     </div>
+    <div class="product-grid" id="pos-grid"></div>
+</div>
 
-    <div class="grid-panel">
-        <div class="search-header">
-            <div class="search-box">
-                <i class="bi bi-upc-scan search-icon" style="cursor: pointer; color: var(--primary); z-index: 10; pointer-events: auto;" onclick="openCameraScanner()" title="Open Camera Scanner"></i>
-                <input type="text" id="pos-search" class="search-input" placeholder="Tap icon for Camera or Type..." oninput="filterGrid()" autocomplete="off">
+<!-- FLOATING CART BAR (SWIGGY STYLE) -->
+<div class="floating-cart-bar hidden" id="floating-cart-bar" onclick="openCartSheet()">
+    <div class="cart-summary-text" id="floating-cart-summary">🛒 0 Items | ₹0.00</div>
+    <div class="cart-view-btn">View Cart <i class="bi bi-arrow-right-circle-fill" style="font-size: 18px;"></i></div>
+</div>
+
+<!-- SLIDE-UP CART BOTTOM SHEET -->
+<div class="cart-sheet-overlay" id="cart-sheet-overlay" onclick="closeCartSheet()"></div>
+<div class="cart-sheet" id="cart-sheet">
+    <div class="cart-sheet-header">
+        <h2><i class="bi bi-cart3"></i> Checkout</h2>
+        <button class="close-sheet-btn" onclick="closeCartSheet()"><i class="bi bi-chevron-down"></i></button>
+    </div>
+    
+    <div class="cart-items-container" id="cart-container"></div>
+    
+    <div class="cart-footer">
+        <div style="position: relative; margin-bottom: 10px;">
+            <div style="display:flex; align-items:center; background:#f8fafc; border:2px solid var(--primary); border-radius:12px; padding-right:10px;">
+                <input type="text" id="customer-search" class="customer-input" placeholder="🔍 Search Name, Mobile, or Khata #" style="border:none; background:transparent; margin-bottom:0; flex:1;" autocomplete="off" oninput="handleCustomerSearch()">
+                <i class="bi bi-x-circle-fill" id="clear-cust-btn" style="color:var(--text-light); cursor:pointer; display:none; font-size:20px;" onclick="clearCustomerSelection()"></i>
             </div>
+            <div id="customer-dropdown" style="display:none; position:absolute; bottom:100%; left:0; width:100%; background:white; border:2px solid var(--primary); border-radius:12px; box-shadow:0 -10px 25px rgba(0,0,0,0.15); max-height:220px; overflow-y:auto; z-index:100; margin-bottom: 5px;"></div>
         </div>
-        <div class="product-grid" id="pos-grid"></div>
+        <div id="udhaar-badge" style="display:none; font-size:14px; font-weight:900; color:var(--danger); text-align:right; margin-bottom:10px; background: #fee2e2; padding: 6px 12px; border-radius: 8px;"></div>
+
+        <div class="summary-row"><span>Subtotal:</span> <span id="cart-subtotal">₹0.00</span></div>
+        <div class="summary-row" style="color:var(--danger);"><span>Discounts:</span> <span id="cart-discount">- ₹0.00</span></div>
+        <div class="summary-row" style="color:var(--text-light); font-size: 12px;"><span>Includes GST:</span> <span id="cart-gst">₹0.00</span></div>
+        <div class="summary-total"><span>Total to Pay:</span> <span id="cart-total">₹0.00</span></div>
+        <div class="checkout-btns">
+            <button class="btn-checkout btn-cash" onclick="openCashModal()"><i class="bi bi-cash-stack"></i> CASH</button>
+            <button class="btn-checkout btn-upi" onclick="openUpiModal()"><i class="bi bi-qr-code-scan"></i> UPI</button>
+            <button class="btn-checkout btn-udhaar" onclick="openUdhaarModal()"><i class="bi bi-journal-text"></i> UDHAAR</button>
+        </div>
     </div>
 </div>
 
+<!-- MODALS -->
 <div class="modal-overlay" id="cash-modal">
     <div class="modal-card">
         <button onclick="document.getElementById('cash-modal').style.display='none'" style="position:absolute; top:15px; right:15px; background:none; border:none; font-size:20px; cursor:pointer;"><i class="bi bi-x-lg"></i></button>
-        <h2 style="margin:0 0 5px 0; font-size:20px; font-weight:900;">Cash Payment</h2>
-        <p style="margin:0 0 15px 0; font-size:14px; font-weight:800; color:var(--text-light);">Bill Amount: <span id="cash-bill-amt" style="color:var(--navy); font-size:18px;">₹0</span></p>
+        <h2 style="margin:0 0 5px 0; font-size:24px; font-weight:900;">Cash Payment</h2>
+        <p style="margin:0 0 20px 0; font-size:16px; font-weight:800; color:var(--text-light);">Bill Amount: <span id="cash-bill-amt" style="color:var(--navy); font-size:22px;">₹0</span></p>
         
         <input type="number" id="cash-given" class="modal-input" placeholder="Cash Given (₹)" oninput="calcChange()">
         <div class="quick-cash-grid">
@@ -195,7 +214,7 @@
             <button class="btn-quick-cash" onclick="setCash(2000)">₹2000</button>
         </div>
         
-        <div style="background:#dcfce7; color:#065f46; padding:15px; border-radius:10px; font-size:18px; font-weight:900; margin-bottom:15px; display:none;" id="change-box">
+        <div style="background:#dcfce7; color:#065f46; padding:15px; border-radius:12px; font-size:20px; font-weight:900; margin-bottom:20px; display:none;" id="change-box">
             Return Change: <span id="cash-return">₹0</span>
         </div>
         
@@ -206,63 +225,51 @@
 <div class="modal-overlay" id="upi-modal">
     <div class="modal-card">
         <button onclick="document.getElementById('upi-modal').style.display='none'" style="position:absolute; top:15px; right:15px; background:none; border:none; font-size:20px; cursor:pointer;"><i class="bi bi-x-lg"></i></button>
-        <h2 style="margin:0 0 5px 0; font-size:20px; font-weight:900; color:#8b5cf6;">Scan to Pay</h2>
-        <p style="margin:0 0 15px 0; font-size:22px; font-weight:900; color:var(--navy);" id="upi-bill-amt">₹0</p>
+        <h2 style="margin:0 0 5px 0; font-size:24px; font-weight:900; color:#8b5cf6;">Scan to Pay</h2>
+        <p style="margin:0 0 15px 0; font-size:28px; font-weight:900; color:var(--navy);" id="upi-bill-amt">₹0</p>
         
         <div class="qr-container"><img id="upi-qr-img" src="" alt="UPI QR"></div>
-        <p style="font-size:12px; font-weight:800; color:var(--text-light); margin-bottom:15px;">Ask customer to scan using GPay, PhonePe, or Paytm.</p>
+        <p style="font-size:14px; font-weight:800; color:var(--text-light); margin-bottom:20px;">Ask customer to scan using GPay, PhonePe, or Paytm.</p>
         
         <button class="btn-modal-action" style="background:#8b5cf6;" onclick="processSale('UPI')">Payment Received -> Print</button>
     </div>
 </div>
 
-<div class="modal-overlay" id="custom-modal">
-    <div class="modal-card">
-        <h2 style="margin:0 0 15px 0; font-size:20px; font-weight:900;">Add Misc Item</h2>
-        <input type="text" id="custom-name" class="modal-input" placeholder="Item Name (e.g. Carry Bag)" style="text-align:left;">
-        <input type="number" id="custom-price" class="modal-input" placeholder="Price (₹)">
-        <div style="display:flex; gap:10px;">
-            <button class="btn-modal-action" style="background:var(--border); color:var(--navy);" onclick="document.getElementById('custom-modal').style.display='none'">Cancel</button>
-            <button class="btn-modal-action" onclick="addCustomItem()">Add to Cart</button>
-        </div>
-    </div>
-</div>
-
 <div class="modal-overlay" id="success-modal">
     <div class="modal-card">
-        <i class="bi bi-check-circle-fill" style="font-size:50px; color:var(--emerald); display:block; margin-bottom:10px;"></i>
-        <h2 style="margin:0 0 5px 0; font-size:22px; font-weight:900;">Sale Successful!</h2>
-        <p style="margin:0 0 20px 0; font-size:14px; font-weight:800; color:var(--text-light);">Inventory updated safely.</p>
+        <i class="bi bi-check-circle-fill" style="font-size:60px; color:var(--emerald); display:block; margin-bottom:15px;"></i>
+        <h2 style="margin:0 0 5px 0; font-size:26px; font-weight:900;">Sale Successful!</h2>
+        <p style="margin:0 0 25px 0; font-size:16px; font-weight:800; color:var(--text-light);">Inventory updated safely.</p>
         
         <button class="btn-modal-action" style="background:var(--primary);" onclick="window.print()"><i class="bi bi-printer"></i> Print Receipt</button>
         <button class="btn-modal-action" style="background:#25D366;" id="btn-whatsapp" onclick="sendWhatsApp()"><i class="bi bi-whatsapp"></i> Send Digital Bill on WhatsApp</button>
-        <button class="btn-modal-action" style="background:var(--border); color:var(--navy);" onclick="document.getElementById('success-modal').style.display='none';">New Sale</button>
+        <button class="btn-modal-action" style="background:var(--border); color:var(--navy);" onclick="document.getElementById('success-modal').style.display='none'; closeCartSheet();">New Sale</button>
     </div>
 </div>
 
 <div class="modal-overlay" id="udhaar-modal">
     <div class="modal-card">
         <button onclick="document.getElementById('udhaar-modal').style.display='none'" style="position:absolute; top:15px; right:15px; background:none; border:none; font-size:20px; cursor:pointer;"><i class="bi bi-x-lg"></i></button>
-       <h2 style="margin:0 0 5px 0; font-size:20px; font-weight:900; color:var(--warning);">Khata / Udhaar</h2>
-        <p style="margin:0 0 15px 0; font-size:13px; font-weight:800; color:var(--navy);" id="udhaar-customer-name">Customer Name</p>
+       <h2 style="margin:0 0 5px 0; font-size:24px; font-weight:900; color:var(--warning);">Khata / Udhaar</h2>
+        <p style="margin:0 0 20px 0; font-size:16px; font-weight:800; color:var(--navy);" id="udhaar-customer-name">Customer Name</p>
         
-        <div id="new-cust-fields" style="display:none; margin-bottom:15px; background:#f8fafc; padding:12px; border-radius:10px; border:1px dashed var(--primary); text-align:left;">
-            <label style="color:var(--primary); font-size:11px; margin-bottom:8px; display:block;"><i class="bi bi-person-plus-fill"></i> New Udhaar Customer Details</label>
-            <input type="text" id="new-cust-name" class="modal-input" placeholder="👤 Customer Name" style="margin-bottom:8px; padding:10px; text-transform:uppercase;">
-            <input type="tel" id="new-cust-phone" class="modal-input" placeholder="📱 10-Digit Mobile Number" style="margin-bottom:0; padding:10px;">
+        <div id="new-cust-fields" style="display:none; margin-bottom:20px; background:#f8fafc; padding:15px; border-radius:12px; border:2px dashed var(--primary); text-align:left;">
+            <label style="color:var(--primary); font-size:13px; margin-bottom:10px; display:block; font-weight: 800;"><i class="bi bi-person-plus-fill"></i> New Udhaar Customer Details</label>
+            <input type="text" id="new-cust-name" class="modal-input" placeholder="👤 Customer Name" style="margin-bottom:10px; font-size: 14px; text-transform:uppercase;">
+            <input type="tel" id="new-cust-phone" class="modal-input" placeholder="📱 10-Digit Mobile Number" style="margin-bottom:0; font-size: 14px;">
         </div>
         
-        <div style="background:#fffbeb; border:1px solid #fde68a; padding:12px; border-radius:10px; margin-bottom:15px; text-align:left;">
-            <div style="display:flex; justify-content:space-between; margin-bottom:5px; font-size:13px; font-weight:700; color:var(--text-light);"><span>Current Bill:</span> <span id="u-bill-amt">₹0</span></div>
-            <div style="display:flex; justify-content:space-between; margin-bottom:5px; font-size:13px; font-weight:700; color:var(--danger);"><span>Previous Pending:</span> <span id="u-prev-amt">₹0</span></div>
-            <div style="border-top:1px dashed #fcd34d; margin:8px 0;"></div>
-            <div style="display:flex; justify-content:space-between; font-size:16px; font-weight:900; color:var(--warning);"><span>Total Khata:</span> <span id="u-total-khata">₹0</span></div>
+        <div style="background:#fffbeb; border:2px solid #fde68a; padding:15px; border-radius:12px; margin-bottom:20px; text-align:left;">
+            <div style="display:flex; justify-content:space-between; margin-bottom:8px; font-size:15px; font-weight:700; color:var(--text-light);"><span>Current Bill:</span> <span id="u-bill-amt">₹0</span></div>
+            <div style="display:flex; justify-content:space-between; margin-bottom:8px; font-size:15px; font-weight:700; color:var(--danger);"><span>Previous Pending:</span> <span id="u-prev-amt">₹0</span></div>
+            <div style="border-top:1px dashed #fcd34d; margin:10px 0;"></div>
+            <div style="display:flex; justify-content:space-between; font-size:20px; font-weight:900; color:var(--warning);"><span>Total Khata:</span> <span id="u-total-khata">₹0</span></div>
         </div>
         
-        <label style="text-align:left; color:var(--emerald);">Cash Paid Now (Partial Payment)</label>
+        <label style="text-align:left; color:var(--emerald); display:block; font-weight: 800; margin-bottom: 5px;">Cash Paid Now (Partial Payment)</label>
         <input type="number" id="udhaar-paid-now" class="modal-input" placeholder="₹0" oninput="calcUdhaarMath()">
         
-        <div style="display:flex; justify-content:space-between; font-size:16px; font-weight:900; color:var(--danger); margin-bottom:15px; padding:0 10px;"><span>Final Pending:</span> <span id="u-final-pending">₹0</span></div>
+        <div style="display:flex; justify-content:space-between; font-size:20px; font-weight:900; color:var(--danger); margin-bottom:20px; padding:0 10px;"><span>Final Pending:</span> <span id="u-final-pending">₹0</span></div>
         
         <button class="btn-modal-action" style="background:var(--warning); color:white;" onclick="processSale('UDHAAR')">Confirm Udhaar & Print</button>
     </div>
@@ -270,8 +277,8 @@
 
 <div class="modal-overlay" id="drafts-modal">
     <div class="modal-card">
-        <h2 style="margin:0 0 15px 0; font-size:20px; font-weight:900;">Held Bills</h2>
-        <div id="draft-list" style="text-align:left; max-height:200px; overflow-y:auto; margin-bottom:15px;"></div>
+        <h2 style="margin:0 0 15px 0; font-size:24px; font-weight:900;">Held Bills</h2>
+        <div id="draft-list" style="text-align:left; max-height:300px; overflow-y:auto; margin-bottom:20px;"></div>
         <button class="btn-modal-action" onclick="document.getElementById('drafts-modal').style.display='none'">Close</button>
     </div>
 </div>
@@ -279,14 +286,14 @@
 <div class="modal-overlay" id="sales-history-modal">
     <div class="modal-card" style="max-width: 650px;">
         <button onclick="document.getElementById('sales-history-modal').style.display='none'" style="position:absolute; top:15px; right:15px; background:none; border:none; font-size:20px; cursor:pointer;"><i class="bi bi-x-lg"></i></button>
-        <h2 style="margin:0 0 15px 0; font-size:20px; font-weight:900;">Sales History</h2>
+        <h2 style="margin:0 0 15px 0; font-size:24px; font-weight:900;">Sales History</h2>
         
-        <div style="display:flex; gap:10px; margin-bottom:10px; flex-wrap:wrap; text-align: left;">
-            <div style="flex:1; min-width:120px;"><label>Start Date</label><input type="date" id="filter-start-date" class="modal-input" style="padding:10px; margin-bottom:0;" onchange="fetchFilteredSales()"></div>
-            <div style="flex:1; min-width:120px;"><label>End Date</label><input type="date" id="filter-end-date" class="modal-input" style="padding:10px; margin-bottom:0;" onchange="fetchFilteredSales()"></div>
+        <div style="display:flex; gap:10px; margin-bottom:15px; flex-wrap:wrap; text-align: left;">
+            <div style="flex:1; min-width:120px;"><label style="font-weight: 800; color: var(--text-light); font-size: 12px; margin-bottom: 4px; display: block;">Start Date</label><input type="date" id="filter-start-date" class="modal-input" style="font-size: 14px; margin-bottom:0;" onchange="fetchFilteredSales()"></div>
+            <div style="flex:1; min-width:120px;"><label style="font-weight: 800; color: var(--text-light); font-size: 12px; margin-bottom: 4px; display: block;">End Date</label><input type="date" id="filter-end-date" class="modal-input" style="font-size: 14px; margin-bottom:0;" onchange="fetchFilteredSales()"></div>
         </div>
-        <div style="margin-bottom:15px;">
-            <input type="text" id="filter-customer" class="modal-input" placeholder="🔍 Search Customer Name or Phone..." style="padding:10px; margin-bottom:0;" oninput="applyLocalSalesFilter()">
+        <div style="margin-bottom:20px;">
+            <input type="text" id="filter-customer" class="modal-input" placeholder="🔍 Search Customer Name or Phone..." style="font-size: 14px; margin-bottom:0;" oninput="applyLocalSalesFilter()">
         </div>
 
         <div id="sales-history-list" style="text-align:left; max-height:400px; overflow-y:auto; margin-bottom:15px; padding-right:5px;"></div>
@@ -294,14 +301,14 @@
 </div>
 
 <div class="modal-overlay" id="scanner-modal">
-    <div class="modal-card" style="max-width: 500px; padding: 15px;">
-        <button onclick="closeCameraScanner()" style="position:absolute; top:15px; right:15px; background:none; border:none; font-size:20px; cursor:pointer; z-index: 50;"><i class="bi bi-x-lg"></i></button>
-        <h2 style="margin:0 0 15px 0; font-size:20px; font-weight:900;">📸 Scan Barcode</h2>
-        <div id="reader" style="width: 100%; border-radius: 12px; overflow: hidden; border: 2px solid var(--border);"></div>
+    <div class="modal-card" style="max-width: 500px; padding: 25px;">
+        <button onclick="closeCameraScanner()" style="position:absolute; top:15px; right:15px; background:none; border:none; font-size:24px; cursor:pointer; z-index: 50;"><i class="bi bi-x-lg"></i></button>
+        <h2 style="margin:0 0 20px 0; font-size:24px; font-weight:900;">📸 Scan Barcode</h2>
+        <div id="reader" style="width: 100%; border-radius: 16px; overflow: hidden; border: 4px solid var(--primary);"></div>
         
-        <div style="display: flex; justify-content: space-between; align-items: center; margin-top: 15px;">
-            <p style="font-size: 11px; color: var(--text-light); font-weight: 700; margin: 0;">Point camera at the barcode.</p>
-            <button onclick="flipCamera()" style="background: var(--navy); color: white; border: none; padding: 8px 12px; border-radius: 8px; font-weight: 800; cursor: pointer; font-size: 12px;"><i class="bi bi-arrow-repeat"></i> Flip Camera</button>
+        <div style="display: flex; justify-content: space-between; align-items: center; margin-top: 20px;">
+            <p style="font-size: 13px; color: var(--text-light); font-weight: 800; margin: 0;">Point camera at the barcode.</p>
+            <button onclick="flipCamera()" style="background: var(--navy); color: white; border: none; padding: 12px 16px; border-radius: 12px; font-weight: 900; cursor: pointer; font-size: 14px;"><i class="bi bi-arrow-repeat"></i> Flip Camera</button>
         </div>
     </div>
 </div>
@@ -391,8 +398,25 @@
               liveInventory = [];
               snapshot.forEach(doc => liveInventory.push({ docId: doc.id, ...doc.data() }));
               document.getElementById('loading-overlay').style.display = 'none';
-              filterGrid(); // Ultra-fast render call
+              filterGrid(); 
           });
+    }
+
+    // --- SLIDE-UP CART SHEET CONTROLLERS ---
+    function openCartSheet() {
+        document.getElementById('cart-sheet-overlay').style.display = 'block';
+        setTimeout(() => {
+            document.getElementById('cart-sheet-overlay').style.opacity = '1';
+            document.getElementById('cart-sheet').classList.add('open');
+        }, 10);
+    }
+    
+    function closeCartSheet() {
+        document.getElementById('cart-sheet').classList.remove('open');
+        document.getElementById('cart-sheet-overlay').style.opacity = '0';
+        setTimeout(() => {
+            document.getElementById('cart-sheet-overlay').style.display = 'none';
+        }, 300);
     }
 
     // --- NAVIGATION CONTROLLERS ---
@@ -451,15 +475,15 @@
             }
 
             if (filtered.length === 0) {
-                let backBtn = (navPath.dept || navPath.cat || navPath.subcat) && !query ? `<button class="btn-action" onclick="setNavPath('back')" style="margin:10px auto;"><i class="bi bi-arrow-left"></i> Go Back</button>` : '';
-                grid.innerHTML = `<div style="text-align:center; padding:40px; color:var(--text-light);"><i class="bi bi-search" style="font-size:40px; display:block; margin-bottom:10px;"></i><h3>No items match criteria.</h3>${backBtn}</div>`;
+                let backBtn = (navPath.dept || navPath.cat || navPath.subcat) && !query ? `<button class="btn-action" onclick="setNavPath('back')" style="margin:10px auto; font-size:16px; padding:12px 24px;"><i class="bi bi-arrow-left"></i> Go Back</button>` : '';
+                grid.innerHTML = `<div style="text-align:center; padding:60px; color:var(--text-light);"><i class="bi bi-search" style="font-size:60px; display:block; margin-bottom:15px;"></i><h3>No items match criteria.</h3>${backBtn}</div>`;
                 return;
             }
 
             let htmlArr = [];
 
             if (!query) {
-                let bcHtml = `<div style="display:flex; gap:8px; align-items:center; padding:12px 15px; background:white; border-radius:8px; margin-bottom:15px; border:1px solid var(--border); font-size:12px; font-weight:900; color:var(--text-light); overflow-x:auto;">`;
+                let bcHtml = `<div style="display:flex; gap:8px; align-items:center; padding:16px 20px; background:white; border-radius:12px; margin-bottom:20px; border:1px solid var(--border); font-size:14px; font-weight:900; color:var(--text-light); overflow-x:auto;">`;
                 bcHtml += `<span onclick="setNavPath('home')" style="cursor:pointer; color:${!navPath.dept ? 'var(--navy)' : 'var(--primary)'};"><i class="bi bi-house-door-fill"></i> Home</span>`;
                 if (navPath.dept) bcHtml += ` <i class="bi bi-chevron-right" style="opacity:0.5;"></i> <span onclick="setNavPath('dept')" style="cursor:pointer; color:${!navPath.cat ? 'var(--navy)' : 'var(--primary)'};">${cleanStr(navPath.dept)}</span>`;
                 if (navPath.cat) bcHtml += ` <i class="bi bi-chevron-right" style="opacity:0.5;"></i> <span onclick="setNavPath('cat')" style="cursor:pointer; color:${!navPath.subcat ? 'var(--navy)' : 'var(--primary)'};">${cleanStr(navPath.cat)}</span>`;
@@ -469,9 +493,9 @@
             }
 
             if (query || navPath.subcat) {
-                if (query) htmlArr.push(`<div style="margin-bottom:15px; padding:0 5px;"><span style="font-size:13px; font-weight:800; color:var(--text-light);">Search Results for: <span style="color:var(--primary);">'${query}'</span></span></div>`);
+                if (query) htmlArr.push(`<div style="margin-bottom:15px; padding:0 5px;"><span style="font-size:14px; font-weight:800; color:var(--text-light);">Search Results for: <span style="color:var(--primary);">'${query}'</span></span></div>`);
                 
-                htmlArr.push(`<div class="shelf-grid" style="display: flex; flex-direction: column; gap: 8px;">`);
+                htmlArr.push(`<div class="shelf-grid" style="display: flex; flex-direction: column; gap: 10px;">`);
                 for (let i = 0; i < filtered.length; i++) {
                     const item = filtered[i];
                     const qty = parseFloat(item.qty || 0);
@@ -514,18 +538,18 @@
                 });
 
                 const keys = Object.keys(groupedList).sort();
-                htmlArr.push(`<div style="display:flex; flex-direction:column; gap:6px;">`);
+                htmlArr.push(`<div style="display:flex; flex-direction:column; gap:8px;">`);
                 keys.forEach(k => {
                     const cleanK = cleanStr(k);
                     htmlArr.push(`
-                        <div onclick="drillDown('${k}')" style="background:#1e293b; color:white; padding:15px 20px; border-radius:6px; display:flex; justify-content:space-between; align-items:center; cursor:pointer; font-weight:900; font-size:13px; text-transform:uppercase; box-shadow:0 2px 4px rgba(0,0,0,0.1); transition:0.1s;">
-                            <div style="display:flex; align-items:center; gap:12px; letter-spacing:0.5px;">
-                                <i class="bi bi-folder-fill" style="color:#60a5fa; font-size:18px;"></i>
+                        <div onclick="drillDown('${k}')" style="background:#1e293b; color:white; padding:20px; border-radius:12px; display:flex; justify-content:space-between; align-items:center; cursor:pointer; font-weight:900; font-size:15px; text-transform:uppercase; box-shadow:0 4px 6px rgba(0,0,0,0.1); transition:0.1s;">
+                            <div style="display:flex; align-items:center; gap:15px; letter-spacing:0.5px;">
+                                <i class="bi bi-folder-fill" style="color:#60a5fa; font-size:22px;"></i>
                                 ${cleanK}
                             </div>
                             <div style="display:flex; align-items:center; gap:15px;">
-                                <span style="background:rgba(255,255,255,0.15); padding:3px 10px; border-radius:12px; font-size:10px;">${groupedList[k]} Options</span>
-                                <i class="bi bi-caret-down-fill" style="opacity:0.5; font-size:12px;"></i>
+                                <span style="background:rgba(255,255,255,0.15); padding:4px 12px; border-radius:12px; font-size:12px;">${groupedList[k]} Options</span>
+                                <i class="bi bi-caret-down-fill" style="opacity:0.5; font-size:14px;"></i>
                             </div>
                         </div>
                     `);
@@ -559,25 +583,19 @@
 
     function removeCartItem(index) { cart.splice(index, 1); renderCart(); }
 
-    // Custom Ad-hoc Item
-    function openCustomItemModal() { document.getElementById('custom-modal').style.display = 'flex'; }
-    function addCustomItem() {
-        const name = document.getElementById('custom-name').value || "Misc Item";
-        const price = parseFloat(document.getElementById('custom-price').value);
-        if(isNaN(price) || price <= 0) return alert("Enter a valid price");
-        cart.push({ docId: 'custom_' + Date.now(), name: name, msp: price, costPer: 0, gstRate: 0, cartQty: 1, isCustom: true });
-        document.getElementById('custom-modal').style.display = 'none';
-        document.getElementById('custom-name').value = ""; document.getElementById('custom-price').value = "";
-        renderCart();
-    }
-
     function renderCart() {
         const container = document.getElementById('cart-container');
+        const floatBar = document.getElementById('floating-cart-bar');
+        const floatSummary = document.getElementById('floating-cart-summary');
+        
         let subtotal = 0; let totalDisc = 0; let totalGst = 0;
         
         if (cart.length === 0) {
-            container.innerHTML = `<div class="empty-cart"><i class="bi bi-basket" style="font-size:40px; opacity:0.3; display:block;"></i>Cart is empty.</div>`;
+            container.innerHTML = `<div class="empty-cart"><i class="bi bi-basket" style="font-size:60px; opacity:0.3; display:block; margin-bottom:15px;"></i>Cart is empty.</div>`;
             document.getElementById('cart-subtotal').innerText = '₹0'; document.getElementById('cart-discount').innerText = '- ₹0'; document.getElementById('cart-gst').innerText = '₹0'; document.getElementById('cart-total').innerText = '₹0';
+            
+            floatBar.classList.add('hidden'); // Hide Floating Bar
+            closeCartSheet(); // Auto close if they remove last item
             return;
         }
 
@@ -598,10 +616,12 @@
             let itemGst = finalPrice - (finalPrice / (1 + (gstRate / 100)));
             totalGst += itemGst;
 
+            const cleanName = item.name ? item.name.replace(/\s*\([^)]*\)/g, '').trim() : "Unknown";
+
             container.innerHTML += `
                 <div class="cart-item">
                     <div class="cart-item-header">
-                        <p class="cart-item-name">${item.name}</p>
+                        <p class="cart-item-name">${cleanName}</p>
                         <span class="cart-item-price">₹${finalPrice.toFixed(0)}</span>
                     </div>
                     ${disc > 0 ? `<span class="cart-item-discount">Saved ₹${disc.toFixed(0)}</span>` : ''}
@@ -619,28 +639,35 @@
         document.getElementById('cart-subtotal').innerText = `₹${subtotal.toFixed(2)}`;
         document.getElementById('cart-discount').innerText = `- ₹${totalDisc.toFixed(2)}`;
         document.getElementById('cart-gst').innerText = `₹${totalGst.toFixed(2)}`;
-        document.getElementById('cart-total').innerText = `₹${(subtotal - totalDisc).toFixed(2)}`;
-        finalSaleData.sub = subtotal; finalSaleData.disc = totalDisc; finalSaleData.gst = totalGst; finalSaleData.tot = subtotal - totalDisc;
+        
+        let finalTot = subtotal - totalDisc;
+        document.getElementById('cart-total').innerText = `₹${finalTot.toFixed(2)}`;
+        
+        finalSaleData.sub = subtotal; finalSaleData.disc = totalDisc; finalSaleData.gst = totalGst; finalSaleData.tot = finalTot;
+
+        // Show and Update Floating Bar
+        floatSummary.innerText = `🛒 ${cart.length} Items | Total: ₹${finalTot.toFixed(0)}`;
+        floatBar.classList.remove('hidden');
     }
 
     // --- HOLD BILL (DRAFTS) ---
     function holdCart() {
         if(cart.length === 0) return;
         heldDrafts.push({ id: new Date().toLocaleTimeString(), items: [...cart], tot: finalSaleData.tot });
-        cart = []; renderCart(); alert("Cart put on hold.");
+        cart = []; renderCart(); alert("Cart put on hold."); closeCartSheet();
     }
     function showDrafts() {
         const list = document.getElementById('draft-list'); list.innerHTML = "";
-        if(heldDrafts.length === 0) list.innerHTML = "<p style='font-size:12px; color:gray;'>No held bills.</p>";
+        if(heldDrafts.length === 0) list.innerHTML = "<p style='font-size:14px; color:gray; font-weight:800;'>No held bills.</p>";
         heldDrafts.forEach((d, i) => {
-            list.innerHTML += `<div style="display:flex; justify-content:space-between; background:#f8fafc; padding:10px; border:1px solid #e2e8f0; border-radius:8px; margin-bottom:8px;">
-                <div><strong>Draft ${d.id}</strong><br><span style="font-size:11px;">${d.items.length} items - ₹${d.tot.toFixed(0)}</span></div>
-                <button onclick="restoreDraft(${i})" style="background:var(--primary); color:white; border:none; border-radius:6px; cursor:pointer;">Resume</button>
+            list.innerHTML += `<div style="display:flex; justify-content:space-between; align-items:center; background:#f8fafc; padding:15px; border:1px solid #e2e8f0; border-radius:12px; margin-bottom:10px;">
+                <div><strong style="font-size:16px;">Draft ${d.id}</strong><br><span style="font-size:13px; color:var(--text-light); font-weight:800;">${d.items.length} items - ₹${d.tot.toFixed(0)}</span></div>
+                <button onclick="restoreDraft(${i})" style="background:var(--primary); color:white; border:none; padding:10px 16px; border-radius:8px; cursor:pointer; font-weight:900;">Resume</button>
             </div>`;
         });
         document.getElementById('drafts-modal').style.display = 'flex';
     }
-    function restoreDraft(i) { cart = [...heldDrafts[i].items]; heldDrafts.splice(i, 1); renderCart(); document.getElementById('drafts-modal').style.display = 'none'; }
+    function restoreDraft(i) { cart = [...heldDrafts[i].items]; heldDrafts.splice(i, 1); renderCart(); document.getElementById('drafts-modal').style.display = 'none'; openCartSheet(); }
 
     // --- SALES HISTORY ENGINE ---
     let loadedSales = [];
@@ -704,18 +731,18 @@
         filtered.forEach(data => {
             const dateObj = data.timestamp ? data.timestamp.toDate() : new Date();
             const timeString = dateObj.toLocaleString('en-IN', { hour: '2-digit', minute: '2-digit', day: '2-digit', month: 'short' });
-            const itemsText = data.items.map(i => `${i.cartQty}x ${i.name}`).join(', ');
+            const itemsText = data.items.map(i => `${i.cartQty}x ${i.name.replace(/\s*\([^)]*\)/g, '').trim()}`).join(', ');
             const custText = (data.customerName || data.customerPhone) ? `👤 ${data.customerName || ''} 📱 ${data.customerPhone || ''}` : "👤 Guest Customer";
             
             list.innerHTML += `
                 <div style="background:#fff; padding:15px; border:1px solid var(--border); border-radius:12px; margin-bottom:12px; box-shadow: 0 2px 4px rgba(0,0,0,0.02);">
                     <div style="display:flex; justify-content:space-between; margin-bottom:8px; align-items:center;">
-                        <span style="font-weight:900; color:var(--navy); font-size:16px;">₹${(data.totalAmount || 0).toFixed(2)}</span>
-                        <span style="font-size:11px; font-weight:800; background:#f1f5f9; color:var(--text-light); padding:4px 8px; border-radius:6px; border:1px solid #cbd5e1;">${data.paymentMode || 'N/A'}</span>
+                        <span style="font-weight:900; color:var(--navy); font-size:18px;">₹${(data.totalAmount || 0).toFixed(2)}</span>
+                        <span style="font-size:12px; font-weight:900; background:#f1f5f9; color:var(--text-light); padding:4px 10px; border-radius:8px; border:1px solid #cbd5e1;">${data.paymentMode || 'N/A'}</span>
                     </div>
-                    <div style="font-size:12px; font-weight:800; color:var(--primary); margin-bottom:6px;">${custText}</div>
+                    <div style="font-size:14px; font-weight:800; color:var(--primary); margin-bottom:6px;">${custText}</div>
                     <div style="font-size:13px; color:var(--text-light); margin-bottom:8px; line-height:1.4;">${itemsText}</div>
-                    <div style="font-size:11px; font-weight:800; color:#94a3b8; border-top:1px dashed #e2e8f0; padding-top:8px;">${timeString}</div>
+                    <div style="font-size:12px; font-weight:800; color:#94a3b8; border-top:1px dashed #e2e8f0; padding-top:8px;">${timeString}</div>
                 </div>`;
         });
     }
@@ -770,9 +797,9 @@
                     const c = doc.data();
                     const kNumStr = c.khataNumber ? `[Khata #${c.khataNumber}] ` : ``;
                     dropdown.innerHTML += `
-                        <div style="padding:10px; border-bottom:1px solid var(--border); cursor:pointer; text-align:left;" onclick="selectCustomer('${c.name}', '${c.phone}', ${c.totalUdhaar || 0}, '${c.khataNumber || ''}')">
-                            <div style="font-weight:900; font-size:14px; color:var(--navy);">${kNumStr}${c.name}</div>
-                            <div style="font-size:12px; color:var(--text-light); font-weight:700;">${c.phone} | Due: ₹${(c.totalUdhaar || 0).toFixed(2)}</div>
+                        <div style="padding:15px; border-bottom:1px solid var(--border); cursor:pointer; text-align:left;" onclick="selectCustomer('${c.name}', '${c.phone}', ${c.totalUdhaar || 0}, '${c.khataNumber || ''}')">
+                            <div style="font-weight:900; font-size:15px; color:var(--navy);">${kNumStr}${c.name}</div>
+                            <div style="font-size:13px; color:var(--text-light); font-weight:700;">${c.phone} | Due: ₹${(c.totalUdhaar || 0).toFixed(2)}</div>
                         </div>`;
                 });
                 dropdown.style.display = 'block';
@@ -1022,9 +1049,10 @@
             rHtml += `<div class="r-items">`;
             finalSaleData.items.forEach(item => {
                 let itemTot = item.msp * item.cartQty;
+                const cleanItemName = item.name ? item.name.replace(/\s*\([^)]*\)/g, '').trim() : "Unknown";
                 rHtml += `
                     <div class="item-row">
-                        <div class="item-name">${item.name}</div>
+                        <div class="item-name">${cleanItemName}</div>
                         <div class="item-qty">x${item.cartQty}</div>
                         <div class="item-total">₹${itemTot.toFixed(2)}</div>
                     </div>
@@ -1095,6 +1123,7 @@
         const url = `https://wa.me/91${finalSaleData.phone}?text=${encodeURIComponent(text)}`;
         window.open(url, '_blank');
         document.getElementById('success-modal').style.display = 'none';
+        closeCartSheet();
     }
 
     document.addEventListener('keypress', function(e) {
@@ -1152,7 +1181,8 @@
         if (itemMatch) {
             addToCart(itemMatch.docId);
             const searchInput = document.getElementById('pos-search');
-            searchInput.value = "Added: " + itemMatch.name;
+            const cleanName = itemMatch.name.replace(/\s*\([^)]*\)/g, '').trim();
+            searchInput.value = "Added: " + cleanName;
             setTimeout(() => { searchInput.value = ""; }, 1500);
         } else {
             alert(`Barcode '${decodedText}' not found in inventory.`);
