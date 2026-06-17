@@ -401,15 +401,15 @@
     let masterTaxonomyList = []; 
     let localShopTaxonomy = [];
 
- document.addEventListener('DOMContentLoaded', () => {
-    firebase.auth().onAuthStateChanged(async (user) => {
-        if (!user) return window.location.href = '/login.html';
-
-        await loadMasterTaxonomy();
-        await loadShopParams();
-        await loadBranches();
+    document.addEventListener('DOMContentLoaded', () => {
+        firebase.auth().onAuthStateChanged(async () => {
+            if (!activeUserPhone) return; 
+            try { if(assignedBranch && assignedBranch.startsWith('[')) assignedBranch = JSON.parse(assignedBranch); } catch(e){}
+            await loadMasterTaxonomy();
+            await loadShopParams(); 
+            await loadBranches();
+        });
     });
-});
 
     function forceUppercase(inputElem) {
         inputElem.value = inputElem.value.toUpperCase().replace(/\s{2,}/g, ' ');
@@ -453,7 +453,7 @@
                     const mainOpt = [...bSelect.options].find(o => o.text.toLowerCase().includes('main'));
                     bSelect.value = mainOpt ? mainOpt.value : bSelect.options[0].value;
                 } else { bSelect.value = assignedBranch; }
-                await fetchInventory();
+                fetchInventory(); 
             }
         } catch(e) { alert("Error: " + e.message); }
     }
@@ -956,9 +956,9 @@ window.renderInventory = function() {
             if (editingBlueprintId && !isSaveAsNew) { await invRef.doc(editingBlueprintId).update(itemData); } 
             else { itemData.qty = 0; await invRef.add(itemData); }
 
-           if(needToUpdateGlobalParams) {
+            if(needToUpdateGlobalParams) {
                 await db.collection('companies').doc(activeUserPhone).collection('settings').doc('params').set({ customParams: savedShopParams }, { merge: true });
-                console.log("Global params updated successfully."); // Function removed to fix crash
+                rebuildDatalists();
             }
             closeBlueprintModal(); fetchInventory(); 
         } catch(e) { alert("Error saving: " + e.message); }
