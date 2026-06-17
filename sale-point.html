@@ -543,13 +543,47 @@
           });
     }
 
-    // --- UNIVERSAL FAST SEARCH ENGINE ---
-    window.handleMainSearch = function() {
-        const query = document.getElementById('main-search').value.toLowerCase().trim();
+   // --- UNIVERSAL FAST SEARCH ENGINE ---
+    window.handleMainSearch = async function() {
+        const rawQuery = document.getElementById('main-search').value.trim();
+        const query = rawQuery.toLowerCase();
         const dropdown = document.getElementById('main-search-dropdown');
         dropdown.innerHTML = "";
         
         if(query.length === 0) { dropdown.style.display = 'none'; return; }
+
+        // --- NEW: HARDWARE SCANNER RECEIPT VALIDATION ---
+        if (query.includes('receipt.html?id=')) {
+            document.getElementById('main-search').value = ""; // Clear search bar instantly
+            dropdown.style.display = 'none';
+            try {
+                document.getElementById('loading-overlay').style.display = 'flex';
+                const urlObj = new URL(rawQuery);
+                const rId = urlObj.searchParams.get('id');
+                const rBranch = urlObj.searchParams.get('branch');
+                
+                const saleDoc = await firebase.firestore().collection('companies').doc(activeUserPhone).collection('branches').doc(rBranch || activeBranchId).collection('sales').doc(rId).get();
+                
+                document.getElementById('loading-overlay').style.display = 'none';
+
+                if(saleDoc.exists) {
+                    let saleData = { id: saleDoc.id, ...saleDoc.data() };
+                    const exists = loadedSales.find(s => s.id === rId);
+                    if(!exists) loadedSales.push(saleData);
+                    
+                    if (typeof openReturnModal === "function") {
+                        openReturnModal(rId);
+                    } else {
+                        alert("✅ SECURE RECEIPT VERIFIED!\n(Note: The Return Engine code needs to be added to process the actual refund).");
+                    }
+                } else { alert("❌ FRAUD ALERT: Receipt not found in database!"); }
+            } catch(e) {
+                document.getElementById('loading-overlay').style.display = 'none';
+                alert("Error reading receipt QR.");
+            }
+            return;
+        }
+        // -------------------------------------------------
 
         if (query.length > 3) {
             const exactMatches = liveInventory.filter(item => item.barcode && item.barcode.toLowerCase() === query);
@@ -1272,12 +1306,49 @@ let scannedPendingItem = null;
         }
     }
 
-  function onScanSuccess(decodedText, decodedResult) {
+ async function onScanSuccess(decodedText, decodedResult) {
     closeCameraScanner();
 
     try {
         new Audio('https://www.soundjay.com/buttons/beep-07.wav').play();
     } catch(e){}
+
+    // --- NEW: ANTI-FRAUD RECEIPT VALIDATION LOGIC ---
+    if (decodedText.includes('receipt.html?id=')) {
+        try {
+            document.getElementById('loading-overlay').style.display = 'flex';
+            const urlObj = new URL(decodedText);
+            const rId = urlObj.searchParams.get('id');
+            const rBranch = urlObj.searchParams.get('branch');
+            
+            // Fetch the 'Ground Truth' directly from Firestore
+            const saleDoc = await firebase.firestore().collection('companies').doc(activeUserPhone).collection('branches').doc(rBranch || activeBranchId).collection('sales').doc(rId).get();
+            
+            document.getElementById('loading-overlay').style.display = 'none';
+
+            if(saleDoc.exists) {
+                // Inject it into loadedSales so the Return Engine can use it
+                let saleData = { id: saleDoc.id, ...saleDoc.data() };
+                const exists = loadedSales.find(s => s.id === rId);
+                if(!exists) loadedSales.push(saleData);
+                
+                if (typeof openReturnModal === "function") {
+                    openReturnModal(rId); // Automatically pop open the secure return modal
+                } else {
+                    alert("✅ SECURE RECEIPT VERIFIED!\n(Note: The Return Engine code needs to be added to process the actual refund).");
+                }
+                return;
+            } else {
+                alert("❌ FRAUD ALERT: Receipt not found in secure database!");
+                return;
+            }
+        } catch(e) {
+            document.getElementById('loading-overlay').style.display = 'none';
+            alert("Error verifying receipt: " + e.message);
+            return;
+        }
+    }
+    // -------------------------------------
 
     const itemMatch = liveInventory.find(
         i => i.barcode &&
