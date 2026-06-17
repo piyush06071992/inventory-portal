@@ -249,8 +249,8 @@
                 </select>
             </div>
             <div>
-                <label>Unit Base</label>
-                <select id="bp-unit" class="modal-input">
+                <label>Base Selling Unit</label>
+                <select id="bp-unit" class="modal-input" onchange="document.getElementById('bulk-lbl-unit').innerText = this.value;">
                     <option value="PIECES">Pieces/Pkt</option>
                     <option value="KG">Kg/Gms</option>
                     <option value="LITRES">Litres/Ml</option>
@@ -261,6 +261,22 @@
              <div>
                 <label>Min Stock Lvl</label>
                 <input type="number" id="bp-min" class="modal-input" value="5">
+            </div>
+        </div>
+
+        <div style="background: #fffbeb; padding: 10px; border-radius: 8px; border: 1px dashed #fcd34d; margin-bottom: 10px;">
+            <label style="color: #d97706; display: flex; align-items: center; gap: 5px; margin-bottom: 8px; cursor: pointer; text-transform: none;">
+                <input type="checkbox" id="bp-is-bulk" onchange="document.getElementById('bulk-fields').style.display = this.checked ? 'grid' : 'none';" style="width:16px; height:16px; margin:0;"> Arrives in Bulk Packages? (e.g. Sacks, Cartons)
+            </label>
+            <div class="grid-2" id="bulk-fields" style="display: none;">
+                <div>
+                    <label style="color: #d97706;">Bulk Unit Name</label>
+                    <input type="text" id="bp-bulk-unit" class="modal-input" placeholder="e.g. Bag, Box" style="margin-bottom:0;">
+                </div>
+                <div>
+                    <label style="color: #d97706;">Base Units per <span id="bulk-lbl-unit"></span></label>
+                    <input type="number" id="bp-bulk-qty" class="modal-input" placeholder="e.g. 100" style="margin-bottom:0;">
+                </div>
             </div>
         </div>
 
@@ -822,7 +838,12 @@ window.renderInventory = function() {
             const item = rawInventory.find(i => i.docId === docId);
             document.getElementById('bp-barcode').value = item.barcode || ""; document.getElementById('bp-name').value = item.name || "";
             document.getElementById('bp-gst').value = item.gstRate || "0"; document.getElementById('bp-cost').value = item.costPer || "0";
-            document.getElementById('bp-msp').value = item.msp || "0"; document.getElementById('bp-min').value = item.minStock !== undefined ? item.minStock : "5";
+           document.getElementById('bp-msp').value = item.msp || "0"; document.getElementById('bp-min').value = item.minStock !== undefined ? item.minStock : "5";
+            
+            document.getElementById('bp-is-bulk').checked = item.isBulk || false;
+            document.getElementById('bulk-fields').style.display = item.isBulk ? 'grid' : 'none';
+            document.getElementById('bp-bulk-unit').value = item.bulkUnitName || "";
+            document.getElementById('bp-bulk-qty').value = item.bulkMultiplier || "";
             
             if (item.imageUrl) {
                 document.getElementById('bp-image-url').value = item.imageUrl;
@@ -863,9 +884,15 @@ window.renderInventory = function() {
             document.getElementById('bp-barcode').value = ""; document.getElementById('bp-name').value = "";
             document.getElementById('bp-dept').value = ""; updateCatDropdown();
             document.getElementById('bp-gst').value = "0"; document.getElementById('bp-unit').value = "PIECES";
-            document.getElementById('bp-cost').value = "0"; document.getElementById('bp-msp').value = "";
+           document.getElementById('bp-cost').value = "0"; document.getElementById('bp-msp').value = "";
             document.getElementById('bp-min').value = "5"; document.getElementById('bp-dynamic-params').style.display = 'none';
+            
+            document.getElementById('bp-is-bulk').checked = false;
+            document.getElementById('bulk-fields').style.display = 'none';
+            document.getElementById('bp-bulk-unit').value = "";
+            document.getElementById('bp-bulk-qty').value = "";
         }
+        document.getElementById('bulk-lbl-unit').innerText = document.getElementById('bp-unit').value;
         updateProfitCalculations(); modal.style.display = 'flex';
     }
 
@@ -891,10 +918,15 @@ window.renderInventory = function() {
         const name = document.getElementById('bp-name').value.trim();
         const department = document.getElementById('bp-dept').value; const category = document.getElementById('bp-cat').value; const subCategory = document.getElementById('bp-subcat').value;
         const gstRate = parseFloat(document.getElementById('bp-gst').value) || 0; const unit = document.getElementById('bp-unit').value;
-        const costPer = parseFloat(document.getElementById('bp-cost').value) || 0; const msp = parseFloat(document.getElementById('bp-msp').value) || 0;
+       const costPer = parseFloat(document.getElementById('bp-cost').value) || 0; const msp = parseFloat(document.getElementById('bp-msp').value) || 0;
         const minStock = parseFloat(document.getElementById('bp-min').value) || 0; const branchId = document.getElementById('filter-branch').value;
 
+        const isBulk = document.getElementById('bp-is-bulk').checked;
+        const bulkUnitName = document.getElementById('bp-bulk-unit').value.trim();
+        const bulkMultiplier = parseFloat(document.getElementById('bp-bulk-qty').value) || 0;
+
         if(!name || !category || !subCategory) return alert("Name, Category, and Sub-Category are mandatory!");
+        if(isBulk && (!bulkUnitName || bulkMultiplier <= 0)) return alert("Bulk Item must have a Unit Name and Multiplier greater than 0.");
 
         const btn = isSaveAsNew ? document.getElementById('btn-save-as-new') : document.getElementById('btn-save-blueprint');
         const originalText = btn.innerText; btn.innerText = "SAVING..."; btn.disabled = true;
@@ -923,9 +955,10 @@ window.renderInventory = function() {
                 finalImageUrl = await snapshot.ref.getDownloadURL();
             }
 
-            const itemData = { 
+          const itemData = { 
                 barcode: inputBarcode, name, department, category, subCategory, 
                 gstRate, unit, minStock, costPer, msp, customParams, 
+                isBulk, bulkUnitName, bulkMultiplier,
                 isSystemBarcode, imageUrl: finalImageUrl || null, lastUpdated: new Date().toISOString() 
             };
 
