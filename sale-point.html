@@ -291,7 +291,7 @@
         <h2 style="margin:0 0 5px 0; font-size:26px; font-weight:900;">Sale Successful!</h2>
         <p style="margin:0 0 25px 0; font-size:16px; font-weight:800; color:var(--text-light);">Inventory updated safely.</p>
         
-        <button class="btn-modal-action" style="background:var(--primary);" onclick="window.print()"><i class="bi bi-printer"></i> Print Receipt</button>
+        <button class="btn-modal-action" style="background:var(--primary);" onclick="printLiveReceipt()"><i class="bi bi-printer"></i> Print Receipt</button>
         <button class="btn-modal-action" style="background:#25D366;" id="btn-whatsapp" onclick="sendWhatsApp()"><i class="bi bi-whatsapp"></i> Send Digital Bill on WhatsApp</button>
         <button class="btn-modal-action" style="background:var(--border); color:var(--navy);" onclick="document.getElementById('success-modal').style.display='none';">New Sale</button>
     </div>
@@ -1182,75 +1182,22 @@ let scannedPendingItem = null;
             cart = []; clearCustomerSelection(true); renderCart();
             localStorage.removeItem('pos_active_cart'); // Clear auto-save after success
             
-            let rHtml = `
-                <div class="receipt-card">
-                    <div class="r-header">
-                        <h1 class="r-shop-name">${shopName.toUpperCase()}</h1>
-                        <p class="r-date">${finalSaleData.date}</p>
-                        <p style="margin:8px 0 0 0; font-size:14px; font-weight:900; color:var(--navy); padding:4px 8px; background:#f1f5f9; border-radius:6px; display:inline-block; border:1px solid var(--border);">Invoice No: ${finalSaleData.billNumber}</p>
-                    </div>
-            `;
-
-            if (finalSaleData.name || finalSaleData.phone) {
-                rHtml += `<div class="r-customer">`;
-                if (finalSaleData.name) rHtml += `<p>👤 ${finalSaleData.name.toUpperCase()}</p>`;
-                if (finalSaleData.phone) rHtml += `<p>📱 ${finalSaleData.phone}</p>`;
-                if (finalSaleData.khataNumber) rHtml += `<p style="color:var(--primary);">🏷️ Khata #${finalSaleData.khataNumber}</p>`;
-                rHtml += `</div>`;
-            }
-
-            rHtml += `<div class="r-items">`;
-            finalSaleData.items.forEach(item => {
-                let itemTot = item.msp * item.cartQty;
-                const cleanItemName = item.name ? item.name.replace(/\s*\([^)]*\)/g, '').trim() : "Unknown";
-                rHtml += `
-                    <div class="item-row">
-                        <div class="item-name">${cleanItemName}</div>
-                        <div class="item-qty">x${item.cartQty}</div>
-                        <div class="item-total">₹${itemTot.toFixed(2)}</div>
-                    </div>
-                `;
-            });
-            rHtml += `</div>`;
-
-            let gstAmt = finalSaleData.gst || 0;
-            let subtotal = finalSaleData.tot - gstAmt;
-
-            rHtml += `
-                <div class="r-summary">
-                    <div class="summary-row"><span>Subtotal</span> <span>₹${subtotal.toFixed(2)}</span></div>
-                    ${gstAmt > 0 ? `<div class="summary-row"><span>Tax/GST</span> <span>₹${gstAmt.toFixed(2)}</span></div>` : ''}
-                    <div class="summary-row"><span>Payment Mode</span> <span style="color:var(--navy); background:#f1f5f9; padding:2px 6px; border-radius:4px;">${finalSaleData.paymentMode || 'N/A'}</span></div>
-                    <div class="summary-total"><span>Total Paid</span> <span>₹${finalSaleData.tot.toFixed(2)}</span></div>
-                </div>
-            `;
-
-            if (finalSaleData.paymentMode === 'UDHAAR') {
-                rHtml += `
-                    <div class="r-khata">
-                        <h4 class="r-khata-title">Khata / Udhaar Details</h4>
-                        <div class="summary-row"><span>Bill Amount:</span> <span>₹${finalSaleData.tot.toFixed(2)}</span></div>
-                        <div class="summary-row" style="color:var(--emerald);"><span>Cash Paid Now:</span> <span>₹${(finalSaleData.cashPaid || 0).toFixed(2)}</span></div>
-                        <div class="summary-row" style="color:#d97706;"><span>Added to Khata:</span> <span>₹${(finalSaleData.udhaarAdded || 0).toFixed(2)}</span></div>
-                        <div style="border-top:1px dashed #fcd34d; margin:8px 0;"></div>
-                        <div style="display:flex; justify-content:space-between; font-size:14px; font-weight:900; color:#b45309;">
-                            <span>Total Khata Pending:</span>
-                            <span>Check with Store</span>
-                        </div>
-                    </div>
-                `;
-            }
-
-            rHtml += `
-                    <div class="thank-you">Thank you for shopping with us!</div>
-                </div>
-            `;
-
-            document.getElementById('print-receipt-container').innerHTML = rHtml;
+           // We no longer build a separate static HTML receipt here.
+            // Printing is now handled entirely by the live receipt.html file to ensure 100% sync.
             
             document.getElementById('btn-whatsapp').style.display = finalSaleData.phone ? 'block' : 'none';
             document.getElementById('success-modal').style.display = 'flex';
         } catch(e) { alert("Checkout Failed: " + e.message); }
+    }
+
+    // --- LIVE PRINT ENGINE ---
+    window.printLiveReceipt = function() {
+        const domain = window.location.origin; 
+        // We add '&autoprint=true' to the URL so the receipt knows to trigger the printer
+        const receiptLink = `${domain}/receipt.html?id=${finalSaleData.receiptId}&phone=${activeUserPhone}&branch=${activeBranchId}&autoprint=true`;
+        
+        window.open(receiptLink, '_blank');
+        document.getElementById('success-modal').style.display = 'none'; // Close the modal so Yamuna can start the next sale
     }
 
     // --- WHATSAPP ENGINE ---
