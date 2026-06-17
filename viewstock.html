@@ -401,13 +401,22 @@
     let masterTaxonomyList = []; 
     let localShopTaxonomy = [];
 
-    document.addEventListener('DOMContentLoaded', () => {
-        firebase.auth().onAuthStateChanged(async () => {
-            if (!activeUserPhone) return; 
-            try { if(assignedBranch && assignedBranch.startsWith('[')) assignedBranch = JSON.parse(assignedBranch); } catch(e){}
+  document.addEventListener('DOMContentLoaded', () => {
+        firebase.auth().onAuthStateChanged(async (user) => {
+            if (!user) return window.location.href = '/login.html';
+            
+            // Explicitly load dependencies in order
             await loadMasterTaxonomy();
             await loadShopParams(); 
-            await loadBranches();
+            await loadBranches(); 
+            
+            // Only start fetching inventory if the branch was successfully loaded
+            if (activeBranchId) {
+                await fetchInventory(); 
+            } else {
+                document.getElementById('inventory-racks-container').innerHTML = 
+                    "<div style='text-align:center; padding:60px; color:var(--danger);'>No branch access assigned. Please contact the store owner.</div>";
+            }
         });
     });
 
@@ -956,9 +965,9 @@ window.renderInventory = function() {
             if (editingBlueprintId && !isSaveAsNew) { await invRef.doc(editingBlueprintId).update(itemData); } 
             else { itemData.qty = 0; await invRef.add(itemData); }
 
-            if(needToUpdateGlobalParams) {
+           if(needToUpdateGlobalParams) {
                 await db.collection('companies').doc(activeUserPhone).collection('settings').doc('params').set({ customParams: savedShopParams }, { merge: true });
-                rebuildDatalists();
+                console.log("Global params updated successfully."); // Function removed to fix crash
             }
             closeBlueprintModal(); fetchInventory(); 
         } catch(e) { alert("Error saving: " + e.message); }
