@@ -189,12 +189,17 @@
             <div class="summary-row"><span>Subtotal:</span> <span id="cart-subtotal">₹0.00</span></div>
             <div class="summary-row" style="color:var(--danger);"><span>Discounts:</span> <span id="cart-discount">- ₹0.00</span></div>
             <div class="summary-row" style="color:var(--text-light); font-size: 12px;"><span>Includes GST:</span> <span id="cart-gst">₹0.00</span></div>
-           <div class="summary-total" style="align-items: flex-end;">
+          <div class="summary-total" style="align-items: flex-end;">
                 <span>Total:</span> 
                 <span id="cart-total" style="text-align: right; line-height: 1.2;">
                     ₹0.00 <span style="font-size:12px; color:var(--text-light); font-weight:700; display:block;">0 Items</span>
                 </span>
             </div>
+            
+            <div style="text-align: center; margin-bottom: 10px; font-size: 11px; font-weight: 800; color: var(--text-light); text-transform: uppercase; background: #f1f5f9; padding: 6px; border-radius: 6px; border: 1px dashed var(--border);">
+                <i class="bi bi-person-badge"></i> Billed By: <span id="billed-by-name" style="color: var(--primary); font-weight: 900;">Loading...</span>
+            </div>
+            
             <div class="checkout-btns">
                 <button class="btn-checkout btn-cash" onclick="openCashModal()"><i class="bi bi-cash-stack"></i> CASH</button>
                 <button class="btn-checkout btn-upi" onclick="openUpiModal()"><i class="bi bi-qr-code-scan"></i> UPI</button>
@@ -474,9 +479,10 @@
         } catch(e) { console.error("Branch Error", e); }
     }
 
-  async function loadBusinessDetails() {
+ async function loadBusinessDetails() {
+        const db = firebase.firestore();
         try {
-            const doc = await firebase.firestore().collection('companies').doc(activeUserPhone).get();
+            const doc = await db.collection('companies').doc(activeUserPhone).get();
             if (doc.exists) {
                 const data = doc.data();
                 if (data.businessName) {
@@ -488,6 +494,22 @@
                 }
             }
         } catch(e) { console.error("Error fetching business details:", e); }
+        
+        // Fetch and display active billing staff name
+        let uName = "OWNER";
+        let uRole = "ADMIN";
+        if (activeStaffId && activeStaffId !== 'admin') {
+            try {
+                const staffDoc = await db.collection('companies').doc(activeUserPhone).collection('staff').doc(activeStaffId).get();
+                if (staffDoc.exists) {
+                    uName = staffDoc.data().name || "Staff";
+                    uRole = staffDoc.data().role || "STAFF";
+                }
+            } catch(e) { console.error("Error fetching staff:", e); }
+        }
+        
+        const billedByEl = document.getElementById('billed-by-name');
+        if(billedByEl) billedByEl.innerText = `${uName} (${uRole})`;
     }
 
     async function setWatermarkDetails() {
@@ -1064,16 +1086,24 @@ let scannedPendingItem = null;
             }
         });
 
-        document.getElementById('udhaar-modal').style.display = 'none';
+  document.getElementById('udhaar-modal').style.display = 'none';
         const saleRef = db.collection('companies').doc(activeUserPhone).collection('branches').doc(activeBranchId).collection('sales').doc();
         
         finalSaleData.paymentMode = mode;
         finalSaleData.receiptId = saleRef.id; 
         
+        // Grab the active staff name from the UI element we just created
+        let activeStaffName = "Admin";
+        const billedByEl = document.getElementById('billed-by-name');
+        if (billedByEl && billedByEl.innerText !== "Loading...") { 
+            activeStaffName = billedByEl.innerText; 
+        }
+        
         let saleObj = {
             timestamp: firebase.firestore.FieldValue.serverTimestamp(),
             items: cart, totalAmount: finalSaleData.tot, totalCost: saleCost, totalGst: finalSaleData.gst, profit: finalSaleData.tot - saleCost,
-            paymentMode: mode, customerName: finalSaleData.name, customerPhone: finalSaleData.phone
+            paymentMode: mode, customerName: finalSaleData.name, customerPhone: finalSaleData.phone,
+            staffName: activeStaffName // <--- This saves the cashier's name to the database!
         };
 
         try {
