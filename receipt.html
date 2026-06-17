@@ -123,7 +123,6 @@
             let billedBy = sale.staffName || "Admin";
 
             // SMART BILL NUMBER COMPLIANCE
-            // If the sale has a formal bill number, use it. Otherwise, fallback to the short ID.
             const displayId = sale.billNumber || receiptId.substring(0,8).toUpperCase();
             const displayLabel = sale.billNumber ? "Invoice No:" : "Receipt ID:";
 
@@ -188,9 +187,20 @@
                 `;
             }
 
+            // CLEAN QR URL: Remove the autoprint parameter so scanning the QR later doesn't trigger print loops
+            const cleanUrl = window.location.href.replace('&autoprint=true', '');
+            const encodedUrl = encodeURIComponent(cleanUrl);
+
             html += `
-                <div style="text-align:center; margin-top:20px;">
-                    <p style="font-size:14px; font-weight:800; color:var(--text-light); margin-bottom:20px;">Thank you for shopping with us!</p>
+                <div style="text-align:center; margin-top:20px; padding-top: 15px; border-top: 1px dashed var(--border);">
+                    <div style="display:inline-flex; align-items:center; gap:5px; background:#dcfce7; color:#166534; padding:6px 12px; border-radius:20px; font-size:11px; font-weight:900; margin-bottom:15px; border:1px solid #bbf7d0;">
+                        <i class="bi bi-shield-fill-check"></i> VERIFIED SECURE RECEIPT
+                    </div>
+                    
+                    <img src="https://api.qrserver.com/v1/create-qr-code/?size=100x100&data=${encodedUrl}" style="width:100px; height:100px; border-radius:8px; margin:0 auto 10px auto; display:block; border: 2px solid var(--border); padding: 4px;">
+                    <p style="font-size:11px; font-weight:700; color:var(--text-light); margin:0 0 20px 0;">Scan to verify or process return</p>
+                    
+                    <p style="font-size:14px; font-weight:900; color:var(--navy); margin-bottom:20px;">Thank you for shopping with us!</p>
                 </div>
                 <button class="btn-print" onclick="window.print()"><i class="bi bi-file-earmark-pdf"></i> Download PDF / Print</button>
             `;
@@ -202,7 +212,7 @@
             if (urlParams.get('autoprint') === 'true') {
                 setTimeout(() => {
                     window.print();
-                }, 800); // We wait 800ms to ensure the fonts and CSS layout have fully rendered
+                }, 800); // We wait 800ms to ensure the fonts, CSS layout, and QR Code have fully rendered
             }
 
         } catch (error) {
