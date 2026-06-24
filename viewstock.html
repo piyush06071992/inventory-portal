@@ -42,26 +42,65 @@
         .filter-row { display: flex; gap: 8px; background: white; padding: 8px; border-radius: 8px; border: 1px solid var(--border); flex: 1; align-items: center; flex-wrap: wrap;}
         .filter-input { padding: 6px 10px; border: 1px solid var(--border); border-radius: 6px; font-size: 12px; font-weight: 600; background: #f8fafc; flex: 1; min-width: 110px; outline: none;}
 
- /* BOOKSHELF STYLES */
-       #inventory-racks-container { padding: 20px; min-height: 600px; }
-       .shelf-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(160px, 1fr)); gap: 15px; }
-       
-       .shelf-item { 
-           width: 100%; border-radius: 12px; padding: 15px; cursor: pointer;
-           display: flex; flex-direction: column; color: white; min-height: 140px;
-           box-shadow: 0 4px 10px rgba(0,0,0,0.1); position: relative; transition: 0.2s;
-       }
-       .shelf-item:hover { transform: translateY(-5px); box-shadow: 0 8px 16px rgba(0,0,0,0.2); }
-       
-       .shelf-item-name { 
-           font-size: 14px; font-weight: 900; line-height: 1.2; margin-top: 5px; 
-           text-transform: uppercase; overflow: hidden; display: -webkit-box; 
-           -webkit-line-clamp: 2; -webkit-box-orient: vertical; 
-       }
-       .shelf-item-dept { font-size: 9px; font-weight: 800; text-transform: uppercase; opacity: 0.8; }
-       .shelf-item-price { font-size: 18px; font-weight: 900; margin-top: auto; }
-       .qty-badge { position: absolute; top: 10px; right: 10px; background: rgba(255,255,255,0.2); color: white; padding: 2px 8px; border-radius: 10px; font-size: 10px; font-weight: 900; border: 1px solid rgba(255,255,255,0.3); }
+/* BOOKSHELF & SIDEBAR STYLES */
+        body { background-color: #000; }
+        .wrapper { padding: 0; max-width: 1600px; margin: auto; padding-bottom: 80px; }
+        
+        #inventory-racks-container { 
+            background-color: #5c3a21; /* Wood Background */
+            min-height: 100vh; padding: 40px 15px;
+        }
 
+        .shelf-row { 
+            position: relative; display: flex; gap: 15px; padding: 45px 15px 15px 15px; 
+            margin-bottom: 30px; 
+            background: linear-gradient(to bottom, #4a2e1b 0%, #5c3a21 100%);
+            border-bottom: 12px solid #3a1e0b; /* Shelf Edge */
+            box-shadow: 0 10px 15px rgba(0,0,0,0.5); flex-wrap: wrap;
+        }
+
+        .shelf-label {
+            position: absolute; top: -15px; left: 15px; padding: 6px 16px;
+            background: #0ea5e9; color: white; font-weight: 900; font-size: 14px;
+            border-radius: 20px; text-transform: uppercase; box-shadow: 0 4px 6px rgba(0,0,0,0.3);
+            display: flex; align-items: center; gap: 8px; z-index: 10; border: 2px solid #fff;
+        }
+
+        /* EXACT CARD STYLE FROM IMAGE */
+        .shelf-item { 
+            width: 145px; border-radius: 8px; cursor: pointer;
+            display: flex; flex-direction: column; overflow: hidden;
+            box-shadow: 0 4px 10px rgba(0,0,0,0.3); position: relative; transition: 0.2s;
+            background: #111; /* Dark Bottom Half */
+            border: 2px solid #3b82f6; /* Will be overridden by JS */
+        }
+        .shelf-item:hover { transform: translateY(-5px); box-shadow: 0 8px 16px rgba(0,0,0,0.5); }
+        
+        .shelf-item-top {
+            background: white; padding: 10px; height: 120px; display: flex; 
+            align-items: center; justify-content: center; position: relative;
+        }
+        .shelf-item-top img { max-width: 100%; max-height: 100%; object-fit: contain; }
+        
+        .qty-badge { 
+            position: absolute; top: -5px; right: -5px; background: #dc2626; color: white; 
+            width: 26px; height: 26px; border-radius: 50%; font-size: 12px; font-weight: 900; 
+            display: flex; align-items: center; justify-content: center; border: 2px solid white; z-index: 2;
+        }
+
+        .shelf-item-bottom { padding: 10px; display: flex; flex-direction: column; flex-grow: 1; text-align: center;}
+        .shelf-item-name { font-size: 12px; font-weight: 900; color: white; line-height: 1.2; margin-bottom: 5px; text-transform: uppercase; display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; }
+        .shelf-item-dept { font-size: 9px; font-weight: 800; color: #fff; margin-bottom: 5px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;}
+        .shelf-item-params { font-size: 9px; color: #94a3b8; margin-bottom: 8px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;}
+        
+        .shelf-item-footer { display: flex; justify-content: space-between; align-items: flex-end; margin-top: auto; }
+        .shelf-item-qty-text { font-size: 11px; font-weight: 800; color: #10b981; }
+        .shelf-item-price { font-size: 18px; font-weight: 900; color: #60a5fa; }
+
+        /* SIDEBAR MENU STYLES */
+        #control-panel-overlay { display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.6); z-index: 2000; backdrop-filter: blur(2px); }
+        #control-panel { position: fixed; top: 0; left: -300px; width: 280px; height: 100%; background: white; z-index: 2001; transition: 0.3s; overflow-y: auto; padding: 20px; box-sizing: border-box; }
+        #control-panel.open { left: 0; }
         /* Item Details Panel Styles */
         .item-detail-hero { display: flex; gap: 15px; align-items: center; margin-bottom: 20px; padding-bottom: 15px; border-bottom: 1px dashed var(--border);}
         .hero-icon { width: 120px; height: 120px; border-radius: 12px; background: var(--primary); color: white; display: flex; align-items: center; justify-content: center; font-size: 28px; font-weight: 900; overflow: hidden; }
@@ -96,39 +135,38 @@
 </head>
 <body>
 
+<div style="background: #0f172a; padding: 15px; display: flex; align-items: center; position: sticky; top: 0; z-index: 1000; color: white; box-shadow: 0 4px 6px rgba(0,0,0,0.3);">
+    <i class="bi bi-list" style="font-size: 28px; cursor: pointer; margin-right: 15px;" onclick="toggleMenu()"></i>
+    <h1 style="margin: 0; font-size: 18px; font-weight: 900; letter-spacing: 1px;">STORE INVENTORY</h1>
+</div>
+
+<div id="control-panel-overlay" onclick="toggleMenu()"></div>
+<div id="control-panel">
+    <h2 style="margin-top:0; font-weight:900; color:var(--navy);">Menu</h2>
+    <button class="btn-action" style="width:100%; margin-bottom:10px; background:var(--navy); color:white;" onclick="toggleMenu(); openBlueprintModal()"><i class="bi bi-plus-circle-fill"></i> Add Item</button>
+    <button class="btn-action" style="width:100%; margin-bottom:10px; background:var(--emerald); color:white;" onclick="toggleMenu(); printWallCatalog()"><i class="bi bi-printer-fill"></i> Print Catalog</button>
+    <button class="btn-action" style="width:100%; margin-bottom:20px; background:var(--warning); color:white;" onclick="toggleMenu(); openGlobalDealsModal()"><i class="bi bi-megaphone-fill"></i> Deals</button>
+    
+    <div class="dash-pill pill-total" style="margin-bottom:10px; min-width:100%;">
+        <div><p>Varieties</p><h3 id="dash-total">0</h3></div>
+    </div>
+    <div class="dash-pill pill-danger" style="margin-bottom:20px; min-width:100%;">
+        <div><p>Low Stock</p><h3 id="dash-low">0</h3></div>
+    </div>
+
+    <label>Search Inventory</label>
+    <input type="text" id="search-input" class="filter-input" placeholder="🔍 Search barcode or name..." oninput="renderInventory()" style="width:100%; margin-bottom:15px; box-sizing:border-box;">
+    
+    <label>Branch</label>
+    <select id="filter-branch" class="filter-input" onchange="fetchInventory()" style="width:100%; margin-bottom:20px; box-sizing:border-box;"></select>
+    
+    <button class="btn-action" id="filter-low-stock" onclick="toggleFilter('lowStock')" style="width:100%; margin-bottom:10px; justify-content:center;">Low Stock Only</button>
+    <button class="btn-action" id="filter-offers" onclick="toggleFilter('offers')" style="width:100%; justify-content:center;">Offered Items Only</button>
+</div>
+
 <div class="wrapper">
-    <div class="header-bar">
-        <h1>Inventory Master</h1>
-        <div style="display: flex; gap: 8px; flex-wrap: wrap;">
-            <button class="btn-action" style="background:var(--navy); color:white; border-color:var(--navy);" onclick="openBlueprintModal()"><i class="bi bi-plus-circle-fill"></i> New Item</button>
-            <button class="btn-action" style="background:var(--emerald); color:white; border-color:var(--emerald);" onclick="printWallCatalog()"><i class="bi bi-printer-fill"></i> Print Wall Catalog</button>
-            <button class="btn-action" style="background:var(--warning); color:white; border-color:var(--warning);" onclick="openGlobalDealsModal()"><i class="bi bi-megaphone-fill"></i> Store Deals</button>
-            <a href="javascript:history.back()" class="btn-action"><i class="bi bi-arrow-left"></i></a>
-        </div>
-    </div>
-
-    <div class="top-master-row">
-        <div class="dash-pill pill-total">
-            <div><p>Varieties</p><h3 id="dash-total">0</h3></div>
-            <i class="bi bi-box-seam" style="font-size:24px; opacity:0.5;"></i>
-        </div>
-        <div class="dash-pill pill-danger">
-            <div><p>Low Stock</p><h3 id="dash-low">0</h3></div>
-            <i class="bi bi-exclamation-triangle" style="font-size:24px; opacity:0.5;"></i>
-        </div>
-        
-  <div class="filter-row" style="padding: 10px; gap: 10px;">
-            <input type="text" id="search-input" class="filter-input" placeholder="🔍 Search barcode or item name..." oninput="renderInventory()" style="font-size: 14px; padding: 10px;">
-            <select id="filter-branch" class="filter-input" onchange="fetchInventory()" style="font-size: 14px; padding: 10px; max-width: 180px;"></select>
-            
-            <button class="btn-action" id="filter-low-stock" onclick="toggleFilter('lowStock')">Low Stock Only</button>
-            <button class="btn-action" id="filter-offers" onclick="toggleFilter('offers')">Offered Items Only</button>
-        </div>
-    </div>
-
     <div id="inventory-racks-container">
-        <div style="text-align: center; padding: 60px; color: var(--text-light); font-weight: 800; font-size: 16px;">
-            <i class="bi bi-box-seam" style="font-size: 40px; display: block; margin-bottom: 15px; opacity: 0.5;"></i>
+        <div style="text-align: center; padding: 60px; color: #fff; font-weight: 800; font-size: 16px;">
             Loading Store Shelves...
         </div>
     </div>
@@ -495,85 +533,105 @@ let activeFilters = { lowStock: false, offers: false };
         renderInventory();
     }
     // --- ULTRA-FAST LIST VIEW RENDER ---
-window.renderInventory = function() {
-    const container = document.getElementById('inventory-racks-container');
-    const query = document.getElementById('search-input').value.toLowerCase().trim();
-    const cleanStr = (str) => str ? str.replace(/\s*\([^)]*\)/g, '').trim() : "Unknown";
-
-    let totalItems = 0; let lowStock = 0;
-
-    window.requestAnimationFrame(() => {
-        let filtered = rawInventory.filter(item => {
-            if (activeFilters.lowStock && parseFloat(item.qty || 0) >= parseFloat(item.minStock || 5)) return false;
-            if (activeFilters.offers && !item.offer) return false;
-            if (query) {
-                const n = (item.name || "").toLowerCase();
-                const b = (item.barcode || "").toLowerCase();
-                return n.includes(query) || b.includes(query);
-            }
-            if (navPath && navPath.dept && item.department !== navPath.dept) return false;
-            if (navPath && navPath.cat && item.category !== navPath.cat) return false;
-            if (navPath && navPath.subcat && item.subCategory !== navPath.subcat) return false;
-            return true;
-        });
-
-        const deptColors = { "STATIONARY": "#f97316", "COSMETICS": "#10b981", "GROCERY": "#3b82f6", "BEVERAGES": "#a855f7", "STAPLES": "#eab308" };
-        let htmlArr = [];
-
-        // Breadcrumb
-        if (!query) {
-            htmlArr.push(`<div style="padding:10px; font-weight:800; color:var(--text-light); margin-bottom:10px;">
-                <span onclick="setNavPath('home')" style="cursor:pointer;">HOME</span>
-                ${navPath?.dept ? ` / <span onclick="setNavPath('dept')" style="cursor:pointer;">${cleanStr(navPath.dept)}</span>` : ''}
-                ${navPath?.cat ? ` / <span onclick="setNavPath('cat')" style="cursor:pointer;">${cleanStr(navPath.cat)}</span>` : ''}
-            </div>`);
-        }
-
-        if (query || (navPath && navPath.subcat)) {
-            htmlArr.push(`<div class="shelf-grid">`);
-            filtered.forEach(item => {
-                totalItems++;
-                if(parseFloat(item.qty || 0) < parseFloat(item.minStock || 5)) lowStock++;
-                const bg = deptColors[(item.department || "").toUpperCase()] || "#64748b";
-                htmlArr.push(`
-                    <div class="shelf-item" onclick="openItemDetailsModal('${item.docId}')" style="background: ${bg};">
-                        <div class="qty-badge">${item.qty}</div>
-                        <div class="shelf-item-dept">${item.department || 'ITEM'}</div>
-                        <div class="shelf-item-name">${cleanStr(item.name)}</div>
-                        <div class="shelf-item-price">₹${parseFloat(item.msp || 0).toFixed(0)}</div>
-                    </div>`);
-            });
-            htmlArr.push(`</div>`);
+function toggleMenu() {
+        const panel = document.getElementById('control-panel');
+        const overlay = document.getElementById('control-panel-overlay');
+        if (panel.classList.contains('open')) {
+            panel.classList.remove('open');
+            overlay.style.display = 'none';
         } else {
+            panel.classList.add('open');
+            overlay.style.display = 'block';
+        }
+    }
+
+    window.renderInventory = function() {
+        const container = document.getElementById('inventory-racks-container');
+        const query = document.getElementById('search-input').value.toLowerCase().trim();
+        const cleanStr = (str) => str ? str.replace(/\s*\([^)]*\)/g, '').trim() : "Unknown";
+
+        let totalItems = 0; let lowStock = 0;
+
+        window.requestAnimationFrame(() => {
+            let filtered = rawInventory.filter(item => {
+                if (activeFilters.lowStock && parseFloat(item.qty || 0) >= parseFloat(item.minStock || 5)) return false;
+                if (activeFilters.offers && !item.offer) return false;
+                if (query) {
+                    const n = (item.name || "").toLowerCase();
+                    const b = (item.barcode || "").toLowerCase();
+                    return n.includes(query) || b.includes(query);
+                }
+                return true;
+            });
+
+            const deptColors = { 
+                "STATIONARY": "#ea580c", "COSMETICS": "#16a34a", "GROCERY": "#2563eb", 
+                "BEVERAGES": "#9333ea", "STAPLES": "#ca8a04", "HARDWARE": "#475569" 
+            };
+            const deptIcons = {
+                "STATIONARY": "bi-pencil-fill", "COSMETICS": "bi-magic", "GROCERY": "bi-cart-fill",
+                "BEVERAGES": "bi-cup-straw", "STAPLES": "bi-bag-fill", "HARDWARE": "bi-tools"
+            };
+
             let grouped = {};
             filtered.forEach(i => {
                 totalItems++;
-                let key = !navPath?.dept ? (i.department || "General") : (!navPath?.cat ? (i.category || "General") : (i.subCategory || "General"));
+                if(parseFloat(i.qty || 0) < parseFloat(i.minStock || 5)) lowStock++;
+                let key = (i.department || "General").toUpperCase();
                 if(!grouped[key]) grouped[key] = [];
                 grouped[key].push(i);
             });
-            
-            htmlArr.push(`<div class="shelf-grid">`);
+
+            if (Object.keys(grouped).length === 0) {
+                container.innerHTML = `<div style="text-align:center; padding:60px; color:#fff;"><h3>No items found.</h3></div>`;
+                document.getElementById('dash-total').innerText = 0; document.getElementById('dash-low').innerText = 0;
+                return;
+            }
+
+            let html = ``;
             Object.keys(grouped).sort().forEach(k => {
-                htmlArr.push(`
-                    <div class="shelf-item" onclick="drillDown('${k}')" style="background:#475569; justify-content:center;">
-                        <div style="font-size:30px;">📁</div>
-                        <div class="shelf-item-name">${cleanStr(k)}</div>
-                        <div style="font-size:10px;">${grouped[k].length} Items</div>
-                    </div>`);
+                const bg = deptColors[k] || "#0ea5e9";
+                const icon = deptIcons[k] || "bi-tag-fill";
+                
+                html += `<div class="shelf-row">
+                            <div class="shelf-label" style="background:${bg};">
+                                <i class="bi ${icon}"></i> ${cleanStr(k)} (${grouped[k].length} Items)
+                            </div>`;
+                
+                grouped[k].forEach(item => {
+                    const params = item.customParams ? Object.values(item.customParams).slice(0,2).join(' • ') : '';
+                    const isLow = parseFloat(item.qty || 0) < parseFloat(item.minStock || 5);
+                    const displayName = cleanStr(item.name);
+                    const catName = cleanStr(item.category || "GENERAL");
+                    
+                    html += `
+                        <div class="shelf-item" onclick="openItemDetailsModal('${item.docId}')" style="border-color: ${bg};">
+                            <div class="shelf-item-top">
+                                <div class="qty-badge">${item.qty}</div>
+                                <img src="${item.imageUrl || 'https://via.placeholder.com/100?text=No+Image'}" alt="img" loading="lazy">
+                            </div>
+                            <div class="shelf-item-bottom">
+                                <div class="shelf-item-name">${displayName}</div>
+                                <div class="shelf-item-dept" style="color:${bg};">${catName}</div>
+                                <div class="shelf-item-params">${params}</div>
+                                <div class="shelf-item-footer">
+                                    <div class="shelf-item-qty-text" style="color: ${isLow ? '#ef4444' : '#10b981'};">Qty ${item.qty}</div>
+                                    <div class="shelf-item-price">₹${parseFloat(item.msp || 0).toFixed(0)}</div>
+                                </div>
+                            </div>
+                        </div>`;
+                });
+                html += `</div>`;
             });
-            htmlArr.push(`</div>`);
-        }
 
-        container.innerHTML = htmlArr.join('');
-        document.getElementById('dash-total').innerText = totalItems;
-        document.getElementById('dash-low').innerText = lowStock;
-    });
-};
+            container.innerHTML = html;
+            document.getElementById('dash-total').innerText = totalItems;
+            document.getElementById('dash-low').innerText = lowStock;
+        });
+    };
 
-    // --- DRILL DOWN NAVIGATION CONTROLLERS ---
-  window.setNavPath = function(){};
-window.drillDown = function(){};
+    window.setNavPath = function(){};
+    window.drillDown = function(){};
 
     // --- MODAL CONTROLLERS ---
     function openItemDetailsModal(docId) {
