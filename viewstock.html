@@ -107,7 +107,7 @@
         0 8px 18px rgba(0,0,0,0.25);
     margin:0 auto;
 }
-        .shelf-item-details { display: flex; flex-direction: column; flex-grow: 1; text-align: left; overflow: hidden;}
+        .shelf-item-details{ display:none; } { display: flex; flex-direction: column; flex-grow: 1; text-align: left; overflow: hidden;}
       .shelf-item-name{
     width:100%;
     font-size:12px;
@@ -633,25 +633,200 @@ window.renderInventory = function() {
                     const firstLetter = item.name ? item.name.charAt(0).toUpperCase() : 'B';
                     const bgGrad = bgGradientsLocal[i % 5]; const textCol = isLow ? '#ef4444' : '#0f172a';
 
-                    let paramSubtitle = '';
-                    if(item.customParams) paramSubtitle = `<div class="shelf-item-subtitle">${Object.values(item.customParams).join(' • ')}</div>`;
+                let paramSubtitle = '';
 
-                    let iconHtml = item.imageUrl ? 
-                        `<div class="shelf-icon"><div class="qty-badge ${isLow ? 'qty-low' : ''}">${qty}</div><img src="${item.imageUrl}" loading="lazy" style="width: 100%; height: 100%; object-fit: contain; padding: 5px;"></div>` : 
-                        `<div class="shelf-icon" style="background: ${bgGrad}; color: ${textCol}; border:none;"><div class="qty-badge ${isLow ? 'qty-low' : ''}">${qty}</div>${firstLetter}</div>`;
+if(item.customParams){
+
+paramSubtitle =
+
+`<div class="shelf-item-subtitle">
+
+${Object.values(item.customParams)
+.slice(0,2)
+.join(' • ')}
+
+</div>`;
+}
+
+                 const deptColorMap = {
+    "BEVERAGES":"#3b82f6",
+    "SNACKS":"#f97316",
+    "DAIRY":"#22c55e",
+    "PERSONAL CARE":"#8b5cf6",
+    "MEDICINE":"#ef4444",
+    "STATIONERY":"#06b6d4"
+};
+
+const deptColor =
+deptColorMap[(item.department || "").toUpperCase()]
+|| "#64748b";
+
+let iconHtml = item.imageUrl ?
+
+`<div class="shelf-icon">
+
+<div class="qty-badge ${isLow ? 'qty-low' : ''}">
+${qty}
+</div>
+
+<img
+src="${item.imageUrl}"
+loading="lazy"
+style="
+width:100%;
+height:100px;
+object-fit:contain;
+padding:8px;
+background:white;
+">
+
+<div style="
+padding:6px;
+background:${deptColor};
+color:white;
+font-size:10px;
+font-weight:900;
+text-align:center;
+white-space:nowrap;
+overflow:hidden;
+text-overflow:ellipsis;
+">
+${item.department || 'PRODUCT'}
+</div>
+
+</div>`
+
+:
+
+`<div class="shelf-icon"
+style="
+background:${bgGrad};
+color:white;
+border:none;
+display:flex;
+flex-direction:column;
+justify-content:space-between;
+">
+
+<div class="qty-badge ${isLow ? 'qty-low' : ''}">
+${qty}
+</div>
+
+<div style="
+padding-top:12px;
+font-size:13px;
+font-weight:900;
+text-align:center;
+line-height:1.2;
+padding-left:6px;
+padding-right:6px;
+">
+
+${(item.name || '').split(' ').slice(0,3).join(' ')}
+
+</div>
+
+<div style="
+background:rgba(0,0,0,0.18);
+padding:8px;
+font-size:10px;
+font-weight:800;
+width:100%;
+box-sizing:border-box;
+">
+
+${item.department || ''}
+
+</div>
+
+</div>`;
 
                     // Clean names in item list as well
                     const displayName = cleanStr(item.name);
 
                    htmlArr.push(`
-                        <div class="shelf-item" onclick="openItemDetailsModal('${item.docId}')" title="${displayName}">
-                            <div style="width:100%; position:relative;">${iconHtml.replace('shelf-icon', 'shelf-icon" style="width:100%; height:180px; margin-bottom:12px;')}</div>
-                            <div class="shelf-item-details">
-                                <div class="shelf-item-name" style="font-size:12px; height:3em; line-height:1.2; display:-webkit-box; -webkit-line-clamp:2; -webkit-box-orient:vertical; white-space:normal;">${displayName}</div>
-                                ${paramSubtitle}
-                                <div class="shelf-item-price" style="margin-top:8px; font-size:16px; text-align:center;">₹${parseFloat(item.msp || 0).toFixed(0)}</div>
-                            </div>
-                        </div>`);
+
+<div
+class="shelf-item"
+onclick="openItemDetailsModal('${item.docId}')"
+title="${displayName}">
+
+${iconHtml}
+
+<div style="
+padding:8px;
+width:100%;
+box-sizing:border-box;
+">
+
+<div style="
+font-size:13px;
+font-weight:900;
+line-height:1.2;
+height:32px;
+overflow:hidden;
+display:-webkit-box;
+-webkit-line-clamp:2;
+-webkit-box-orient:vertical;
+color:white;
+background:rgba(0,0,0,0.55);
+border-radius:6px;
+padding:5px;
+">
+
+${displayName}
+
+</div>
+
+<div style="
+font-size:11px;
+margin-top:6px;
+font-weight:700;
+color:#cbd5e1;
+">
+
+${item.category || ''}
+
+${item.subCategory ? ' • ' + item.subCategory : ''}
+
+</div>
+
+${paramSubtitle}
+
+<div style="
+display:flex;
+justify-content:space-between;
+align-items:center;
+margin-top:8px;
+">
+
+<div style="
+font-size:12px;
+font-weight:900;
+color:${isLow ? '#ef4444' : '#10b981'};
+">
+
+Qty ${qty}
+
+</div>
+
+<div style="
+font-size:18px;
+font-weight:900;
+color:#60a5fa;
+">
+
+₹${parseFloat(item.msp || 0).toFixed(0)}
+
+</div>
+
+</div>
+
+</div>
+
+</div>
+
+`);
                 }
                 htmlArr.push(`</div>`);
             } 
