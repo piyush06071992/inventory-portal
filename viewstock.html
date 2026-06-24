@@ -76,9 +76,11 @@
         }
         .shelf-item:hover { transform: translateY(-5px); box-shadow: 0 8px 16px rgba(0,0,0,0.5); }
         
-     .shelf-item-top {
-            padding: 10px; height: 0; display: none;
+        .shelf-item-top {
+            background: white; padding: 10px; height: 120px; display: flex; 
+            align-items: center; justify-content: center; position: relative;
         }
+        .shelf-item-top img { max-width: 100%; max-height: 100%; object-fit: contain; }
         
         .qty-badge { 
             position: absolute; top: -5px; right: -5px; background: #dc2626; color: white; 
@@ -443,8 +445,8 @@
     let rawInventory = []; let globalBranches = []; 
     let currentMoveItem = null; let currentWasteItem = null; 
  let currentPromoDocId = null; let currentMspForMath = 0; let currentCpForMath = 0; let currentGstForMath = 0;
-  let editingBlueprintId = null; 
-    let openAccordions = {}; // ACCORDION STATE
+    let editingBlueprintId = null; 
+    let navPath = null; // GOOGLE DRIVE DRILL-DOWN STATE
     let savedShopParams = {};
     let masterTaxonomyList = []; 
     let localShopTaxonomy = [];
@@ -530,7 +532,19 @@ let activeFilters = { lowStock: false, offers: false };
         btn.style.color = activeFilters[filterType] ? 'white' : 'var(--navy)';
         renderInventory();
     }
-// --- ACCORDION RENDER ---
+    // --- ULTRA-FAST LIST VIEW RENDER ---
+function toggleMenu() {
+        const panel = document.getElementById('control-panel');
+        const overlay = document.getElementById('control-panel-overlay');
+        if (panel.classList.contains('open')) {
+            panel.classList.remove('open');
+            overlay.style.display = 'none';
+        } else {
+            panel.classList.add('open');
+            overlay.style.display = 'block';
+        }
+    }
+
     window.renderInventory = function() {
         const container = document.getElementById('inventory-racks-container');
         const query = document.getElementById('search-input').value.toLowerCase().trim();
@@ -578,49 +592,35 @@ let activeFilters = { lowStock: false, offers: false };
             Object.keys(grouped).sort().forEach(k => {
                 const bg = deptColors[k] || "#0ea5e9";
                 const icon = deptIcons[k] || "bi-tag-fill";
-                const isOpen = query ? true : !!openAccordions[k]; // Auto-open if searching
                 
-                html += `<div class="shelf-row" style="padding-bottom: ${isOpen ? '15px' : '0px'}; min-height: ${isOpen ? 'auto' : '20px'}; cursor: pointer;" onclick="toggleAccordion('${k}')">
+                html += `<div class="shelf-row">
                             <div class="shelf-label" style="background:${bg};">
-                                <i class="bi ${icon}"></i> ${cleanStr(k)} (${grouped[k].length} Items) ${isOpen ? '<i class="bi bi-chevron-up" style="margin-left:5px;"></i>' : '<i class="bi bi-chevron-down" style="margin-left:5px;"></i>'}
+                                <i class="bi ${icon}"></i> ${cleanStr(k)} (${grouped[k].length} Items)
                             </div>`;
                 
-                if (isOpen) {
-                    grouped[k].forEach(item => {
-                        const params = item.customParams ? Object.values(item.customParams).slice(0,2).join(' • ') : '';
-                        const isLow = parseFloat(item.qty || 0) < parseFloat(item.minStock || 5);
-                        const displayName = cleanStr(item.name);
-                        const catName = cleanStr(item.category || "GENERAL");
-                        
-                        // FIX: Removes the external placeholder image network error
-                        const imgHtml = item.imageUrl 
-                            ? `<img src="${item.imageUrl}" alt="img" loading="lazy">`
-                            : `<i class="bi bi-box-seam" style="font-size:40px; color:#cbd5e1; opacity:0.5;"></i>`;
-                        
-                       html += `
-                            <div class="shelf-item" onclick="openItemDetailsModal('${item.docId}')" style="border-color: ${bg};">
+                grouped[k].forEach(item => {
+                    const params = item.customParams ? Object.values(item.customParams).slice(0,2).join(' • ') : '';
+                    const isLow = parseFloat(item.qty || 0) < parseFloat(item.minStock || 5);
+                    const displayName = cleanStr(item.name);
+                    const catName = cleanStr(item.category || "GENERAL");
+                    
+                    html += `
+                        <div class="shelf-item" onclick="openItemDetailsModal('${item.docId}')" style="border-color: ${bg};">
+                            <div class="shelf-item-top">
                                 <div class="qty-badge">${item.qty}</div>
-                                <div class="shelf-item-bottom" style="padding-top:15px;">
-                                    <div class="shelf-item-name">${displayName}</div>
-                                    <div class="shelf-item-dept" style="color:${bg};">${catName}</div>
-                                    <div class="shelf-item-params">${params}</div>
-                                    <div class="shelf-item-footer">
-                                        <div class="shelf-item-qty-text" style="color: ${isLow ? '#ef4444' : '#10b981'};">Qty ${item.qty}</div>
-                                        <div class="shelf-item-price">₹${parseFloat(item.msp || 0).toFixed(0)}</div>
-                                    </div>
+                                <img src="${item.imageUrl || 'https://via.placeholder.com/100?text=No+Image'}" alt="img" loading="lazy">
+                            </div>
+                            <div class="shelf-item-bottom">
+                                <div class="shelf-item-name">${displayName}</div>
+                                <div class="shelf-item-dept" style="color:${bg};">${catName}</div>
+                                <div class="shelf-item-params">${params}</div>
+                                <div class="shelf-item-footer">
+                                    <div class="shelf-item-qty-text" style="color: ${isLow ? '#ef4444' : '#10b981'};">Qty ${item.qty}</div>
+                                    <div class="shelf-item-price">₹${parseFloat(item.msp || 0).toFixed(0)}</div>
                                 </div>
-                            </div>`;
-                                    <div class="shelf-item-name">${displayName}</div>
-                                    <div class="shelf-item-dept" style="color:${bg};">${catName}</div>
-                                    <div class="shelf-item-params">${params}</div>
-                                    <div class="shelf-item-footer">
-                                        <div class="shelf-item-qty-text" style="color: ${isLow ? '#ef4444' : '#10b981'};">Qty ${item.qty}</div>
-                                        <div class="shelf-item-price">₹${parseFloat(item.msp || 0).toFixed(0)}</div>
-                                    </div>
-                                </div>
-                            </div>`;
-                    });
-                }
+                            </div>
+                        </div>`;
+                });
                 html += `</div>`;
             });
 
@@ -628,11 +628,6 @@ let activeFilters = { lowStock: false, offers: false };
             document.getElementById('dash-total').innerText = totalItems;
             document.getElementById('dash-low').innerText = lowStock;
         });
-    };
-
-    window.toggleAccordion = function(key) {
-        openAccordions[key] = !openAccordions[key];
-        renderInventory();
     };
 
     window.setNavPath = function(){};
