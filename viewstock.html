@@ -481,7 +481,7 @@
     let currentMoveItem = null; let currentWasteItem = null; 
  let currentPromoDocId = null; let currentMspForMath = 0; let currentCpForMath = 0; let currentGstForMath = 0;
     let editingBlueprintId = null; 
-    let navPath = { dept: null, cat: null, subcat: null }; // GOOGLE DRIVE DRILL-DOWN STATE
+    let navPath = null; // GOOGLE DRIVE DRILL-DOWN STATE
     let savedShopParams = {};
     let masterTaxonomyList = []; 
     let localShopTaxonomy = [];
@@ -596,11 +596,7 @@ window.renderInventory = function() {
                 }
                 
                 // If NOT searching, apply drill-down path filtering
-                if (!query) {
-                    if (navPath.dept && item.department !== navPath.dept) continue;
-                    if (navPath.cat && item.category !== navPath.cat) continue;
-                    if (navPath.subcat && item.subCategory !== navPath.subcat) continue;
-                }
+               // SHOW ALL PRODUCTS DIRECTLY
                 filtered.push(item);
             }
 
@@ -613,21 +609,11 @@ window.renderInventory = function() {
 
             let htmlArr = [];
 
-            // BREADCRUMB NAVIGATION UI (Only show if not searching)
-            if (!query) {
-                let bcHtml = `<div style="display:flex; gap:8px; align-items:center; padding:12px 15px; background:white; border-radius:8px; margin-bottom:15px; border:1px solid var(--border); font-size:12px; font-weight:900; color:var(--text-light); overflow-x:auto;">`;
-                bcHtml += `<span onclick="setNavPath('home')" style="cursor:pointer; color:${!navPath.dept ? 'var(--navy)' : 'var(--primary)'};"><i class="bi bi-house-door-fill"></i> Home</span>`;
-                
-                if (navPath.dept) bcHtml += ` <i class="bi bi-chevron-right" style="opacity:0.5;"></i> <span onclick="setNavPath('dept')" style="cursor:pointer; color:${!navPath.cat ? 'var(--navy)' : 'var(--primary)'};">${cleanStr(navPath.dept)}</span>`;
-                if (navPath.cat) bcHtml += ` <i class="bi bi-chevron-right" style="opacity:0.5;"></i> <span onclick="setNavPath('cat')" style="cursor:pointer; color:${!navPath.subcat ? 'var(--navy)' : 'var(--primary)'};">${cleanStr(navPath.cat)}</span>`;
-                if (navPath.subcat) bcHtml += ` <i class="bi bi-chevron-right" style="opacity:0.5;"></i> <span style="color:var(--navy);">${cleanStr(navPath.subcat)}</span>`;
-                
-                bcHtml += `</div>`;
-                htmlArr.push(bcHtml);
-            }
+          
+           
 
             // STATE 1: RENDER ITEMS (If searching or fully drilled down to Sub-Category)
-            if (query || navPath.subcat) {
+            if (true) {
                 if (query) htmlArr.push(`<div style="margin-bottom:15px; padding:0 5px;"><span style="font-size:13px; font-weight:800; color:var(--text-light);">Search Results for: <span style="color:var(--primary);">'${query}'</span></span></div>`);
                 const bgGradientsLocal = [
 'linear-gradient(135deg,#ef4444,#f97316)',
@@ -733,26 +719,8 @@ backdrop-filter:blur(8px);
     }
 
     // --- DRILL DOWN NAVIGATION CONTROLLERS ---
-    window.setNavPath = function(level) {
-        if (level === 'home') navPath = { dept: null, cat: null, subcat: null };
-        if (level === 'dept') navPath = { dept: navPath.dept, cat: null, subcat: null };
-        if (level === 'cat') navPath = { dept: navPath.dept, cat: navPath.cat, subcat: null };
-        if (level === 'back') {
-            if (navPath.subcat) navPath.subcat = null;
-            else if (navPath.cat) navPath.cat = null;
-            else if (navPath.dept) navPath.dept = null;
-        }
-        document.getElementById('search-input').value = "";
-        renderInventory();
-    }
-
-    window.drillDown = function(selectedValue) {
-        if (!navPath.dept) navPath.dept = selectedValue;
-        else if (!navPath.cat) navPath.cat = selectedValue;
-        else if (!navPath.subcat) navPath.subcat = selectedValue;
-        document.getElementById('search-input').value = "";
-        renderInventory();
-    }
+  window.setNavPath = function(){};
+window.drillDown = function(){};
 
     // --- MODAL CONTROLLERS ---
     function openItemDetailsModal(docId) {
