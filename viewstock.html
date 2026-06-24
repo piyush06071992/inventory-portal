@@ -42,28 +42,25 @@
         .filter-row { display: flex; gap: 8px; background: white; padding: 8px; border-radius: 8px; border: 1px solid var(--border); flex: 1; align-items: center; flex-wrap: wrap;}
         .filter-input { padding: 6px 10px; border: 1px solid var(--border); border-radius: 6px; font-size: 12px; font-weight: 600; background: #f8fafc; flex: 1; min-width: 110px; outline: none;}
 
-     #inventory-racks-container { padding: 20px; min-height: 600px; }
+ /* BOOKSHELF STYLES */
+       #inventory-racks-container { padding: 20px; min-height: 600px; }
        .shelf-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(160px, 1fr)); gap: 15px; }
        
        .shelf-item { 
            width: 100%; border-radius: 12px; padding: 15px; cursor: pointer;
-           display: flex; flex-direction: column; color: white;
-           box-shadow: 0 4px 10px rgba(0,0,0,0.1); position: relative;
+           display: flex; flex-direction: column; color: white; min-height: 140px;
+           box-shadow: 0 4px 10px rgba(0,0,0,0.1); position: relative; transition: 0.2s;
        }
-       .shelf-item:hover { transform: translateY(-5px); }
+       .shelf-item:hover { transform: translateY(-5px); box-shadow: 0 8px 16px rgba(0,0,0,0.2); }
        
-       .shelf-item-name { font-size: 16px; font-weight: 900; line-height: 1.2; margin-bottom: 5px; text-transform: uppercase; }
-       .shelf-item-dept { font-size: 10px; font-weight: 800; text-transform: uppercase; opacity: 0.8; margin-bottom: 10px; }
-       .shelf-item-price { font-size: 20px; font-weight: 900; margin-top: auto; }
-       .qty-badge { position: absolute; top: 10px; right: 10px; background: white; color: black; padding: 2px 8px; border-radius: 10px; font-size: 10px; font-weight: 900; }
-        .shelf-item-subtitle { font-size: 11px; color: var(--text-light); font-weight: 700; margin-top: 4px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;}
-        .shelf-item-price { font-size: 15px; font-weight: 900; color: var(--primary); margin-left: 15px; text-align: right; min-width: 80px;}
-        
-        .qty-badge { position: absolute; top: -4px; right: -4px; background: #10b981; color: white; min-width: 20px; height: 20px; border-radius: 10px; font-size: 10px; font-weight: 900; display: flex; align-items: center; justify-content: center; box-shadow: 0 2px 4px rgba(0,0,0,0.2); border: 2px solid white; padding: 0 4px; z-index: 2;}
-        .qty-low { background: #ef4444; animation: pulse 2s infinite; }
-        @keyframes pulse { 0% { box-shadow: 0 0 0 0 rgba(239, 68, 68, 0.7); } 70% { box-shadow: 0 0 0 8px rgba(239, 68, 68, 0); } 100% { box-shadow: 0 0 0 0 rgba(239, 68, 68, 0); } }
-
-        .shelf-board { height: 6px; background: linear-gradient(to bottom, #cbd5e1, #94a3b8); border-radius: 4px; margin-top: 15px; width: 100%; opacity: 0.5;}
+       .shelf-item-name { 
+           font-size: 14px; font-weight: 900; line-height: 1.2; margin-top: 5px; 
+           text-transform: uppercase; overflow: hidden; display: -webkit-box; 
+           -webkit-line-clamp: 2; -webkit-box-orient: vertical; 
+       }
+       .shelf-item-dept { font-size: 9px; font-weight: 800; text-transform: uppercase; opacity: 0.8; }
+       .shelf-item-price { font-size: 18px; font-weight: 900; margin-top: auto; }
+       .qty-badge { position: absolute; top: 10px; right: 10px; background: rgba(255,255,255,0.2); color: white; padding: 2px 8px; border-radius: 10px; font-size: 10px; font-weight: 900; border: 1px solid rgba(255,255,255,0.3); }
 
         /* Item Details Panel Styles */
         .item-detail-hero { display: flex; gap: 15px; align-items: center; margin-bottom: 20px; padding-bottom: 15px; border-bottom: 1px dashed var(--border);}
@@ -499,133 +496,80 @@ let activeFilters = { lowStock: false, offers: false };
     }
     // --- ULTRA-FAST LIST VIEW RENDER ---
 window.renderInventory = function() {
-        const container = document.getElementById('inventory-racks-container');
-        const query = document.getElementById('search-input').value.toLowerCase().trim();
-        
-        // MAGIC TEXT CLEANER: Scrubs out any Hindi brackets from the DB dynamically
-        const cleanStr = (str) => str ? str.replace(/\s*\([^)]*\)/g, '').trim() : "Unknown";
+    const container = document.getElementById('inventory-racks-container');
+    const query = document.getElementById('search-input').value.toLowerCase().trim();
+    const cleanStr = (str) => str ? str.replace(/\s*\([^)]*\)/g, '').trim() : "Unknown";
 
-        let totalItems = 0; let lowStock = 0; 
-        
-        window.requestAnimationFrame(() => {
-            let filtered = [];
-           for (let i = 0; i < rawInventory.length; i++) {
-                const item = rawInventory[i];
-                const qty = parseFloat(item.qty || 0);
-                const minStock = parseFloat(item.minStock !== undefined ? item.minStock : 5);
+    let totalItems = 0; let lowStock = 0;
 
-                // NEW: Apply Low Stock / Offer Filters
-                if (activeFilters.lowStock && qty >= minStock) continue;
-                if (activeFilters.offers && !item.offer) continue;
-
-                // If searching, ignore folders and show matching items
-                if (query) {
-                    const n = item.name ? item.name.toLowerCase() : "";
-                    const b = item.barcode ? item.barcode.toLowerCase() : "";
-                    if (!n.includes(query) && !b.includes(query)) continue;
-                }
-                
-                // If NOT searching, apply drill-down path filtering
-               // SHOW ALL PRODUCTS DIRECTLY
-                filtered.push(item);
+    window.requestAnimationFrame(() => {
+        let filtered = rawInventory.filter(item => {
+            if (activeFilters.lowStock && parseFloat(item.qty || 0) >= parseFloat(item.minStock || 5)) return false;
+            if (activeFilters.offers && !item.offer) return false;
+            if (query) {
+                const n = (item.name || "").toLowerCase();
+                const b = (item.barcode || "").toLowerCase();
+                return n.includes(query) || b.includes(query);
             }
-
-            if(filtered.length === 0) {
-                let backBtn = (navPath.dept || navPath.cat || navPath.subcat) && !query ? `<button class="btn-action" onclick="setNavPath('back')" style="margin:10px auto;"><i class="bi bi-arrow-left"></i> Go Back</button>` : '';
-                container.innerHTML = `<div style="text-align:center; padding:60px; color:var(--text-light);"><i class="bi bi-search" style="font-size:40px; display:block; margin-bottom:10px;"></i><h3>No items match criteria.</h3>${backBtn}</div>`;
-                document.getElementById('dash-total').innerText = 0; document.getElementById('dash-low').innerText = 0;
-                return;
-            }
-
-            let htmlArr = [];
-
-          
-           
-
-// STATE 1: RENDER ITEMS
-                htmlArr.push(`<div class="shelf-grid">`);
-                const deptColors = {
-                    "STATIONARY": "#f97316", "COSMETICS": "#10b981", 
-                    "GROCERY": "#3b82f6", "BEVERAGES": "#a855f7", "STAPLES": "#eab308"
-                };
-
-                for (let i = 0; i < filtered.length; i++) {
-                    const item = filtered[i]; totalItems++;
-                    const dept = (item.department || "").toUpperCase();
-                    const bg = deptColors[dept] || "#64748b";
-                    const displayName = cleanStr(item.name);
-                    
-                    htmlArr.push(`
-                        <div class="shelf-item" onclick="openItemDetailsModal('${item.docId}')" style="background: ${bg};">
-                            <div class="qty-badge">${item.qty}</div>
-                            <div class="shelf-item-dept">${item.department || 'ITEM'}</div>
-                            <div class="shelf-item-name">${displayName}</div>
-                            <div class="shelf-item-price">₹${parseFloat(item.msp || 0).toFixed(0)}</div>
-                        </div>`);
-                }
-                htmlArr.push(`</div>`);
-            // STATE 2: RENDER DRILL-DOWN LIST (Dark Accordion Style from Image)
-            else {
-                let groupedList = {};
-                filtered.forEach(item => {
-                    totalItems++;
-                    let key = "";
-                    if (!navPath.dept) key = item.department || "Other";
-                    else if (!navPath.cat) key = item.category || "General";
-                    else if (!navPath.subcat) key = item.subCategory || "Items";
-                    
-                    if (!groupedList[key]) groupedList[key] = 0;
-                    groupedList[key]++;
-                });
-
-              const keys = Object.keys(groupedList).sort();
-               htmlArr.push(`
-<div style="
-background:rgba(255,255,255,0.08);
-padding:20px;
-border-radius:14px;
-display:flex;
-flex-direction:column;
-gap:14px;
-backdrop-filter:blur(8px);
-">
-`);
-                
-                // Vibrant, modern solid color palette for the strips
-                const stripColors = [
-                    { bg: '#3b82f6', hover: '#2563eb', text: '#ffffff', badgeBg: 'rgba(255,255,255,0.2)', icon: '#93c5fd' }, // Blue
-                    { bg: '#10b981', hover: '#059669', text: '#ffffff', badgeBg: 'rgba(255,255,255,0.2)', icon: '#6ee7b7' }, // Emerald
-                    { bg: '#8b5cf6', hover: '#7c3aed', text: '#ffffff', badgeBg: 'rgba(255,255,255,0.2)', icon: '#c4b5fd' }, // Purple
-                    { bg: '#f59e0b', hover: '#d97706', text: '#ffffff', badgeBg: 'rgba(255,255,255,0.2)', icon: '#fcd34d' }, // Amber
-                    { bg: '#ec4899', hover: '#db2777', text: '#ffffff', badgeBg: 'rgba(255,255,255,0.2)', icon: '#fbcfe8' }, // Pink
-                    { bg: '#14b8a6', hover: '#0d9488', text: '#ffffff', badgeBg: 'rgba(255,255,255,0.2)', icon: '#5eead4' }  // Teal
-                ];
-
-                keys.forEach((k, index) => {
-                    const cleanK = cleanStr(k);
-                    const palette = stripColors[index % stripColors.length];
-                    
-                    htmlArr.push(`
-                        <div onclick="drillDown('${k}')" style="background:${palette.bg}; color:${palette.text}; padding:18px 20px; border-radius:12px; display:flex; justify-content:space-between; align-items:center; cursor:pointer; font-weight:900; font-size:15px; text-transform:uppercase; box-shadow:0 4px 6px rgba(0,0,0,0.05); transition:0.2s;" onmouseover="this.style.background='${palette.hover}'; this.style.transform='translateY(-2px)';" onmouseout="this.style.background='${palette.bg}'; this.style.transform='none';">
-                            <div style="display:flex; align-items:center; gap:15px; letter-spacing:0.5px;">
-                             <i class="bi bi-bookshelf" style="color:${palette.icon}; font-size:24px;"></i>
-                                ${cleanK}
-                            </div>
-                            <div style="display:flex; align-items:center; gap:15px;">
-                                <span style="background:${palette.badgeBg}; padding:6px 14px; border-radius:12px; font-size:12px; font-weight:800;">${groupedList[k]} Options</span>
-                                <i class="bi bi-caret-right-fill" style="opacity:0.8; font-size:16px;"></i>
-                            </div>
-                        </div>
-                    `);
-                });
-                htmlArr.push(`</div>`);
-            }
-
-            container.innerHTML = htmlArr.join('');
-            document.getElementById('dash-total').innerText = totalItems;
-            document.getElementById('dash-low').innerText = lowStock;
+            if (navPath && navPath.dept && item.department !== navPath.dept) return false;
+            if (navPath && navPath.cat && item.category !== navPath.cat) return false;
+            if (navPath && navPath.subcat && item.subCategory !== navPath.subcat) return false;
+            return true;
         });
-    }
+
+        const deptColors = { "STATIONARY": "#f97316", "COSMETICS": "#10b981", "GROCERY": "#3b82f6", "BEVERAGES": "#a855f7", "STAPLES": "#eab308" };
+        let htmlArr = [];
+
+        // Breadcrumb
+        if (!query) {
+            htmlArr.push(`<div style="padding:10px; font-weight:800; color:var(--text-light); margin-bottom:10px;">
+                <span onclick="setNavPath('home')" style="cursor:pointer;">HOME</span>
+                ${navPath?.dept ? ` / <span onclick="setNavPath('dept')" style="cursor:pointer;">${cleanStr(navPath.dept)}</span>` : ''}
+                ${navPath?.cat ? ` / <span onclick="setNavPath('cat')" style="cursor:pointer;">${cleanStr(navPath.cat)}</span>` : ''}
+            </div>`);
+        }
+
+        if (query || (navPath && navPath.subcat)) {
+            htmlArr.push(`<div class="shelf-grid">`);
+            filtered.forEach(item => {
+                totalItems++;
+                if(parseFloat(item.qty || 0) < parseFloat(item.minStock || 5)) lowStock++;
+                const bg = deptColors[(item.department || "").toUpperCase()] || "#64748b";
+                htmlArr.push(`
+                    <div class="shelf-item" onclick="openItemDetailsModal('${item.docId}')" style="background: ${bg};">
+                        <div class="qty-badge">${item.qty}</div>
+                        <div class="shelf-item-dept">${item.department || 'ITEM'}</div>
+                        <div class="shelf-item-name">${cleanStr(item.name)}</div>
+                        <div class="shelf-item-price">₹${parseFloat(item.msp || 0).toFixed(0)}</div>
+                    </div>`);
+            });
+            htmlArr.push(`</div>`);
+        } else {
+            let grouped = {};
+            filtered.forEach(i => {
+                totalItems++;
+                let key = !navPath?.dept ? (i.department || "General") : (!navPath?.cat ? (i.category || "General") : (i.subCategory || "General"));
+                if(!grouped[key]) grouped[key] = [];
+                grouped[key].push(i);
+            });
+            
+            htmlArr.push(`<div class="shelf-grid">`);
+            Object.keys(grouped).sort().forEach(k => {
+                htmlArr.push(`
+                    <div class="shelf-item" onclick="drillDown('${k}')" style="background:#475569; justify-content:center;">
+                        <div style="font-size:30px;">📁</div>
+                        <div class="shelf-item-name">${cleanStr(k)}</div>
+                        <div style="font-size:10px;">${grouped[k].length} Items</div>
+                    </div>`);
+            });
+            htmlArr.push(`</div>`);
+        }
+
+        container.innerHTML = htmlArr.join('');
+        document.getElementById('dash-total').innerText = totalItems;
+        document.getElementById('dash-low').innerText = lowStock;
+    });
+};
 
     // --- DRILL DOWN NAVIGATION CONTROLLERS ---
   window.setNavPath = function(){};
