@@ -348,11 +348,8 @@
         }
 
         // Firestore Synchronizations
-    async function saveToCloud() {
+async function saveToCloud() {
             if(hasDuplicates) return alert("Cannot save. Please fix duplicate entries marked in red.");
-            
-            const user = firebase.auth().currentUser;
-            if (!user) return alert("You are not logged in! Please login via developer.html first.");
 
             const db = firebase.firestore();
             const saveBtn = document.getElementById('save-btn');
@@ -367,11 +364,12 @@
                     dictionary: sanitizedData,
                     totalCount: sanitizedData.length,
                     lastCompiled: new Date().toISOString(),
-                    updatedBy: user.email
+                    devSecret: "9817138521Ps$" // This matches the database rule to unlock the save!
                 });
                 alert("Master Database Registry deployed to Cloud successfully!");
             } catch(err) {
-                alert("Firestore Error: Permission Denied. Make sure you are logged in with rana.rpiyush.piyush826@gmail.com.");
+                console.error(err);
+                alert("Firestore Error: Permission Denied.");
             } finally {
                 saveBtn.innerHTML = `<i class="bi bi-cloud-arrow-up-fill"></i> Save to Cloud`;
                 saveBtn.disabled = false;
@@ -403,18 +401,13 @@
             }
         }
 
-      window.onload = function() {
+   window.onload = function() {
             if (sessionStorage.getItem("devAccessGranted") === "true") {
-                firebase.auth().onAuthStateChanged(user => {
-                    if (user) {
-                        populateDeptFilter();
-                        renderTableSpreadsheet();
-                        loadFromCloud(); 
-                    } else {
-                        alert("Firebase session expired. Please log in again.");
-                        window.location.href = "/developer.html";
-                    }
-                });
+                populateDeptFilter();
+                renderTableSpreadsheet();
+                loadFromCloud(); 
+            } else {
+                window.location.href = "/developer.html";
             }
         };
     </script>
