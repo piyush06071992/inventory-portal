@@ -138,8 +138,16 @@
     <div class="dash-pill pill-total" style="margin-bottom:10px; min-width:100%;">
         <div><p>Varieties</p><h3 id="dash-total">0</h3></div>
     </div>
-    <div class="dash-pill pill-danger" style="margin-bottom:20px; min-width:100%;">
+  <div class="dash-pill pill-danger" style="margin-bottom:20px; min-width:100%;">
         <div><p>Low Stock</p><h3 id="dash-low">0</h3></div>
+    </div>
+
+    <div style="background: #fffbeb; padding: 10px; border-radius: 8px; border: 1px solid #fcd34d; margin-bottom: 20px;">
+        <label style="color: #b45309;">Today's Base Rate (₹ per 1g)</label>
+        <div style="display:flex; gap:5px;">
+            <input type="number" id="global-gold-rate" class="modal-input" placeholder="e.g. 7200" style="margin-bottom:0;" onchange="saveGoldRate()">
+            <button class="btn-action" onclick="saveGoldRate()" style="background:#f59e0b; color:white; border:none;"><i class="bi bi-check-lg"></i></button>
+        </div>
     </div>
 
     <label>Search Inventory</label>
@@ -285,7 +293,7 @@
             </div>
         </div>
 
-        <div style="background: #fffbeb; padding: 10px; border-radius: 8px; border: 1px dashed #fcd34d; margin-bottom: 10px;">
+    <div id="standard-toolkit" style="background: #fffbeb; padding: 10px; border-radius: 8px; border: 1px dashed #fcd34d; margin-bottom: 10px;">
             <label style="color: #d97706; display: flex; align-items: center; gap: 5px; margin-bottom: 8px; cursor: pointer; text-transform: none;">
                 <input type="checkbox" id="bp-is-bulk" onchange="document.getElementById('bulk-fields').style.display = this.checked ? 'grid' : 'none';" style="width:16px; height:16px; margin:0;"> Arrives in Bulk Packages? (e.g. Sacks, Cartons)
             </label>
@@ -301,6 +309,48 @@
             </div>
         </div>
 
+        <div id="jewellery-toolkit" style="display: none; background: #fef08a; padding: 15px; border-radius: 8px; border: 1px solid #eab308; margin-bottom: 10px;">
+            <h4 style="margin: 0 0 10px 0; color: #a16207; font-size: 13px; font-weight: 900;"><i class="bi bi-gem"></i> Jewellery & Weight Specs</h4>
+            <div class="grid-3" style="margin-bottom:10px;">
+                <div>
+                    <label style="color: #854d0e;">Purity</label>
+                    <select id="bp-purity" class="modal-input" onchange="updateJewelleryMath()">
+                        <option value="24K">24K (99.9%)</option>
+                        <option value="22K" selected>22K (91.6%)</option>
+                        <option value="18K">18K (75.0%)</option>
+                        <option value="14K">14K (58.3%)</option>
+                        <option value="925">Silver 925</option>
+                        <option value="OTHER">Other/Gem</option>
+                    </select>
+                </div>
+                <div>
+                    <label style="color: #854d0e;">Gross Wt (g)</label>
+                    <input type="number" id="bp-gross-wt" class="modal-input" placeholder="0.000" oninput="updateJewelleryMath()" step="0.001">
+                </div>
+                <div>
+                    <label style="color: #854d0e;">Stone Wt (g)</label>
+                    <input type="number" id="bp-stone-wt" class="modal-input" placeholder="0.000" oninput="updateJewelleryMath()" step="0.001">
+                </div>
+            </div>
+            <div class="grid-3">
+                <div>
+                    <label style="color: #854d0e;">Net Gold Wt</label>
+                    <input type="number" id="bp-net-wt" class="modal-input" placeholder="0.000" disabled style="background:#fde047; font-weight:900; color:#854d0e;">
+                </div>
+                <div>
+                    <label style="color: #854d0e;">Making Charges</label>
+                    <input type="number" id="bp-making-charge" class="modal-input" placeholder="0.00" oninput="updateJewelleryMath()">
+                </div>
+                <div>
+                    <label style="color: #854d0e;">Charge Type</label>
+                    <select id="bp-making-type" class="modal-input" onchange="updateJewelleryMath()">
+                        <option value="PER_GRAM">Per Gram (₹)</option>
+                        <option value="FLAT">Flat Amt (₹)</option>
+                        <option value="PERCENT">% of Gold Val</option>
+                    </select>
+                </div>
+            </div>
+        </div>
         <div class="grid-2">
             <div>
                 <label>Cost Price (CP) <span style="color:var(--danger); text-transform:none;">(Via Enter Stock)</span></label>
@@ -439,7 +489,12 @@
     let masterTaxonomyList = []; 
     let localShopTaxonomy = [];
 
-    document.addEventListener('DOMContentLoaded', () => {
+   document.addEventListener('DOMContentLoaded', () => {
+        const savedRate = localStorage.getItem('todayGoldRate');
+        if (savedRate && document.getElementById('global-gold-rate')) {
+            document.getElementById('global-gold-rate').value = savedRate;
+        }
+
         firebase.auth().onAuthStateChanged(async () => {
             if (!activeUserPhone) return; 
             try { if(assignedBranch && assignedBranch.startsWith('[')) assignedBranch = JSON.parse(assignedBranch); } catch(e){}
@@ -674,9 +729,65 @@
 // --- BLUEPRINT AUTO-LEARNING LOGIC (Select + Prompt) ---
     function getCombinedTaxonomy() { return [...masterTaxonomyList, ...localShopTaxonomy]; }
 
+  window.saveGoldRate = function() {
+        const rate = document.getElementById('global-gold-rate').value;
+        if(rate) {
+            localStorage.setItem('todayGoldRate', rate);
+            alert("Today's Base Rate saved: ₹" + rate + " per gram.");
+            if(document.getElementById('blueprint-modal').style.display === 'flex') updateJewelleryMath();
+        }
+    };
+
+    window.updateJewelleryMath = function() {
+        const isJewelry = document.getElementById('bp-dept').value === 'JEWELLERY';
+        if (!isJewelry) return;
+
+        const baseRate = parseFloat(localStorage.getItem('todayGoldRate')) || 0;
+        const purity = document.getElementById('bp-purity').value;
+        const gross = parseFloat(document.getElementById('bp-gross-wt').value) || 0;
+        const stone = parseFloat(document.getElementById('bp-stone-wt').value) || 0;
+        const net = gross - stone;
+        document.getElementById('bp-net-wt').value = net >= 0 ? net.toFixed(3) : 0;
+
+        let purityRatio = 1;
+        if(purity === '22K') purityRatio = 91.6 / 100;
+        else if(purity === '18K') purityRatio = 75.0 / 100;
+        else if(purity === '14K') purityRatio = 58.3 / 100;
+        
+        const goldValue = net * baseRate * purityRatio;
+
+        const makeAmt = parseFloat(document.getElementById('bp-making-charge').value) || 0;
+        const makeType = document.getElementById('bp-making-type').value;
+        
+        let totalMaking = 0;
+        if(makeType === 'PER_GRAM') totalMaking = net * makeAmt;
+        else if(makeType === 'FLAT') totalMaking = makeAmt;
+        else if(makeType === 'PERCENT') totalMaking = goldValue * (makeAmt / 100);
+
+        const preTaxMsp = goldValue + totalMaking;
+        const gstRate = parseFloat(document.getElementById('bp-gst').value) || 0;
+        const finalMsp = preTaxMsp * (1 + (gstRate/100));
+        
+        document.getElementById('bp-cost').value = goldValue.toFixed(2); // Treat raw metal value as CP
+        document.getElementById('bp-msp').value = finalMsp.toFixed(2); // Auto-fill final MRP
+        updateProfitCalculations();
+    };
+
     window.handleDropdownChange = function(level, paramKey = null) {
         let selectEl = paramKey ? document.getElementById(`bp-param-${paramKey}`) : document.getElementById(`bp-${level}`);
         
+        if (level === 'dept') {
+            if (selectEl.value === 'JEWELLERY') {
+                document.getElementById('standard-toolkit').style.display = 'none';
+                document.getElementById('jewellery-toolkit').style.display = 'block';
+                document.getElementById('bp-unit').value = 'GRAMS';
+                document.getElementById('bp-gst').value = '3'; // Default to 3% GST for Indian Jewelry
+            } else {
+                document.getElementById('standard-toolkit').style.display = 'block';
+                document.getElementById('jewellery-toolkit').style.display = 'none';
+            }
+        }
+
         if (selectEl.value === 'ADD_NEW') {
             let newVal = prompt(`Enter New ${level.toUpperCase()}:`);
             if (newVal) {
@@ -797,10 +908,24 @@
             document.getElementById('bp-gst').value = item.gstRate || "0"; document.getElementById('bp-cost').value = item.costPer || "0";
            document.getElementById('bp-msp').value = item.msp || "0"; document.getElementById('bp-min').value = item.minStock !== undefined ? item.minStock : "5";
             
-            document.getElementById('bp-is-bulk').checked = item.isBulk || false;
+           document.getElementById('bp-is-bulk').checked = item.isBulk || false;
             document.getElementById('bulk-fields').style.display = item.isBulk ? 'grid' : 'none';
             document.getElementById('bp-bulk-unit').value = item.bulkUnitName || "";
             document.getElementById('bp-bulk-qty').value = item.bulkMultiplier || "";
+
+            if (item.department === 'JEWELLERY') {
+                document.getElementById('standard-toolkit').style.display = 'none';
+                document.getElementById('jewellery-toolkit').style.display = 'block';
+                document.getElementById('bp-purity').value = item.purity || "22K";
+                document.getElementById('bp-gross-wt').value = item.grossWt || "";
+                document.getElementById('bp-stone-wt').value = item.stoneWt || "0";
+                document.getElementById('bp-net-wt').value = item.netWt || "";
+                document.getElementById('bp-making-charge').value = item.makingCharge || "";
+                document.getElementById('bp-making-type').value = item.makingType || "PER_GRAM";
+            } else {
+                document.getElementById('standard-toolkit').style.display = 'block';
+                document.getElementById('jewellery-toolkit').style.display = 'none';
+            }
             
             if (item.imageUrl) {
                 document.getElementById('bp-image-url').value = item.imageUrl;
@@ -878,10 +1003,17 @@
        const costPer = parseFloat(document.getElementById('bp-cost').value) || 0; const msp = parseFloat(document.getElementById('bp-msp').value) || 0;
         const minStock = parseFloat(document.getElementById('bp-min').value) || 0; const branchId = document.getElementById('filter-branch').value;
 
-        const isBulk = document.getElementById('bp-is-bulk').checked;
+       const isBulk = document.getElementById('bp-is-bulk').checked;
         const bulkUnitName = document.getElementById('bp-bulk-unit').value.trim();
         const bulkMultiplier = parseFloat(document.getElementById('bp-bulk-qty').value) || 0;
 
+        const isJewellery = department === 'JEWELLERY';
+        const purity = isJewellery ? document.getElementById('bp-purity').value : null;
+        const grossWt = isJewellery ? (parseFloat(document.getElementById('bp-gross-wt').value) || 0) : null;
+        const stoneWt = isJewellery ? (parseFloat(document.getElementById('bp-stone-wt').value) || 0) : null;
+        const netWt = isJewellery ? (parseFloat(document.getElementById('bp-net-wt').value) || 0) : null;
+        const makingCharge = isJewellery ? (parseFloat(document.getElementById('bp-making-charge').value) || 0) : null;
+        const makingType = isJewellery ? document.getElementById('bp-making-type').value : null;
         if(!name || !category || !subCategory) return alert("Name, Category, and Sub-Category are mandatory!");
         if(isBulk && (!bulkUnitName || bulkMultiplier <= 0)) return alert("Bulk Item must have a Unit Name and Multiplier greater than 0.");
 
@@ -912,10 +1044,11 @@
                 finalImageUrl = await snapshot.ref.getDownloadURL();
             }
 
-          const itemData = { 
+     const itemData = { 
                 barcode: inputBarcode, name, department, category, subCategory, 
                 gstRate, unit, minStock, costPer, msp, customParams, 
                 isBulk, bulkUnitName, bulkMultiplier,
+                purity, grossWt, stoneWt, netWt, makingCharge, makingType,
                 isSystemBarcode, imageUrl: finalImageUrl || null, lastUpdated: new Date().toISOString() 
             };
 
