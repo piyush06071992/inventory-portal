@@ -1,18 +1,45 @@
-name: Deploy to Firebase Hosting on Push
+name: Deploy to Firebase Hosting
+
 on:
   push:
     branches:
-      - main
+      - main # Change to 'master' if your default branch is master
+
 jobs:
-  build_and_deploy:
+  deploy:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
-      
-      - name: Deploy to Firebase Hosting
-        uses: FirebaseExtended/action-hosting-deploy@v0
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v3
         with:
-          repoToken: ${{ secrets.GITHUB_TOKEN }}
-          firebaseServiceAccount: ${{ secrets.FIREBASE_SERVICE_ACCOUNT_BUSINESS_SAARTHI }}
-          projectId: business-saarthi
-          channelId: live
+          node-version: '20'
+
+      - name: Install Dependencies
+        run: npm ci
+
+      - name: Deploy to Firebase
+        # This tells Firebase to use the Service Account we just added
+        env:
+          GOOGLE_APPLICATION_CREDENTIALS_JSON: '${{ secrets.FIREBASE_SERVICE_ACCOUNT }}'
+        run: |
+          npm install -g firebase-tools
+          
+          # Create the credentials file that Firebase needs
+          echo "$GOOGLE_APPLICATION_CREDENTIALS_JSON" > /tmp/firebase-key.json
+          export GOOGLE_APPLICATION_CREDENTIALS="/tmp/firebase-key.json"
+          
+          # Deploy with a retry loop to prevent network glitches
+          for i in {1..3}; do
+            echo "Attempt $i: Deploying..."
+            firebase deploy --only hosting --project business-saarthi && break
+            
+            if [ $i -lt 3 ]; then
+              echo "Deploy failed, retrying in 10s..."
+              sleep 10
+            else
+              echo "Deploy failed after 3 attempts."
+              exit 1
+            fi
+          done
